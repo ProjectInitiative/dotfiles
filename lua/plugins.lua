@@ -17,7 +17,12 @@ vim.cmd([[
 return require('packer').startup(function(use)
   -- My plugins here
   use 'wbthomason/packer.nvim'
-  use {'neoclide/coc.nvim', branch = 'release'}
+  use {
+    "williamboman/nvim-lsp-installer",
+    "neovim/nvim-lspconfig",
+    "hrsh7th/nvim-cmp",
+    }
+  -- use {'neoclide/coc.nvim', branch = 'release'}
   use {'junegunn/fzf', dir = '~/.fzf', run = './install --all' }
   use {'junegunn/fzf.vim'}
   use {"akinsho/toggleterm.nvim", tag = 'v2.*', config = function()
