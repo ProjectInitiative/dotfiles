@@ -8,4 +8,6 @@ lspconfig.ansiblels.setup{}
 lspconfig.bashls.setup{}
 lspconfig.dockerls.setup{}
 lspconfig.pylsp.setup{}
+lspconfig.pyright.setup{}
 lspconfig.rust_analyzer.setup{}
+lspconfig.yamlls.setup{}
