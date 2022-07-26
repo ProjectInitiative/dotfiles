@@ -20,7 +20,10 @@ return require('packer').startup(function(use)
   use {
     "williamboman/nvim-lsp-installer",
     "neovim/nvim-lspconfig",
-    "hrsh7th/nvim-cmp",
+    'hrsh7th/nvim-cmp', -- Autocompletion plugin
+    'hrsh7th/cmp-nvim-lsp', -- LSP source for nvim-cmp
+    'saadparwaiz1/cmp_luasnip', -- Snippets source for nvim-cmp
+    'L3MON4D3/LuaSnip' -- Snippets plugin
     }
   -- use {'neoclide/coc.nvim', branch = 'release'}
   use {'junegunn/fzf', dir = '~/.fzf', run = './install --all' }
@@ -28,6 +31,13 @@ return require('packer').startup(function(use)
   use {"akinsho/toggleterm.nvim", tag = 'v2.*', config = function()
     require("toggleterm").setup()
   end}
+  use({
+      'projekt0n/github-nvim-theme',
+      config = function()
+        require('github-theme').setup({})
+      end
+    })
+
 
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins
