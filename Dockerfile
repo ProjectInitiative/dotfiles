@@ -62,4 +62,3 @@ RUN source "$HOME/.profile" && nvm install v18.7.0 --silent
 RUN source $HOME/.profile && bash <(curl -s https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh) -y > /dev/null
 COPY ./config.lua $HOME/.config/lvim/
 RUN source $HOME/.profile && lvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'
-RUN source $HOME/.profile && lvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerCompile'
