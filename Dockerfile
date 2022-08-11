@@ -43,21 +43,23 @@ RUN apt-get install -qq -y python3 python3-pip > /dev/null
 # local user installs
 USER ${USER}
 # COPY .bashrc and other configs
+RUN echo 'PATH="$PATH:$HOME/.local/bin"' >> $HOME/.profile
 
 # install rust
 RUN sh <(curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs) -q -y > /dev/null
-RUN source "$HOME/.cargo/env" && cargo install --quiet cargo-edit
+RUN source "$HOME/.profile" && cargo install --quiet cargo-edit
 
 # install tmux plugin manager
 RUN git clone https://github.com/tmux-plugins/tpm $HOME/.tmux/plugins/tpm
-RUN $HOME/.tmux/plugins/tpm/bin/install_plugins
+COPY ./.tmux.conf $HOME/.tmux.conf
+RUN TMUX_PLUGIN_MANAGER_PATH="$HOME/.tmux/plugins/" $HOME/.tmux/plugins/tpm/bin/install_plugins
 
 # install lunarvim dependencies
 RUN bash <(curl --proto '=https' --tlsv1.2 -sSfLo- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh)
-RUN source "$HOME/.nvm/nvm.sh" && nvm install v18.7.0 --silent
+RUN source "$HOME/.profile" && nvm install v18.7.0 --silent
 
 # install lunarvim
-RUN  "$HOME/.nvm/nvm.sh" && bash <(curl -s https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh) -y
-
-
-
+RUN source $HOME/.profile && bash <(curl -s https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh) -y > /dev/null
+COPY ./config.lua $HOME/.config/lvim/
+RUN source $HOME/.profile && lvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'
+RUN source $HOME/.profile && lvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerCompile'
