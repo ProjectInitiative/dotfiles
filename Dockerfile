@@ -19,10 +19,20 @@ RUN useradd -m ${USER}
 RUN apt-get update -qq && apt-get upgrade -qq -y > /dev/null && apt-get install -qq -y apt-utils > /dev/null
 
 # install base dependencies
-RUN apt-get install -qq -y init systemd curl git fuse > /dev/null
+RUN apt-get install -qq -y init systemd sudo curl ca-certificates git fuse > /dev/null
 
 # install dev essentials
 RUN apt-get install -qq -y build-essential pkg-config openssl libssl-dev procps > /dev/null
+
+# add apt keys
+# google
+RUN curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | tee /etc/apt/sources.list.d/kubernetes.list
+# helm
+RUN curl -fsSL https://baltocdn.com/helm/signing.asc | gpg --dearmor | tee /usr/share/keyrings/helm.gpg > /dev/null
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | tee /etc/apt/sources.list.d/helm-stable-debian.list
+# update apt cache
+RUN apt-get update
 
 # install tmux
 RUN apt install -qq -y tmux > /dev/null
@@ -38,6 +48,10 @@ RUN curl --proto '=https' --tlsv1.2 -sSfL https://go.dev/dl/go1.19.linux-amd64.t
 
 # install python
 RUN apt-get install -qq -y python3 python3-pip > /dev/null
+
+# install kubernetes
+RUN apt-get install -y -qq kubectl helm > /dev/null
+RUN kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl > /dev/null
 
 
 # local user installs
@@ -62,3 +76,12 @@ RUN source "$HOME/.profile" && nvm install v18.7.0 --silent
 RUN source $HOME/.profile && bash <(curl -s https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh) -y > /dev/null
 COPY ./config.lua $HOME/.config/lvim/
 RUN source $HOME/.profile && lvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'
+
+# install local kubernetes tools
+RUN echo 'alias k=kubectl' >>~/.bashrc
+RUN echo 'complete -o default -F __start_kubectl k' >>~/.bashrc
+
+
+
+# CMD [ "/sbin/init" ]
+ENTRYPOINT [ "/sbin/init" ]
