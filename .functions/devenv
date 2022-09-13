@@ -1,0 +1,9 @@
+
+function devenv() {
+  
+  podman run ghcr.io/projectinitiative/devenv:latest \
+    --it --rm \
+    --privileged \
+    --nework host \
+    /bin/bash
+}
