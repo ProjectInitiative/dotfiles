@@ -20,6 +20,10 @@ RUN apt-get update -qq && apt-get upgrade -qq -y > /dev/null && apt-get install 
 
 # install base dependencies
 RUN apt-get install -qq -y init systemd sudo curl ca-certificates git fuse > /dev/null
+# install entrypoint and enable systemd
+COPY docker-scripts/entrypoint.sh /usr/bin/
+COPY docker-scripts/entrypoint.service /etc/systemd/system/
+RUN chmod +x /usr/bin/entrypoint.sh && systemctl enable entrypoint.service
 
 # install dev essentials
 RUN apt-get install -qq -y build-essential pkg-config openssl libssl-dev procps > /dev/null
@@ -35,7 +39,7 @@ RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/h
 RUN apt-get update
 
 # install tmux
-RUN apt install -qq -y tmux > /dev/null
+RUN apt-get install -qq -y tmux > /dev/null
 
 # install neovim
 # RUN curl --proto '=https' --tlsv1.2 -sSfL https://github.com/neovim/neovim/releases/download/v0.7.2/nvim.appimage -o /usr/local/bin/nvim && chmod +x /usr/local/bin/nvim

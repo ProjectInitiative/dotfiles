@@ -1,0 +1,15 @@
+[Unit]
+Description=Run entrypoing script
+After=network.target
+
+[Service]
+Type=simple
+#Restart=Always
+#RestartSec=5
+ExecStart=/usr/bin/entrypoint.sh
+User=root
+SyslogIdentifier=entrypoint
+
+[Install]
+WantedBy=multi-user.target
+
