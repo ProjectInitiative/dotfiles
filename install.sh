@@ -10,6 +10,8 @@ cat << EOF | base64 --decode > $HOME/$DEVENV
 CmZ1bmN0aW9uIGRldmVudigpIHsKICAgIAogIH0K
 EOF
 =======
+=======
+>>>>>>> Stashed changes
 apt-get update -qq && apt-get upgrade -qq -y > /dev/null && apt-get install -qq -y apt-utils > /dev/null
 
 # install base dependencies
