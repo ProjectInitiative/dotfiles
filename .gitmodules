@@ -1,0 +1,3 @@
+[submodule "submodules/helix"]
+	path = submodules/helix
+	url = https://github.com/helix-editor/helix.git
