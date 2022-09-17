@@ -4,7 +4,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 mkdir -p ~/.config/
 
-ln -sf $SCRIPT_DIR/.alacritty.toml ~/.config/.alacritty.toml
+ln -sf $SCRIPT_DIR/.alacritty.yml ~/.alacritty.yml
 sudo apt-get install -y xclip cmake pkg-config libfreetype6-dev libfontconfig1-dev libxcb-xfixes0-dev libxkbcommon-dev python3
 
 git -C $SCRIPT_DIR submodule update --init --recursive
