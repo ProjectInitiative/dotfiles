@@ -429,7 +429,8 @@ shell:
   program: /bin/bash
   args:
     - -c
-    - "tmux attach || tmux"
+    - "zellij attach || zellij"
+    # - "tmux attach || tmux"
 
 # Shell
 #
