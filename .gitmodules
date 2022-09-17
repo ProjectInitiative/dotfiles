@@ -4,3 +4,6 @@
 [submodule "submodules/zellij"]
 	path = submodules/zellij
 	url = https://github.com/zellij-org/zellij.git
+[submodule "submodules/alacritty"]
+	path = submodules/alacritty
+	url = https://github.com/alacritty/alacritty.git
