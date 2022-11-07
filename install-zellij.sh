@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+# script_dir=$( cd -- "$( dirname -- "${bash_source[0]}" )" &> /dev/null && pwd )
 
-mkdir -p ~/.config/
-cargo install cargo-make
+# mkdir -p ~/.config/
+# cargo install cargo-make
 
-git -C $SCRIPT_DIR submodule update --init --recursive
-cargo install --path $SCRIPT_DIR/submodules/zellij
+# git -c $script_dir submodule update --init --recursive
+# cargo install --path $script_dir/submodules/zellij
+
+cargo install zellij
