@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+podman build -t localhost/devbox:latest --format=docker .
 IMAGE="localhost/devbox:latest"
 # IMAGE="ghcr.io/projectinitiative/devbox:latest"
 DISTROBOX_NAME="devbox"
