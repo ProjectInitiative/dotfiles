@@ -5,6 +5,7 @@
 # mkdir -p ~/.config/
 # cargo install cargo-make
 
-git -C $SCRIPT_DIR submodule update --init --recursive
-git -C $SCRIPT_DIR submodule update --remote --merge
-cargo install --path $SCRIPT_DIR/submodules/zellij
+# git -C $SCRIPT_DIR submodule update --init --recursive
+# git -C $SCRIPT_DIR submodule update --remote --merge
+# cargo install --path $SCRIPT_DIR/submodules/zellij
+cargo install zellij
