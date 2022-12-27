@@ -21,4 +21,4 @@ g = { a = "code_action" } # Maps `ga` to show possible code actions
 
 [keys.insert]
 "C-c" = "normal_mode" # Maps Ctrl-c to enter normal mode
-j = { k = "normal_mode" } # Maps `jk` to exit insert mode
+# j = { k = "normal_mode" } # Maps `jk` to exit insert mode
