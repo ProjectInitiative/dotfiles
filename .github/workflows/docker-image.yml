@@ -12,8 +12,10 @@ jobs:
   Deploy:
     runs-on: ubuntu-latest
     steps:
+
       - id: repo_owner
-        uses: Entepotenz/change-string-case-action@v1
+        name: Change String Case minimal dependencies
+        uses: Entepotenz/change-string-case-action-min-dependencies@v1
         with:
           string: ${{ github.repository_owner }}
       - name: Checkout Code
