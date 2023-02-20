@@ -6,6 +6,7 @@ SHELL ["/bin/bash", "-c"]
 
 ARG DOTFILES="/src/dotfiles"
 ADD . ${DOTFILES}
+RUN mkdir -p ${DOTFILES}/submodules
 
 # update apt cache and upgrade packages
 RUN apt-get update -qq && apt-get upgrade -qq -y > /dev/null && apt-get install -qq -y apt-utils bc curl dialog diffutils findutils gnupg2 less libnss-myhostname libvte-2.9[0-9]-common libvte-common lsof ncurses-base passwd pinentry-curses procps sudo time wget util-linux > /dev/null
@@ -59,6 +60,9 @@ RUN curl --proto '=https' --tlsv1.2 -sSfL https://go.dev/dl/go1.19.linux-amd64.t
 RUN groupadd -g 1111 installer && useradd -u 1111 -g 1111 -m -s /bin/bash installer && echo 'installer ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers
 USER installer
 RUN cp ${DOTFILES}/.bashrc $HOME/.bashrc
+# add safe directory
+RUN sudo chown -R installer:installer ${DOTFILES} 
+RUN git config --global --add safe.directory ${DOTFILES}
 
 # install go binaries
 # install hcloud
@@ -84,6 +88,7 @@ USER linuxbrew
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)" > /dev/null 2>&1
 USER root
 
+RUN rm -rf ${DOTFILES}/submodules/*
 
 # # install tmux plugin manager
 # RUN git clone https://github.com/tmux-plugins/tpm $HOME/.tmux/plugins/tpm
