@@ -11,5 +11,7 @@ git -C $SCRIPT_DIR submodule update --remote --merge
 
 cargo install --path $SCRIPT_DIR/submodules/helix/helix-term
 
+sudo cp ~/.cargo/bin/hx /usr/local/bin/hx
+
 mkdir -p $SCRIPT_DIR/helix/runtime
 cp -fr $SCRIPT_DIR/submodules/helix/runtime/* $SCRIPT_DIR/helix/runtime/
