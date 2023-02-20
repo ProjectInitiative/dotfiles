@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 
+mkdir -p ~/.config/containers
+cat <<EOF > ~/.config/containers/storage.cfg
+[storage]
+driver = "overlay"
+
+[storage.options.overlay]
+mount_program = "/usr/bin/fuse-overlayfs"
+EOF
+
 podman build -t localhost/devbox:latest --format=docker .
 IMAGE="localhost/devbox:latest"
 # IMAGE="ghcr.io/projectinitiative/devbox:latest"

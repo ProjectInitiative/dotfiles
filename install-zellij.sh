@@ -9,3 +9,4 @@
 # git -C $SCRIPT_DIR submodule update --remote --merge
 # cargo install --path $SCRIPT_DIR/submodules/zellij
 cargo install zellij
+sudo cp ~/.cargo/bin/zellij /usr/local/bin/zellij

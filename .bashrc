@@ -133,8 +133,18 @@ copy() {
 # add go binaries to path
 #export PATH="$PATH:/usr/local/go/bin"
 
+# distrobox
+if [ -e /usr/local/bin/bind-user.sh ]; then
+    # Run the command here
+    /usr/local/bin/bind-user.sh
+fi
+
+alias devbox='distrobox-enter devbox'
+#TODO: add curl commands to pull and build env from scratch
+
 # updates make to use all cores
 alias make='make -j $(nproc)'
+alias loc='git ls-files | xargs wc -l'
 # kubernetes aliases
 export KUBECONFIG=~/.kube/config
 source <(kubectl completion bash)
