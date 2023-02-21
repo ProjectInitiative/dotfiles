@@ -6,6 +6,7 @@ SHELL ["/bin/bash", "-c"]
 
 ARG DOTFILES="/src/dotfiles"
 ADD . ${DOTFILES}
+RUN cp ${DOTFILES}/bind-user.sh /usr/local/bin/bind-user.sh
 RUN mkdir -p ${DOTFILES}/submodules
 
 # update apt cache and upgrade packages
