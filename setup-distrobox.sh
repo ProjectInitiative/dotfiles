@@ -9,7 +9,8 @@ driver = "overlay"
 mount_program = "/usr/bin/fuse-overlayfs"
 EOF
 
-podman build -t localhost/devbox:latest --format=docker .
+# podman build -t localhost/devbox:latest --format=docker . || exit 1
+docker build -t localhost/devbox:latest . || exit 1
 IMAGE="localhost/devbox:latest"
 # IMAGE="ghcr.io/projectinitiative/devbox:latest"
 DISTROBOX_NAME="devbox"
