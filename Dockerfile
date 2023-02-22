@@ -49,10 +49,10 @@ RUN apt-get install -y -qq kubectl helm > /dev/null
 RUN kubectl completion bash | tee /etc/bash_completion.d/kubectl > /dev/null
 
 # install hashicorp packages
-RUN apt-get install -y -qq gnupg software-properties-common > /dev/null
-RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --yes --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list > /dev/null
-RUN apt-get update -qq > /dev/null && apt-get install -y -qq vagrant terraform packer > /dev/null
+# RUN apt-get install -y -qq gnupg software-properties-common > /dev/null
+# RUN curl -fsSL https://apt.releases.hashicorp.com/gpg | gpg --yes --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+# RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list > /dev/null
+# RUN apt-get update -qq > /dev/null && apt-get install -y -qq vagrant terraform packer > /dev/null
 
 # install go
 RUN curl --proto '=https' --tlsv1.2 -sSfL https://go.dev/dl/go1.19.linux-amd64.tar.gz | tar -C /usr/local -xz
@@ -63,7 +63,6 @@ RUN curl --proto '=https' --tlsv1.2 -sSfL https://go.dev/dl/go1.19.linux-amd64.t
 RUN groupadd -g 1111 installer && useradd -u 1111 -g 1111 -m -s /bin/bash installer && echo 'installer ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers
 USER installer
 RUN ln -sf ${DOTFILES}/.bashrc $HOME/.bashrc
-RUN ln -sf ${DOTFILES}/Brewfile $HOME/Brewfile
 RUN mkdir -p $HOME/.config && ln -sf ${DOTFILES}/helix $HOME/.config/helix
 # RUN ln -s ${DOTFILES}/.alacritty.yml $HOME/.alacritty.yml
 RUN ln -sf ${DOTFILES}/.alacritty.yml $HOME/.alacritty.yml
@@ -93,6 +92,7 @@ USER root
 RUN groupadd -g 4200 linuxbrew && useradd -u 4200 -g 4200 -m -s /bin/bash linuxbrew && echo 'linuxbrew ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers
 USER linuxbrew
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)" > /dev/null 2>&1
+RUN ln -sf ${DOTFILES}/Brewfile $HOME/Brewfile
 RUN /home/linuxbrew/.linuxbrew/bin/brew tap Homebrew/bundle
 RUN /usr/local/bin/brew-up
 USER root

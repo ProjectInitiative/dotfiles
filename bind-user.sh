@@ -15,18 +15,27 @@ dest_home="/home/$dest_user"
 #     fi
 # done
 
+# Enable the dotglob option to include hidden files
+shopt -s dotglob
+
 # Bind mount every regular file in each source user's home directory to destination user's home directory
 for src_user in "${src_users[@]}"; do
-    find "/home/$src_user" -type f -name ".*" -o -not -name ".*" | while read file; do
-        # Get the relative path of the file within src_user's home directory
-        rel_path=${file#/home/$src_user/}
-
-        # Create the corresponding directory within destination user's home directory and bind mount the file to it
-        mkdir -p "$dest_home/$(dirname "$rel_path")"
-        sudo mount --bind "$file" "$dest_home/$rel_path"
-
-        # Set the ownership of the mounted file to the destination user
-        sudo chown "$dest_user:$dest_user" "$dest_home/$rel_path"
+    # Iterate over every subdirectory in the source user's home directory
+    for subdir in /home/${src_user}/*; do
+      # Check if the subdir is a directory
+      if [ -d "$subdir" ]; then
+        # Get the name of the subdirectory
+        subdir_name=$(basename $subdir)
+    
+        # Create the corresponding directory in the destination user's home directory
+        mkdir -p /home/${dest_user}/${subdir_name}
+    
+        # Bind mount the source subdirectory to the destination subdirectory
+        mount --bind $subdir /home/${dest_user}/${subdir_name}
+    
+        # Make sure the mount persists across reboots
+        echo "$subdir /home/${dest_user}/${subdir_name} none bind 0 0" >> /etc/fstab
+      fi
     done
 done
 
@@ -39,7 +48,13 @@ undo_mounts() {
             sudo umount "$mount_point"
         fi
     done
+    
+    # Disable the dotglob option to avoid unintended consequences
+    shopt -u dotglob
 }
 
 # Call the undo_mounts function on exit or interrupt
 trap "undo_mounts" EXIT INT
+
+# Disable the dotglob option to avoid unintended consequences
+shopt -u dotglob
