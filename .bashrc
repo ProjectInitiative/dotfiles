@@ -134,12 +134,13 @@ copy() {
 #export PATH="$PATH:/usr/local/go/bin"
 
 # distrobox
-if [ -e /usr/local/bin/bind-user.sh ]; then
-    # Run the command here
-    /usr/local/bin/bind-user.sh
+if [ -f /run/.containerenv ] || [ -f /.dockerenv ]; then
+    if [ -e /usr/local/bin/bind-user.sh ]; then
+        # Run the command here
+        /usr/local/bin/bind-user.sh
+    fi
 fi
-
-alias devbox='distrobox-enter devbox'
+alias devbox='distrobox-enter devbox -- bash -l'
 #TODO: add curl commands to pull and build env from scratch
 
 # updates make to use all cores
@@ -205,6 +206,7 @@ alias mount-gluster="sudo mount -t nfs pve.projecti.org:/mnt/main-pool /mnt/main
 export PATH=$PATH:/usr/local/go/bin
 export PATH=/home/kpzak/.tiup/bin:$PATH
 
+export PATH="$PATH:/home/linuxbrew/.linuxbrew/bin"
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm

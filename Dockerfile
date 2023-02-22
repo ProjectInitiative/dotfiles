@@ -6,8 +6,9 @@ SHELL ["/bin/bash", "-c"]
 
 ARG DOTFILES="/src/dotfiles"
 ADD . ${DOTFILES}
-RUN cp ${DOTFILES}/bind-user.sh /usr/local/bin/bind-user.sh
-RUN mkdir -p ${DOTFILES}/submodules
+RUN ln -sf ${DOTFILES}/bind-user.sh /usr/local/bin/bind-user.sh
+RUN ln -sf ${DOTFILES}/brew-up.sh /usr/local/bin/brew-up
+# RUN mkdir -p ${DOTFILES}/submodules
 
 # update apt cache and upgrade packages
 RUN apt-get update -qq && apt-get upgrade -qq -y > /dev/null && apt-get install -qq -y apt-utils bc curl dialog diffutils findutils gnupg2 less libnss-myhostname libvte-2.9[0-9]-common libvte-common lsof ncurses-base passwd pinentry-curses procps sudo time wget util-linux > /dev/null
@@ -37,8 +38,8 @@ RUN apt-get install -qq -y tmux > /dev/null
 # RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 # RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
 # RUN apt-get update -qq > /dev/null && apt-get install -qq -y docker-ce docker-ce-cli containerd.io docker-compose-plugin > /dev/null
-RUN ln -s /usr/bin/distrobox-host-exec /usr/local/bin/docker
-RUN ln -s /usr/bin/distrobox-host-exec /usr/local/bin/podman
+RUN ln -sf /usr/bin/distrobox-host-exec /usr/local/bin/docker
+RUN ln -sf /usr/bin/distrobox-host-exec /usr/local/bin/podman
 
 # install python
 RUN apt-get install -qq -y python3 python3-pip > /dev/null
@@ -56,11 +57,16 @@ RUN apt-get update -qq > /dev/null && apt-get install -y -qq vagrant terraform p
 # install go
 RUN curl --proto '=https' --tlsv1.2 -sSfL https://go.dev/dl/go1.19.linux-amd64.tar.gz | tar -C /usr/local -xz
 
+
 # USER LEVEL INSTALLS
 # create installer user
 RUN groupadd -g 1111 installer && useradd -u 1111 -g 1111 -m -s /bin/bash installer && echo 'installer ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers
 USER installer
-RUN cp ${DOTFILES}/.bashrc $HOME/.bashrc
+RUN ln -sf ${DOTFILES}/.bashrc $HOME/.bashrc
+RUN ln -sf ${DOTFILES}/Brewfile $HOME/Brewfile
+RUN mkdir -p $HOME/.config && ln -sf ${DOTFILES}/helix $HOME/.config/helix
+# RUN ln -s ${DOTFILES}/.alacritty.yml $HOME/.alacritty.yml
+RUN ln -sf ${DOTFILES}/.alacritty.yml $HOME/.alacritty.yml
 # add safe directory
 RUN sudo chown -R installer:installer ${DOTFILES} 
 RUN git config --global --add safe.directory ${DOTFILES}
@@ -74,22 +80,24 @@ RUN sh <(curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs) -q -y > /dev
 RUN source "$HOME/.profile" && cargo install --quiet cargo-edit
 
 # install rust binaries
-RUN source "$HOME/.profile" && cargo install ripgrep > /dev/null
+# RUN source "$HOME/.profile" && cargo install ripgrep > /dev/null
 
 # install helix
-RUN source "$HOME/.profile" && ${DOTFILES}/install-helix.sh > /dev/null
+# RUN source "$HOME/.profile" && ${DOTFILES}/install-helix.sh > /dev/null
 
 # install zellij
-RUN source "$HOME/.profile" && ${DOTFILES}/install-zellij.sh > /dev/null
+# RUN source "$HOME/.profile" && ${DOTFILES}/install-zellij.sh > /dev/null
 
 # install homebrew
 USER root
 RUN groupadd -g 4200 linuxbrew && useradd -u 4200 -g 4200 -m -s /bin/bash linuxbrew && echo 'linuxbrew ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers
 USER linuxbrew
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)" > /dev/null 2>&1
+RUN /home/linuxbrew/.linuxbrew/bin/brew tap Homebrew/bundle
+RUN /usr/local/bin/brew-up
 USER root
 
-RUN rm -rf ${DOTFILES}/submodules/*
+# RUN rm -rf ${DOTFILES}/submodules/*
 
 # # install tmux plugin manager
 # RUN git clone https://github.com/tmux-plugins/tpm $HOME/.tmux/plugins/tpm
@@ -115,4 +123,4 @@ RUN rm -rf ${DOTFILES}/submodules/*
 # ENTRYPOINT [ "/sbin/init" ]
 
 # install misc essentials
-# RUN apt-get install -qq -y ripgrep > /dev/null
+RUN apt-get install -qq -y ripgrep > /dev/null

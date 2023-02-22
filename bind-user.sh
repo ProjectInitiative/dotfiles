@@ -1,43 +1,45 @@
-#!/bin/env bash
+#!/bin/bash
 
-# Set the source user name
-src_user="installer"
+# List of source users to mount
+src_users=(installer linuxbrew)
 
-# Get the current user name
+# Destination user
 dest_user=$(whoami)
+dest_home="/home/$dest_user"
 
-sudo chown -R ${dest_user}:${dest_user} /home/${src_user}
-# Check if the destination user has permission to access the source user's home directory
-if [ ! -r /home/${src_user} -o ! -x /home/${src_user} ]; then
-  # If the destination user does not have the required permissions, grant them
-  sudo chmod +rx /home/${src_user}
-  if [ $? -ne 0 ]; then
-    echo "Error: failed to grant ${dest_user} permission to access /home/${src_user}"
-    exit 1
-  fi
-fi
+# Check if destination user has permission to access source users' home directories
+# for src_user in "${src_users[@]}"; do
+#     if [ ! -r "/home/$src_user" ]; then
+#         echo "Error: $dest_user does not have read permission for /home/$src_user"
+#         exit 1
+#     fi
+# done
 
-# Enable the dotglob option to include hidden files
-shopt -s dotglob
+# Bind mount every regular file in each source user's home directory to destination user's home directory
+for src_user in "${src_users[@]}"; do
+    find "/home/$src_user" -type f -name ".*" -o -not -name ".*" | while read file; do
+        # Get the relative path of the file within src_user's home directory
+        rel_path=${file#/home/$src_user/}
 
-# Iterate over every subdirectory in the source user's home directory
-for subdir in /home/${src_user}/*; do
-  # Get the name of the subdirectory
-  subdir_name=$(basename $subdir)
+        # Create the corresponding directory within destination user's home directory and bind mount the file to it
+        mkdir -p "$dest_home/$(dirname "$rel_path")"
+        sudo mount --bind "$file" "$dest_home/$rel_path"
 
-  if [ -d "$subdir" ]; then
-
-	  # Create the corresponding directory in the destination user's home directory
-	  mkdir -p /home/${dest_user}/${subdir_name}
-
-  fi
-
-  # Bind mount the source subdirectory to the destination subdirectory
-  sudo mount -o bind $subdir /home/${dest_user}/${subdir_name}
-  
-  # Make sure the mount persists across reboots
-	# echo "$subdir /home/${dest_user}/${subdir_name} none bind 0 0" | sudo tee /etc/fstab
+        # Set the ownership of the mounted file to the destination user
+        sudo chown "$dest_user:$dest_user" "$dest_home/$rel_path"
+    done
 done
 
-# Disable the dotglob option to avoid unintended consequences
-shopt -u dotglob
+# Function to undo the mounts
+undo_mounts() {
+    # Unmount every path in destination user's home directory that is a bind mount
+    grep -w "$dest_home" /proc/mounts | while read line; do
+        mount_point=$(echo "$line" | awk '{print $2}')
+        if grep -q "^$mount_point " /proc/self/mountinfo; then
+            sudo umount "$mount_point"
+        fi
+    done
+}
+
+# Call the undo_mounts function on exit or interrupt
+trap "undo_mounts" EXIT INT
