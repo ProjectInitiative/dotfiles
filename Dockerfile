@@ -6,8 +6,7 @@ SHELL ["/bin/bash", "-c"]
 
 ARG DOTFILES="/src/dotfiles"
 ADD . ${DOTFILES}
-RUN ln -sf ${DOTFILES}/bind-user.sh /usr/local/bin/bind-user.sh
-RUN ln -sf ${DOTFILES}/brew-up.sh /usr/local/bin/brew-up
+RUN ln -sf ${DOTFILES}/bin /usr/local/bin
 # RUN mkdir -p ${DOTFILES}/submodules
 
 # update apt cache and upgrade packages

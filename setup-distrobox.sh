@@ -10,9 +10,9 @@ mount_program = "/usr/bin/fuse-overlayfs"
 EOF
 
 # podman build -t localhost/devbox:latest --format=docker . || exit 1
-docker build -t localhost/devbox:latest . || exit 1
-IMAGE="localhost/devbox:latest"
-# IMAGE="ghcr.io/projectinitiative/devbox:latest"
+# docker build -t localhost/devbox:latest . || exit 1
+# IMAGE="localhost/devbox:latest"
+IMAGE="ghcr.io/projectinitiative/devbox:latest"
 DISTROBOX_NAME="devbox"
 
 # install distrobox scripts
@@ -21,4 +21,4 @@ curl -s https://raw.githubusercontent.com/89luca89/distrobox/main/install | sh -
 
 # create devbox
 echo "creating distrobox from $IMAGE base image"
-distrobox create --image "$IMAGE" --name "$DISTROBOX_NAME" --init
+distrobox create --image "$IMAGE" --name "$DISTROBOX_NAME"

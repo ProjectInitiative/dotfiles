@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # List of source users to mount
-src_users=(installer linuxbrew)
+src_users=(linuxbrew installer)
 
 # Destination user
 dest_user=$(whoami)
@@ -20,22 +20,23 @@ shopt -s dotglob
 
 # Bind mount every regular file in each source user's home directory to destination user's home directory
 for src_user in "${src_users[@]}"; do
-    # Iterate over every subdirectory in the source user's home directory
-    for subdir in /home/${src_user}/*; do
-      # Check if the subdir is a directory
-      if [ -d "$subdir" ]; then
+    sudo chown -R ${dest_user}:${dest_user} "/home/$src_user"
+    sudo find "/home/$src_user" -mindepth 1 -maxdepth 1 | while read file; do
         # Get the name of the subdirectory
-        subdir_name=$(basename $subdir)
-    
+        subdir_name=${file##*/}
+  
         # Create the corresponding directory in the destination user's home directory
-        mkdir -p /home/${dest_user}/${subdir_name}
-    
+        if [ -d ${file} ]; then
+            mkdir -p /home/${dest_user}/${subdir_name}
+        fi
+	if [ -f ${file} ]; then
+	    touch /home/${dest_user}/${subdir_name}
+	fi
+        # echo $subdir_name
+        # echo /home/${dest_user}/${subdir_name}
+  
         # Bind mount the source subdirectory to the destination subdirectory
-        mount --bind $subdir /home/${dest_user}/${subdir_name}
-    
-        # Make sure the mount persists across reboots
-        echo "$subdir /home/${dest_user}/${subdir_name} none bind 0 0" >> /etc/fstab
-      fi
+        sudo mount --bind $file /home/${dest_user}/${subdir_name}
     done
 done
 
