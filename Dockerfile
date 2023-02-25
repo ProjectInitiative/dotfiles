@@ -6,7 +6,9 @@ SHELL ["/bin/bash", "-c"]
 
 ARG DOTFILES="/src/dotfiles"
 ADD . ${DOTFILES}
-RUN ln -sf ${DOTFILES}/bin /usr/local/bin
+# RUN ln -sf ${DOTFILES}/bin /usr/local/bin
+RUN ln -sf ${DOTFILES}/bin/brew-up /usr/local/bin/brew-up
+RUN ln -sf ${DOTFILES}/bin/setup-overlay.sh /usr/local/bin/setup-overlay.sh
 # RUN mkdir -p ${DOTFILES}/submodules
 
 # update apt cache and upgrade packages
