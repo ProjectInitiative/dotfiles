@@ -135,9 +135,9 @@ copy() {
 
 # distrobox
 if [ -f /run/.containerenv ] || [ -f /.dockerenv ]; then
-    if [ -e /usr/local/bin/bind-user.sh ]; then
+    if [ -e /usr/local/bin/setup-overlay.sh ]; then
         # Run the command here
-        /usr/local/bin/bind-user.sh
+        /usr/local/bin/setup-overlay.sh
     fi
 fi
 alias devbox='distrobox-enter devbox -- bash -l'
