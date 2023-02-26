@@ -78,7 +78,8 @@ RUN /usr/local/go/bin/go install github.com/hetznercloud/cli/cmd/hcloud@latest >
 
 # install rust
 RUN sh <(curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs) -q -y > /dev/null 2>&1
-RUN source "$HOME/.profile" && cargo install --quiet cargo-edit
+RUN source "$HOME/.profile" && cargo install --quiet sccache
+RUN source "$HOME/.profile" && RUSTC_WRAPPER=sccache cargo install --quiet cargo-edit cargo-info ripgrep bat exa bacon du-dust speedtest-rs gitui
 
 # install rust binaries
 # RUN source "$HOME/.profile" && cargo install ripgrep > /dev/null
@@ -125,4 +126,4 @@ USER root
 # ENTRYPOINT [ "/sbin/init" ]
 
 # install misc essentials
-RUN apt-get install -qq -y ripgrep > /dev/null
+# RUN apt-get install -qq -y ripgrep > /dev/null
