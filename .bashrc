@@ -202,7 +202,10 @@ alias ap='ansible-playbook'
 
 alias mount-gluster="sudo mount -t nfs pve.projecti.org:/mnt/main-pool /mnt/main-pool/"
 
+# setup-rust
 . "$HOME/.cargo/env"
+alias ls="$HOME/.cargo/bin/exa"
+alias cat="$HOME/.cargo/bin/bat"
 export PATH=$PATH:/usr/local/go/bin
 export PATH=/home/kpzak/.tiup/bin:$PATH
 
