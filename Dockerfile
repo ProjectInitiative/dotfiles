@@ -10,7 +10,6 @@ ADD . ${DOTFILES}
 RUN ln -sf ${DOTFILES}/bin/brew-up /usr/local/bin/brew-up
 RUN ln -sf ${DOTFILES}/bin/bind-user.sh /usr/local/bin/bind-user.sh
 # RUN ln -sf ${DOTFILES}/bin/setup-overlay.sh /usr/local/bin/setup-overlay.sh
-# RUN mkdir -p ${DOTFILES}/submodules
 
 # update apt cache and upgrade packages
 RUN apt-get update -qq && apt-get upgrade -qq -y > /dev/null && apt-get install -qq -y apt-utils bc curl dialog diffutils findutils gnupg2 less libnss-myhostname libvte-2.9[0-9]-common libvte-common lsof ncurses-base passwd pinentry-curses procps sudo time wget util-linux > /dev/null
@@ -35,11 +34,6 @@ RUN apt-get update -qq > /dev/null
 RUN apt-get install -qq -y tmux > /dev/null
 
 # use host docker and podman
-# RUN apt-get install -qq -y ca-certificates curl gnupg lsb-release > /dev/null
-# RUN mkdir -p /etc/apt/keyrings
-# RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-# RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-# RUN apt-get update -qq > /dev/null && apt-get install -qq -y docker-ce docker-ce-cli containerd.io docker-compose-plugin > /dev/null
 RUN ln -sf /usr/bin/distrobox-host-exec /usr/local/bin/docker
 RUN ln -sf /usr/bin/distrobox-host-exec /usr/local/bin/podman
 
@@ -78,17 +72,8 @@ RUN /usr/local/go/bin/go install github.com/hetznercloud/cli/cmd/hcloud@latest >
 
 # install rust
 RUN sh <(curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs) -q -y > /dev/null 2>&1
-RUN source "$HOME/.profile" && cargo install --quiet sccache
-RUN source "$HOME/.profile" && RUSTC_WRAPPER=sccache cargo install --quiet cargo-edit cargo-info ripgrep bat exa bacon du-dust speedtest-rs gitui
+RUN source "$HOME/.profile" && cargo install --quiet sccache RUN source "$HOME/.profile" && RUSTC_WRAPPER=sccache cargo install --quiet cargo-edit cargo-info ripgrep bat exa bacon du-dust speedtest-rs gitui
 
-# install rust binaries
-# RUN source "$HOME/.profile" && cargo install ripgrep > /dev/null
-
-# install helix
-# RUN source "$HOME/.profile" && ${DOTFILES}/install-helix.sh > /dev/null
-
-# install zellij
-# RUN source "$HOME/.profile" && ${DOTFILES}/install-zellij.sh > /dev/null
 
 # install homebrew
 USER root
@@ -100,30 +85,4 @@ RUN /home/linuxbrew/.linuxbrew/bin/brew tap Homebrew/bundle
 RUN /usr/local/bin/brew-up
 USER root
 
-# RUN rm -rf ${DOTFILES}/submodules/*
 
-# # install tmux plugin manager
-# RUN git clone https://github.com/tmux-plugins/tpm $HOME/.tmux/plugins/tpm
-# COPY ./.tmux.conf $HOME/.tmux.conf
-# RUN TMUX_PLUGIN_MANAGER_PATH="$HOME/.tmux/plugins/" $HOME/.tmux/plugins/tpm/bin/install_plugins
-
-# # install lunarvim dependencies
-# RUN bash <(curl --proto '=https' --tlsv1.2 -sSfLo- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh)
-# RUN source "$HOME/.profile" && nvm install v18.7.0 --silent
-
-# # install lunarvim
-# RUN source $HOME/.profile && bash <(curl -s https://raw.githubusercontent.com/lunarvim/lunarvim/master/utils/installer/install.sh) -y > /dev/null
-# COPY ./config.lua $HOME/.config/lvim/
-# RUN source $HOME/.profile && lvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'
-
-# # install local kubernetes tools
-# RUN echo 'alias k=kubectl' >>~/.bashrc
-# RUN echo 'complete -o default -F __start_kubectl k' >>~/.bashrc
-
-
-
-# CMD [ "/sbin/init" ]
-# ENTRYPOINT [ "/sbin/init" ]
-
-# install misc essentials
-# RUN apt-get install -qq -y ripgrep > /dev/null
