@@ -72,7 +72,7 @@ RUN /usr/local/go/bin/go install github.com/hetznercloud/cli/cmd/hcloud@latest >
 
 # install rust
 RUN sh <(curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs) -q -y > /dev/null 2>&1
-RUN source "$HOME/.profile" && cargo install --quiet sccache RUN source "$HOME/.profile" && RUSTC_WRAPPER=sccache cargo install --quiet cargo-edit cargo-info ripgrep bat exa bacon du-dust speedtest-rs gitui
+RUN source "$HOME/.profile" && cargo install --quiet sccache && source "$HOME/.profile" && RUSTC_WRAPPER=sccache cargo install --quiet cargo-edit cargo-info ripgrep bat exa bacon du-dust speedtest-rs gitui
 
 
 # install homebrew
