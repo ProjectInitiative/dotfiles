@@ -154,6 +154,7 @@ complete -o default -F __start_kubectl k
 alias kx='kubectx'
 alias kn='kubens'
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+alias tailscale-up='sudo tailscale up --login-server https://ts.projectinitiative.io --accept-routes'
 # wireguard
 alias wgon='nmcli connection up wg0'
 alias wgoff='nmcli connection down wg0'
@@ -204,10 +205,10 @@ alias mount-gluster="sudo mount -t nfs pve.projecti.org:/mnt/main-pool /mnt/main
 
 # setup-rust
 . "$HOME/.cargo/env"
-alias grep="$HOME/.cargo/bin/rg"
-alias ls="$HOME/.cargo/bin/exa"
-alias ll="$HOME/.cargo/bin/exa -al"
-alias cat="$HOME/.cargo/bin/bat"
+alias grep="rg"
+alias ls="exa"
+alias ll="exa -al"
+alias cat="bat"
 export PATH=$PATH:/usr/local/go/bin
 export PATH=/home/kpzak/.tiup/bin:$PATH
 

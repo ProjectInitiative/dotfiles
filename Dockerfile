@@ -15,7 +15,7 @@ RUN ln -sf ${DOTFILES}/bin/bind-user.sh /usr/local/bin/bind-user.sh
 RUN apt-get update -qq && apt-get upgrade -qq -y > /dev/null && apt-get install -qq -y apt-utils bc curl dialog diffutils findutils gnupg2 less libnss-myhostname libvte-2.9[0-9]-common libvte-common lsof ncurses-base passwd pinentry-curses procps sudo time wget util-linux > /dev/null
 
 # install base dependencies
-RUN apt-get install -qq -y ca-certificates git fuse > /dev/null
+RUN apt-get install -qq -y ca-certificates git lsb-release fuse > /dev/null
 
 # install dev essentials
 RUN apt-get install -qq -y build-essential pkg-config openssl libssl-dev procps > /dev/null
@@ -27,6 +27,10 @@ RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/k
 # helm
 RUN curl -fsSL https://baltocdn.com/helm/signing.asc | gpg --dearmor | tee /usr/share/keyrings/helm.gpg > /dev/null
 RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | tee /etc/apt/sources.list.d/helm-stable-debian.list
+# microsoft
+RUN wget wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
+RUN dpkg -i packages-microsoft-prod.deb
+RUN rm packages-microsoft-prod.deb
 # update apt cache
 RUN apt-get update -qq > /dev/null
 
@@ -39,6 +43,9 @@ RUN ln -sf /usr/bin/distrobox-host-exec /usr/local/bin/podman
 
 # install python
 RUN apt-get install -qq -y python3 python3-pip > /dev/null
+
+# install dotnet and powershell
+RUN apt-get install -qq -y dotnet-sdk-7.0 powershell
 
 # install kubernetes
 RUN apt-get install -y -qq kubectl helm > /dev/null
@@ -66,13 +73,15 @@ RUN ln -sf ${DOTFILES}/.alacritty.yml $HOME/.alacritty.yml
 RUN sudo chown -R installer:installer ${DOTFILES} 
 RUN git config --global --add safe.directory ${DOTFILES}
 
+
 # install go binaries
 # install hcloud
 RUN /usr/local/go/bin/go install github.com/hetznercloud/cli/cmd/hcloud@latest > /dev/null 2>&1
 
 # install rust
 RUN sh <(curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs) -q -y > /dev/null 2>&1
-RUN source "$HOME/.profile" && cargo install --quiet sccache && source "$HOME/.profile" && RUSTC_WRAPPER=sccache cargo install --quiet cargo-edit cargo-info ripgrep bat exa bacon du-dust speedtest-rs gitui
+RUN source "$HOME/.profile" && cargo install --quiet sccache && source "$HOME/.profile" && RUSTC_WRAPPER=sccache cargo install --quiet cargo-edit cargo-info bacon speedtest-rs
+# RUN source "$HOME/.profile" && cargo install --quiet sccache && source "$HOME/.profile" && RUSTC_WRAPPER=sccache cargo install --quiet cargo-edit cargo-info ripgrep bat exa bacon du-dust speedtest-rs gitui
 
 
 # install homebrew
