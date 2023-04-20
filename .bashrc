@@ -151,8 +151,9 @@ export KUBECONFIG=~/.kube/config
 source <(kubectl completion bash)
 alias k='kubectl'
 complete -o default -F __start_kubectl k
-alias kx='kubectx'
-alias kn='kubens'
+alias kx='kubectl ctx'
+alias kn='kubectl ns'
+alias rm-pv="kubectl get pv | grep Released | awk '$1 {print$1}' | while read vol; do kubectl delete pv/${vol}; done"
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 alias tailscale-up='sudo tailscale up --login-server https://ts.projectinitiative.io --accept-routes'
 # wireguard
@@ -217,3 +218,6 @@ export PATH="$PATH:/home/linuxbrew/.linuxbrew/bin"
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# function aws { command aws --endpoint-url http://172.16.4.70:31857 $@ ; }
+function aws { command aws --endpoint-url https://ssd.s3.us-east-1.projectinitiative.io $@ ; }
