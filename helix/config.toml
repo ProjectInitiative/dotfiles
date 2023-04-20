@@ -2,11 +2,19 @@ theme = "onedark_transparent"
 
 [editor]
 line-number = "relative"
+bufferline = "always"
+completion-replace = true
 
 [editor.indent-guides]
 render = true
 character = "╎"
 
+[editor.soft-wrap]
+enable = true
+
+[editor.lsp]
+display-inlay-hints = true
+display-signature-help-docs = false
 
 # At most one section each of 'keys.normal', 'keys.insert' and 'keys.select'
 [keys.normal]
