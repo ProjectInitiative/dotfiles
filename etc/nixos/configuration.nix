@@ -127,6 +127,7 @@
       python3
       rustup
       go
+      awscli2
     ];
   };
       # terraform
@@ -150,7 +151,9 @@
   environment.systemPackages = with pkgs; [
     stow
     git
+    gitui
     gnupg
+    pinentry-curses
     helix
     alacritty
     zellij
@@ -163,11 +166,21 @@
     appimage-run
     eza
     bat
+    mcfly
     ripgrep
     ansible
     ansible-lint
   ];
 
+  # https://discourse.nixos.org/t/cant-get-gnupg-to-work-no-pinentry/15373/21
+  # GnuPG
+  programs.gnupg.agent = {
+    enable = true;
+    enableSSHSupport = true;
+    pinentryFlavor = "curses";
+  };
+  services.dbus.packages = [ pkgs.gcr ];
+  services.pcscd.enable = true;
 
   # enable containers
   virtualisation = {
