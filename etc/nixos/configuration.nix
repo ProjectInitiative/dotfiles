@@ -158,6 +158,7 @@
     alacritty
     zellij
     tailscale
+    juicefs
     podman-compose
     docker-compose
     virtualbox
