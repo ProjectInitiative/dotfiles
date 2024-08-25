@@ -8,10 +8,11 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
-      # Include bootloader info
-      ./bootloader.nix
     ];
 
+  # Use the systemd-boot EFI boot loader.
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
 
   # networking.hostName = "nixos"; # Define your hostname.
   # Pick only one of the below networking options.
@@ -77,21 +78,21 @@
   services.printing.enable = true;
 
   # Enable sound with pipewire.  
-  sound.enable = true;  
-  hardware.pulseaudio.enable = false;  
-  security.rtkit.enable = true;  
-  services.pipewire = {   
-   enable = true;    
-    alsa.enable = true;    
-    alsa.support32Bit = true;
-    pulse.enable = true;
+  # sound.enable = true;  
+  # hardware.pulseaudio.enable = false;  
+  # security.rtkit.enable = true;  
+  # services.pipewire = {   
+  #  enable = true;    
+  #   alsa.enable = true;    
+  #   alsa.support32Bit = true;
+  #   pulse.enable = true;
     # If you want to use JACK applications, uncomment this
     #jack.enable = true;
 
     # use the example session manager (no others are packaged yet so this is enabled by default,
     # no need to redefine it in your config for now)
     #media-session.enable = true;
-  };
+  # };
   # Enable sound.
   # sound.enable = true;
   # hardware.pulseaudio.enable = true;
@@ -134,6 +135,11 @@
       # terraform
       # parsec-bin
       # steam
+
+# environment.variables = {
+#   MOZILLA_HOME = "/home/kylepzak/.mozilla";
+#   MOZ_LEGACY_PROFILES = "1";
+# };
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
@@ -230,7 +236,7 @@
   # and migrated your data accordingly.
   #
   # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
-  system.stateVersion = "23.11"; # Did you read the comment?
+  system.stateVersion = "24.05"; # Did you read the comment?
 
 }
 
