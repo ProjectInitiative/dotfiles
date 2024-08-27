@@ -67,8 +67,9 @@
 
   # Copy dotfiles
   home.file = {
-    ".config/zellij/zellij".source = ./dotfiles/zellij/zellij;
+    # ".config/zellij/zellij".source = ./dotfiles/zellij/zellij;
     ".config/helix/config.toml".source = ./dotfiles/helix/config.toml;
+    ".config/helix/themes".source = ./dotfiles/helix/themes;
     ".alacritty.yml".source = ./dotfiles/.alacritty.yml;
   };
 
