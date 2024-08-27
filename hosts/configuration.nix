@@ -7,7 +7,8 @@
 {
   imports =
     [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
+      ./thinkpad/hardware-configuration.nix
+      <home-manager/nixos>
     ];
 
   # Use the systemd-boot EFI boot loader.
@@ -84,7 +85,7 @@
   };
 
   # Enable the X11 windowing system.
-  # services.xserver.enable = true;
+  services.xserver.enable = true;
 
 
   # Enable the GNOME Desktop Environment.
@@ -163,30 +164,6 @@
     description = "Kyle Petryszak";
     extraGroups = [ "networkmanager" "wheel" ];
     packages = with pkgs; [
-      firefox
-      chromium
-      thunderbird
-      freecad
-      spotify
-      bitwarden
-      tor
-      tor-browser
-      telegram-desktop
-      signal-desktop
-      solaar
-      vlc
-      backintime
-      gimp
-      wireshark
-      kubectl
-      krew
-      kubernetes-helm
-      kustomize
-      vagrant
-      packer
-      python3
-      rustup
-      go
     ];
   };
       # terraform
@@ -240,7 +217,7 @@
     gnome-tweaks
     gnomeExtensions.dash-to-dock
     gnomeExtensions.quake-mode
-    gnomeExtensions.gtile
+    gnomeExtensions.pop-shell
   ];
 
 
@@ -296,6 +273,70 @@
     pinentryPackage = pkgs.pinentry-curses;
   };
   services.pcscd.enable = true;
+
+
+  # home manager
+
+  # Enable home-manager
+  # home-manager.enable = true;
+
+  # Home Manager configuration
+  home-manager.users.kylepzak = { pkgs, ... }: {
+
+    # Home Manager needs a bit of information about you and the
+    # paths it should manage.
+    home.username = "kylepzak";
+    home.homeDirectory = "/home/kylepzak";
+
+    # This value determines the Home Manager release that your
+    # configuration is compatible with. It's recommended to use
+    # the same value as your NixOS system.stateVersion.
+    home.stateVersion = "24.05";
+
+    
+    # specify user specific packages
+    home.packages = with pkgs; [
+      firefox
+      chromium
+      thunderbird
+      freecad
+      spotify
+      bitwarden
+      tor
+      tor-browser
+      telegram-desktop
+      signal-desktop
+      solaar
+      vlc
+      backintime
+      gimp
+      wireshark
+      kubectl
+      krew
+      kubernetes-helm
+      kustomize
+      vagrant
+      packer
+      python3
+      rustup
+      go
+    ]
+    
+    # existing dotfile configurations
+    home.file = {
+      ".config/zellij/config.kdl".source = ../dotfiles/zellij/zellij;
+      ".config/helix/config.toml".source = ../dotfiles/helix/config.toml;
+      ".alacritty.yml".source = ../dotfiles/.alacritty.yml;
+      ".bashrc".source = ../dotfiles/.bashrc;
+      ".zshrc".source = ../dotfiles/.zshrc;
+    };
+
+    # Ensure the target directories exist
+    home.file.".config/zellij/.keep".text = "";
+    home.file.".config/helix/.keep".text = "";
+
+    # ... (any other home-manager configurations)
+  };
 
   # List services that you want to enable:
 
