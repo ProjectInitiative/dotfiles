@@ -7,9 +7,11 @@
 {
   imports =
     [ # Include the results of the hardware scan.
-      ./thinkpad/hardware-configuration.nix
+      ./hosts/thinkpad/hardware-configuration.nix
       <home-manager/nixos>
     ];
+  # enable flakes
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
@@ -29,7 +31,13 @@
   '';
 
   # Enable networking  
-  networking.networkmanager.enable = true;    
+  networking = {
+    networkmanager.enable = true;    
+  };
+
+  # Disable wait online service
+  systemd.services.NetworkManager-wait-online.enable = false;
+
   # # Set NIC info  
   # networking = {    
   # `# Disable DHCP    
@@ -279,6 +287,7 @@
 
   # Enable home-manager
   # home-manager.enable = true;
+  home-manager.useGlobalPkgs = true;
 
   # Home Manager configuration
   home-manager.users.kylepzak = { pkgs, ... }: {
@@ -320,7 +329,7 @@
       python3
       rustup
       go
-    ]
+    ];
     
     # existing dotfile configurations
     home.file = {
