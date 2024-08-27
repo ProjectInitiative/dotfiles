@@ -19,6 +19,14 @@
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
   # networking.networkmanager.enable = true;  # Easiest to use and most distros use this by default.
 
+  environment.sessionVariables = {
+    GPG_TTY = "$(tty)";
+  };
+
+  environment.extraInit = ''
+    export GPG_TTY=$(tty)
+  '';
+
   # Enable networking  
   networking.networkmanager.enable = true;    
   # # Set NIC info  
@@ -61,14 +69,66 @@
    LC_TIME = "en_US.UTF-8";
  }; 
 
+  # hyprland
+  programs.hyprland = {
+    # Install the packages from nixpkgs
+    enable = false;
+    # Whether to enable XWayland
+    xwayland.enable = true;
+    # The hyprland package to use
+    package = pkgs.hyprland;
+
+    # Optional
+    # Whether to enable hyprland-session.target on hyprland startup
+    # systemd.enable = true;
+  };
+
   # Enable the X11 windowing system.
-  services.xserver.enable = true;
+  # services.xserver.enable = true;
 
 
   # Enable the GNOME Desktop Environment.
   services.xserver.displayManager.gdm.enable = true;
-  services.xserver.desktopManager.gnome.enable = true;
-  
+  # services.xserver.desktopManager.gnome.enable = true;
+
+  services.xserver.desktopManager.gnome = {
+    enable = true;
+    extraGSettingsOverrides = ''
+      [org.gnome.mutter]
+      edge-tiling=true
+      [org.gnome.desktop.wm.preferences]
+      button-layout=':minimize,maximize,close'
+    '';
+  };
+
+  # environment.gnome.excludePackages = (with pkgs; [
+  #   gnome-photos
+  #   gnome-tour
+  #   gnome-music
+  #   geary # email reader
+  #   tali # poker game
+  #   iagno # go game
+  #   hitori # sudoku game
+  #   atomix # puzzle game
+  # ]) ++ (with pkgs.gnome; [
+  #   cheese # webcam tool
+  #   gnome-terminal
+  #   gedit # text editor
+  #   epiphany # web browser
+  #   evince # document viewer
+  #   gnome-characters
+  #   totem # video player
+  # ]);
+
+ # Enable GNOME Shell extensions for all users
+  environment.sessionVariables = {
+    GNOME_SHELL_EXTENSIONS = with pkgs.gnomeExtensions; [
+      # "${appindicator}/share/gnome-shell/extensions/appindicator@gnome-shell-extensions.gcampax.github.com"
+      "${dash-to-dock}/share/gnome-shell/extensions/dash-to-dock@micxgx.gmail.com"
+      "${quake-mode}/share/gnome-shell/extensions/quake-mode@repsac-by.github.com"
+      # Add paths for more extensions as needed
+    ];
+  };
 
   # Configure keymap in X11
   # services.xserver.xkb.layout = "us";
@@ -79,23 +139,20 @@
 
   # Enable sound with pipewire.  
   # sound.enable = true;  
-  # hardware.pulseaudio.enable = false;  
-  # security.rtkit.enable = true;  
-  # services.pipewire = {   
-  #  enable = true;    
-  #   alsa.enable = true;    
-  #   alsa.support32Bit = true;
-  #   pulse.enable = true;
+  hardware.pulseaudio.enable = false;  
+  security.rtkit.enable = true;  
+  services.pipewire = {   
+   enable = true;    
+    alsa.enable = true;    
+    alsa.support32Bit = true;
+    pulse.enable = true;
     # If you want to use JACK applications, uncomment this
     #jack.enable = true;
 
     # use the example session manager (no others are packaged yet so this is enabled by default,
     # no need to redefine it in your config for now)
     #media-session.enable = true;
-  # };
-  # Enable sound.
-  # sound.enable = true;
-  # hardware.pulseaudio.enable = true;
+  };
 
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
@@ -161,6 +218,9 @@
     trufflehog
     gitleaks
     gnupg
+    pinentry
+    pinentry-curses  # for terminal use
+    pinentry-qt  # if you're using a graphical environment
     helix
     alacritty
     zellij
@@ -176,7 +236,38 @@
     ripgrep
     ansible
     ansible-lint
+    atuin
+    gnome-tweaks
+    gnomeExtensions.dash-to-dock
+    gnomeExtensions.quake-mode
+    gnomeExtensions.gtile
   ];
+
+
+
+  
+  programs.zsh = {
+    enable = true;
+    enableCompletion = true;
+    autosuggestions.enable = true;
+    # syntaxHighlighting = true;
+    interactiveShellInit = ''
+      eval "$(${pkgs.atuin}/bin/atuin init zsh)"
+    '';
+  };
+  # Set Zsh as the default shell for all users
+  users.defaultUserShell = pkgs.zsh;
+
+  security.sudo = {
+    enable = true;
+    extraConfig = ''
+      # Set sudo timeout to 1 day (86400 seconds)
+      Defaults timestamp_timeout=86400
+    '';
+  };
+
+  # enable tailscale
+  services.tailscale.enable = true;
 
 
   # enable containers
@@ -198,11 +289,13 @@
   
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
-  # programs.mtr.enable = true;
-  # programs.gnupg.agent = {
-  #   enable = true;
-  #   enableSSHSupport = true;
-  # };
+  programs.mtr.enable = true;
+  programs.gnupg.agent = {
+    enable = true;
+    enableSSHSupport = true;
+    pinentryPackage = pkgs.pinentry-curses;
+  };
+  services.pcscd.enable = true;
 
   # List services that you want to enable:
 
