@@ -55,14 +55,6 @@
     };
   };
 
-  # Alacritty configuration
-  programs.alacritty = {
-    enable = true;
-    settings = {
-      font.size = 11;
-      background_opacity = 0.9;
-    };
-  };
 
 
   # Copy dotfiles
@@ -70,7 +62,7 @@
     # ".config/zellij/zellij".source = ./dotfiles/zellij/zellij;
     ".config/helix/config.toml".source = ./dotfiles/helix/config.toml;
     ".config/helix/themes".source = ./dotfiles/helix/themes;
-    ".alacritty.yml".source = ./dotfiles/.alacritty.yml;
+    ".alacritty.toml".source = ./dotfiles/.alacritty.toml;
   };
 
   # Allow unfree packages

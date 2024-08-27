@@ -426,7 +426,7 @@ font:
 live_config_reload: true
 
 shell:
-  program: /bin/zsh
+  program: zsh
   args:
     - -c
     - "zellij attach || zellij"
