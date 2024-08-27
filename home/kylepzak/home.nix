@@ -1,0 +1,77 @@
+{ config, pkgs, ... }:
+
+{
+  # Home Manager needs a bit of information about you and the paths it should manage.
+  home.username = "kylepzak";
+  home.homeDirectory = "/home/kylepzak";
+
+  # This value determines the Home Manager release that your configuration is
+  # compatible with. It's recommended to use the same value as your NixOS system.
+  home.stateVersion = "24.05";
+
+  # Let Home Manager install and manage itself.
+  programs.home-manager.enable = true;
+
+  # User-specific packages
+  home.packages = with pkgs; [
+    firefox
+    chromium
+    thunderbird
+    freecad
+    spotify
+    bitwarden
+    tor-browser
+    telegram-desktop
+    signal-desktop
+    vlc
+    gimp
+    wireshark
+    kubectl
+    kubernetes-helm
+    kustomize
+    vagrant
+    packer
+    python3
+    rustup
+    go
+  ];
+
+  # Git configuration
+  programs.git = {
+    enable = true;
+    userName = "Kyle Petryszak";
+    userEmail = "6314611+ProjectInitiative@users.noreply.github.com";
+  };
+
+  # Zsh configuration (user-specific settings)
+  programs.zsh = {
+    enable = true;
+    autosuggestion.enable = true;
+    syntaxHighlighting.enable = true;
+    oh-my-zsh = {
+      enable = false;
+      theme = "robbyrussell";
+      plugins = [ "git" "docker" "kubectl" ];
+    };
+  };
+
+  # Alacritty configuration
+  programs.alacritty = {
+    enable = true;
+    settings = {
+      font.size = 11;
+      background_opacity = 0.9;
+    };
+  };
+
+
+  # Copy dotfiles
+  home.file = {
+    ".config/zellij/zellij".source = ./dotfiles/zellij/zellij;
+    ".config/helix/config.toml".source = ./dotfiles/helix/config.toml;
+    ".alacritty.yml".source = ./dotfiles/.alacritty.yml;
+  };
+
+  # Allow unfree packages
+  nixpkgs.config.allowUnfree = true;
+}

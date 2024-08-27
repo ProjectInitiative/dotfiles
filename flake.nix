@@ -20,7 +20,7 @@
     in {
       nixosConfigurations = {
         # Define your hosts here
-        your-hostname = nixpkgs.lib.nixosSystem {
+        thinkpad = nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
             # Your main configuration file
@@ -34,7 +34,7 @@
             {
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
-              home-manager.users.your-username = import ./home.nix;
+              home-manager.users.kylepzak = import ./home/kylepzak/home.nix;
             }
           ];
         };
