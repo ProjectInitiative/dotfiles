@@ -43,6 +43,7 @@
   # System-wide packages
   environment.systemPackages = with pkgs; [
     # displaylink
+    solaar
     gnome-tweaks
     gnomeExtensions.dash-to-dock
     gnomeExtensions.quake-terminal

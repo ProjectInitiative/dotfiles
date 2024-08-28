@@ -56,7 +56,6 @@
   };
 
 
-
   # Copy dotfiles
   home.file = {
     # ".config/zellij/zellij".source = ./dotfiles/zellij/zellij;
