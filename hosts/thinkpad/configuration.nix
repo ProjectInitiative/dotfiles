@@ -42,9 +42,10 @@
 
   # System-wide packages
   environment.systemPackages = with pkgs; [
+    # displaylink
     gnome-tweaks
     gnomeExtensions.dash-to-dock
-    gnomeExtensions.quake-mode
+    gnomeExtensions.quake-terminal
     gnomeExtensions.pop-shell
   ];
 

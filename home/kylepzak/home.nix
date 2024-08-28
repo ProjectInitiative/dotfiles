@@ -63,6 +63,7 @@
     ".config/helix/config.toml".source = ./dotfiles/helix/config.toml;
     ".config/helix/themes".source = ./dotfiles/helix/themes;
     ".alacritty.toml".source = ./dotfiles/.alacritty.toml;
+    ".config/atuin/config.toml".source = ./dotfiles/atuin/config.toml;
   };
 
   # Allow unfree packages
