@@ -18,11 +18,13 @@
     chromium
     thunderbird
     freecad
+    bambu-studio
     spotify
     bitwarden
     tor-browser
     telegram-desktop
     signal-desktop
+    git-filter-repo
     vlc
     gimp
     wireshark
@@ -32,6 +34,8 @@
     vagrant
     packer
     python3
+    python3Packages.pip
+    usbutils
     rustup
     go
   ];

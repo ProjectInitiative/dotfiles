@@ -28,6 +28,9 @@
             
             # Host-specific configuration
             ./hosts/thinkpad/configuration.nix
+
+            # additional appimage configs
+            # ./pkgs/common/appimages.nix
             
             # Home-manager configuration
             home-manager.nixosModules.home-manager

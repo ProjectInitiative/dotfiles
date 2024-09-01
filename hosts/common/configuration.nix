@@ -82,6 +82,7 @@
     appimage-run
     eza
     bat
+    zoxide
     ripgrep
     ansible
     ansible-lint
@@ -96,6 +97,19 @@
     interactiveShellInit = ''
       eval "$(${pkgs.atuin}/bin/atuin init zsh)"
     '';
+    shellAliases = {
+      refresh = "source ~/.zshrc";
+      make = "make -j $(nproc)";
+      k = "kubectl";
+      kx = "kubectl ctx";
+      kn = "kubectl ns";
+      tailscale-up = "sudo tailscale up --login-server https://ts.projectinitiative.io --accept-routes";
+      ap = "ansible-playbook";
+      grep = "rg";
+      ls = "exa";
+      ll = "exa -al";
+      cat = "bat";
+    };
   };
   users.defaultUserShell = pkgs.zsh;
 
