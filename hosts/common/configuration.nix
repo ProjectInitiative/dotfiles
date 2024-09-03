@@ -96,6 +96,8 @@
     autosuggestions.enable = true;
     interactiveShellInit = ''
       eval "$(${pkgs.atuin}/bin/atuin init zsh)"
+      eval "$(zoxide init zsh)"
+      export PATH="''${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
     '';
     shellAliases = {
       refresh = "source ~/.zshrc";
@@ -109,6 +111,7 @@
       ls = "exa";
       ll = "exa -al";
       cat = "bat";
+      cd = "z";
     };
   };
   users.defaultUserShell = pkgs.zsh;

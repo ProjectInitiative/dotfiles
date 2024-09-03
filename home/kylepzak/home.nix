@@ -29,6 +29,7 @@
     gimp
     wireshark
     kubectl
+    krew
     kubernetes-helm
     kustomize
     vagrant
