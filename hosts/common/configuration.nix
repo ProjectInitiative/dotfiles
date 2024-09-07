@@ -4,6 +4,9 @@
 
 { config, lib, pkgs, ... }:
 
+let
+  commonPackages = import ../../packages/common.nix { inherit pkgs; };
+in
 {
   # Enable flakes
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
@@ -61,33 +64,7 @@
   nixpkgs.config.allowUnfree = true;
 
   # List packages installed in system profile
-  environment.systemPackages = with pkgs; [
-    stow
-    git
-    trufflehog
-    gitleaks
-    gnupg
-    pinentry
-    pinentry-curses
-    pinentry-qt
-    helix
-    alacritty
-    zellij
-    tailscale
-    podman-compose
-    docker-compose
-    virtualbox
-    quickemu
-    quickgui
-    appimage-run
-    eza
-    bat
-    zoxide
-    ripgrep
-    ansible
-    ansible-lint
-    atuin
-  ];
+  environment.systemPackages = commonPackages;
 
   # Zsh configuration
   programs.zsh = {

@@ -43,8 +43,17 @@
   # System-wide packages
   environment.systemPackages = with pkgs; [
     # displaylink
+    podman-compose
+    docker-compose
+    virtualbox
+    quickemu
+    quickgui
+    tailscale
+    appimage-run
     solaar
     gnome-tweaks
+    gnome-firmware
+    gnomeExtensions.appindicator
     gnomeExtensions.dash-to-dock
     gnomeExtensions.quake-terminal
     gnomeExtensions.pop-shell
@@ -52,6 +61,7 @@
 
   # Enable zsh system-wide
   programs.zsh.enable = true;
+  services.fwupd.enable = true;
 
   # This setting is handled in the common configuration, but you can override it here if needed
   # users.users.kylepzak.shell = pkgs.zsh;

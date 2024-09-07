@@ -24,21 +24,10 @@
     tor-browser
     telegram-desktop
     signal-desktop
-    git-filter-repo
     vlc
     gimp
     wireshark
-    kubectl
-    krew
-    kubernetes-helm
-    kustomize
     vagrant
-    packer
-    python3
-    python3Packages.pip
-    usbutils
-    rustup
-    go
   ];
 
   # Git configuration
