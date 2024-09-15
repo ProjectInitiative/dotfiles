@@ -23,9 +23,9 @@ with pkgs; [
   kubernetes-helm
   kustomize
   krew
+  ncdu
   nix-prefetch-git
   nix-prefetch-github
-  ncdu
   packer
   pinentry
   pinentry-curses

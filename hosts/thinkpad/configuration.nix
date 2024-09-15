@@ -46,23 +46,23 @@
 
   # System-wide packages
   environment.systemPackages = with pkgs; [
+    appimage-run
     # displaylink
-    podman-compose
     docker-compose
-    virtualbox
+    podman-compose
     quickemu
     quickgui
-    tailscale
-    appimage-run
     solaar
-    gnome-tweaks
+    tailscale
+    virtualbox
     gnome-firmware
     gnome-network-displays
+    gnome-tweaks
+    gnomeExtensions.another-window-session-manager
     gnomeExtensions.appindicator
     gnomeExtensions.dash-to-dock
-    gnomeExtensions.quake-terminal
     gnomeExtensions.pop-shell
-    gnomeExtensions.another-window-session-manager
+    gnomeExtensions.quake-terminal
   ];
 
   # Enable zsh system-wide

@@ -14,20 +14,20 @@
 
   # User-specific packages
   home.packages = with pkgs; [
-    firefox
-    chromium
-    thunderbird
-    freecad
     bambu-studio
-    spotify
     bitwarden
-    tor-browser
-    telegram-desktop
-    signal-desktop
-    vlc
+    chromium
     gimp
-    wireshark
+    firefox
+    freecad
+    spotify
+    signal-desktop
+    telegram-desktop
+    thunderbird
+    tor-browser
     vagrant
+    vlc
+    wireshark
   ];
 
   # Git configuration
