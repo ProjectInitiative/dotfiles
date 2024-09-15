@@ -6,9 +6,10 @@ with pkgs; [
   alacritty
   ansible
   ansible-lint
-  atin
+  atuin
   bat
   backintime
+  borgbackup
   eza
   git
   git-filter-repo
@@ -28,7 +29,7 @@ with pkgs; [
   pinentry-curses
   pinentry-qt
   python3
-  python3packages.pip
+  python3Packages.pip
   ripgrep
   rustup
   stow
