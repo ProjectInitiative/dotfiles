@@ -3,36 +3,37 @@
 
 with pkgs; [
   # Common packages for both NixOS and non-NixOS environments
-  stow
+  alacritty
+  ansible
+  ansible-Lint
+  atin
+  bat
+  backintime
+  eza
   git
-  kubectl
-  krew
-  kubernetes-helm
-  kustomize
-  git-filter-repo
-  trufflehog
+  git-Filter-Repo
   gitleaks
   gnupg
-  pinentry
-  pinentry-curses
-  pinentry-qt
-  helix
-  alacritty
-  zellij
-  eza
-  bat
-  zoxide
-  ripgrep
-  ansible
-  ansible-lint
-  atuin
-  packer
-  python3
-  python3Packages.pip
-  usbutils
-  rustup
   go
-  nix-prefetch-git
-  nix-prefetch-github
+  helix
   htop
+  kubectl
+  kubernetes-Helm
+  kustomize
+  krew
+  nix-Prefetch-Git
+  nix-Prefetch-Github
+  packer
+  pinentry
+  pinentry-Curses
+  pinentry-Qt
+  python3
+  python3Packages.Pip
+  ripgrep
+  rustup
+  stow
+  trufflehog
+  usbutils
+  zellij
+  zoxide
 ]
