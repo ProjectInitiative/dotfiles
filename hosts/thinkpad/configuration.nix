@@ -6,6 +6,10 @@
       ./hardware-configuration.nix
     ];
 
+    # nixpkgs.overlays = [
+    #   (import ./overlays.nix)
+    # ];
+
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -53,10 +57,12 @@
     solaar
     gnome-tweaks
     gnome-firmware
+    gnome-network-displays
     gnomeExtensions.appindicator
     gnomeExtensions.dash-to-dock
     gnomeExtensions.quake-terminal
     gnomeExtensions.pop-shell
+    gnomeExtensions.another-window-session-manager
   ];
 
   # Enable zsh system-wide

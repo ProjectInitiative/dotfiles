@@ -32,4 +32,7 @@ with pkgs; [
   usbutils
   rustup
   go
+  nix-prefetch-git
+  nix-prefetch-github
+  htop
 ]
