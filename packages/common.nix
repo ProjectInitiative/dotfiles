@@ -18,6 +18,7 @@ with pkgs; [
   go
   helix
   htop
+  juicefs
   kubectl
   kubernetes-helm
   kustomize
