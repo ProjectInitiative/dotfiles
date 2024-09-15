@@ -5,30 +5,30 @@ with pkgs; [
   # Common packages for both NixOS and non-NixOS environments
   alacritty
   ansible
-  ansible-Lint
+  ansible-lint
   atin
   bat
   backintime
   eza
   git
-  git-Filter-Repo
+  git-filter-repo
   gitleaks
   gnupg
   go
   helix
   htop
   kubectl
-  kubernetes-Helm
+  kubernetes-helm
   kustomize
   krew
-  nix-Prefetch-Git
-  nix-Prefetch-Github
+  nix-prefetch-git
+  nix-prefetch-github
   packer
   pinentry
-  pinentry-Curses
-  pinentry-Qt
+  pinentry-curses
+  pinentry-qt
   python3
-  python3Packages.Pip
+  python3packages.pip
   ripgrep
   rustup
   stow
