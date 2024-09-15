@@ -25,6 +25,7 @@ with pkgs; [
   krew
   nix-prefetch-git
   nix-prefetch-github
+  ncdu
   packer
   pinentry
   pinentry-curses
