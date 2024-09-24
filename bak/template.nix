@@ -71,6 +71,8 @@
     bash
     helix
     binutils
+    git
+    curl
   ];
 
 }
