@@ -45,12 +45,17 @@ in
 
 
   # Define a user account. Don't forget to set a password with 'passwd'.
-  users.users.kylepzak = {
-    isNormalUser = true;
-    description = "Kyle Petryszak";
-    extraGroups = [ "networkmanager" "wheel" ];
-    packages = with pkgs; [];
-  };
+  users.users = lib.mkMerge [
+    (lib.mkOrder 1500 {
+      kylepzak = {
+        isNormalUser = true;
+        description = "Kyle Petryszak";
+        extraGroups = [ "networkmanager" "wheel" ];
+        packages = with pkgs; [];
+      };
+
+    })
+  ];
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
