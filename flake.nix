@@ -25,6 +25,12 @@
         inherit system;
         config.allowUnfree = true;
       };
+
+      # Import the mkProxmoxLXC function
+      mkProxmoxLXC = import ./lib/mk-proxmox-lxc.nix {
+        inherit nixpkgs system ssh-pub-keys;
+      };
+      
     in {
       nixosConfigurations = {
         # Define your hosts here
@@ -50,27 +56,18 @@
           ];
         };
 
-        test-server = nixpkgs.lib.nixosSystem {
-          inherit system;
-          modules = [
-            ./templates/proxmox-lxc/template.nix
-
+        test-server = mkProxmoxLXC {
+          name = "test-server";
+          extraModules = [
+            ./hosts/test-server/configuration.nix
             # Your main configuration file
             ./hosts/common/configuration.nix
-            
-            # Host-specific configuration
-            ./hosts/test-server/configuration.nix
-            
-            # Home-manager configuration
-            # home-manager.nixosModules.home-manager
-            # {
-            #   home-manager.useGlobalPkgs = true;
-            #   home-manager.useUserPackages = true;
-            #   home-manager.users.kylepzak = import ./home/kylepzak/home.nix;
-            # }
           ];
         };
-        
+
+        # Base Proxmox LXC template
+        proxmox-lxc-base = mkProxmoxLXC { name = "proxmox-lxc-base"; };
+       
         # You can add more hosts here
         # another-host = nixpkgs.lib.nixosSystem {
         #   inherit system;
@@ -87,13 +84,15 @@
         # };
       }; # nixosConfigurations
 
+
       packages.x86_64-linux = {
         proxmox-lxc-template = nixos-generators.nixosGenerate {
-          system = "x86_64-linux";
+          inherit system;
+          specialArgs = { inherit ssh-pub-keys; };
           modules = [
-            # you can include your own nixos configuration here, i.e.
-            # ./configuration.nix
-  					(import ./templates/proxmox-lxc/template.nix inputs)
+            ./templates/proxmox-lxc/template.nix
+            # ./hosts/common/configuration.nix
+            # { proxmoxLXC.enable = true; }
           ];
           format = "proxmox-lxc";
           # optional arguments:
@@ -114,5 +113,10 @@
         # };
       }; # packages.x86_64-linux
 
+      # Overlay for use in specific server configurations
+      # overlays.proxmoxLXC = final: prev: {
+      #   proxmoxLXCBase = self.nixosConfigurations.proxmox-lxc-base.config.system.build.toplevel;
+      # };
+      
     };
 }

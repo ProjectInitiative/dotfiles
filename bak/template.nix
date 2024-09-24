@@ -25,9 +25,9 @@
   # Set your time zone.
   time.timeZone = "America/Chicago";
 
-  users.users.kylepzak = {
+  users.users.kpzak = {
     isNormalUser = true;
-    home = "/home/kylepzak";
+    home = "/home/kpzak";
     # initialPassword = "initchangeme";
     description = "default admin user";
     extraGroups = [ "wheel"];
@@ -71,8 +71,6 @@
     bash
     helix
     binutils
-    git
-    curl
   ];
 
 }
