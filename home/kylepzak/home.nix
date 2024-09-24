@@ -36,6 +36,9 @@
     enable = true;
     userName = "Kyle Petryszak";
     userEmail = "6314611+ProjectInitiative@users.noreply.github.com";
+    extraConfig = {
+      push = { autoSetupRemote = true; };
+    };
   };
 
   # Zsh configuration (user-specific settings)
