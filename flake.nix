@@ -27,7 +27,7 @@
       };
 
       # Import the mkProxmoxLXC function
-      mkProxmoxLXC = import ./lib/mk-proxmox-lxc.nix {
+      mkProxmoxLXC = import ./templates/proxmox-lxc/mk-proxmox-lxc.nix {
         inherit nixpkgs system ssh-pub-keys;
       };
       
