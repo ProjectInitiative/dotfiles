@@ -52,7 +52,7 @@ in
         description = "Kyle Petryszak";
         extraGroups = [ "networkmanager" "wheel" ];
         packages = with pkgs; [];
-        openssh.authorizedKeys.keyFiles = [ ssh-pub-keys ];
+        openssh.authorizedKeys.keyFiles = [ "${ssh-pub-keys}" ];
       };
 
     })
