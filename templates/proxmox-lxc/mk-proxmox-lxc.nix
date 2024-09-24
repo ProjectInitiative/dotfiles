@@ -8,8 +8,10 @@ nixpkgs.lib.nixosSystem {
   modules = [
     # "${nixpkgs}/nixos/modules/virtualisation/proxmox-lxc.nix"
     ./template.nix
-    ../../hosts/common/configuration.nix
-    { virtualisation.lxc.lxcfs.enable = true; }
+    # ../../hosts/common/configuration.nix
+
+    { virtualisation.lxc.enable = true; }
+    # { virtualisation.lxc.lxcfs.enable = true; }
     # { proxmoxLXC.enable = true; }
   ] ++ extraModules;
 }

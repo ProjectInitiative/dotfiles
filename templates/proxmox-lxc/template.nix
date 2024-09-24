@@ -1,11 +1,15 @@
-{ config, pkgs, lib, ssh-pub-keys, ... }:
+{ config, pkgs, lib, modulesPath, ssh-pub-keys, ... }:
 
 {
   # options.proxmoxLXC = {
   #   enable = lib.mkEnableOption "Enable Proxmox LXC specific configurations";
   # };
 
-  config = lib.mkIf config.proxmoxLXC.enable {
+  imports = [
+    (modulesPath + "/virtualisation/proxmox-lxc.nix")
+  ];
+
+  # config = lib.mkIf config.virtualisation.lxc.enable {
     boot.isContainer = true;
     system.stateVersion = "24.05";
     nix.settings.experimental-features = [ "nix-command" "flakes" ];
@@ -58,5 +62,5 @@
       binutils
       git
     ];
-  };
+  # };
 }
