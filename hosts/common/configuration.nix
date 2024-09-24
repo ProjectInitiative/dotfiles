@@ -6,8 +6,12 @@
 
 let
   commonPackages = import ../../packages/common.nix { inherit pkgs; };
+  tempOverlay = self: super: {
+    lsp-ai = self.callPackage ../../packages/custom/lsp-ai/package.nix {};
+  };
 in
 {
+  nixpkgs.overlays = [ tempOverlay ];
   # Enable flakes
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 

@@ -3,6 +3,7 @@
 
 with pkgs; [
   # Common packages for both NixOS and non-NixOS environments
+  lsp-ai
   alacritty
   ansible
   ansible-lint
@@ -33,6 +34,7 @@ with pkgs; [
   pinentry-qt
   python3
   python3Packages.pip
+  python3Packages.python-lsp-server
   ripgrep
   rustup
   stow

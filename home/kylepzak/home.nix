@@ -17,9 +17,10 @@
     bambu-studio
     bitwarden
     chromium
+    element-desktop
     gimp
     firefox
-    freecad
+    # freecad
     spotify
     signal-desktop
     telegram-desktop

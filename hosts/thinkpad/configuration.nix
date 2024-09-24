@@ -49,6 +49,7 @@
     appimage-run
     # displaylink
     docker-compose
+    freecad
     podman-compose
     quickemu
     quickgui
