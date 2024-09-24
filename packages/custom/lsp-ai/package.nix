@@ -16,8 +16,8 @@ rustPlatform.buildRustPackage rec {
   src = fetchFromGitHub {
     owner = "SilasMarvin";
     repo = "lsp-ai";
-    rev = "refs/tags/v${version}";
-    hash = "sha256-DwqqZBzLevuRCW6QzGyWdE+JtpW6b3EMDuiWtajv/U4=";
+    rev = "release/v${version}";
+    hash = "sha256-5chIz9uIKmwnZG1HjEjqZqoWi3aTmh51r5YJD21u2OE=";
   };
 
   passthru.updateScript = gitUpdater {
