@@ -49,7 +49,7 @@ in
     (lib.mkOrder 1500 {
       kylepzak = {
         isNormalUser = true;
-        description = "Kyle Petryszak";
+        description = lib.mkDefault "Kyle Petryszak";
         extraGroups = [ "networkmanager" "wheel" ];
         packages = with pkgs; [];
         openssh.authorizedKeys.keyFiles = [ "${ssh-pub-keys}" ];

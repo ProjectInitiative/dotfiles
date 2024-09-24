@@ -33,7 +33,7 @@
           isNormalUser = true;
           home = "/home/kylepzak";
           # initialPassword = "initchangeme";
-          description = "default admin user";
+          description = lib.mkForce "default admin user";
           extraGroups = [ "wheel" ];
           openssh.authorizedKeys.keyFiles = [ "${ssh-pub-keys}" ];       
          };
