@@ -17,7 +17,7 @@ rustPlatform.buildRustPackage rec {
     owner = "SilasMarvin";
     repo = "lsp-ai";
     rev = "refs/tags/v${version}";
-    hash = "sha256-5chIz9uIKmwnZG1HjEjqZqoWi3aTmh51r5YJD21u2OE=";
+    hash = "sha256-DwqqZBzLevuRCW6QzGyWdE+JtpW6b3EMDuiWtajv/U4=";
   };
 
   passthru.updateScript = gitUpdater {
@@ -73,7 +73,7 @@ rustPlatform.buildRustPackage rec {
     description = "Open-source language server that serves as a backend for AI-powered functionality";
     homepage = "https://github.com/SilasMarvin/lsp-ai";
     mainProgram = "lsp-ai";
-    changelog = "https://github.com/SilasMarvin/lsp-ai/releases";
+    changelog = "https://github.com/SilasMarvin/lsp-ai/releases/v${version}";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ projectinitiative ];
   };
