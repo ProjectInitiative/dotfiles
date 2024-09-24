@@ -62,12 +62,12 @@
             ./hosts/test-server/configuration.nix
             
             # Home-manager configuration
-            home-manager.nixosModules.home-manager
-            {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.users.kylepzak = import ./home/kylepzak/home.nix;
-            }
+            # home-manager.nixosModules.home-manager
+            # {
+            #   home-manager.useGlobalPkgs = true;
+            #   home-manager.useUserPackages = true;
+            #   home-manager.users.kylepzak = import ./home/kylepzak/home.nix;
+            # }
           ];
         };
         
