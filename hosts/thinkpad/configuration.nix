@@ -48,8 +48,6 @@
   environment.systemPackages = with pkgs; [
     appimage-run
     # displaylink
-    docker-compose
-    podman-compose
     quickemu
     quickgui
     solaar

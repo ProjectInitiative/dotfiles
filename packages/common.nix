@@ -11,6 +11,7 @@ with pkgs; [
   bat
   backintime
   borgbackup
+  docker-compose
   eza
   git
   git-filter-repo
@@ -32,6 +33,7 @@ with pkgs; [
   pinentry
   pinentry-curses
   pinentry-qt
+  podman-compose
   python3
   python3Packages.pip
   python3Packages.python-lsp-server
