@@ -34,12 +34,12 @@
           home = "/home/kylepzak";
           description = "default admin user";
           extraGroups = [ "wheel" ];
-          openssh.authorizedKeys.keyFiles = [ ssh-pub-keys ];
         };
       })
     ];
 
     users.users.kylepzak.openssh.authorizedKeys.keyFiles = [ ssh-pub-keys ];
+
     security.sudo.extraRules = [
       {
         groups = [ "wheel" ];
