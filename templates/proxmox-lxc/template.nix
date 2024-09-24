@@ -27,18 +27,18 @@
     # Set your time zone.
     time.timeZone = "America/Chicago";
 
-    users.users = lib.mkMerge [
-      (lib.mkOrder 1000 {
-        kylepzak = {
-          isNormalUser = true;
-          home = "/home/kylepzak";
-          description = "default admin user";
-          extraGroups = [ "wheel" ];
-        };
-      })
-    ];
+    # users.users = lib.mkMerge [
+    #   (lib.mkOrder 1000 {
+    #     kylepzak = {
+    #       isNormalUser = true;
+    #       home = "/home/kylepzak";
+    #       description = "default admin user";
+    #       extraGroups = [ "wheel" ];
+    #     };
+    #   })
+    # ];
 
-    users.users.kylepzak.openssh.authorizedKeys.keyFiles = [ ssh-pub-keys ];
+    users.users.kylepzak.openssh.authorizedKeys.keyFiles = [ "${ssh-pub-keys}" ];
 
     security.sudo.extraRules = [
       {

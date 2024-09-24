@@ -2,7 +2,7 @@
 # your system. Help is available in the configuration.nix(5) man page, on
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, ssh-pub-keys, ... }:
 
 let
   commonPackages = import ../../packages/common.nix { inherit pkgs; };
@@ -52,6 +52,7 @@ in
         description = "Kyle Petryszak";
         extraGroups = [ "networkmanager" "wheel" ];
         packages = with pkgs; [];
+        openssh.authorizedKeys.keyFiles = [ ssh-pub-keys ];
       };
 
     })
