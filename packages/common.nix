@@ -38,6 +38,7 @@ with pkgs; [
   ripgrep
   rustup
   stow
+  tree
   trufflehog
   usbutils
   zellij

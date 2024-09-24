@@ -1,6 +1,9 @@
 ####==  Env   ==####
 .env
 ####==  Nix   ==####
+*.tar.xz
+*.tar.gz
+result
 */result
 ####== Helix ==####
 runtime/

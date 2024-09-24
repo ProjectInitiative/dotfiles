@@ -49,7 +49,6 @@
     appimage-run
     # displaylink
     docker-compose
-    freecad
     podman-compose
     quickemu
     quickgui
@@ -70,6 +69,18 @@
   programs.zsh.enable = true;
   services.fwupd.enable = true;
 
+  # Enable CUPS to print documents.
+  services.printing.enable = true;
+
+  # Enable sound with pipewire.
+  hardware.pulseaudio.enable = false;
+  security.rtkit.enable = true;
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+  };
   # This setting is handled in the common configuration, but you can override it here if needed
   # users.users.kylepzak.shell = pkgs.zsh;
 
