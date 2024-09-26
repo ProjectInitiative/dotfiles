@@ -5,9 +5,9 @@
 { config, lib, pkgs, ssh-pub-keys, ... }:
 
 let
-  commonPackages = import ../../packages/common.nix { inherit pkgs; };
+  commonPackages = import ../../pkgs/common.nix { inherit pkgs; };
   tempOverlay = self: super: {
-    lsp-ai = self.callPackage ../../packages/custom/lsp-ai/package.nix {};
+    lsp-ai = self.callPackage ../../pkgs/custom/lsp-ai/package.nix {};
   };
 in
 {
