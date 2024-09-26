@@ -55,26 +55,29 @@
           # Define your hosts here
           thinkpad = nixpkgs.lib.nixosSystem {
             inherit system;
-            specialArgs = { inherit pkgs; };
-            modules = commonModules ++ commonDesktopModules ++ [
+            specialArgs = { inherit ssh-pub-keys; inherit pkgs; };
+            modules = [
+            # modules = commonModules ++  [
+            # modules = commonModules ++ commonDesktopModules ++ [
               # Host-specific configuration
               ./hosts/thinkpad/configuration.nix
 
+              ./hosts/common/configuration.nix
               # additional appimage configs
               # ./pkgs/common/appimages.nix
 
-              ({ config, ... }: {
-                assertions = [
-                  {
-                    assertion = config._module.args.commonModulesImported or false;
-                    message = "Common modules were not imported correctly.";
-                  }
-                  {
-                    assertion = config._module.args.desktopModulesImported or false;
-                    message = "Desktop modules were not imported correctly.";
-                  }
-                ];
-              })
+              # ({ config, ... }: {
+              #   assertions = [
+              #     {
+              #       assertion = config._module.args.commonModulesImported or false;
+              #       message = "Common modules were not imported correctly.";
+              #     }
+              #     {
+              #       assertion = config._module.args.desktopModulesImported or false;
+              #       message = "Desktop modules were not imported correctly.";
+              #     }
+              #   ];
+              # })
           
             ];
           };
