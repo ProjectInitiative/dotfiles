@@ -33,10 +33,12 @@
       };
 
       commonDesktopModules = [
+      { _module.args.desktopModulesImported = true; }
         ./hosts/common/desktop-configuration.nix
         # Add other desktop-specific modules here
       ];
       commonModules = [
+      { _module.args.commonModulesImported = true; }
         home-manager.nixosModules.home-manager
         ./hosts/common/configuration.nix
         {
@@ -53,12 +55,26 @@
           # Define your hosts here
           thinkpad = nixpkgs.lib.nixosSystem {
             inherit system;
+            specialArgs = { inherit pkgs; };
             modules = commonModules ++ commonDesktopModules ++ [
               # Host-specific configuration
               ./hosts/thinkpad/configuration.nix
 
               # additional appimage configs
               # ./pkgs/common/appimages.nix
+
+              ({ config, ... }: {
+                assertions = [
+                  {
+                    assertion = config._module.args.commonModulesImported or false;
+                    message = "Common modules were not imported correctly.";
+                  }
+                  {
+                    assertion = config._module.args.desktopModulesImported or false;
+                    message = "Desktop modules were not imported correctly.";
+                  }
+                ];
+              })
           
             ];
           };
@@ -93,7 +109,7 @@
       packages.x86_64-linux = {
         proxmox-lxc-template = nixos-generators.nixosGenerate {
           inherit system;
-          specialArgs = { inherit ssh-pub-keys; };
+          specialArgs = { inherit pkgs; inherit ssh-pub-keys; };
           modules = [
             ./templates/proxmox-lxc/template.nix
             # ./hosts/common/configuration.nix

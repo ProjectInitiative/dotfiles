@@ -5,10 +5,21 @@
 { config, lib, pkgs, home-manager, ssh-pub-keys, ... }:
 
 let
-  commonPackages = import ../../pkgs/common/common.nix { inherit pkgs; };
   tempOverlay = self: super: {
     lsp-ai = self.callPackage ../../pkgs/custom/lsp-ai/package.nix {};
   };
+  
+  pkgsWithOverlay = import pkgs.path {
+    inherit (pkgs) system;
+    config = pkgs.config;
+    overlays = pkgs.overlays ++ [ tempOverlay ];
+  };
+
+  commonPackages = import ../../pkgs/common/common.nix { pkgs = pkgsWithOverlay; };
+  # commonPackages = import ../../pkgs/common/common.nix { inherit pkgs; };
+  # tempOverlay = self: super: {
+  #   lsp-ai = self.callPackage ../../pkgs/custom/lsp-ai/package.nix {};
+  # };
 in
 {
   nixpkgs.overlays = [ tempOverlay ];
