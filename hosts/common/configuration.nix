@@ -2,12 +2,12 @@
 # your system. Help is available in the configuration.nix(5) man page, on
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
-{ config, lib, pkgs, ssh-pub-keys, ... }:
+{ config, lib, pkgs, home-manager, ssh-pub-keys, ... }:
 
 let
-  commonPackages = import ../../packages/common.nix { inherit pkgs; };
+  commonPackages = import ../../pkgs/common/common.nix { inherit pkgs; };
   tempOverlay = self: super: {
-    lsp-ai = self.callPackage ../../packages/custom/lsp-ai/package.nix {};
+    lsp-ai = self.callPackage ../../pkgs/custom/lsp-ai/package.nix {};
   };
 in
 {

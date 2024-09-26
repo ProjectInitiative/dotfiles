@@ -16,6 +16,11 @@
     docker-compose
     podman-compose
     tailscale
+    nvidia-docker
+    # nvidia-podman
+    nvidia-container-toolkit
+    cudatoolkit
+    linuxPackages.nvidia_x11
   ];
 
   # Enable zsh system-wide

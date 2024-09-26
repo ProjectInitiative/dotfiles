@@ -14,21 +14,6 @@
 
   # User-specific packages
   home.packages = with pkgs; [
-    bambu-studio
-    bitwarden
-    chromium
-    element-desktop
-    gimp
-    firefox
-    freecad
-    spotify
-    signal-desktop
-    telegram-desktop
-    thunderbird
-    tor-browser
-    vagrant
-    vlc
-    wireshark
   ];
 
   # Git configuration

@@ -51,7 +51,6 @@
     quickemu
     quickgui
     solaar
-    tailscale
     virtualbox
     gnome-firmware
     gnome-network-displays

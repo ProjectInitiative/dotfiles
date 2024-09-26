@@ -20,6 +20,7 @@
 
   outputs = { self, nixpkgs, home-manager, nixos-generators, ssh-pub-keys, ... }@inputs:
     let
+
       system = "x86_64-linux";
       pkgs = import nixpkgs {
         inherit system;
@@ -30,59 +31,63 @@
       mkProxmoxLXC = import ./templates/proxmox-lxc/mk-proxmox-lxc.nix {
         inherit nixpkgs system ssh-pub-keys;
       };
+
+      commonDesktopModules = [
+        ./hosts/common/desktop-configuration.nix
+        # Add other desktop-specific modules here
+      ];
+      commonModules = [
+        home-manager.nixosModules.home-manager
+        ./hosts/common/configuration.nix
+        {
+          home-manager.useGlobalPkgs = true;
+          home-manager.useUserPackages = true;
+          home-manager.users.kylepzak = import ./home/kylepzak/home.nix;
+        }
+        # Add this line to pass ssh-pub-keys to all configurations
+        { _module.args.ssh-pub-keys = ssh-pub-keys; }
+      ];
       
     in {
-      nixosConfigurations = {
-        # Define your hosts here
-        thinkpad = nixpkgs.lib.nixosSystem {
-          inherit system;
-          modules = [
-            # Your main configuration file
-            ./hosts/common/configuration.nix
-            
-            # Host-specific configuration
-            ./hosts/thinkpad/configuration.nix
+        nixosConfigurations = {
+          # Define your hosts here
+          thinkpad = nixpkgs.lib.nixosSystem {
+            inherit system;
+            modules = commonModules ++ commonDesktopModules ++ [
+              # Host-specific configuration
+              ./hosts/thinkpad/configuration.nix
 
-            # additional appimage configs
-            # ./pkgs/common/appimages.nix
-            
-            # Home-manager configuration
-            home-manager.nixosModules.home-manager
-            {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.users.kylepzak = import ./home/kylepzak/home.nix;
-            }
-          ];
-        };
+              # additional appimage configs
+              # ./pkgs/common/appimages.nix
+          
+            ];
+          };
 
-        test-server = mkProxmoxLXC {
-          name = "test-server";
-          extraModules = [
-            ./hosts/test-server/configuration.nix
-            # Your main configuration file
-            ./hosts/common/configuration.nix
-          ];
-        };
+          test-server = mkProxmoxLXC {
+            name = "test-server";
+            extraModules = commonModules ++ [
+              ./hosts/test-server/configuration.nix
+            ];
+          };
 
-        # Base Proxmox LXC template
-        proxmox-lxc-base = mkProxmoxLXC { name = "proxmox-lxc-base"; };
+          # Base Proxmox LXC template
+          proxmox-lxc-base = mkProxmoxLXC { name = "proxmox-lxc-base"; };
        
-        # You can add more hosts here
-        # another-host = nixpkgs.lib.nixosSystem {
-        #   inherit system;
-        #   modules = [
-        #     ./configuration.nix
-        #     ./hosts/another-host/configuration.nix
-        #     home-manager.nixosModules.home-manager
-        #     {
-        #       home-manager.useGlobalPkgs = true;
-        #       home-manager.useUserPackages = true;
-        #       home-manager.users.another-user = import ./home.nix;
-        #     }
-        #   ];
-        # };
-      }; # nixosConfigurations
+          # You can add more hosts here
+          # another-host = nixpkgs.lib.nixosSystem {
+          #   inherit system;
+          #   modules = [
+          #     ./configuration.nix
+          #     ./hosts/another-host/configuration.nix
+          #     home-manager.nixosModules.home-manager
+          #     {
+          #       home-manager.useGlobalPkgs = true;
+          #       home-manager.useUserPackages = true;
+          #       home-manager.users.another-user = import ./home.nix;
+          #     }
+          #   ];
+          # };
+        }; # nixosConfigurations
 
 
       packages.x86_64-linux = {

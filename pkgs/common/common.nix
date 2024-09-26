@@ -1,4 +1,4 @@
-# packages/common.nix
+# pkgs/common.nix
 { pkgs }:
 
 with pkgs; [
@@ -40,9 +40,11 @@ with pkgs; [
   ripgrep
   rustup
   stow
+  tailscale
   tree
   trufflehog
   usbutils
+  vagrant
   zellij
   zoxide
 ]
