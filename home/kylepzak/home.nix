@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ stateVersion, config, pkgs, ... }:
 
 {
   # Home Manager needs a bit of information about you and the paths it should manage.
@@ -7,7 +7,7 @@
 
   # This value determines the Home Manager release that your configuration is
   # compatible with. It's recommended to use the same value as your NixOS system.
-  home.stateVersion = "24.05";
+  home.stateVersion = stateVersion;
 
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
