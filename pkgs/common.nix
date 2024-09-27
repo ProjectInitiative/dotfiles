@@ -21,7 +21,7 @@ with pkgs; [
   helix
   htop
   juicefs
-  # jq
+  jq
   k9s
   kubectl
   kubernetes-helm
