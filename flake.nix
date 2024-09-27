@@ -20,7 +20,9 @@
 
   outputs = { self, nixpkgs, home-manager, nixos-generators, ssh-pub-keys, ... }@inputs:
     let
+      flakeRoot = self;
       system = "x86_64-linux";
+      stateVersion = "24.05";
       pkgs = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
@@ -28,40 +30,39 @@
 
       # Import the mkProxmoxLXC function
       mkProxmoxLXC = import ./templates/proxmox-lxc/mk-proxmox-lxc.nix {
-        inherit nixpkgs system ssh-pub-keys;
+        inherit stateVersion nixpkgs system ssh-pub-keys flakeRoot;
       };
+
+      mkCommonConfig = import ./hosts/common/mk-common-config.nix {
+        inherit stateVersion nixpkgs home-manager system ssh-pub-keys flakeRoot;
+      };
+
+      mkLXCCompositeConfig = { name, extraModules ? [] }:
+        let
+          proxmoxConfig = mkProxmoxLXC {
+            inherit name extraModules;
+          };
+          commonConfig = mkCommonConfig {
+            inherit name;
+            extraModules = extraModules ++ [proxmoxConfig];
+          };
+        in commonConfig;
       
     in {
       nixosConfigurations = {
         # Define your hosts here
-        thinkpad = nixpkgs.lib.nixosSystem {
-          inherit system;
-          modules = [
-            # Your main configuration file
-            ./hosts/common/configuration.nix
-            
-            # Host-specific configuration
+        thinkpad = mkCommonConfig {
+          name = "thinkpad";
+          extraModules = [
             ./hosts/thinkpad/configuration.nix
-
-            # additional appimage configs
-            # ./pkgs/common/appimages.nix
-            
-            # Home-manager configuration
-            home-manager.nixosModules.home-manager
-            {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.users.kylepzak = import ./home/kylepzak/home.nix;
-            }
+            ./hosts/common/desktop-configuration.nix
           ];
         };
 
-        test-server = mkProxmoxLXC {
+        test-server = mkLXCCompositeConfig {
           name = "test-server";
           extraModules = [
             ./hosts/test-server/configuration.nix
-            # Your main configuration file
-            ./hosts/common/configuration.nix
           ];
         };
 

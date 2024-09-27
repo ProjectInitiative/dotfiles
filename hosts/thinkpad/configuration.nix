@@ -48,8 +48,8 @@
   environment.systemPackages = with pkgs; [
     appimage-run
     # displaylink
-    quickemu
-    quickgui
+    # quickemu
+    # quickgui
     solaar
     tailscale
     virtualbox

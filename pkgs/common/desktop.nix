@@ -10,6 +10,7 @@ with pkgs; [
   gimp
   firefox
   freecad
+  libreoffice
   spotify
   signal-desktop
   telegram-desktop

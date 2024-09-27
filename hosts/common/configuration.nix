@@ -2,12 +2,12 @@
 # your system. Help is available in the configuration.nix(5) man page, on
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
-{ config, lib, pkgs, ssh-pub-keys, ... }:
+{ stateVersion, config, lib, pkgs, ssh-pub-keys, flakeRoot, ... }:
 
 let
-  commonPackages = import ../../pkgs/common.nix { inherit pkgs; };
+  commonPackages = import (flakeRoot + "/pkgs/common.nix") { inherit pkgs; };
   tempOverlay = self: super: {
-    lsp-ai = self.callPackage ../../pkgs/custom/lsp-ai/package.nix {};
+    lsp-ai = self.callPackage (flakeRoot + "/pkgs/custom/lsp-ai/package.nix") {};
   };
 in
 {
@@ -131,5 +131,5 @@ in
   # this value at the release version of the first install of this system.
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "24.05"; # Did you read the comment?
+  system.stateVersion = stateVersion; # Did you read the comment?
 }

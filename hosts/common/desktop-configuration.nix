@@ -2,10 +2,10 @@
 # your system. Help is available in the configuration.nix(5) man page, on
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
-{ config, lib, pkgs, ssh-pub-keys, ... }:
+{ stateVersion, config, lib, pkgs, ssh-pub-keys, flakeRoot, ... }:
 
 let
-  commonPackages = import ../../pkgs/common/desktop.nix { inherit pkgs; };
+  commonDesktopPackages = import (flakeRoot + "/pkgs/common/desktop.nix") { inherit pkgs; };
   # tempOverlay = self: super: {
   #   lsp-ai = self.callPackage ../../pkgs/custom/lsp-ai/package.nix {};
   # };
@@ -16,7 +16,7 @@ in
   # nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   # List packages installed in system profile
-  environment.systemPackages = commonPackages;
+  environment.systemPackages = commonDesktopPackages;
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions

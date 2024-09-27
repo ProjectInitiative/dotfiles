@@ -1,13 +1,13 @@
-{ nixpkgs, system, ssh-pub-keys }:
+{ stateVersion, nixpkgs, system, ssh-pub-keys, flakeRoot }:
 
 { name, extraModules ? [] }:
 
 nixpkgs.lib.nixosSystem {
   inherit system;
-  specialArgs = { inherit ssh-pub-keys; };
+  specialArgs = { inherit stateVersion ssh-pub-keys flakeRoot; };
   modules = [
     # "${nixpkgs}/nixos/modules/virtualisation/proxmox-lxc.nix"
-    ./template.nix
+    (flakeRoot + "/templates/proxmox-lxc/template.nix")
     # ../../hosts/common/configuration.nix
 
     { virtualisation.lxc.enable = true; }
