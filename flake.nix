@@ -59,12 +59,27 @@
           ];
         };
 
-        test-server = mkLXCCompositeConfig {
-          name = "test-server";
-          extraModules = [
-            ./hosts/test-server/configuration.nix
-          ];
-        };
+        # test-server = mkLXCCompositeConfig {
+        #   name = "test-server";
+        #   extraModules = [
+        #     ./hosts/test-server/configuration.nix
+        #   ];
+        # };
+
+        # test-server = nixpkgs.lib.nixosSystem {
+        #   inherit system;
+        #   modules = [
+        #     (mkProxmoxLXC {
+        #       name = "test-server";
+        #       extraModules = [];
+        #     })
+        #     (mkCommonConfig {
+        #       name = "test-server";
+        #       extraModules = [];
+        #     })
+        #     ./hosts/test-server/configuration.nix
+        #   ];
+        # };
 
         # Base Proxmox LXC template
         proxmox-lxc-base = mkProxmoxLXC { name = "proxmox-lxc-base"; };
