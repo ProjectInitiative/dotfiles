@@ -2,10 +2,8 @@
 
 { name, extraModules ? [] }:
 
-nixpkgs.lib.nixosSystem {
-  inherit system;
-  specialArgs = { inherit stateVersion ssh-pub-keys flakeRoot; };
-  modules = [
+{
+  imports = [
     # "${nixpkgs}/nixos/modules/virtualisation/proxmox-lxc.nix"
     (flakeRoot + "/templates/proxmox-lxc/template.nix")
     # ../../hosts/common/configuration.nix
@@ -14,4 +12,6 @@ nixpkgs.lib.nixosSystem {
     # { virtualisation.lxc.lxcfs.enable = true; }
     # { proxmoxLXC.enable = true; }
   ] ++ extraModules;
+
+  virtualisation.lxc.enable = true;
 }
