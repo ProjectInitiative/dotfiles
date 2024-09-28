@@ -37,6 +37,27 @@
         inherit stateVersion nixpkgs home-manager system ssh-pub-keys flakeRoot;
       };
 
+      # Helper function to merge configurations
+      # mergeConfigs = configs:
+      #   nixpkgs.lib.nixosSystem {
+      #     inherit system;
+      #     modules = map (c: c.module) configs;
+      #     specialArgs = builtins.foldl' (a: b: a // b) {} (map (c: c.specialArgs) configs);
+      #   };
+
+      # Function to extract modules from a NixOS configuration
+      extractModules = config:
+        if config ? modules
+        then config.modules
+        else [ config ];
+
+      # Helper function to merge configurations
+      mergeConfigs = configs:
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = builtins.concatMap extractModules configs;
+        };
+
       mkLXCCompositeConfig = { name, extraModules ? [] }:
         let
           proxmoxConfig = mkProxmoxLXC {
@@ -57,6 +78,19 @@
             ./hosts/thinkpad/configuration.nix
             ./hosts/common/desktop-configuration.nix
           ];
+        };
+
+        test-server = let
+          proxmoxConfig = mkProxmoxLXC { name = "test-server"; };
+          commonConfig = mkCommonConfig { 
+            name = "test-server"; 
+            extraModules = [./hosts/test-server/configuration.nix]; 
+          };
+        in nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = 
+            extractModules proxmoxConfig ++
+            extractModules commonConfig;
         };
 
         # test-server = mkLXCCompositeConfig {

@@ -2,6 +2,8 @@
   lib,
   rustPlatform,
   fetchFromGitHub,
+  stdenv,
+  darwin,
   pkg-config,
   cmake,
   openssl,
@@ -12,12 +14,12 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "lsp-ai";
-  version = "0.7.0";
+  version = "0.7.1";
   src = fetchFromGitHub {
     owner = "SilasMarvin";
     repo = "lsp-ai";
-    rev = "release/v${version}";
-    hash = "sha256-5chIz9uIKmwnZG1HjEjqZqoWi3aTmh51r5YJD21u2OE=";
+    rev = "refs/tags/v${version}";
+    hash = "sha256-mBbaJn4u+Wlu/Y4G4a6YUBWnmN143INAGm0opiAjnIk=";
   };
 
   passthru.updateScript = gitUpdater {
@@ -40,7 +42,7 @@ rustPlatform.buildRustPackage rec {
     "--skip=memory_backends::vector_store::tests::can_rename_document"
     "--skip=memory_backends::vector_store::tests::can_build_prompt"
     "--skip=memory_backends::vector_store::tests::can_change_document"
-    # Additional skip flags
+    # These integ test require a LLM server to be running over the network
     "--skip=lsp_ai::transformer_worker"
     "--skip=lsp_ai::memory_worker"
     "--skip=test_chat_sequence"
@@ -64,10 +66,15 @@ rustPlatform.buildRustPackage rec {
     cmake
     perl
   ];
-  buildInputs = [
-    openssl
-    zlib
-  ];
+  buildInputs =
+    [
+      openssl
+      zlib
+    ]
+    ++ lib.optionals stdenv.hostPlatform.isDarwin [
+      darwin.apple_sdk.frameworks.SystemConfiguration
+      darwin.apple_sdk.frameworks.CoreServices
+    ];
 
   meta = {
     description = "Open-source language server that serves as a backend for AI-powered functionality";
