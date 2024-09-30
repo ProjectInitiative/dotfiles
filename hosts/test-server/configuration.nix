@@ -1,10 +1,10 @@
 { config, lib, pkgs, ... }:
 
 {
-  # imports =
-  #   [ # Include the results of the hardware scan.
-  #     ./hardware-configuration.nix
-  #   ];
+  imports =
+    [ # Include the results of the hardware scan.
+      ./hardware-configuration.nix
+    ];
 
     # nixpkgs.overlays = [
     #   (import ./overlays.nix)
@@ -15,7 +15,7 @@
   environment.systemPackages = with pkgs; [
     docker-compose
     podman-compose
-    tailscale
+    # tailscale
   ];
 
   # Enable zsh system-wide

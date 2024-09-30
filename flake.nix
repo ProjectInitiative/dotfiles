@@ -20,7 +20,7 @@
     # Add other inputs as needed
   };
 
-  outputs = { self, nixpkgs, home-manager, nixos-generators, ssh-pub-keys, ... }@inputs:
+  outputs = { self, nixpkgs, nixpkgs-stable, home-manager, nixos-generators, ssh-pub-keys, ... }@inputs:
     let
       flakeRoot = self;
       system = "x86_64-linux";
