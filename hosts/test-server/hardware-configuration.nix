@@ -4,8 +4,33 @@
 { config, lib, pkgs, modulesPath, ... }:
 
 {
-  imports =
-  [];
+  imports = [];
+  nixpkgs.overlays = [ (import ./overlays.nix) ];
+
+  
+  virtualisation = {
+    podman = {
+      enable = true;
+      dockerCompat = false;
+      defaultNetwork.settings.dns_enabled = true;
+    };
+
+    docker = {
+      enable = true;
+      rootless = {
+        enable = true;
+        setSocketVariable = true;
+        daemon.settings = {
+          default-runtime = "nvidia";
+          runtimes.nvidia.path = "${pkgs.nvidia-container-toolkit}/bin/nvidia-container-runtime";
+        };
+      };
+    };
+  };
+  users.extraGroups.docker.members = [ "kylepzak" ];
+  # virtualisation.containers.cdi.dynamic.nvidia.enable = true;
+  hardware.nvidia-container-toolkit.enable = true;
+  boot.kernelModules = [ "nvidia" "nvidia_uvm" ];
 
   nixpkgs.config.allowUnfreePredicate = pkg:
     builtins.elem (lib.getName pkg) [
@@ -24,6 +49,9 @@
     nvidia-container-toolkit
   ];
 
+  services.xserver.enable = true;
+  services.xserver.videoDrivers = ["nvidia"];
+
   hardware.nvidia ={
     modesetting.enable = true;
     powerManagement.enable = false;
@@ -35,8 +63,6 @@
     package = config.boot.kernelPackages.nvidiaPackages.stable;
   };
 
-  hardware.nvidia-container-toolkit.enable = true;
-  boot.kernelModules = [ "nvidia" "nvidia_uvm" ];
   
   # Optionally, if you need CUDA support
   environment.variables.CUDA_PATH = "${pkgs.cudatoolkit}";
