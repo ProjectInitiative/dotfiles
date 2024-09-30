@@ -5,7 +5,6 @@
 {
   imports = [
     (flakeRoot + "/hosts/common/configuration.nix")
-    home-manager.backupFileExtension = "backup";
     home-manager.nixosModules.home-manager
     {
       home-manager.useGlobalPkgs = true;
@@ -16,4 +15,5 @@
       };
     }
   ] ++ extraModules;
+  home-manager.backupFileExtension = "backup";
 }
