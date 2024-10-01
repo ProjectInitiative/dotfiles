@@ -40,6 +40,7 @@
       };
    
     in {
+
       nixosConfigurations = {
         # Define your hosts here
         thinkpad = nixpkgs.lib.nixosSystem {
@@ -110,6 +111,9 @@
 
 
       packages.x86_64-linux = {
+
+        flattenDirectory = pkgs.callPackage ./scripts/flatten-directory.nix {};
+
         proxmox-lxc-template = nixos-generators.nixosGenerate {
           inherit system;
           specialArgs = { inherit ssh-pub-keys; };
