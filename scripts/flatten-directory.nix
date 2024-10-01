@@ -1,4 +1,3 @@
-#nix run .#flattenDirectory -- . /tmp/flattened --nix-only --skip-git
 { lib, writeShellApplication, coreutils, findutils, gnused }:
 
 writeShellApplication {
@@ -8,8 +7,8 @@ writeShellApplication {
     print_usage() {
       echo "Usage: $0 <source_directory> <destination_directory> [options]"
       echo "Options:"
-      echo "  --nix-only    Only include .nix files"
-      echo "  --skip-git    Skip .git directory"
+      echo "  --extensions <ext1,ext2,...>  Only include files with specified extensions"
+      echo "  --skip-git                    Skip .git directory"
     }
 
     if [ $# -lt 2 ]; then
@@ -21,12 +20,20 @@ writeShellApplication {
     dest_dir="$2"
     shift 2
 
-    nix_only=false
+    extensions=""
     skip_git=false
 
     while [ "$#" -gt 0 ]; do
       case "$1" in
-        --nix-only) nix_only=true ;;
+        --extensions)
+          if [ -n "$2" ] && [ "$(echo "$2" | cut -c1-1)" != "-" ]; then
+            extensions=$2
+            shift
+          else
+            echo "Error: --extensions requires a comma-separated list of extensions"
+            exit 1
+          fi
+          ;;
         --skip-git) skip_git=true ;;
         *) echo "Unknown option: $1"; print_usage; exit 1 ;;
       esac
@@ -41,8 +48,14 @@ writeShellApplication {
     mkdir -p "$dest_dir"
 
     find_args=("$source_dir" -type f)
-    if [ "$nix_only" = true ]; then
-      find_args+=(-name "*.nix")
+    if [ -n "$extensions" ]; then
+      IFS=',' read -ra ext_array <<< "$extensions"
+      find_args+=( '(' )
+      for ext in "''${ext_array[@]}"; do
+        find_args+=( -name "*.$ext" -o )
+      done
+      unset 'find_args[''${#find_args[@]}-1]'  # Remove last '-o'
+      find_args+=( ')' )
     fi
     if [ "$skip_git" = true ]; then
       find_args+=(-not -path "*.git*")
