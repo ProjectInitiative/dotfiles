@@ -8,10 +8,14 @@ let
   commonPackages = import (flakeRoot + "/pkgs/common.nix") { inherit pkgs; };
   tempOverlay = self: super: {
     lsp-ai = self.callPackage (flakeRoot + "/pkgs/custom/lsp-ai/package.nix") {};
+    helix = self.callPackage (flakeRoot + "/pkgs/custom/helix/package.nix") {};
   };
 in
 {
-  nixpkgs.overlays = [ tempOverlay ];
+  nixpkgs.overlays = [ 
+    (import ./overlays.nix)
+    tempOverlay 
+    ];
   # Enable flakes
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
