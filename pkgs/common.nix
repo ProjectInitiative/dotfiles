@@ -27,6 +27,7 @@ with pkgs; [
   kubernetes-helm
   kustomize
   krew
+  lazygit
   ncdu
   nix-prefetch-git
   nix-prefetch-github
