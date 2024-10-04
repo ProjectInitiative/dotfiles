@@ -45,13 +45,13 @@
         # Define your hosts here
         thinkpad = nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit stateVersion ssh-pub-keys flakeRoot; };
+          specialArgs = { inherit stateVersion ssh-pub-keys flakeRoot pkgs; };
           modules = [
             (mkCommonConfig { name = "thinkpad"; })
             ./hosts/thinkpad/configuration.nix
             ./hosts/common/desktop-configuration.nix
             ({ pkgs, ... }: {
-              environment.systemPackages = builtins.trace "Adding Helix to systemPackages" [ pkgs.helix ];
+              environment.systemPackages = builtins.trace "Adding Helix to systemPackages" [               (builtins.trace "Helix version: ${pkgs.helix.version}" pkgs.helix) ];
             })
           ];
         };

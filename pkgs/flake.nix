@@ -14,15 +14,12 @@
         };
         overlays = [
           (final: prev: {
-            helix = builtins.trace "Evaluating Helix overlay" (
-              builtins.trace "Helix version: ${helix.packages.${system}.default.version}"
-              helix.packages.${system}.default
-            );
+            helix = builtins.trace "Applying Helix overlay" helix.packages.${system}.default;
           })
         ];
       };
     in {
-      pkgs = builtins.trace "Returning pkgs from pkgs/flake.nix" pkgs;
+      pkgs.${system} = pkgs;
       lib = nixpkgs.lib;
     };
 }
