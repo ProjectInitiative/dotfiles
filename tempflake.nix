@@ -2,8 +2,7 @@
   description = "NixOS configuration with multiple hosts";
 
   inputs = {
-    nixpkgs.url = "path:./pkgs";
-    # nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs-stable.url = "github:nixos/nixpkgs/nixos-24.05";
 
     home-manager = {
@@ -19,25 +18,30 @@
 			flake = false;
 		};
     # Add other inputs as needed
-    # helix.url = "github:helix-editor/helix/57ec3b7330de3f5a7b37e766a758f13fdf3c0da5"; # Replace with desired commit
+    helix.url = "github:helix-editor/helix/57ec3b7330de3f5a7b37e766a758f13fdf3c0da5"; # Replace with desired commit
   };
 
-  outputs = { self, nixpkgs, nixpkgs-stable, home-manager, nixos-generators, ssh-pub-keys, ... }@inputs:
+  # outputs = { self, nixpkgs, nixpkgs-stable, home-manager, nixos-generators, ssh-pub-keys, ... }@inputs:
+  outputs = inputs@{ self, nixpkgs, ... }:
     let
       flakeRoot = self;
       system = "x86_64-linux";
       stateVersion = "24.05";
-
-      pkgs = nixpkgs.pkgs;
+      pkgs = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
 
       # Import the mkProxmoxLXC function
-      mkProxmoxLXC = import ./templates/proxmox-lxc/mk-proxmox-lxc.nix {
-        inherit stateVersion nixpkgs system ssh-pub-keys flakeRoot;
-      };
+      mkProxmoxLXC = import ./templates/proxmox-lxc/mk-proxmox-lxc.nix (inputs // { inherit flakeRoot; });
+      # {
+      #   inherit stateVersion nixpkgs system ssh-pub-keys flakeRoot;
+      # };
 
-      mkCommonConfig = import ./hosts/common/mk-common-config.nix {
-        inherit stateVersion nixpkgs home-manager system ssh-pub-keys flakeRoot;
-      };
+      mkCommonConfig = import ./hosts/common/mk-common-config.nix (inputs // { inherit flakeRoot; });
+      # {
+      #   inherit stateVersion nixpkgs home-manager system ssh-pub-keys flakeRoot;
+      # };
    
     in {
 
@@ -45,20 +49,17 @@
         # Define your hosts here
         thinkpad = nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit stateVersion ssh-pub-keys flakeRoot; };
+          specialArgs = (inputs // { inherit flakeRoot; });
           modules = [
             (mkCommonConfig { name = "thinkpad"; })
             ./hosts/thinkpad/configuration.nix
             ./hosts/common/desktop-configuration.nix
-            ({ pkgs, ... }: {
-              environment.systemPackages = builtins.trace "Adding Helix to systemPackages" [ pkgs.helix ];
-            })
           ];
         };
 
         test-server = nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit stateVersion ssh-pub-keys flakeRoot; };
+          specialArgs = (inputs // { inherit flakeRoot; });
           modules = [
             (mkProxmoxLXC { name = "test-server"; })
             (mkCommonConfig { name = "test-server"; })
@@ -90,7 +91,7 @@
         # Base Proxmox LXC template
         proxmox-lxc-base = nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit stateVersion ssh-pub-keys flakeRoot; };
+          specialArgs = (inputs // { inherit flakeRoot; });
           modules = [
             (mkProxmoxLXC { name = "proxmox-lxc-base"; })
           ];

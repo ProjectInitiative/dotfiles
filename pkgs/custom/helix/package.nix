@@ -1,3 +1,4 @@
+# nix-build -E 'with import <nixpkgs> {}; callPackage ./package.nix {}'
 { fetchFromGitHub, lib, rustPlatform, git, installShellFiles }:
 
 rustPlatform.buildRustPackage rec {
@@ -12,15 +13,15 @@ rustPlatform.buildRustPackage rec {
     hash = "sha256-10PtZHgDq7S5n8ez0iT9eLWvAlEDtEi572yFzidLW/0=";  # Replace with the actual hash
   };
 
-  cargoLock = {
-    lockFile = ./Cargo.lock;
-    # outputHashes = {
-    #   "hf-hub-0.3.2" = "sha256-1AcishEVkTzO3bU0/cVBI2hiCFoQrrPduQ1diMHuEwo=";
-    #   "tree-sitter-zig-0.0.1" = "sha256-UXJCh8GvXzn+sssTrIsLViXD3TiBZhLFABYCKM+fNMQ=";
-    # };
-  };
-  # # cargoHash = "sha256-Y8zqdS8vl2koXmgFY0hZWWP1ZAO8JgwkoPTYPVpkWsA=";
-  # cargoHash = "sha256-kxvj7f6GszuV8JQgUCGJud8EmwhgYEkK3ZQLGGR6Nc0=";
+  # cargoLock = {
+  #   lockFile = ./Cargo.lock;
+  #   # outputHashes = {
+  #   #   "hf-hub-0.3.2" = "sha256-1AcishEVkTzO3bU0/cVBI2hiCFoQrrPduQ1diMHuEwo=";
+  #   #   "tree-sitter-zig-0.0.1" = "sha256-UXJCh8GvXzn+sssTrIsLViXD3TiBZhLFABYCKM+fNMQ=";
+  #   # };
+  # };
+  # cargoHash = "sha256-Y8zqdS8vl2koXmgFY0hZWWP1ZAO8JgwkoPTYPVpkWsA=";
+  cargoHash = "sha256-kxvj7f6GszuV8JQgUCGJud8EmwhgYEkK3ZQLGGR6Nc0=";
 
   nativeBuildInputs = [ git installShellFiles ];
 
