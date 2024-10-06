@@ -12,10 +12,10 @@ let
   };
 in
 {
-  nixpkgs.overlays = [ 
-    # (import ./overlays.nix)
-    tempOverlay 
-    ];
+  # nixpkgs.overlays = [ 
+  #   # (import ./overlays.nix)
+  #   tempOverlay 
+  #   ];
   # Enable flakes
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
@@ -106,7 +106,7 @@ in
 
   # Enable tailscale
   services.tailscale.enable = true;
-
+  services.tailscale.useRoutingFeatures = "client";
   # Enable containers
   virtualisation = {
     podman = {
