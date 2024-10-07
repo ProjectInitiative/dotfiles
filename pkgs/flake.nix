@@ -6,20 +6,27 @@
   };
   outputs = { self, nixpkgs, helix, ... }: 
     let
-      system = "x86_64-linux";
-      pkgs = import nixpkgs {
-        inherit system;
-        config = {
-          allowUnfree = true;
-        };
-        overlays = [
-          (final: prev: {
-            helix = builtins.trace "Applying Helix overlay" helix.packages.${system}.default;
-          })
-        ];
-      };
+      supportedSystems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+      forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
     in {
-      pkgs.${system} = pkgs;
+      packages = forAllSystems (system: {
+        default = self.pkgs.${system};
+        helix = helix.packages.${system}.default;
+      });
+      
+      pkgs = forAllSystems (system:
+        import nixpkgs {
+          inherit system;
+          config = {
+            allowUnfree = true;
+          };
+          overlays = [
+            (final: prev: {
+              helix = self.packages.${system}.helix;
+            })
+          ];
+        }
+      );
       lib = nixpkgs.lib;
     };
 }

@@ -28,7 +28,9 @@
       system = "x86_64-linux";
       stateVersion = "24.05";
 
-      pkgs = nixpkgs.pkgs;
+      # pkgs = nixpkgs.pkgs;
+      pkgs = nixpkgs.pkgs.${system};
+      # pkgs = (import ./pkgs).pkgs.${system};
 
       # Import the mkProxmoxLXC function
       mkProxmoxLXC = import ./templates/proxmox-lxc/mk-proxmox-lxc.nix {
@@ -45,7 +47,7 @@
         # Define your hosts here
         thinkpad = nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit stateVersion ssh-pub-keys flakeRoot; };
+          specialArgs = { inherit stateVersion ssh-pub-keys flakeRoot pkgs; };
           modules = [
             (mkCommonConfig { name = "thinkpad"; })
             ./hosts/thinkpad/configuration.nix
@@ -115,7 +117,7 @@
 
       packages.x86_64-linux = {
 
-        flattenDirectory = pkgs.callPackage ./scripts/flatten-directory.nix { inherit system; };
+        flattenDirectory = pkgs.callPackage ./scripts/flatten-directory.nix { };
 
         proxmox-lxc-template = nixos-generators.nixosGenerate {
           inherit system;
