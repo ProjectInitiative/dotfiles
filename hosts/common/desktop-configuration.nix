@@ -11,6 +11,11 @@ let
   # };
 in
 {
+  nixpkgs.overlays = [ 
+    (import ./desktop-overlays.nix {
+      inherit flakeRoot;
+    })
+  ];
   # nixpkgs.overlays = [ tempOverlay ];
   # Enable flakes
   # nix.settings.experimental-features = [ "nix-command" "flakes" ];
