@@ -1,4 +1,4 @@
-{ lib, writeShellApplication, coreutils, findutils, gnused }:
+{ lib, writeShellApplication, coreutils, findutils, gnused, ... }:
 
 writeShellApplication {
   name = "flatten-directory";

@@ -18,8 +18,8 @@ with pkgs; [
   gitleaks
   gnupg
   go
+  helix.packages.${pkgs.system}.default
   # helix
-      (builtins.trace "Helix version in configuration.nix: ${helix.version}" helix)
   htop
   juicefs
   jq
@@ -30,7 +30,6 @@ with pkgs; [
   krew
   lazygit
   ncdu
-  nil
   nix-prefetch-git
   nix-prefetch-github
   packer

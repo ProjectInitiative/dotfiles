@@ -1,0 +1,79 @@
+From 4d711ec3bfd6c9d55d5e7d603a468019e6aadb2a Mon Sep 17 00:00:00 2001
+From: Kyle Petryszak <6314611+ProjectInitiative@users.noreply.github.com>
+Date: Fri, 4 Oct 2024 23:47:11 -0500
+Subject: [PATCH] testing cursor.pcf patch
+
+---
+ src/Gui/PreferencePages/DlgSettingsEditor.cpp | 34 ++++++++++++-------
+ 1 file changed, 22 insertions(+), 12 deletions(-)
+
+diff --git a/src/Gui/PreferencePages/DlgSettingsEditor.cpp b/src/Gui/PreferencePages/DlgSettingsEditor.cpp
+index 5f92058c18..bb4a16738b 100644
+--- a/src/Gui/PreferencePages/DlgSettingsEditor.cpp
++++ b/src/Gui/PreferencePages/DlgSettingsEditor.cpp
+@@ -24,6 +24,7 @@
+ #include "PreCompiled.h"
+ #ifndef _PreComp_
+ #include <QFontDatabase>
++#include <QDebug>
+ #endif
+ 
+ #include <App/Color.h>
+@@ -57,25 +58,34 @@ namespace
+  * Based on
+  * https://stackoverflow.com/questions/18896933/qt-qfont-selection-of-a-monospace-font-doesnt-work
+  */
+-QFont getMonospaceFont()
+-{
+-    QFont font(QString::fromLatin1("monospace"));
+-    if (font.fixedPitch()) {
++ bool hasFixedPitch(const QFont &font) {
++   const QFontInfo font_info(font); // <<== CRITICAL QFontInfo
++   const auto family_name = font_info.family();
++   const auto has_fixed_pitch =  font_info.fixedPitch();
++   qWarning() << "### hasFixedPitch():" << family_name << has_fixed_pitch;
++   return has_fixed_pitch;
++}
++
++QFont getMonospaceFont() {
++    QFont font; // default QApplication font
++    font.setStyleHint(QFont::Courier); // may not work
++    if (hasFixedPitch(font)) {
+         return font;
+     }
+-    font.setStyleHint(QFont::Monospace);
+-    if (font.fixedPitch()) {
++    font.setFamily(QString::fromLatin1("Monospace")); // may not work
++    if (hasFixedPitch(font)) {
+         return font;
+     }
+-    font.setStyleHint(QFont::TypeWriter);
+-    if (font.fixedPitch()) {
++    font.setFamily(QString::fromLatin1("Courier")); // may not work
++    if (hasFixedPitch(font)) {
+         return font;
+     }
+-    font.setFamily(QString::fromLatin1("courier"));
+-    if (font.fixedPitch()) {
++    font = QFontDatabase::systemFont(QFontDatabase::FixedFont); // should always work
++    if (hasFixedPitch(font)) {
+         return font;
+     }
+-    return font;  // We failed, but return whatever we have anyway
++    qWarning() << "### getMonospaceFont(): failure";
++    return font;
+ }
+ }  // namespace
+ 
+@@ -302,7 +312,7 @@ void DlgSettingsEditor::loadSettings()
+     ui->fontSize->setValue(10);
+     ui->fontSize->setValue(hGrp->GetInt("FontSize", ui->fontSize->value()));
+ 
+-    QByteArray defaultMonospaceFont = getMonospaceFont().family().toLatin1();
++    QByteArray defaultMonospaceFont = QFontInfo(getMonospaceFont()).family().toLatin1(); // <<== CRITICAL QFontInfo
+ 
+ #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+     QStringList familyNames = QFontDatabase().families(QFontDatabase::Any);
+-- 
+2.46.0
+
