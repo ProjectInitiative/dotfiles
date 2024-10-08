@@ -19,8 +19,6 @@
 			url = "https://github.com/projectinitiative.keys";
 			flake = false;
 		};
-    # Add other inputs as needed
-    # helix.url = "github:helix-editor/helix/57ec3b7330de3f5a7b37e766a758f13fdf3c0da5"; # Replace with desired commit
   };
 
   outputs = { self, nixpkgs, nixpkgs-stable, home-manager, nixos-generators, ssh-pub-keys, ... }@inputs:
@@ -53,9 +51,9 @@
             (mkCommonConfig { name = "thinkpad"; })
             ./hosts/thinkpad/configuration.nix
             ./hosts/common/desktop-configuration.nix
-            ({ pkgs, ... }: {
-              environment.systemPackages = builtins.trace "Adding Helix to systemPackages" [               (builtins.trace "Helix version: ${pkgs.helix.version}" pkgs.helix) ];
-            })
+            # ({ pkgs, ... }: {
+            #   environment.systemPackages = builtins.trace "Adding Helix to systemPackages" [               (builtins.trace "Helix version: ${pkgs.helix.version}" pkgs.helix) ];
+            # })
           ];
         };
 

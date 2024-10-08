@@ -18,8 +18,7 @@ with pkgs; [
   gitleaks
   gnupg
   go
-  # helix
-      (builtins.trace "Helix version in configuration.nix: ${helix.version}" helix)
+  helix
   htop
   juicefs
   jq
