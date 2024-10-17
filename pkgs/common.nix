@@ -3,7 +3,7 @@
 
 with pkgs; [
   # Common packages for both NixOS and non-NixOS environments
-  lsp-ai
+  age
   alacritty
   ansible
   ansible-lint
@@ -28,6 +28,7 @@ with pkgs; [
   kustomize
   krew
   lazygit
+  lsp-ai
   ncdu
   nil
   nix-prefetch-git
@@ -42,6 +43,7 @@ with pkgs; [
   python3Packages.python-lsp-server
   ripgrep
   rustup
+  sops
   stow
   tree
   trufflehog

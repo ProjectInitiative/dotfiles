@@ -9,10 +9,11 @@ command = "lsp-ai"
 file_store = { }
 
 [language-server.lsp-ai.config.models.model1]
-type = "anthropic"
-chat_endpoint = "https://api.anthropic.com/v1/messages"
-model = "claude-3-5-sonnet-20240620"
-auth_token_env_var_name = "{{ ANTHROPIC_API_KEY }}"
+type = "ollama"
+chat_endpoint = "{{ollama_address}}/ollama/api/chat"
+generate_endpoint = "{{ollama_address}}/ollama/api/generate"
+model = "deepseek-coder-v2:latest"
+auth_token_env_var_name = "OLLAMA_API_TOKEN"
 
 [[language-server.lsp-ai.config.chat]]
 trigger = "!C"
@@ -33,3 +34,7 @@ system = "You are a code assistant chatbot. The user will ask you for assistance
 [[language]]
 name = "markdown"
 language-servers = ["lsp-ai"]
+
+[[language]]
+name = "rust"
+language-servers = ["rust-analyzer", "lsp-ai"]

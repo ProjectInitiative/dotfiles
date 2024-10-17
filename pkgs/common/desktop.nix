@@ -15,6 +15,7 @@ with pkgs; [
   signal-desktop
   telegram-desktop
   thunderbird
+  tor
   tor-browser
   vlc
   wireshark
