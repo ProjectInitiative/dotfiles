@@ -31,6 +31,7 @@ with pkgs; [
   lsp-ai
   ncdu
   nil
+  nixd
   nix-prefetch-git
   nix-prefetch-github
   packer

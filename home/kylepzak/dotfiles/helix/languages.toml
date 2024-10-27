@@ -38,3 +38,10 @@ language-servers = ["lsp-ai"]
 [[language]]
 name = "rust"
 language-servers = ["rust-analyzer", "lsp-ai"]
+
+[[language]]
+name = "nix"
+language-servers = ["nixd","nil"]
+
+[language-server.nixd]
+command = "nixd"
