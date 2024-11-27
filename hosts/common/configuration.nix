@@ -6,16 +6,24 @@
 
 let
   commonPackages = import (flakeRoot + "/pkgs/common.nix") { inherit pkgs; };
-  # tempOverlay = self: super: {
-  #   lsp-ai = self.callPackage (flakeRoot + "/pkgs/custom/lsp-ai/package.nix") {};
-  #   # helix = self.callPackage (flakeRoot + "/pkgs/custom/helix/package.nix") {};
-  # };
+  tempOverlay = self: super: {
+    # lsp-ai = self.callPackage (flakeRoot + "/pkgs/custom/lsp-ai/package.nix") {};
+    # helix = self.callPackage (flakeRoot + "/pkgs/custom/helix/package.nix") {};
+    kustomize-sops = super.kustomize-sops.overrideAttrs (oldAttrs: {
+      installPhase = ''
+          mkdir -p $out/lib/viaduct.ai/v1/ksops/
+          mkdir -p $out/lib/viaduct.ai/v1/ksops-exec/
+          mv $GOPATH/bin/kustomize-sops $out/lib/viaduct.ai/v1/ksops/ksops
+          ln -s $out/lib/viaduct.ai/v1/ksops/ksops $out/lib/viaduct.ai/v1/ksops-exec/ksops-exec
+      '';
+    });
+  };
 in
 {
-  # nixpkgs.overlays = [ 
-  #   # (import ./overlays.nix)
-  #   tempOverlay 
-  #   ];
+  nixpkgs.overlays = [ 
+    # (import ./overlays.nix)
+    tempOverlay 
+    ];
   # Enable flakes
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
