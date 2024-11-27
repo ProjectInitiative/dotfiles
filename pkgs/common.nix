@@ -26,6 +26,7 @@ with pkgs; [
   kubectl
   kubernetes-helm
   kustomize
+  kustomize-sops
   krew
   lazygit
   lsp-ai
@@ -34,6 +35,7 @@ with pkgs; [
   nixd
   nix-prefetch-git
   nix-prefetch-github
+  nix-search-cli
   packer
   pinentry
   pinentry-curses
