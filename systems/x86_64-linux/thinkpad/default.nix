@@ -11,7 +11,8 @@ with lib.${namespace};
     imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
-    ] ++ (importAllCommonModules "${inputs.self}/modules/common");
+    ];
+    # ] ++ (importAllCommonModules "${inputs.self}/modules/common");
 
     projectinitiative = {
       suites = {

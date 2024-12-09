@@ -128,7 +128,17 @@
         home-manager.nixosModules.home-manager
         nix-ld.nixosModules.nix-ld
         sops-nix.nixosModules.sops
-      ];
+      ] ++ (lib.snowfall.fs.get-nix-files-recursive ./modules/common); # Add common modules here;
+
+      
+      systems.modules.home-manager = with inputs; [
+        # any home-manager specific modules
+      ] ++ (lib.snowfall.fs.get-nix-files-recursive ./modules/common); # Add common modules here
+
+      systems.modules.darwin = with inputs; [
+        # any darwin specific modules
+      ] ++ (lib.snowfall.fs.get-nix-files-recursive ./modules/common); # Add common modules here
+
 
       # Example host-specific hardware modules
       # systems.hosts.thinkpad.modules = with inputs; [
