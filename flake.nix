@@ -101,12 +101,12 @@
         src = ./.;
 
         snowfall = {
+          namespace = "projectinitiative";
           meta = {
             name = "projectinitiative";
             title = "projectinitiative";
           };
 
-          namespace = "projectinitiative";
         };
       };
     in
@@ -146,9 +146,9 @@
       outputs-builder = channels: {
         formatter = channels.nixpkgs.nixfmt-rfc-style;
       };
-    };
-    # } // {
-    #   # Add this line to expose self
-    #   self = inputs.self;
     # };
+    } // {
+      # Add this line to expose self
+      self = inputs.self;
+    };
 }

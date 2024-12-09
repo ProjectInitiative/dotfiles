@@ -1,6 +1,7 @@
 {
-  pkgs,
   lib,
+  pkgs,
+  inputs,
   namespace,
   ...
 }:
@@ -10,8 +11,13 @@ with lib.${namespace};
     imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
-    ];
+    ] ++ (importAllCommonModules "${inputs.self}/modules/common");
 
+    projectinitiative = {
+      suites = {
+        development = enabled;
+      };
+    };
 
   boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 
@@ -43,11 +49,13 @@ with lib.${namespace};
     ];
   };
 
+
+
   # Install fonts
-  fonts.packages = with pkgs; [
-    fira-code
-    fira-code-symbols
-  ];
+  # fonts.packages = with pkgs; [
+  #   fira-code
+  #   fira-code-symbols
+  # ];
 
   # System-wide packages
   environment.systemPackages = with pkgs; [
@@ -60,7 +68,7 @@ with lib.${namespace};
     virtualbox
     gnome-firmware
     gnome-network-displays
-    gnome-tweaks
+    # gnome-tweaks
     gnomeExtensions.another-window-session-manager
     gnomeExtensions.appindicator
     gnomeExtensions.dash-to-dock
