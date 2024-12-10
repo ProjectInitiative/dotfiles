@@ -10,7 +10,7 @@ with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.system.fonts;
-    # Common font list for both platforms
+  # Common font list for both platforms
   commonFonts = with pkgs; [
     fira-code
     fira-code-symbols
@@ -40,7 +40,7 @@ in
     # Linux-specific configuration
     (mkIf pkgs.stdenv.isLinux {
       environment.systemPackages = [ pkgs.font-manager ];
-      fonts.packages = commonFonts ++ [ pkgs.plusultra.rf ];
+      fonts.packages = commonFonts;
     })
 
     # Darwin-specific configuration

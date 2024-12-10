@@ -25,6 +25,7 @@ in
       };
 
       tools = {
+        git = enabled;
         k8s = enabled;
       };
 
