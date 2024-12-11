@@ -22,7 +22,14 @@ in
   };
 
   config = mkIf cfg.enable {
-    environment.systemPackages = with pkgs; [ git ];
+    environment.systemPackages = with pkgs; 
+    [ 
+      git 
+      git-filter-repo
+      gitleaks
+      lazygit
+      trufflehog
+    ];
 
     projectinitiative.home.extraOptions = {
       programs.git = {
