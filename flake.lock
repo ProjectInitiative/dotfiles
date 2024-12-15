@@ -633,6 +633,22 @@
         "type": "github"
       }
     },
+    "gpg-base-conf": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1724021581,
+        "narHash": "sha256-f+ghj8qiljbHyIPZb6b2IAxxQU9GvbYpTdEEjSN9g8E=",
+        "owner": "drduh",
+        "repo": "config",
+        "rev": "eedb4ecf4bb2b5fd71bb27768f76da0f2e2605c8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "drduh",
+        "repo": "config",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -882,6 +898,7 @@
         "deploy-rs": "deploy-rs",
         "drift": "drift",
         "flake": "flake",
+        "gpg-base-conf": "gpg-base-conf",
         "home-manager": "home-manager",
         "icehouse": "icehouse",
         "lix": "lix",

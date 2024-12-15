@@ -86,6 +86,12 @@
       flake = false;
     };
 
+    # GPG default configuration
+    gpg-base-conf = {
+      url = "github:drduh/config";
+      flake = false;
+    };
+
     # Public SSH keys
     ssh-pub-keys = {
       url = "https://github.com/projectinitiative.keys";

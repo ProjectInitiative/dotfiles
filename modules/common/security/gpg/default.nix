@@ -106,7 +106,7 @@ in
       };
     };
 
-    plusultra = {
+    projectinitiative = {
       home.file = {
         ".gnupg/.keep".text = "";
 
