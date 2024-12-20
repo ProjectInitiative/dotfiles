@@ -115,8 +115,17 @@
 
         };
       };
+          # Add debug information
+    debug = {
+      raw-files = lib.snowfall.fs.get-nix-files-recursive ./modules/common;
+      raw-files-string = toString (lib.snowfall.fs.get-nix-files-recursive ./modules/common);
+    };
     in
     lib.mkFlake {
+      # export for debugging
+      inherit lib;
+      inherit debug;
+
       channels-config = {
         allowUnfree = true;
         permittedInsecurePackages = [
@@ -130,20 +139,55 @@
         drift.overlays.default
       ];
 
-      systems.modules.nixos = with inputs; [
-        home-manager.nixosModules.home-manager
-        nix-ld.nixosModules.nix-ld
-        sops-nix.nixosModules.sops
-      ] ++ (lib.snowfall.fs.get-nix-files-recursive ./modules/common); # Add common modules here;
+      system.modules = 
+        let
+          common = lib.create-common-modules (lib.snowfall.fs.get-snowfall-file "modules/common");
+          # Direct usage of create-modules for debugging
+          common-modules = lib.snowfall.module.create-modules {
+            src = lib.snowfall.fs.get-snowfall-file "modules/common";
+            overrides = {};
+            alias = {};
+          };
+        in
+        {
 
-      
-      systems.modules.home-manager = with inputs; [
-        # any home-manager specific modules
-      ] ++ (lib.snowfall.fs.get-nix-files-recursive ./modules/common); # Add common modules here
+          # Export the raw common-modules for inspection
+          common = {
+            raw = common-modules;
+            nixos = builtins.attrValues common-modules;
+            home-manager = builtins.attrValues common-modules;
+            darwin = builtins.attrValues common-modules;
+          };
 
-      systems.modules.darwin = with inputs; [
-        # any darwin specific modules
-      ] ++ (lib.snowfall.fs.get-nix-files-recursive ./modules/common); # Add common modules here
+       
+          nixos = with inputs; [
+            home-manager.nixosModules.home-manager
+            nix-ld.nixosModules.nix-ld
+            sops-nix.nixosModules.sops
+          ] ++ common.nixos;
+
+          home-manager = with inputs; [
+            # any home-manager specific modules
+          ] ++ common.home-manager;
+
+          darwin = with inputs; [
+            # any darwin specific modules
+          ] ++ common.darwin;
+        };
+
+      # systems.modules.nixos = with inputs; [
+      #   home-manager.nixosModules.home-manager
+      #   nix-ld.nixosModules.nix-ld
+      #   sops-nix.nixosModules.sops
+      # ] ++ (lib.snowfall.fs.get-nix-files-recursive ./modules/common); # Add common modules here;
+
+      # systems.modules.home-manager = with inputs; [
+      #   # any home-manager specific modules
+      # ] ++ (lib.snowfall.fs.get-nix-files-recursive ./modules/common); # Add common modules here
+
+      # systems.modules.darwin = with inputs; [
+      #   # any darwin specific modules
+      # ] ++ (lib.snowfall.fs.get-nix-files-recursive ./modules/common); # Add common modules here
 
 
       # Example host-specific hardware modules
