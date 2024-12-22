@@ -141,18 +141,19 @@
 
       system.modules = 
         let
-          common = lib.create-common-modules (lib.snowfall.fs.get-snowfall-file "modules/common");
+          # common-modules = lib.create-common-modules (lib.snowfall.fs.get-snowfall-file "modules/common");
+          common-modules = lib.create-common-modules "modules/common";
           # Direct usage of create-modules for debugging
-          common-modules = lib.snowfall.module.create-modules {
-            src = lib.snowfall.fs.get-snowfall-file "modules/common";
-            overrides = {};
-            alias = {};
-          };
-          nix-modules = lib.snowfall.module.create-modules {
-            src = lib.snowfall.fs.get-snowfall-file "modules/nixos";
-            overrides = {};
-            alias = {};
-          };
+          # common-modules = lib.snowfall.module.create-modules {
+          #   src = lib.snowfall.fs.get-snowfall-file "modules/common";
+          #   overrides = {};
+          #   alias = {};
+          # };
+          # nix-modules = lib.snowfall.module.create-modules {
+          #   src = lib.snowfall.fs.get-snowfall-file "modules/nixos";
+          #   overrides = {};
+          #   alias = {};
+          # };
         in
         {
 
@@ -163,24 +164,29 @@
           #   home-manager = builtins.attrValues common-modules;
           #   darwin = builtins.attrValues common-modules;
           # };
-          # inherit common;
-          common = common-modules;
-          nix-test = nix-modules;
-
+          inherit common-modules;
+          # common = common-modules;
+          # nix-test = nix-modules;
+        
        
+          # nixos = with inputs; [
+          #   home-manager.nixosModules.home-manager
+          #   nix-ld.nixosModules.nix-ld
+          #   sops-nix.nixosModules.sops
+          # ];
           nixos = with inputs; [
             home-manager.nixosModules.home-manager
             nix-ld.nixosModules.nix-ld
             sops-nix.nixosModules.sops
-          ] ++ common.nixos;
+          ] ++ common-modules;
 
           home-manager = with inputs; [
             # any home-manager specific modules
-          ] ++ common.home-manager;
+          ] ++ common-modules;
 
           darwin = with inputs; [
             # any darwin specific modules
-          ] ++ common.darwin;
+          ] ++ common-modules;
         };
 
       # systems.modules.nixos = with inputs; [
