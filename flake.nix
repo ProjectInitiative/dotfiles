@@ -148,16 +148,24 @@
             overrides = {};
             alias = {};
           };
+          nix-modules = lib.snowfall.module.create-modules {
+            src = lib.snowfall.fs.get-snowfall-file "modules/nixos";
+            overrides = {};
+            alias = {};
+          };
         in
         {
 
           # Export the raw common-modules for inspection
-          common = {
-            raw = common-modules;
-            nixos = builtins.attrValues common-modules;
-            home-manager = builtins.attrValues common-modules;
-            darwin = builtins.attrValues common-modules;
-          };
+          # common = {
+          #   raw = common-modules;
+          #   nixos = builtins.attrValues common-modules;
+          #   home-manager = builtins.attrValues common-modules;
+          #   darwin = builtins.attrValues common-modules;
+          # };
+          # inherit common;
+          common = common-modules;
+          nix-test = nix-modules;
 
        
           nixos = with inputs; [
