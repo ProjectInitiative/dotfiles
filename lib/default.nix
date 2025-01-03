@@ -36,7 +36,7 @@ rec {
     # Debug trace that won't break JSON serialization
     _ = builtins.trace "Created modules: ${toString (builtins.attrNames common-modules)}" null;
   in
-  builtins.attrValues common-modules;
+  common-modules;
   # {
   #   nixos = common-modules;
   #   home-manager = common-modules;

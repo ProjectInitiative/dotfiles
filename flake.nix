@@ -32,7 +32,8 @@
     sops-nix.url = "github:Mic92/sops-nix";
 
     # Snowfall Lib
-    snowfall-lib.url = "github:snowfallorg/lib?ref=v3.0.3";
+    snowfall-lib.url = "path:/home/kylepzak/development/build-software/snowfall-lib";
+    # snowfall-lib.url = "github:snowfallorg/lib?ref=v3.0.3";
     # snowfall-lib.url = "path:/home/short/work/@snowfallorg/lib";
     snowfall-lib.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -138,11 +139,34 @@
         thaw.overlays.default
         drift.overlays.default
       ];
+      # modules =
+      #   {
+      #     common = lib.create-common-modules "modules/common";
+      #   };
+      modules = {
+        nixos = lib.snowfall.module.create-modules {
+          src = lib.snowfall.fs.get-snowfall-file "modules/common";
+          # namespace = "projectinitiative";
+        };
+      };
 
-      system.modules = 
+      # systems.modules = 
+      #   let 
+      #     build-modules = lib.create-common-modules "modules/common";
+      #     common-modules = (builtins.attrValues build-modules);
+      #   in
+      #   {
+      #     nixos = common-modules;
+      #   };
+        
+
+      systems.modules = 
         let
-          # common-modules = lib.create-common-modules (lib.snowfall.fs.get-snowfall-file "modules/common");
-          common-modules = lib.create-common-modules "modules/common";
+          build-modules = lib.create-common-modules "modules/common";
+          common-modules = (builtins.attrValues build-modules);
+          # common-modules = lib.create-common-modules "modules/common";
+    #         common-modules = lib.snowfall.fs.get-default-nix-files-recursive 
+    # (lib.snowfall.fs.get-snowfall-file "modules/common");
           # Direct usage of create-modules for debugging
           # common-modules = lib.snowfall.module.create-modules {
           #   src = lib.snowfall.fs.get-snowfall-file "modules/common";
@@ -156,6 +180,7 @@
           # };
         in
         {
+        inherit build-modules common-modules;
 
           # Export the raw common-modules for inspection
           # common = {
@@ -164,7 +189,7 @@
           #   home-manager = builtins.attrValues common-modules;
           #   darwin = builtins.attrValues common-modules;
           # };
-          inherit common-modules;
+          # inherit common-modules;
           # common = common-modules;
           # nix-test = nix-modules;
         
@@ -178,6 +203,13 @@
             home-manager.nixosModules.home-manager
             nix-ld.nixosModules.nix-ld
             sops-nix.nixosModules.sops
+            # ]
+            # ] ++ (builtins.attrValues (lib.snowfall.module.create-modules {
+            #   src = lib.snowfall.fs.get-snowfall-file "modules/common";
+            #   namespace = "projectinitiative"; # Make sure namespace is explicitly set
+            # }));
+          # ] ++ (builtins.attrValues common-modules);
+          # ++ map (path: import path) common-modules;
           ] ++ common-modules;
 
           home-manager = with inputs; [
