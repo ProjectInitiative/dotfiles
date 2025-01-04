@@ -17,11 +17,11 @@ with lib.${namespace};
     ];
     # ] ++ (importAllCommonModules "${inputs.self}/modules/common");
 
-    # projectinitiative = {
-    #   suites = {
-    #     development = enabled;
-    #   };
-    # };
+    projectinitiative = {
+      suites = {
+        development = enabled;
+      };
+    };
 
   boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 
