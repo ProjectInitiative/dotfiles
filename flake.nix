@@ -139,101 +139,47 @@
         thaw.overlays.default
         drift.overlays.default
       ];
-      # modules =
-      #   {
-      #     common = lib.create-common-modules "modules/common";
+      # modules = {
+      #   nixos = lib.snowfall.module.create-modules {
+      #     src = lib.snowfall.fs.get-snowfall-file "modules/common";
+      #     # namespace = "projectinitiative";
       #   };
-      modules = {
-        nixos = lib.snowfall.module.create-modules {
-          src = lib.snowfall.fs.get-snowfall-file "modules/common";
-          # namespace = "projectinitiative";
-        };
-      };
-
-      # systems.modules = 
-      #   let 
-      #     build-modules = lib.create-common-modules "modules/common";
-      #     common-modules = (builtins.attrValues build-modules);
-      #   in
-      #   {
-      #     nixos = common-modules;
-      #   };
-        
+      # };
 
       systems.modules = 
         let
           build-modules = lib.create-common-modules "modules/common";
           common-modules = (builtins.attrValues build-modules);
-          # common-modules = lib.create-common-modules "modules/common";
-    #         common-modules = lib.snowfall.fs.get-default-nix-files-recursive 
-    # (lib.snowfall.fs.get-snowfall-file "modules/common");
-          # Direct usage of create-modules for debugging
-          # common-modules = lib.snowfall.module.create-modules {
-          #   src = lib.snowfall.fs.get-snowfall-file "modules/common";
-          #   overrides = {};
-          #   alias = {};
-          # };
-          # nix-modules = lib.snowfall.module.create-modules {
-          #   src = lib.snowfall.fs.get-snowfall-file "modules/nixos";
-          #   overrides = {};
-          #   alias = {};
-          # };
         in
         {
-        inherit build-modules common-modules;
+          inherit build-modules common-modules;
 
-          # Export the raw common-modules for inspection
-          # common = {
-          #   raw = common-modules;
-          #   nixos = builtins.attrValues common-modules;
-          #   home-manager = builtins.attrValues common-modules;
-          #   darwin = builtins.attrValues common-modules;
-          # };
-          # inherit common-modules;
-          # common = common-modules;
-          # nix-test = nix-modules;
-        
-       
-          # nixos = with inputs; [
-          #   home-manager.nixosModules.home-manager
-          #   nix-ld.nixosModules.nix-ld
-          #   sops-nix.nixosModules.sops
-          # ];
           nixos = with inputs; [
             home-manager.nixosModules.home-manager
             nix-ld.nixosModules.nix-ld
             sops-nix.nixosModules.sops
-            # ]
-            # ] ++ (builtins.attrValues (lib.snowfall.module.create-modules {
-            #   src = lib.snowfall.fs.get-snowfall-file "modules/common";
-            #   namespace = "projectinitiative"; # Make sure namespace is explicitly set
-            # }));
-          # ] ++ (builtins.attrValues common-modules);
-          # ++ map (path: import path) common-modules;
           ] ++ common-modules;
 
-          home-manager = with inputs; [
-            # any home-manager specific modules
-          ] ++ common-modules;
+          # home-manager = with inputs; [
+          #   # any home-manager specific modules
+          # ] ++ common-modules;
 
           darwin = with inputs; [
             # any darwin specific modules
           ] ++ common-modules;
         };
 
-      # systems.modules.nixos = with inputs; [
-      #   home-manager.nixosModules.home-manager
-      #   nix-ld.nixosModules.nix-ld
-      #   sops-nix.nixosModules.sops
-      # ] ++ (lib.snowfall.fs.get-nix-files-recursive ./modules/common); # Add common modules here;
-
-      # systems.modules.home-manager = with inputs; [
-      #   # any home-manager specific modules
-      # ] ++ (lib.snowfall.fs.get-nix-files-recursive ./modules/common); # Add common modules here
-
-      # systems.modules.darwin = with inputs; [
-      #   # any darwin specific modules
-      # ] ++ (lib.snowfall.fs.get-nix-files-recursive ./modules/common); # Add common modules here
+      homes = 
+        let
+          build-modules = lib.create-common-modules "modules/common";
+          common-modules = (builtins.attrValues build-modules);
+        in
+        {
+          inherit build-modules common-modules;
+          modules = with inputs; [
+            # any home specific modules
+          ] ++common-modules;
+        };
 
 
       # Example host-specific hardware modules

@@ -10,12 +10,10 @@
 with lib;
 with lib.${namespace};
 {
-    # _module.args.modulePath = throw builtins.stack-trace;
     imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
     ];
-    # ] ++ (importAllCommonModules "${inputs.self}/modules/common");
 
     projectinitiative = {
       suites = {
