@@ -9,9 +9,6 @@
 }:
 with lib.${namespace};
 {
-  # imports = [
-  #   ../../../modules/common/home/cli-apps/home-manager/default.nix  # Import the module
-  # ];
   # home.stateVersion = "24.05";
   projectinitiative = {
     cli-apps = {
@@ -20,9 +17,9 @@ with lib.${namespace};
       home-manager = enabled;
     };
 
-    tools = {
-      git = enabled;
-      direnv = enabled;
-    };
+    # tools = {
+    #   git = enabled;
+    #   direnv = enabled;
+    # };
   };
 }

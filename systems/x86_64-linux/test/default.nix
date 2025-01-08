@@ -24,5 +24,6 @@ with lib.${namespace};
     #     development = enabled;
     #   };
     # };
+    system.stateVersion = "24.05";
 
 }

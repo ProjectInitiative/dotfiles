@@ -160,9 +160,6 @@
             sops-nix.nixosModules.sops
           ] ++ common-modules;
 
-          # home-manager = with inputs; [
-          #   # any home-manager specific modules
-          # ] ++ common-modules;
 
           darwin = with inputs; [
             # any darwin specific modules
@@ -171,7 +168,7 @@
 
       homes = 
         let
-          build-modules = lib.create-common-modules "modules/common";
+          build-modules = lib.create-common-modules "modules/common/home";
           common-modules = (builtins.attrValues build-modules);
         in
         {

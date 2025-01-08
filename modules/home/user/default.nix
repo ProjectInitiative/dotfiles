@@ -31,7 +31,7 @@ in
 {
   options.${namespace}.user = {
     enable = mkOpt types.bool true "Whether to configure the user account.";
-    name = mkOpt (types.nullOr types.str) (config.snowfallorg.user.name or "short") "The user account.";
+    name = mkOpt (types.nullOr types.str) (config.snowfallorg.user.name or "kylepzak") "The user account.";
 
     fullName = mkOpt types.str "Kyle Petryszak" "The full name of the user.";
     email = mkOpt types.str "kylepetryszak@projectinitiative.io" "The email of the user.";
