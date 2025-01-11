@@ -166,17 +166,17 @@
           ] ++ common-modules;
         };
 
-      homes = 
-        let
-          build-modules = lib.create-common-modules "modules/common/home";
-          common-modules = (builtins.attrValues build-modules);
-        in
-        {
-          inherit build-modules common-modules;
-          modules = with inputs; [
-            # any home specific modules
-          ] ++common-modules;
-        };
+      # homes = 
+      #   let
+      #     build-modules = lib.create-common-modules "modules/common/home";
+      #     common-modules = (builtins.attrValues build-modules);
+      #   in
+      #   {
+      #     inherit build-modules common-modules;
+      #     modules = with inputs; [
+      #       # any home specific modules
+      #     ] ++common-modules;
+      #   };
 
 
       # Example host-specific hardware modules

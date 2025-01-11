@@ -12,6 +12,7 @@ let
   cfg = config.${namespace}.tools.git;
   gpg = config.${namespace}.security.gpg;
   user = config.${namespace}.user;
+
 in
 {
   options.${namespace}.tools.git = with types; {
@@ -22,16 +23,16 @@ in
   };
 
   config = mkIf cfg.enable {
-    environment.systemPackages = with pkgs; 
-    [ 
-      git 
-      git-filter-repo
-      gitleaks
-      lazygit
-      trufflehog
-    ];
+    home = {
+      packages = with pkgs; [
+        git 
+        git-filter-repo
+        gitleaks
+        lazygit
+        trufflehog
+      ];
+    };
 
-    projectinitiative.home.extraOptions = {
       programs.git = {
         enable = true;
         inherit (cfg) userName userEmail;
@@ -54,10 +55,9 @@ in
             whitespace = "trailing-space,space-before-tab";
           };
           safe = {
-            directory = "${config.users.users.${user.name}.home}/work/config";
+            directory = "${user.home}/work/config/.git";
           };
         };
       };
-    };
   };
 }

@@ -17,11 +17,9 @@ in
   };
 
   config = mkIf cfg.enable {
-    projectinitiative.home.extraOptions = {
-      programs.direnv = {
-        enable = true;
-        nix-direnv = enabled;
-      };
+    programs.direnv = {
+      enable = true;
+      nix-direnv = enabled;
     };
   };
 }

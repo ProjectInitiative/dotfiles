@@ -25,8 +25,8 @@ in
     projectinitiative.home.extraOptions = {
       home.stateVersion = config.system.stateVersion;
       home.file = mkAliasDefinitions options.${namespace}.home.file;
-      xdg.enable = true;
-      xdg.configFile = mkAliasDefinitions options.${namespace}.home.configFile;
+      # xdg.enable = true;
+      # xdg.configFile = mkAliasDefinitions options.${namespace}.home.configFile;
     };
 
     snowfallorg.users.${config.${namespace}.user.name}.home.config =
