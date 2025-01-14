@@ -14,7 +14,9 @@ with lib.${namespace};
     cli-apps = {
       zsh = enabled;
       helix = enabled;
+      atuin = enabled;
       home-manager = enabled;
+      zellij = enabled;
     };
 
     tools = {
@@ -23,6 +25,8 @@ with lib.${namespace};
           userEmail = "6314611+ProjectInitiative@users.noreply.github.com";
         };
       direnv = enabled;
+      alacritty = enabled;
+      ghostty = enabled;
     };
   };
 }

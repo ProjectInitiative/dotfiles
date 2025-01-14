@@ -17,8 +17,6 @@ in
   };
 
   config = mkIf cfg.enable {
-    # programs.zsh.shellAliases = {
-    # };
 
     home = {
       packages = with pkgs; [
@@ -32,7 +30,5 @@ in
         pyright
       ];
     };
-    # environment.systemPackages = with pkgs; [
-    # ];
   };
 }

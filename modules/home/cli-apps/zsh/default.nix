@@ -44,14 +44,12 @@ in
         enable = true;
         enableCompletion = true;
         syntaxHighlighting.enable = true;
-        autosuggestions.enable = true;
-        interactiveShellInit = ''
-          eval "$(${pkgs.atuin}/bin/atuin init zsh)"
-          eval "$(zoxide init zsh)"
-          export PATH="''${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
-        '';
+        # interactiveShellInit = ''
+        #   eval "$(${pkgs.atuin}/bin/atuin init zsh)"
+        #   eval "$(zoxide init zsh)"
+        #   export PATH="''${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+        # '';
         shellAliases = {
-          refresh = "source ~/.zshrc";
           make = "make -j $(nproc)";
           k = "kubectl";
           kx = "kubectl ctx";

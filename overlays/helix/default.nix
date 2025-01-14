@@ -2,7 +2,7 @@
 
 final: prev: {
 
-  helix = let
+  helix-test = let
     helixSrc = final.fetchFromGitHub {
       owner = "helix-editor";
       repo = "helix";

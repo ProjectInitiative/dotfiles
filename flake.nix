@@ -3,7 +3,7 @@
 
   inputs = {
     # NixPkgs
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
     # NixPkgs Unstable
     unstable.url = "github:nixos/nixpkgs/nixos-unstable";
 
@@ -14,7 +14,7 @@
     };
 
     # Home Manager
-    home-manager.url = "github:nix-community/home-manager/release-24.05";
+    home-manager.url = "github:nix-community/home-manager/release-24.11";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     # macOS Support
