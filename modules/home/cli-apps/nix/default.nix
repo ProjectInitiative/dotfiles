@@ -17,12 +17,15 @@ in
   };
 
   config = mkIf cfg.enable {
-    programs = {
-      nix-ld.enable = true;      
-    };
+    # TODO: Move config
+    # nixos specific
+    # programs = {
+    #   nix-ld.enable = true;      
+    # };
 
     home = {
       packages = with pkgs; [
+          nixfmt-rfc-style
           nix-prefetch-git
           nix-prefetch-github
           nix-search-cli

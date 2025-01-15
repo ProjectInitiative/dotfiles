@@ -22,6 +22,10 @@ with lib.${namespace};
       home-manager = enabled;
     };
 
+    security = {
+      sops = enabled;
+    };
+
     tools = {
       ghostty = enabled;
     };

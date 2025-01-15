@@ -29,10 +29,6 @@ in
       };
     };
 
-    security = {
-      gpg = enabled;
-      sops = enabled;
-    };
 
     home = {
       packages = with pkgs; [
