@@ -52,12 +52,6 @@ in
         shellAliases = {
           make = "make -j $(nproc)";
           tailscale-up = "sudo tailscale up --login-server https://ts.projectinitiative.io --accept-routes";
-          ap = "ansible-playbook";
-          grep = "rg";
-          ls = "exa -a";
-          ll = "exa -al";
-          cat = "bat";
-          cd = "z";
         };
       };
 

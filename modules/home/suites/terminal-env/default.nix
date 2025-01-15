@@ -25,6 +25,7 @@ in
         # QOL cli
         bat = enabled;
         eza = enabled;
+        ripgrep = enabled;
       };
 
       tools = {
