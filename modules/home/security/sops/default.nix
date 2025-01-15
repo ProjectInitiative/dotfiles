@@ -9,23 +9,22 @@
 with lib;
 with lib.${namespace};
 let
-  cfg = config.${namespace}.tools.ansible;
+  cfg = config.${namespace}.security.sops;
 in
 {
-  options.${namespace}.tools.ansible = with types; {
-    enable = mkBoolOpt false "Whether or not to enable ansible.";
+  options.${namespace}.security.sops = with types; {
+    enable = mkBoolOpt false "Whether or not to enable sops.";
   };
 
   config = mkIf cfg.enable {
 
     home = {
       packages = with pkgs; [
-        ansible
-        ansible-lint
+        age
+        sops
       ];
 
       shellAliases = {
-        ap = "ansible-playbook";     
       };
     };
   };

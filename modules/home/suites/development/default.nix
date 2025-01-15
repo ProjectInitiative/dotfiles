@@ -28,5 +28,22 @@ in
         ansible = enabled;
       };
     };
+
+    security = {
+      gpg = enabled;
+      sops = enabled;
+    };
+
+    home = {
+      packages = with pkgs; [
+        go
+        juicefs
+        packer
+        podman-compose
+        python3
+        python3Packages.pip
+        rustup
+      ];
+    };
   };
 }

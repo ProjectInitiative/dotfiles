@@ -32,5 +32,12 @@ in
         alacritty = enabled;
       };
     };
+    home = {
+      packages = with pkgs; [
+          jq
+          ncdu
+          tree
+      ];
+    };
   };
 }

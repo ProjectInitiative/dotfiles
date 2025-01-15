@@ -18,6 +18,7 @@ with lib.${namespace};
 
     cli-apps = {
       zsh = enabled;
+      nix = enabled;
       home-manager = enabled;
     };
 
