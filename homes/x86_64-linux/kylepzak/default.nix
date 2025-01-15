@@ -5,28 +5,34 @@
   osConfig ? { },
   format ? "unknown",
   namespace,
+  inputs,
   ...
 }:
 with lib.${namespace};
 {
-  # home.stateVersion = "24.05";
   projectinitiative = {
+    suites = {
+      terminal-env = enabled;      
+      development = enabled;
+    };
+
     cli-apps = {
       zsh = enabled;
-      helix = enabled;
-      atuin = enabled;
       home-manager = enabled;
-      zellij = enabled;
     };
 
     tools = {
-      git = {
-          enable = true;
-          userEmail = "6314611+ProjectInitiative@users.noreply.github.com";
-        };
-      direnv = enabled;
-      alacritty = enabled;
       ghostty = enabled;
     };
+   
+  };
+
+  home.file = {
+    # ".config/zellij/zellij".source = "${inputs.self}/homes/dotfiles/zellij/zellij";
+    ".config/helix/config.toml".source = "${inputs.self}/homes/dotfiles/helix/config.toml";
+    ".config/helix/themes".source = "${inputs.self}/homes/dotfiles/helix/themes";
+    # ".config/helix/languages.toml".source = helixLanguagesConfig;
+    ".alacritty.toml".source = "${inputs.self}/homes/dotfiles/.alacritty.toml";
+    ".config/atuin/config.toml".source = "${inputs.self}/homes/dotfiles/atuin/config.toml";
   };
 }

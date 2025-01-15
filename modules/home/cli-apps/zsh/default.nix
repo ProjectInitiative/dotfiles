@@ -51,9 +51,6 @@ in
         # '';
         shellAliases = {
           make = "make -j $(nproc)";
-          k = "kubectl";
-          kx = "kubectl ctx";
-          kn = "kubectl ns";
           tailscale-up = "sudo tailscale up --login-server https://ts.projectinitiative.io --accept-routes";
           ap = "ansible-playbook";
           grep = "rg";

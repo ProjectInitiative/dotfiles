@@ -168,14 +168,17 @@
 
       # homes = 
       #   let
-      #     build-modules = lib.create-common-modules "modules/common/home";
-      #     common-modules = (builtins.attrValues build-modules);
+      #     # build-modules = lib.create-common-modules "modules/common/home";
+      #     # common-modules = (builtins.attrValues build-modules);
+      #     build-homes = lib.create-common-modules "homes/common";
+      #     common-homes = (builtins.attrValues build-homes);
       #   in
       #   {
-      #     inherit build-modules common-modules;
+      #     # inherit build-modules common-modules;
+      #     inherit build-homes common-homes;
       #     modules = with inputs; [
       #       # any home specific modules
-      #     ] ++common-modules;
+      #     ] ++ common-homes;
       #   };
 
 

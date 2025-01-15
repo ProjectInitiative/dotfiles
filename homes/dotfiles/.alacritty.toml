@@ -1,0 +1,19 @@
+live_config_reload = true
+
+[env]
+TERM = "xterm-256color"
+
+[font.normal]
+family = "FuraMono Nerd Font Mono"
+
+[shell]
+args = ["-c", "zellij attach || zellij"]
+program = "zsh"
+
+[window]
+dynamic_padding = false
+opacity = 0.85
+
+[window.padding]
+x = 10
+y = 10
