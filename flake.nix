@@ -63,7 +63,7 @@
 
     # Run unpatched dynamically compiled binaries
     nix-ld.url = "github:Mic92/nix-ld";
-    nix-ld.inputs.nixpkgs.follows = "unstable";
+    nix-ld.inputs.nixpkgs.follows = "nixpkgs";
 
     # Binary Cache
     attic = {
