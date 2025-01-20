@@ -34,9 +34,10 @@ in
     name = mkOpt (types.nullOr types.str) (config.snowfallorg.user.name or "kylepzak") "The user account.";
 
     fullName = mkOpt types.str "Kyle Petryszak" "The full name of the user.";
-    email = mkOpt types.str "kylepetryszak@projectinitiative.io" "The email of the user.";
+    email = mkOpt types.str "6314611+ProjectInitiative@users.noreply.github.com" "The email of the user.";
 
     home = mkOpt (types.nullOr types.str) home-directory "The user's home directory.";
+    authorized-keys = mkOpt (types.str) "" "Authorized SSH keys for user.";
   };
 
   config = mkIf cfg.enable (mkMerge [
@@ -55,7 +56,11 @@ in
       home = {
         username = mkDefault cfg.name;
         homeDirectory = mkDefault cfg.home;
+        file = {
+          ".ssh/authorized_keys".text = cfg.authorized-keys;
+        };
       };
+
     }
   ]);
 }

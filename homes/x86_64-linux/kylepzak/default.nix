@@ -10,7 +10,18 @@
 }:
 with lib.${namespace};
 {
+
   projectinitiative = {
+
+    home = {
+      enable = true;
+      stateVersion = "24.11";
+    };
+
+    user = {
+      enable = true;
+    };
+    
     suites = {
       terminal-env = enabled;      
       development = enabled;
@@ -29,8 +40,14 @@ with lib.${namespace};
     tools = {
       ghostty = enabled;
     };
-   
+
+    user.authorized-keys = builtins.readFile inputs.ssh-pub-keys;
+
   };
+
+  # config = {
+  #   user.authorized-keys = inputs.ssh-pub-keys;
+  # };
 
   home.file = {
     # ".config/zellij/zellij".source = "${inputs.self}/homes/dotfiles/zellij/zellij";

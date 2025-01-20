@@ -24,6 +24,9 @@ with lib.${namespace};
     #     development = enabled;
     #   };
     # };
-    system.stateVersion = "24.05";
+    # snowfallorg.users.kylepzak = {
+    #   create = true;
+    # };
+    system.stateVersion = "24.11";
 
 }

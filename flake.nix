@@ -32,8 +32,9 @@
     sops-nix.url = "github:Mic92/sops-nix";
 
     # Snowfall Lib
-    snowfall-lib.url = "path:/home/kylepzak/development/build-software/snowfall-lib";
-    # snowfall-lib.url = "github:snowfallorg/lib?ref=v3.0.3";
+    # snowfall-lib.url = "path:/home/kylepzak/development/build-software/snowfall-lib";
+    # snowfall-lib.url = "github:projectinitiative/snowfall-lib";
+    snowfall-lib.url = "github:snowfallorg/lib?ref=v3.0.3";
     # snowfall-lib.url = "path:/home/short/work/@snowfallorg/lib";
     snowfall-lib.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -63,7 +64,7 @@
 
     # Run unpatched dynamically compiled binaries
     nix-ld.url = "github:Mic92/nix-ld";
-    nix-ld.inputs.nixpkgs.follows = "nixpkgs";
+    nix-ld.inputs.nixpkgs.follows = "unstable";
 
     # Binary Cache
     attic = {
@@ -156,7 +157,7 @@
 
           nixos = with inputs; [
             home-manager.nixosModules.home-manager
-            nix-ld.nixosModules.nix-ld
+            # nix-ld.nixosModules.nix-ld
             sops-nix.nixosModules.sops
           ] ++ common-modules;
 

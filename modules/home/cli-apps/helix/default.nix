@@ -26,7 +26,6 @@ in
         nil
         nixd
         python312Packages.python-lsp-server
-        python311Packages.python-lsp-server
         pyright
       ];
     };

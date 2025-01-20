@@ -5,16 +5,30 @@
   namespace,
   config,
   options,
+  modulesPath,
   ...
 }:
 with lib;
 with lib.${namespace};
 {
   imports = [
-    (modulesPath + "/virtualisation/proxmox.nix")
+    # (modulesPath + "/virtualisation/proxmox.nix")
     (modulesPath + "/profiles/qemu-guest.nix")
   ];
 
+  # enable qemu guest for proxmox
+  services.qemuGuest.enable = lib.mkDefault true;
+
+  # Use the boot drive for grub
+  boot.loader.grub.enable = lib.mkDefault true;
+  boot.loader.grub.devices = [ "nodev" ];
+
+  boot.growPartition = lib.mkDefault true;
+
+  # Allow remote updates with flakes and non-root users
+  nix.settings.trusted-users = [ "root" "@wheel" ];
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  
   boot.kernelModules = [ "bcachefs" "loop" ];
 
   # Create the loop devices and mount points in the live environment

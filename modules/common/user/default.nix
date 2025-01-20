@@ -4,6 +4,7 @@
   pkgs,
   lib,
   namespace,
+  inputs,
   ...
 }:
 with lib;
@@ -16,7 +17,7 @@ in
   options.${namespace}.user = with types; {
     name = mkOpt str "kylepzak" "The name to use for the user account.";
     fullName = mkOpt str "Kyle Petryszak" "The full name of the user.";
-    email = mkOpt str "kylepetryszak@projectinitiative.io" "The email of the user.";
+    email = mkOpt str "6314611+ProjectInitiative@users.noreply.github.com" "The email of the user.";
     initialPassword =
       mkOpt str "password"
         "The initial password to use when the user is first created.";
@@ -24,14 +25,15 @@ in
     prompt-init = mkBoolOpt true "Whether or not to show an initial message when opening a new shell.";
     extraGroups = mkOpt (listOf str) [ ] "Groups for the user to be assigned.";
     extraOptions = mkOpt attrs { } (mdDoc "Extra options passed to `users.users.<name>`.");
+    authorized-keys = mkOpt (listOf path) ["${inputs.ssh-pub-keys}"] "Authorized SSH keys for user.";
   };
 
   config = {
-    projectinitiative.home = {
-      file = {};
+    # projectinitiative.home = {
+    #   file = {};
       
-      extraOptions = {};
-    };
+    #   extraOptions = {};
+    # };
     
     users.users.${cfg.name} = {
       isNormalUser = true;
@@ -42,6 +44,8 @@ in
       group = "users";
 
       shell = pkgs.zsh;
+      # openssh.authorizedKeys.keyFiles = ["${inputs.ssh-pub-keys}"];
+      openssh.authorizedKeys.keyFiles = cfg.authorized-keys;
 
       # Arbitrary user ID to use for the user. Since I only
       # have a single user on my machines this won't ever collide.
