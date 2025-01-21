@@ -10,16 +10,16 @@
 with lib;
 with lib.${namespace};
 {
-    imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-    ];
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+  ];
 
-    projectinitiative = {
-      suites = {
-        development = enabled;
-      };
+  projectinitiative = {
+    suites = {
+      development = enabled;
     };
+  };
 
   boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 
@@ -50,8 +50,6 @@ with lib.${namespace};
       "${pop-shell}/share/gnome-shell/extensions/pop-shell@system76.com"
     ];
   };
-
-
 
   # Install fonts
   # fonts.packages = with pkgs; [

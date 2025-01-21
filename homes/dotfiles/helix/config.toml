@@ -12,13 +12,13 @@ character = "╎"
 [editor.soft-wrap]
 enable = true
 
-[editor.lsp]
-display-inlay-hints = true
-display-signature-help-docs = false
+# [editor.lsp]
+# display-inlay-hints = true
+# display-signature-help-docs = false
 
-[editor.inline-diagnostics]
-cursor-line = "hint"
-other-lines = "error"
+# [editor.inline-diagnostics]
+# cursor-line = "hint"
+# other-lines = "error"
 
 # At most one section each of 'keys.normal', 'keys.insert' and 'keys.select'
 [keys.normal]

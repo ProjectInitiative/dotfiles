@@ -26,7 +26,7 @@ final: prev: {
 
   # Add Helix overlay
   helix = prev.helix.overrideAttrs (oldAttrs: {
-    version = "23.10";  # Specify the version you want
+    version = "23.10"; # Specify the version you want
     src = prev.fetchFromGitHub {
       owner = "helix-editor";
       repo = "helix";

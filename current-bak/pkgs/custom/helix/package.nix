@@ -1,5 +1,11 @@
 # nix-build -E 'with import <nixpkgs> {}; callPackage ./package.nix {}'
-{ fetchFromGitHub, lib, rustPlatform, git, installShellFiles }:
+{
+  fetchFromGitHub,
+  lib,
+  rustPlatform,
+  git,
+  installShellFiles,
+}:
 
 rustPlatform.buildRustPackage rec {
   pname = "helix";
@@ -9,8 +15,8 @@ rustPlatform.buildRustPackage rec {
   src = fetchFromGitHub {
     owner = "helix-editor";
     repo = "helix";
-    rev = "57ec3b7330de3f5a7b37e766a758f13fdf3c0da5";  # Replace with the specific commit hash
-    hash = "sha256-10PtZHgDq7S5n8ez0iT9eLWvAlEDtEi572yFzidLW/0=";  # Replace with the actual hash
+    rev = "57ec3b7330de3f5a7b37e766a758f13fdf3c0da5"; # Replace with the specific commit hash
+    hash = "sha256-10PtZHgDq7S5n8ez0iT9eLWvAlEDtEi572yFzidLW/0="; # Replace with the actual hash
   };
 
   # cargoLock = {
@@ -23,7 +29,10 @@ rustPlatform.buildRustPackage rec {
   # cargoHash = "sha256-Y8zqdS8vl2koXmgFY0hZWWP1ZAO8JgwkoPTYPVpkWsA=";
   cargoHash = "sha256-kxvj7f6GszuV8JQgUCGJud8EmwhgYEkK3ZQLGGR6Nc0=";
 
-  nativeBuildInputs = [ git installShellFiles ];
+  nativeBuildInputs = [
+    git
+    installShellFiles
+  ];
 
   env.HELIX_DEFAULT_RUNTIME = "${placeholder "out"}/lib/runtime";
 
@@ -44,6 +53,10 @@ rustPlatform.buildRustPackage rec {
     homepage = "https://helix-editor.com";
     license = licenses.mpl20;
     mainProgram = "hx";
-    maintainers = with maintainers; [ danth yusdacra zowoq ];
+    maintainers = with maintainers; [
+      danth
+      yusdacra
+      zowoq
+    ];
   };
 }

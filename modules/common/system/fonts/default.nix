@@ -11,15 +11,18 @@ with lib.${namespace};
 let
   cfg = config.${namespace}.system.fonts;
   # Common font list for both platforms
-  commonFonts = with pkgs; [
-    fira-code
-    fira-code-symbols
-    noto-fonts
-    noto-fonts-cjk-sans
-    noto-fonts-cjk-serif
-    noto-fonts-emoji
-    (nerdfonts.override { fonts = [ "Hack" ]; })
-  ] ++ cfg.fonts;
+  commonFonts =
+    with pkgs;
+    [
+      fira-code
+      fira-code-symbols
+      noto-fonts
+      noto-fonts-cjk-sans
+      noto-fonts-cjk-serif
+      noto-fonts-emoji
+      (nerdfonts.override { fonts = [ "Hack" ]; })
+    ]
+    ++ cfg.fonts;
 in
 {
   options.${namespace}.system.fonts = with types; {
@@ -27,7 +30,7 @@ in
     fonts = mkOpt (listOf package) [ ] "Custom font packages to install.";
   };
 
-    config = mkIf cfg.enable (mkMerge [
+  config = mkIf cfg.enable (mkMerge [
 
     # common configurations
     {

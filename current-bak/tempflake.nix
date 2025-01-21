@@ -13,16 +13,17 @@
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-		ssh-pub-keys = {
-			url = "https://github.com/projectinitiative.keys";
-			flake = false;
-		};
+    ssh-pub-keys = {
+      url = "https://github.com/projectinitiative.keys";
+      flake = false;
+    };
     # Add other inputs as needed
     helix.url = "github:helix-editor/helix/57ec3b7330de3f5a7b37e766a758f13fdf3c0da5"; # Replace with desired commit
   };
 
   # outputs = { self, nixpkgs, nixpkgs-stable, home-manager, nixos-generators, ssh-pub-keys, ... }@inputs:
-  outputs = inputs@{ self, nixpkgs, ... }:
+  outputs =
+    inputs@{ self, nixpkgs, ... }:
     let
       flakeRoot = self;
       system = "x86_64-linux";
@@ -42,8 +43,9 @@
       # {
       #   inherit stateVersion nixpkgs home-manager system ssh-pub-keys flakeRoot;
       # };
-   
-    in {
+
+    in
+    {
 
       nixosConfigurations = {
         # Define your hosts here
@@ -96,7 +98,7 @@
             (mkProxmoxLXC { name = "proxmox-lxc-base"; })
           ];
         };
-       
+
         # You can add more hosts here
         # another-host = nixpkgs.lib.nixosSystem {
         #   inherit system;
@@ -113,10 +115,9 @@
         # };
       }; # nixosConfigurations
 
-
       packages.x86_64-linux = {
 
-        flattenDirectory = pkgs.callPackage ./scripts/flatten-directory.nix {};
+        flattenDirectory = pkgs.callPackage ./scripts/flatten-directory.nix { };
 
         proxmox-lxc-template = nixos-generators.nixosGenerate {
           inherit system;
@@ -133,7 +134,7 @@
           # lib = nixpkgs.legacyPackages.x86_64-linux.lib;
           # additional arguments to pass to modules:
           # specialArgs = { myExtraArg = "foobar"; };
-        
+
           # you can also define your own custom formats
           # customFormats = { "myFormat" = <myFormatModule>; ... };
           # format = "myFormat";
@@ -149,6 +150,6 @@
       # overlays.proxmoxLXC = final: prev: {
       #   proxmoxLXCBase = self.nixosConfigurations.proxmox-lxc-base.config.system.build.toplevel;
       # };
-      
+
     };
 }

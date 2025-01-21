@@ -1,7 +1,8 @@
 # packages/common.nix
 { pkgs }:
 
-with pkgs; [
+with pkgs;
+[
   # Common packages for both NixOS and non-NixOS environments
   age
   alacritty

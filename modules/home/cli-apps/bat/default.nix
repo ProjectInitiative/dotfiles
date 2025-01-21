@@ -24,7 +24,7 @@ in
       ];
 
       shellAliases = {
-        cat = "bat";     
+        cat = "bat";
       };
     };
   };

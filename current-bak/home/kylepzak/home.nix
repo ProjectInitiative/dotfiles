@@ -1,19 +1,29 @@
-{ stateVersion, lib, config, pkgs, flakeRoot, ... }:
+{
+  stateVersion,
+  lib,
+  config,
+  pkgs,
+  flakeRoot,
+  ...
+}:
 
 let
-  replaceSecrets = file: secretsMap:
+  replaceSecrets =
+    file: secretsMap:
     let
       placeholders = lib.mapAttrsToList (name: value: "{{${name}}}") secretsMap;
       secrets = lib.attrValues secretsMap;
       content = builtins.readFile file;
     in
-      builtins.foldl' (str: placeholder: secret: 
-        builtins.replaceStrings [placeholder] [secret] str
-      ) content placeholders secrets;
+    builtins.foldl' (
+      str: placeholder: secret:
+      builtins.replaceStrings [ placeholder ] [ secret ] str
+    ) content placeholders secrets;
 
   envConfig = builtins.getEnv "HOME" + "/.env";
-  loadedEnv = lib.mapAttrs (name: value: builtins.getEnv name) 
-    (builtins.fromJSON (builtins.readFile envConfig));
+  loadedEnv = lib.mapAttrs (name: value: builtins.getEnv name) (
+    builtins.fromJSON (builtins.readFile envConfig)
+  );
 
   helixLanguagesConfig = replaceSecrets ./dotfiles/helix/languages.toml {
     ollama_address = loadedEnv.ollama_address;
@@ -42,7 +52,7 @@ in
 
   # User-specific packages
   home.packages = with pkgs; [
-  # firefox
+    # firefox
   ];
 
   # Git configuration
@@ -51,7 +61,9 @@ in
     userName = "Kyle Petryszak";
     userEmail = "6314611+ProjectInitiative@users.noreply.github.com";
     extraConfig = {
-      push = { autoSetupRemote = true; };
+      push = {
+        autoSetupRemote = true;
+      };
     };
   };
 
@@ -63,10 +75,13 @@ in
     oh-my-zsh = {
       enable = false;
       theme = "robbyrussell";
-      plugins = [ "git" "docker" "kubectl" ];
+      plugins = [
+        "git"
+        "docker"
+        "kubectl"
+      ];
     };
   };
-
 
   # Copy dotfiles
   home.file = {

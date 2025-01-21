@@ -2,16 +2,24 @@
 # your system. Help is available in the configuration.nix(5) man page, on
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
-{ stateVersion, config, lib, pkgs, ssh-pub-keys, flakeRoot, ... }:
+{
+  stateVersion,
+  config,
+  lib,
+  pkgs,
+  ssh-pub-keys,
+  flakeRoot,
+  ...
+}:
 
 let
   commonDesktopPackages = import (flakeRoot + "/pkgs/common/desktop.nix") { inherit pkgs; };
-  # tempOverlay = self: super: {
-  #   lsp-ai = self.callPackage ../../pkgs/custom/lsp-ai/package.nix {};
-  # };
 in
+# tempOverlay = self: super: {
+#   lsp-ai = self.callPackage ../../pkgs/custom/lsp-ai/package.nix {};
+# };
 {
-  nixpkgs.overlays = [ 
+  nixpkgs.overlays = [
     (import ./desktop-overlays.nix {
       inherit flakeRoot;
     })

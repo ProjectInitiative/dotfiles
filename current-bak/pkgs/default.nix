@@ -13,9 +13,9 @@
 # For a quick environment with all packages:
 # Run nix-shell -p '(import ./packages/default.nix {})'
 
-
 # packages/default.nix
-{ pkgs ? import <nixpkgs> {} }:
+{
+  pkgs ? import <nixpkgs> { },
+}:
 
 import ./common.nix { inherit pkgs; }
-

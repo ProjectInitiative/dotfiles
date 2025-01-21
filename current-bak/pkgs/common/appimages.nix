@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 let
   appImageUrls = [
@@ -13,7 +18,7 @@ let
     # Add more AppImages as needed
   ];
 
-appImageScript = pkgs.writeScriptBin "manage-appimages" ''
+  appImageScript = pkgs.writeScriptBin "manage-appimages" ''
     #!${pkgs.runtimeShell}
 
     set -e
@@ -69,14 +74,24 @@ appImageScript = pkgs.writeScriptBin "manage-appimages" ''
     echo "AppImage installation complete."
   '';
 
-in {
-  environment.systemPackages = [ appImageScript pkgs.appimage-run ]
-    ++ (map (app: pkgs.writeScriptBin app.name ''
-      #!/bin/sh
-      ${pkgs.appimage-run}/bin/appimage-run /home/${config.users.users.kylepzak.name}/.local/bin/${app.name}/${app.name}.AppImage "$@"
-    '') appImageUrls);
+in
+{
+  environment.systemPackages =
+    [
+      appImageScript
+      pkgs.appimage-run
+    ]
+    ++ (map (
+      app:
+      pkgs.writeScriptBin app.name ''
+        #!/bin/sh
+        ${pkgs.appimage-run}/bin/appimage-run /home/${config.users.users.kylepzak.name}/.local/bin/${app.name}/${app.name}.AppImage "$@"
+      ''
+    ) appImageUrls);
 
   system.activationScripts.downloadAppImages = ''
-    ${appImageScript}/bin/manage-appimages ${lib.concatMapStringsSep " " (app: "${app.name} ${app.url}") appImageUrls}
+    ${appImageScript}/bin/manage-appimages ${
+      lib.concatMapStringsSep " " (app: "${app.name} ${app.url}") appImageUrls
+    }
   '';
 }

@@ -1,6 +1,11 @@
 # /etc/nixos/services/generate-config.nix
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
@@ -29,4 +34,3 @@ in
     };
   };
 }
-

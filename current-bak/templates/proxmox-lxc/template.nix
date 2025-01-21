@@ -1,4 +1,11 @@
-{ config, pkgs, lib, modulesPath, ssh-pub-keys, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  modulesPath,
+  ssh-pub-keys,
+  ...
+}:
 
 {
   # options.proxmoxLXC = {
@@ -10,62 +17,70 @@
   ];
 
   # config = lib.mkIf config.virtualisation.lxc.enable {
-    boot.isContainer = true;
-    system.stateVersion = "24.05";
-    nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  boot.isContainer = true;
+  system.stateVersion = "24.05";
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
 
-    # Enable SSH
-    services.openssh = {
-      enable = true;
-      settings = {
-        PasswordAuthentication = false;
-        KbdInteractiveAuthentication = false;
-        PermitRootLogin = "no";
+  # Enable SSH
+  services.openssh = {
+    enable = true;
+    settings = {
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
+      PermitRootLogin = "no";
+    };
+  };
+
+  # Set your time zone.
+  time.timeZone = "America/Chicago";
+
+  users.users = lib.mkMerge [
+    (lib.mkOrder 1000 {
+      kylepzak = {
+        isNormalUser = true;
+        home = "/home/kylepzak";
+        # initialPassword = "initchangeme";
+        description = lib.mkForce "default admin user";
+        extraGroups = [ "wheel" ];
+        openssh.authorizedKeys.keyFiles = [ "${ssh-pub-keys}" ];
       };
-    };
+    })
+  ];
 
-    # Set your time zone.
-    time.timeZone = "America/Chicago";
+  security.sudo.extraRules = [
+    {
+      groups = [ "wheel" ];
+      commands = [
+        {
+          command = "ALL";
+          options = [ "NOPASSWD" ];
+        }
+      ];
+    }
+  ];
 
-    users.users = lib.mkMerge [
-      (lib.mkOrder 1000 {
-        kylepzak = {
-          isNormalUser = true;
-          home = "/home/kylepzak";
-          # initialPassword = "initchangeme";
-          description = lib.mkForce "default admin user";
-          extraGroups = [ "wheel" ];
-          openssh.authorizedKeys.keyFiles = [ "${ssh-pub-keys}" ];       
-         };
-      })
-    ];
+  # Suppress systemd units that don't work because of LXC
+  systemd.suppressedSystemUnits = [
+    "dev-mqueue.mount"
+    "sys-kernel-debug.mount"
+    "sys-fs-fuse-connections.mount"
+  ];
 
-    security.sudo.extraRules = [
-      {
-        groups = [ "wheel" ];
-        commands = [ { command = "ALL"; options = [ "NOPASSWD" ]; } ];
-      }
-    ];
+  # Start tty0 on serial console
+  systemd.services."getty@tty1" = {
+    enable = lib.mkForce true;
+    wantedBy = [ "getty.target" ];
+    serviceConfig.Restart = "always";
+  };
 
-    # Suppress systemd units that don't work because of LXC
-    systemd.suppressedSystemUnits = [
-      "dev-mqueue.mount"
-      "sys-kernel-debug.mount"
-      "sys-fs-fuse-connections.mount"
-    ];
-
-    # Start tty0 on serial console
-    systemd.services."getty@tty1" = {
-      enable = lib.mkForce true;
-      wantedBy = [ "getty.target" ];
-      serviceConfig.Restart = "always";
-    };
-
-    environment.systemPackages = with pkgs; [
-      bash
-      helix
-      binutils
-      git
-    ];
+  environment.systemPackages = with pkgs; [
+    bash
+    helix
+    binutils
+    git
+  ];
   # };
 }

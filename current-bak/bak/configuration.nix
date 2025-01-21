@@ -1,10 +1,16 @@
-{ config, lib, pkgs, ... }: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+{
   # https://kevingoos.medium.com/kubernetes-inside-proxmox-lxc-cce5c9927942
 
   # edit /etc/sysctl.conf on host
   # net.ipv4.ip_forward=1
   # vm.swapness=0
-  
+
   # add to /etc/pve/nodes/NODE/lxc/NUM.conf
   # lxc.init.cmd: /sbin/init
   # lxc.apparmor.profile: unconfined
@@ -34,19 +40,18 @@
     };
   };
 
-#   networking = {
-#     interfaces = {
-#       eth0.ipv4.addresses = [{
-#         address = "172.16.1.180";
-#         prefixLength = 24;
-#       }];
-#     };
-#     defaultGateway = {
-#       address = "172.16.1.1";
-#       interface = "eth0";
-#     };
-# };
-
+  #   networking = {
+  #     interfaces = {
+  #       eth0.ipv4.addresses = [{
+  #         address = "172.16.1.180";
+  #         prefixLength = 24;
+  #       }];
+  #     };
+  #     defaultGateway = {
+  #       address = "172.16.1.1";
+  #       interface = "eth0";
+  #     };
+  # };
 
   networking.firewall.allowedTCPPorts = [
     6443 # k3s: required so that pods can reach the API server (running on port 6443 by default)
@@ -77,15 +82,14 @@
   };
   # https://kevingoos.medium.com/kubernetes-inside-proxmox-lxc-cce5c9927942
 
-
-#   postBoot = with pkgs.lib; let
-#     isMaster = isMasterNode hostName;
-#     in mkIf isMaster (
-#       # Configuration for master node, e.g., include cluster-init
-#       service.k3s.clusterInit = true;
-#     ) ++ mkIf (!isMaster) (
-#       # Configuration for worker nodes
-#     );
+  #   postBoot = with pkgs.lib; let
+  #     isMaster = isMasterNode hostName;
+  #     in mkIf isMaster (
+  #       # Configuration for master node, e.g., include cluster-init
+  #       service.k3s.clusterInit = true;
+  #     ) ++ mkIf (!isMaster) (
+  #       # Configuration for worker nodes
+  #     );
 }
 
 # "--flannel-iface tailscale0"

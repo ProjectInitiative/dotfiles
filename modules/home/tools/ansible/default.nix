@@ -25,7 +25,7 @@ in
       ];
 
       shellAliases = {
-        ap = "ansible-playbook";     
+        ap = "ansible-playbook";
       };
     };
   };

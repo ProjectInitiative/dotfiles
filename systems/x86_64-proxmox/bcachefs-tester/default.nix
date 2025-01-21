@@ -26,10 +26,19 @@ with lib.${namespace};
   boot.growPartition = lib.mkDefault true;
 
   # Allow remote updates with flakes and non-root users
-  nix.settings.trusted-users = [ "root" "@wheel" ];
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
-  
-  boot.kernelModules = [ "bcachefs" "loop" ];
+  nix.settings.trusted-users = [
+    "root"
+    "@wheel"
+  ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
+
+  boot.kernelModules = [
+    "bcachefs"
+    "loop"
+  ];
 
   # Create the loop devices and mount points in the live environment
   boot.initrd.extraUtilsCommands = ''
@@ -68,11 +77,14 @@ with lib.${namespace};
 
   environment.systemPackages = with pkgs; [
     bcachefs-tools
-    util-linux  # for losetup
+    util-linux # for losetup
   ];
 
   programs.zsh.enable = true;
 
   # Make sure the initrd includes the necessary tools
-  boot.initrd.availableKernelModules = [ "loop" "bcachefs" ];
+  boot.initrd.availableKernelModules = [
+    "loop"
+    "bcachefs"
+  ];
 }

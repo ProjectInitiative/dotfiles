@@ -15,7 +15,7 @@
   namespace,
   pkgs,
   ...
-}: 
+}:
 with lib;
 with lib.${namespace};
 let
@@ -27,20 +27,19 @@ let
 
   cfg = config.${namespace}.home;
   username = config.snowfallorg.user.name;
-in {
+in
+{
   options.${namespace}.home = {
     enable = mkBoolOpt false "Whether or not enable home configuration.";
     stateVersion = mkOpt types.str "" "The state version of the home configuration.";
     home = mkOpt types.str (
-      if is-darwin
-      then "/Users/${username}"
-      else "/home/${username}"
+      if is-darwin then "/Users/${username}" else "/home/${username}"
     ) "The home directory of the user.";
   };
 
   config = mkIf cfg.enable {
     programs.home-manager = enabled;
-    
+
     home = {
       inherit username;
 

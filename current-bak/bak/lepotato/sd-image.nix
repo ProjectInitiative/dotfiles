@@ -1,8 +1,14 @@
-{ config, pkgs, modulesPath, lib, ... }: {
+{
+  config,
+  pkgs,
+  modulesPath,
+  lib,
+  ...
+}:
+{
   # only needed for crosscompilation
   nixpkgs.crossSystem = lib.systems.elaborate lib.systems.examples.aarch64-multiplatform;
   system.stateVersion = "24.05";
-
 
   imports = [
     <nixpkgs/nixos/modules/installer/sd-card/sd-image-aarch64.nix>

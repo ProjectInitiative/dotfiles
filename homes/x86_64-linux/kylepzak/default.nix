@@ -21,9 +21,9 @@ with lib.${namespace};
     user = {
       enable = true;
     };
-    
+
     suites = {
-      terminal-env = enabled;      
+      terminal-env = enabled;
       development = enabled;
     };
 

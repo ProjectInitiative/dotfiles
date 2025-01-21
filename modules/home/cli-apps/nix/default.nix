@@ -20,15 +20,15 @@ in
     # TODO: Move config
     # nixos specific
     # programs = {
-    #   nix-ld.enable = true;      
+    #   nix-ld.enable = true;
     # };
 
     home = {
       packages = with pkgs; [
-          nixfmt-rfc-style
-          nix-prefetch-git
-          nix-prefetch-github
-          nix-search-cli
+        nixfmt-rfc-style
+        nix-prefetch-git
+        nix-prefetch-github
+        nix-search-cli
       ];
 
       shellAliases = {

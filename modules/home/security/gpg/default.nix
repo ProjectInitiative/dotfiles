@@ -24,7 +24,7 @@ let
     max-cache-ttl 120
   '';
 
-    # pinentry-program ${pkgs.pinentry-gnome3}/bin/pinentry-gnome3
+  # pinentry-program ${pkgs.pinentry-gnome3}/bin/pinentry-gnome3
   # guide = "${inputs.yubikey-guide}/README.md";
 
   # theme = pkgs.fetchFromGitHub {
@@ -57,10 +57,10 @@ let
   #   categories = [ "System" ];
   # };
 
-  # reload-yubikey = pkgs.writeShellScriptBin "reload-yubikey" ''
-  #   ${pkgs.gnupg}/bin/gpg-connect-agent "scd serialno" "learn --force" /bye
-  # '';
 in
+# reload-yubikey = pkgs.writeShellScriptBin "reload-yubikey" ''
+#   ${pkgs.gnupg}/bin/gpg-connect-agent "scd serialno" "learn --force" /bye
+# '';
 {
   options.${namespace}.security.gpg = with types; {
     enable = mkBoolOpt false "Whether or not to enable GPG.";
@@ -70,7 +70,7 @@ in
   config = mkIf cfg.enable {
     # service = mkIf is-nothing {
     #   pcscd.enable = true;
-    #   udev.packages = with pkgs; [ yubikey-personalization ];    
+    #   udev.packages = with pkgs; [ yubikey-personalization ];
     # };
 
     # # NOTE: This should already have been added by programs.gpg, but
@@ -99,17 +99,16 @@ in
         # guideDesktopItem
         # reload-yubikey
       ];
-        
 
-        file = {
-          ".gnupg/.keep".text = "";
+      file = {
+        ".gnupg/.keep".text = "";
 
-          ".gnupg/yubikey-guide.md".source = guide;
-          ".gnupg/yubikey-guide.html".source = guideHTML;
+        ".gnupg/yubikey-guide.md".source = guide;
+        ".gnupg/yubikey-guide.html".source = guideHTML;
 
-          ".gnupg/gpg.conf".source = gpgConf;
-          ".gnupg/gpg-agent.conf".text = gpgAgentConf;
-        };
+        ".gnupg/gpg.conf".source = gpgConf;
+        ".gnupg/gpg-agent.conf".text = gpgAgentConf;
+      };
     };
 
     services.gpg-agent = {
@@ -126,7 +125,6 @@ in
     #     pinentryPackage = pkgs.pinentry-gnome3;
     #   };
     # };
-
 
   };
 }

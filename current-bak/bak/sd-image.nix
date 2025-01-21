@@ -1,7 +1,14 @@
 # save as sd-image.nix somewhere
 { ssh-pub-keys, ... }:
-{ config, pkgs, modulesPath, lib, ... }: 
-{ ... }: {
+{
+  config,
+  pkgs,
+  modulesPath,
+  lib,
+  ...
+}:
+{ ... }:
+{
   # only needed for crosscompilation
   nixpkgs.crossSystem = lib.systems.elaborate lib.systems.examples.aarch64-multiplatform;
 
@@ -19,14 +26,13 @@
 
   # Enable SSH
   services.openssh = {
-   enable = true;
-   # require public key authentication
-   settings.PasswordAuthentication = false;
-   settings.KbdInteractiveAuthentication = false;
-   settings.PermitRootLogin = "no";
-   # settings.authorizedKeysFiles = [ ssh-pub-keys ];
+    enable = true;
+    # require public key authentication
+    settings.PasswordAuthentication = false;
+    settings.KbdInteractiveAuthentication = false;
+    settings.PermitRootLogin = "no";
+    # settings.authorizedKeysFiles = [ ssh-pub-keys ];
   };
-   
 
   # Set your time zone.
   time.timeZone = "America/Chicago";
@@ -36,16 +42,21 @@
     home = "/home/kpzak";
     # initialPassword = "initchangeme";
     description = "default admin user";
-    extraGroups = [ "wheel"];
+    extraGroups = [ "wheel" ];
     openssh.authorizedKeys.keyFiles = [
-     "${ssh-pub-keys}"
+      "${ssh-pub-keys}"
     ];
   };
 
   security.sudo.extraRules = [
     {
       groups = [ "wheel" ];
-      commands = [ { command = "ALL"; options = [ "NOPASSWD" ]; } ];
+      commands = [
+        {
+          command = "ALL";
+          options = [ "NOPASSWD" ];
+        }
+      ];
     }
   ];
 }

@@ -2,7 +2,15 @@
 # your system. Help is available in the configuration.nix(5) man page, on
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
-{ stateVersion, config, lib, pkgs, ssh-pub-keys, flakeRoot, ... }:
+{
+  stateVersion,
+  config,
+  lib,
+  pkgs,
+  ssh-pub-keys,
+  flakeRoot,
+  ...
+}:
 
 let
   commonPackages = import (flakeRoot + "/pkgs/common.nix") { inherit pkgs; };
@@ -11,21 +19,24 @@ let
     # helix = self.callPackage (flakeRoot + "/pkgs/custom/helix/package.nix") {};
     kustomize-sops = super.kustomize-sops.overrideAttrs (oldAttrs: {
       installPhase = ''
-          mkdir -p $out/lib/viaduct.ai/v1/ksops/
-          mkdir -p $out/lib/viaduct.ai/v1/ksops-exec/
-          mv $GOPATH/bin/kustomize-sops $out/lib/viaduct.ai/v1/ksops/ksops
-          ln -s $out/lib/viaduct.ai/v1/ksops/ksops $out/lib/viaduct.ai/v1/ksops-exec/ksops-exec
+        mkdir -p $out/lib/viaduct.ai/v1/ksops/
+        mkdir -p $out/lib/viaduct.ai/v1/ksops-exec/
+        mv $GOPATH/bin/kustomize-sops $out/lib/viaduct.ai/v1/ksops/ksops
+        ln -s $out/lib/viaduct.ai/v1/ksops/ksops $out/lib/viaduct.ai/v1/ksops-exec/ksops-exec
       '';
     });
   };
 in
 {
-  nixpkgs.overlays = [ 
+  nixpkgs.overlays = [
     # (import ./overlays.nix)
-    tempOverlay 
-    ];
+    tempOverlay
+  ];
   # Enable flakes
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
 
   # Networking
   networking.networkmanager.enable = true;
@@ -55,15 +66,17 @@ in
     LC_TIME = "en_US.UTF-8";
   };
 
-
   # Define a user account. Don't forget to set a password with 'passwd'.
   users.users = lib.mkMerge [
     (lib.mkOrder 1500 {
       kylepzak = {
         isNormalUser = true;
         description = lib.mkDefault "Kyle Petryszak";
-        extraGroups = [ "networkmanager" "wheel" ];
-        packages = with pkgs; [];
+        extraGroups = [
+          "networkmanager"
+          "wheel"
+        ];
+        packages = with pkgs; [ ];
         openssh.authorizedKeys.keyFiles = [ "${ssh-pub-keys}" ];
       };
 

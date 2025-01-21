@@ -1,8 +1,19 @@
-{ lib, writeShellApplication, coreutils, findutils, gnused, ... }:
+{
+  lib,
+  writeShellApplication,
+  coreutils,
+  findutils,
+  gnused,
+  ...
+}:
 
 writeShellApplication {
   name = "flatten-directory";
-  runtimeInputs = [ coreutils findutils gnused ];
+  runtimeInputs = [
+    coreutils
+    findutils
+    gnused
+  ];
   text = ''
     print_usage() {
       echo "Usage: $0 <source_directory> <destination_directory> [options]"

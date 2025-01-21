@@ -25,18 +25,19 @@ rec {
 
   ## Create and inject common modules into standard module paths
   #@ Path -> AttrSet
-  create-common-modules = common-path:
-  let
-    common-modules = lib.snowfall.module.create-modules {
-      src = lib.snowfall.fs.get-snowfall-file common-path;
-      overrides = lib.full-flake-options.modules.common or {};
-      alias = lib.alias.modules.common or {};
-    };
+  create-common-modules =
+    common-path:
+    let
+      common-modules = lib.snowfall.module.create-modules {
+        src = lib.snowfall.fs.get-snowfall-file common-path;
+        overrides = lib.full-flake-options.modules.common or { };
+        alias = lib.alias.modules.common or { };
+      };
 
-    # Debug trace that won't break JSON serialization
-    _ = builtins.trace "Created modules: ${toString (builtins.attrNames common-modules)}" null;
-  in
-  common-modules;
+      # Debug trace that won't break JSON serialization
+      _ = builtins.trace "Created modules: ${toString (builtins.attrNames common-modules)}" null;
+    in
+    common-modules;
   # {
   #   nixos = common-modules;
   #   home-manager = common-modules;

@@ -1,14 +1,14 @@
 flakeRoot: final: prev: {
   # helix = final.callPackage ./helix.nix { };
   freecad = prev.freecad.overrideAttrs (oldAttrs: {
-    patches = (oldAttrs.patches or []) ++ [
-      ( flakeRoot + "/pkgs/custom/freecad/0003-fix-cursor-font-bug.patch")
+    patches = (oldAttrs.patches or [ ]) ++ [
+      (flakeRoot + "/pkgs/custom/freecad/0003-fix-cursor-font-bug.patch")
     ];
   });
 }
 # final: prev: {
 #   helix = (final.callPackage
-#     ({ fetchFromGitHub }: 
+#     ({ fetchFromGitHub }:
 #       let
 #         helix-src = fetchFromGitHub {
 #           owner = "helix-editor";

@@ -34,9 +34,9 @@ in
     };
     home = {
       packages = with pkgs; [
-          jq
-          ncdu
-          tree
+        jq
+        ncdu
+        tree
       ];
     };
   };

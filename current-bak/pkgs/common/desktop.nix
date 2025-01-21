@@ -1,7 +1,8 @@
 # pkgs/common/desktop.nix
 { pkgs }:
 
-with pkgs; [
+with pkgs;
+[
   # Common packages for NixOS Desktop
   bambu-studio
   bitwarden

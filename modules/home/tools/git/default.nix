@@ -25,7 +25,7 @@ in
   config = mkIf cfg.enable {
     home = {
       packages = with pkgs; [
-        git 
+        git
         git-filter-repo
         gitleaks
         lazygit
@@ -33,31 +33,31 @@ in
       ];
     };
 
-      programs.git = {
-        enable = true;
-        inherit (cfg) userName userEmail;
-        lfs = enabled;
-        signing = {
-          key = cfg.signingKey;
-          signByDefault = mkIf gpg.enable true;
+    programs.git = {
+      enable = true;
+      inherit (cfg) userName userEmail;
+      lfs = enabled;
+      signing = {
+        key = cfg.signingKey;
+        signByDefault = mkIf gpg.enable true;
+      };
+      extraConfig = {
+        init = {
+          defaultBranch = "main";
         };
-        extraConfig = {
-          init = {
-            defaultBranch = "main";
-          };
-          pull = {
-            rebase = true;
-          };
-          push = {
-            autoSetupRemote = true;
-          };
-          core = {
-            whitespace = "trailing-space,space-before-tab";
-          };
-          safe = {
-            directory = "${user.home}/work/config/.git";
-          };
+        pull = {
+          rebase = true;
+        };
+        push = {
+          autoSetupRemote = true;
+        };
+        core = {
+          whitespace = "trailing-space,space-before-tab";
+        };
+        safe = {
+          directory = "${user.home}/work/config/.git";
         };
       };
+    };
   };
 }

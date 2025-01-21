@@ -62,7 +62,6 @@ rec {
     enable = false;
   };
 
-  
   ## Import common modules for both NixOS and Darwin systems
   ##
   ## ```nix
@@ -70,12 +69,12 @@ rec {
   ## ```
   ##
   #@ Path -> [Module]
-  importCommonModules = path:
+  importCommonModules =
+    path:
     let
       files = lib.snowfall.fs.get-nix-files-recursive path;
-      moduleFiles = builtins.filter (f: 
-        !(lib.hasInfix "/darwin/" f) && 
-        !(lib.hasInfix "/nixos/" f)
+      moduleFiles = builtins.filter (
+        f: !(lib.hasInfix "/darwin/" f) && !(lib.hasInfix "/nixos/" f)
       ) files;
     in
     map import moduleFiles;
@@ -87,15 +86,18 @@ rec {
   ## ```
   ##
   #@ String -> Module -> Bool
-  checkModuleCompatibility = system: module:
+  checkModuleCompatibility =
+    system: module:
     let
-      platformPrefix = 
-        if lib.hasPrefix "x86_64-linux" system then "nixos"
-        else if lib.hasPrefix "x86_64-darwin" system then "darwin"
-        else null;
+      platformPrefix =
+        if lib.hasPrefix "x86_64-linux" system then
+          "nixos"
+        else if lib.hasPrefix "x86_64-darwin" system then
+          "darwin"
+        else
+          null;
     in
-    if platformPrefix == null then false
-    else !(lib.hasInfix "/${platformPrefix}/" module);
+    if platformPrefix == null then false else !(lib.hasInfix "/${platformPrefix}/" module);
 
   ## Import platform-specific and common modules
   ##
@@ -108,20 +110,25 @@ rec {
   ## ```
   ##
   #@ { path, system, platformDir } -> [Module]
-  importPlatformModules = { path, system, platformDir }:
+  importPlatformModules =
+    {
+      path,
+      system,
+      platformDir,
+    }:
     let
       platformPath = path + "/${platformDir}";
       commonPath = path + "/common";
-      
+
       # Get all .nix files from platform-specific directory
-      platformModules = if builtins.pathExists platformPath
-        then map import (lib.snowfall.fs.get-nix-files-recursive platformPath)
-        else [];
-      
+      platformModules =
+        if builtins.pathExists platformPath then
+          map import (lib.snowfall.fs.get-nix-files-recursive platformPath)
+        else
+          [ ];
+
       # Get compatible common modules
-      commonModules = if builtins.pathExists commonPath
-        then importCommonModules commonPath
-        else [];
+      commonModules = if builtins.pathExists commonPath then importCommonModules commonPath else [ ];
     in
     platformModules ++ commonModules;
 
@@ -132,18 +139,22 @@ rec {
   ## ```
   ##
   #@ Path -> [Module]
-  importAllCommonModules = commonPath:
+  importAllCommonModules =
+    commonPath:
     let
       # Get all .nix files recursively from common directory
       allFiles = lib.snowfall.fs.get-nix-files-recursive commonPath;
-      
+
       # Filter out any backup files or temporary files
-      validFiles = builtins.filter (f: 
-        !(lib.hasInfix "~" f) &&  # Filter backup files
-        !(lib.hasInfix "#" f) &&  # Filter temp files
-        !(lib.hasInfix ".#" f)    # Filter temp files
+      validFiles = builtins.filter (
+        f:
+        !(lib.hasInfix "~" f)
+        # Filter backup files
+        && !(lib.hasInfix "#" f)
+        # Filter temp files
+        && !(lib.hasInfix ".#" f) # Filter temp files
       ) allFiles;
     in
     map import validFiles;
-  
+
 }

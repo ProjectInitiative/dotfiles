@@ -1,6 +1,15 @@
-{ stateVersion, nixpkgs, system, ssh-pub-keys, flakeRoot }:
+{
+  stateVersion,
+  nixpkgs,
+  system,
+  ssh-pub-keys,
+  flakeRoot,
+}:
 
-{ name, extraModules ? [] }:
+{
+  name,
+  extraModules ? [ ],
+}:
 
 {
   imports = [

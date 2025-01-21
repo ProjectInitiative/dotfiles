@@ -2,29 +2,33 @@
 # your system. Help is available in the configuration.nix(5) man page, on
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-      # Include bootloader info
-      ./bootloader.nix
-    ];
-
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+    # Include bootloader info
+    ./bootloader.nix
+  ];
 
   # networking.hostName = "nixos"; # Define your hostname.
   # Pick only one of the below networking options.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
   # networking.networkmanager.enable = true;  # Easiest to use and most distros use this by default.
 
-  # Enable networking  
-  networking.networkmanager.enable = true;    
-  # # Set NIC info  
-  # networking = {    
-  # `# Disable DHCP    
-  # useDHCP = false;    
-  # defaultGateway = "172.16.1.1";    
+  # Enable networking
+  networking.networkmanager.enable = true;
+  # # Set NIC info
+  # networking = {
+  # `# Disable DHCP
+  # useDHCP = false;
+  # defaultGateway = "172.16.1.1";
   # interfaces = {
   #     # Configure the default interface
   #     "enp0s18" ={
@@ -35,39 +39,37 @@
   #   };
   # };
 
- # Enable SSH
- services.openssh = {
-   enable = true;
-   # require public key authentication
-   settings.PasswordAuthentication = false;
-   settings.KbdInteractiveAuthentication = false;
- };
+  # Enable SSH
+  services.openssh = {
+    enable = true;
+    # require public key authentication
+    settings.PasswordAuthentication = false;
+    settings.KbdInteractiveAuthentication = false;
+  };
 
- # Set your time zone.
- time.timeZone = "America/Chicago";
+  # Set your time zone.
+  time.timeZone = "America/Chicago";
 
- # Select internationalisation properties.
- i18n.defaultLocale = "en_US.UTF-8";
- i18n.extraLocaleSettings = {
-   LC_ADDRESS = "en_US.UTF-8";
-   LC_IDENTIFICATION = "en_US.UTF-8";
-   LC_MEASUREMENT = "en_US.UTF-8";
-   LC_MONETARY = "en_US.UTF-8";
-   LC_NAME = "en_US.UTF-8";
-   LC_NUMERIC = "en_US.UTF-8";
-   LC_PAPER = "en_US.UTF-8";
-   LC_TELEPHONE = "en_US.UTF-8";
-   LC_TIME = "en_US.UTF-8";
- }; 
+  # Select internationalisation properties.
+  i18n.defaultLocale = "en_US.UTF-8";
+  i18n.extraLocaleSettings = {
+    LC_ADDRESS = "en_US.UTF-8";
+    LC_IDENTIFICATION = "en_US.UTF-8";
+    LC_MEASUREMENT = "en_US.UTF-8";
+    LC_MONETARY = "en_US.UTF-8";
+    LC_NAME = "en_US.UTF-8";
+    LC_NUMERIC = "en_US.UTF-8";
+    LC_PAPER = "en_US.UTF-8";
+    LC_TELEPHONE = "en_US.UTF-8";
+    LC_TIME = "en_US.UTF-8";
+  };
 
   # Enable the X11 windowing system.
   services.xserver.enable = true;
 
-
   # Enable the GNOME Desktop Environment.
   services.xserver.displayManager.gdm.enable = true;
   services.xserver.desktopManager.gnome.enable = true;
-  
 
   # Configure keymap in X11
   # services.xserver.xkb.layout = "us";
@@ -76,13 +78,13 @@
   # Enable CUPS to print documents.
   services.printing.enable = true;
 
-  # Enable sound with pipewire.  
-  sound.enable = true;  
-  hardware.pulseaudio.enable = false;  
-  security.rtkit.enable = true;  
-  services.pipewire = {   
-   enable = true;    
-    alsa.enable = true;    
+  # Enable sound with pipewire.
+  sound.enable = true;
+  hardware.pulseaudio.enable = false;
+  security.rtkit.enable = true;
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
     # If you want to use JACK applications, uncomment this
@@ -99,11 +101,14 @@
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
 
- # Define a user account. Don't forget to set a password with ‘passwd’.
+  # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.kylepzak = {
     isNormalUser = true;
     description = "Kyle Petryszak";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+    ];
     packages = with pkgs; [
       firefox
       chromium
@@ -132,21 +137,20 @@
       awscli2
     ];
   };
-      # terraform
-      # parsec-bin
-      # steam
+  # terraform
+  # parsec-bin
+  # steam
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
   # List packages installed in system profile. To search, run:
   # $ nix search wget
 
- # install fonts
+  # install fonts
   fonts.packages = with pkgs; [
     fira-code
     fira-code-symbols
   ];
-
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
@@ -203,7 +207,7 @@
     };
   };
   users.extraGroups.docker.members = [ "kylepzak" ];
-  
+
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
   # programs.mtr.enable = true;
@@ -247,4 +251,3 @@
   system.stateVersion = "23.11"; # Did you read the comment?
 
 }
-

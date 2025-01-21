@@ -1,7 +1,8 @@
-{ pkgs ? import <nixpkgs> { }
-, lib
-, stdenv
-, python3
+{
+  pkgs ? import <nixpkgs> { },
+  lib,
+  stdenv,
+  python3,
 }:
 
 python3.pkgs.buildPythonApplication {
@@ -15,13 +16,15 @@ python3.pkgs.buildPythonApplication {
 
   buildInputs = [ python3 ];
 
-  installPhase = let
-    script = ./generate-module.py;
-  in ''
-    mkdir -p $out/bin
-    cp ${script} $out/bin/generate-module
-    chmod +x $out/bin/generate-module
-  '';
+  installPhase =
+    let
+      script = ./generate-module.py;
+    in
+    ''
+      mkdir -p $out/bin
+      cp ${script} $out/bin/generate-module
+      chmod +x $out/bin/generate-module
+    '';
 
   meta = with lib; {
     description = "Generate NixOS module templates";

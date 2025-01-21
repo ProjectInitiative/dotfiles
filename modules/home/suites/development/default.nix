@@ -20,15 +20,14 @@ in
     ${namespace} = {
       tools = {
         git = {
-            enable = true;
-            userEmail = "6314611+ProjectInitiative@users.noreply.github.com";
-          };
+          enable = true;
+          userEmail = "6314611+ProjectInitiative@users.noreply.github.com";
+        };
         direnv = enabled;
         k8s = enabled;
         ansible = enabled;
       };
     };
-
 
     home = {
       packages = with pkgs; [

@@ -5,28 +5,16 @@
   namespace,
   config,
   options,
+  modulesPath,
   ...
 }:
 with lib;
 with lib.${namespace};
 {
-    # _module.args.modulePath = throw builtins.stack-trace;
-    # imports =
-    # [ # Include the results of the hardware scan.
-    #   # ./hardware-configuration.nix
-    # # ];
-    # ] ++ builtins.attrValues (lib.create-custom-modules "${inputs.self}/modules/common");
-    # inherit lib namespace;
 
-
-    # projectinitiative = {
-    #   suites = {
-    #     development = enabled;
-    #   };
-    # };
-    # snowfallorg.users.kylepzak = {
-    #   create = true;
-    # };
-    system.stateVersion = "24.11";
-
+  projectinitiative = {
+    system = {
+      base-vm = enabled;
+    };
+  };
 }

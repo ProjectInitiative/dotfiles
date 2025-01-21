@@ -24,7 +24,7 @@ in
       ];
 
       shellAliases = {
-        ls = "eza -alh";     
+        ls = "eza -alh";
         # ll = "eza -al";
       };
     };

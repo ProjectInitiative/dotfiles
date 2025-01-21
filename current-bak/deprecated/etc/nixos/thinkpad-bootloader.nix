@@ -1,23 +1,32 @@
-
-{ config, lib, pkgs, ... }:
 {
-	
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+{
+
   fileSystems."/boot" = {
-    options = ["uid=0" "gid=0" "umask=0077" "fmask=0077" "dmask=0077"];
+    options = [
+      "uid=0"
+      "gid=0"
+      "umask=0077"
+      "fmask=0077"
+      "dmask=0077"
+    ];
   };
 
   # use systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-
   # Disable the GRUB 2 boot loader.
   boot.loader.grub = {
     enable = false;
     efiSupport = true;
     enableCryptodisk = true;
-    device = "nodev"; 
-  }; 
+    device = "nodev";
+  };
   #boot.loader.grub.enable = true;
   #boot.loader.grub.efiSupport = true;
   #boot.loader.grub.efiInstallAsRemovable = true;
@@ -28,10 +37,9 @@
   # luks
   boot.initrd.luks.devices = {
     cryptroot = {
-      device = "/dev/disk/by-uuid/fb793780-923f-4f0d-bb9b-cead23745d39"; 
+      device = "/dev/disk/by-uuid/fb793780-923f-4f0d-bb9b-cead23745d39";
       preLVM = true;
-		};
-	};
+    };
+  };
 
 }
-

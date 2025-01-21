@@ -25,7 +25,7 @@ in
       ];
 
       shellAliases = {
-        cd = "z";     
+        cd = "z";
       };
     };
 

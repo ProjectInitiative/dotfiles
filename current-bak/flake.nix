@@ -18,13 +18,22 @@
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-		ssh-pub-keys = {
-			url = "https://github.com/projectinitiative.keys";
-			flake = false;
-		};
+    ssh-pub-keys = {
+      url = "https://github.com/projectinitiative.keys";
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-stable, home-manager, nixos-generators, ssh-pub-keys, ... }@inputs:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      nixpkgs-stable,
+      home-manager,
+      nixos-generators,
+      ssh-pub-keys,
+      ...
+    }@inputs:
     let
       flakeRoot = self;
       system = "x86_64-linux";
@@ -36,20 +45,41 @@
 
       # Import the mkProxmoxLXC function
       mkProxmoxLXC = import ./templates/proxmox-lxc/mk-proxmox-lxc.nix {
-        inherit stateVersion nixpkgs system ssh-pub-keys flakeRoot;
+        inherit
+          stateVersion
+          nixpkgs
+          system
+          ssh-pub-keys
+          flakeRoot
+          ;
       };
 
       mkCommonConfig = import ./hosts/common/mk-common-config.nix {
-        inherit stateVersion nixpkgs home-manager system ssh-pub-keys flakeRoot;
+        inherit
+          stateVersion
+          nixpkgs
+          home-manager
+          system
+          ssh-pub-keys
+          flakeRoot
+          ;
       };
-   
-    in {
+
+    in
+    {
 
       nixosConfigurations = {
         # Define your hosts here
         thinkpad = nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { inherit stateVersion ssh-pub-keys flakeRoot pkgs; };
+          specialArgs = {
+            inherit
+              stateVersion
+              ssh-pub-keys
+              flakeRoot
+              pkgs
+              ;
+          };
           modules = [
             (mkCommonConfig { name = "thinkpad"; })
             ./hosts/thinkpad/configuration.nix
@@ -99,7 +129,7 @@
             (mkProxmoxLXC { name = "proxmox-lxc-base"; })
           ];
         };
-       
+
         # You can add more hosts here
         # another-host = nixpkgs.lib.nixosSystem {
         #   inherit system;
@@ -115,7 +145,6 @@
         #   ];
         # };
       }; # nixosConfigurations
-
 
       packages.x86_64-linux = {
 
@@ -136,7 +165,7 @@
           # lib = nixpkgs.legacyPackages.x86_64-linux.lib;
           # additional arguments to pass to modules:
           # specialArgs = { myExtraArg = "foobar"; };
-        
+
           # you can also define your own custom formats
           # customFormats = { "myFormat" = <myFormatModule>; ... };
           # format = "myFormat";
@@ -152,6 +181,6 @@
       # overlays.proxmoxLXC = final: prev: {
       #   proxmoxLXCBase = self.nixosConfigurations.proxmox-lxc-base.config.system.build.toplevel;
       # };
-      
+
     };
 }

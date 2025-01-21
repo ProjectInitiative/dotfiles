@@ -1,15 +1,19 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-    ];
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+  ];
 
-    # nixpkgs.overlays = [
-    #   (import ./overlays.nix)
-    # ];
-
+  # nixpkgs.overlays = [
+  #   (import ./overlays.nix)
+  # ];
 
   # System-wide packages
   environment.systemPackages = with pkgs; [

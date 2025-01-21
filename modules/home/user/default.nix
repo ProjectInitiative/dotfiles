@@ -31,10 +31,13 @@ in
 {
   options.${namespace}.user = {
     enable = mkOpt types.bool true "Whether to configure the user account.";
-    name = mkOpt (types.nullOr types.str) (config.snowfallorg.user.name or "kylepzak") "The user account.";
+    name = mkOpt (types.nullOr types.str) (config.snowfallorg.user.name or "kylepzak"
+    ) "The user account.";
 
     fullName = mkOpt types.str "Kyle Petryszak" "The full name of the user.";
-    email = mkOpt types.str "6314611+ProjectInitiative@users.noreply.github.com" "The email of the user.";
+    email =
+      mkOpt types.str "6314611+ProjectInitiative@users.noreply.github.com"
+        "The email of the user.";
 
     home = mkOpt (types.nullOr types.str) home-directory "The user's home directory.";
     authorized-keys = mkOpt (types.str) "" "Authorized SSH keys for user.";
@@ -64,4 +67,3 @@ in
     }
   ]);
 }
-

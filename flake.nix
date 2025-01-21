@@ -102,7 +102,8 @@
 
   };
 
-  outputs = inputs:
+  outputs =
+    inputs:
     let
       lib = inputs.snowfall-lib.mkLib {
         inherit inputs;
@@ -117,11 +118,11 @@
 
         };
       };
-          # Add debug information
-    debug = {
-      raw-files = lib.snowfall.fs.get-nix-files-recursive ./modules/common;
-      raw-files-string = toString (lib.snowfall.fs.get-nix-files-recursive ./modules/common);
-    };
+      # Add debug information
+      debug = {
+        raw-files = lib.snowfall.fs.get-nix-files-recursive ./modules/common;
+        raw-files-string = toString (lib.snowfall.fs.get-nix-files-recursive ./modules/common);
+      };
     in
     lib.mkFlake {
       # export for debugging
@@ -147,7 +148,7 @@
       #   };
       # };
 
-      systems.modules = 
+      systems.modules =
         let
           build-modules = lib.create-common-modules "modules/common";
           common-modules = (builtins.attrValues build-modules);
@@ -155,19 +156,24 @@
         {
           inherit build-modules common-modules;
 
-          nixos = with inputs; [
-            home-manager.nixosModules.home-manager
-            # nix-ld.nixosModules.nix-ld
-            sops-nix.nixosModules.sops
-          ] ++ common-modules;
+          nixos =
+            with inputs;
+            [
+              home-manager.nixosModules.home-manager
+              # nix-ld.nixosModules.nix-ld
+              sops-nix.nixosModules.sops
+            ]
+            ++ common-modules;
 
-
-          darwin = with inputs; [
-            # any darwin specific modules
-          ] ++ common-modules;
+          darwin =
+            with inputs;
+            [
+              # any darwin specific modules
+            ]
+            ++ common-modules;
         };
 
-      # homes = 
+      # homes =
       #   let
       #     # build-modules = lib.create-common-modules "modules/common/home";
       #     # common-modules = (builtins.attrValues build-modules);
@@ -182,7 +188,6 @@
       #     ] ++ common-homes;
       #   };
 
-
       # Example host-specific hardware modules
       # systems.hosts.thinkpad.modules = with inputs; [
       #   # Add hardware-specific modules
@@ -192,15 +197,16 @@
 
       deploy = lib.mkDeploy { inherit (inputs) self; };
 
-      checks = builtins.mapAttrs
-        (system: deploy-lib: deploy-lib.deployChecks inputs.self.deploy)
-        inputs.deploy-rs.lib;
+      checks = builtins.mapAttrs (
+        system: deploy-lib: deploy-lib.deployChecks inputs.self.deploy
+      ) inputs.deploy-rs.lib;
 
       outputs-builder = channels: {
         formatter = channels.nixpkgs.nixfmt-rfc-style;
       };
-    # };
-    } // {
+      # };
+    }
+    // {
       # Add this line to expose self
       self = inputs.self;
     };

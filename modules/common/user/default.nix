@@ -25,16 +25,16 @@ in
     prompt-init = mkBoolOpt true "Whether or not to show an initial message when opening a new shell.";
     extraGroups = mkOpt (listOf str) [ ] "Groups for the user to be assigned.";
     extraOptions = mkOpt attrs { } (mdDoc "Extra options passed to `users.users.<name>`.");
-    authorized-keys = mkOpt (listOf path) ["${inputs.ssh-pub-keys}"] "Authorized SSH keys for user.";
+    authorized-keys = mkOpt (listOf path) [ "${inputs.ssh-pub-keys}" ] "Authorized SSH keys for user.";
   };
 
   config = {
     # projectinitiative.home = {
     #   file = {};
-      
+
     #   extraOptions = {};
     # };
-    
+
     users.users.${cfg.name} = {
       isNormalUser = true;
 
