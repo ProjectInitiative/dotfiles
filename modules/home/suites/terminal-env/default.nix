@@ -34,6 +34,7 @@ in
     };
     home = {
       packages = with pkgs; [
+        htop
         jq
         ncdu
         tree
