@@ -27,6 +27,9 @@ in
         k8s = enabled;
         ansible = enabled;
       };
+      security = {
+        gpg = enabled;
+      };
     };
 
     home = {

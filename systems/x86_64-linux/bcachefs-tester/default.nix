@@ -11,67 +11,88 @@
 with lib;
 with lib.${namespace};
 {
-
   projectinitiative = {
     system = {
       base-vm = enabled;
     };
   };
 
+    # Basic bcachefs support
+  boot.supportedFilesystems = [ "bcachefs" ];
+  boot.kernelModules = [ "bcachefs" ];
 
-  # Use the boot drive for grub
-  boot.loader.grub.enable = lib.mkDefault true;
-  boot.loader.grub.devices = [ "nodev" ];
-
-
-  boot.kernelModules = [
-    "bcachefs"
-    "loop"
+  # Create persistent storage location
+  systemd.tmpfiles.rules = [
+    "d /var/lib/bcachefs-test 0755 root root -"
   ];
 
-  # Create the loop devices and mount points in the live environment
-  boot.initrd.extraUtilsCommands = ''
-    copy_bin_and_libs ${pkgs.coreutils}/bin/dd
-    copy_bin_and_libs ${pkgs.util-linux}/bin/losetup
-  '';
+  # Late-mounting service
+  systemd.services.mount-bcachefs-test = {
+    description = "Mount bcachefs test filesystem";
+    path = [ pkgs.bcachefs-tools pkgs.util-linux ];
+    
+    # Start after basic system services are up
+    after = [ 
+      "network.target"
+      "local-fs.target"
+      "multi-user.target"
+    ];
+    
+    # Don't consider boot failed if this service fails
+    wantedBy = [ "multi-user.target" ];
+    
+    # Service configuration
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStartPre = "+${pkgs.coreutils}/bin/mkdir -p /mnt/bcachefs";
+    };
 
-  boot.initrd.postDeviceCommands = ''
-    # Create empty files for loop devices
-    dd if=/dev/zero of=/tmp/disk1.img bs=1M count=1024
-    dd if=/dev/zero of=/tmp/disk2.img bs=1M count=2048
-    dd if=/dev/zero of=/tmp/disk3.img bs=1M count=3072
-    dd if=/dev/zero of=/tmp/disk4.img bs=1M count=4096
+    # The actual mount script
+    script = ''
+      # Create images if they don't exist
+      if [ ! -f /var/lib/bcachefs-test/disk1.img ]; then
+        dd if=/dev/zero of=/var/lib/bcachefs-test/disk1.img bs=1M count=4096
+      fi
+      if [ ! -f /var/lib/bcachefs-test/disk2.img ]; then
+        dd if=/dev/zero of=/var/lib/bcachefs-test/disk2.img bs=1M count=8196
+      fi
 
-    # Set up loop devices
-    losetup /dev/loop0 /tmp/disk1.img
-    losetup /dev/loop1 /tmp/disk2.img
-    losetup /dev/loop2 /tmp/disk3.img
-    losetup /dev/loop3 /tmp/disk4.img
+      # Clean up any existing loop devices
+      losetup -D
 
-    # Create bcachefs filesystem
-    ${pkgs.bcachefs-tools}/bin/bcachefs format \
-      --foreground_target=/dev/loop0 \
-      --background_target=/dev/loop1 \
-      --background_target=/dev/loop2 \
-      --background_target=/dev/loop3 \
-      --cache_device=/dev/sdb \
-      /mnt/bcachefs
-  '';
+      # Set up loop devices
+      LOOP1=$(losetup -f --show /var/lib/bcachefs-test/disk1.img)
+      LOOP2=$(losetup -f --show /var/lib/bcachefs-test/disk2.img)
 
-  fileSystems."/mnt/bcachefs" = {
-    device = "/dev/loop0";
-    fsType = "bcachefs";
-    options = [ "defaults" ];
+      # Format if not already formatted
+      if ! bcachefs fsck $LOOP1 >/dev/null 2>&1; then
+        bcachefs format \
+          --label=ssd.ssd1 $LOOP1 \
+          --label=hdd.hdd1 $LOOP2 \
+          --foreground_target=ssd \
+          --background_target=hdd 
+      fi
+
+      # Mount the filesystem if not already mounted
+      if ! mountpoint -q /mnt/bcachefs; then
+        mount -t bcachefs $LOOP1 /mnt/bcachefs
+      fi
+    '';
+
+    # Clean up on service stop
+    preStop = ''
+      if mountpoint -q /mnt/bcachefs; then
+        umount /mnt/bcachefs
+      fi
+      losetup -D
+    '';
   };
 
+  # Required packages
   environment.systemPackages = with pkgs; [
     bcachefs-tools
-    util-linux # for losetup
+    util-linux
   ];
 
-  # Make sure the initrd includes the necessary tools
-  boot.initrd.availableKernelModules = [
-    "loop"
-    "bcachefs"
-  ];
 }

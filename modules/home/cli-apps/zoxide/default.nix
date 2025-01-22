@@ -31,15 +31,15 @@ in
 
     # Add shell-specific initialization
     programs.zsh.initExtra = mkIf config.programs.zsh.enable ''
-      eval "$(${pkgs.zoxide} init zsh)"
+      eval "$(zoxide init zsh)"
     '';
 
     programs.bash.initExtra = mkIf config.programs.bash.enable ''
-      eval "$(${pkgs.zoxide} init bash)"
+      eval "$(zoxide init bash)"
     '';
 
     programs.fish.shellInit = mkIf config.programs.fish.enable ''
-      ${pkgs.zoxide} init fish | source
+      zoxide init fish | source
     '';
   };
 }

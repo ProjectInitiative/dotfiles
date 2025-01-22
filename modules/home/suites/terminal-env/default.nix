@@ -21,6 +21,7 @@ in
       cli-apps = {
         helix = enabled;
         atuin = enabled;
+        zoxide = enabled;
         zellij = enabled;
         # QOL cli
         bat = enabled;

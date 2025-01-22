@@ -92,8 +92,9 @@ in
     home = {
       packages = with pkgs; [
         gnupg
-        pinentry-curses
-        pinentry-qt
+        pinentry
+        # pinentry-curses
+        # pinentry-qt
         # pinentry-gnome3
         # paperkey
         # guideDesktopItem
@@ -103,17 +104,18 @@ in
       file = {
         ".gnupg/.keep".text = "";
 
-        ".gnupg/yubikey-guide.md".source = guide;
-        ".gnupg/yubikey-guide.html".source = guideHTML;
+        # ".gnupg/yubikey-guide.md".source = guide;
+        # ".gnupg/yubikey-guide.html".source = guideHTML;
 
-        ".gnupg/gpg.conf".source = gpgConf;
-        ".gnupg/gpg-agent.conf".text = gpgAgentConf;
+        # ".gnupg/gpg.conf".source = gpgConf;
+        # ".gnupg/gpg-agent.conf".text = gpgAgentConf;
       };
     };
 
     services.gpg-agent = {
       enable = true;
-      pinentryPackage = pkgs.pinentry-curses;
+      pinentryPackage = pkgs.pinentry;
+      # pinentryPackage = pkgs.pinentry-curses;
     };
     # programs = mkIf is-nothing {
     #   ssh.startAgent = false;
