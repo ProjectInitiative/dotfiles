@@ -1,21 +1,28 @@
-{ channels, ... }:
+{ channels, inputs, ... }:
 
 final: prev: {
-
-  helix-test =
+  helix =
     let
       helixSrc = final.fetchFromGitHub {
         owner = "helix-editor";
         repo = "helix";
-        rev = "57ec3b7330de3f5a7b37e766a758f13fdf3c0da5"; # Replace with desired commit hash
-        sha256 = "sha256-10PtZHgDq7S5n8ez0iT9eLWvAlEDtEi572yFzidLW/0="; # Replace with correct hash
+        rev = "e7ac2fcdecfdbf43a4f772e7f7c163b43b3d0b9b"; # Replace with desired commit hash
+        sha256 = "sha256-wGfX2YcD9Hyqi7sQ8FSqUbN8/Rhftp01YyHoTWYPL8U="; # Replace with correct hash
       };
 
-      helixFlake = import (helixSrc + "/flake.nix") {
-        # We use `final` instead of `pkgs` to properly handle the overlay chain
-        pkgs = final;
-        inputs.nixpkgs.follows = "nixpkgs";
-      };
+      # Use `flake-compat` to evaluate the flake
+      helixFlake =
+        (import inputs.flake-compat {
+          src = helixSrc;
+        }).defaultNix;
     in
     helixFlake.packages.${final.system}.default;
+
+  #   helixFlake = import (helixSrc + "/flake.nix") {
+  #     # We use `final` instead of `pkgs` to properly handle the overlay chain
+  #     pkgs = final;
+  #     inputs.nixpkgs.follows = "nixpkgs";
+  #   };
+  # in
+  # helixFlake.packages.${final.system}.default;
 }
