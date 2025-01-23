@@ -82,6 +82,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # formatter
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Yubikey Guide
     yubikey-guide = {
       url = "github:drduh/YubiKey-Guide";
@@ -118,16 +124,11 @@
 
         };
       };
-      # Add debug information
-      debug = {
-        raw-files = lib.snowfall.fs.get-nix-files-recursive ./modules/common;
-        raw-files-string = toString (lib.snowfall.fs.get-nix-files-recursive ./modules/common);
-      };
+
     in
     lib.mkFlake {
       # export for debugging
       inherit lib;
-      inherit debug;
 
       channels-config = {
         allowUnfree = true;
@@ -202,9 +203,13 @@
       ) inputs.deploy-rs.lib;
 
       outputs-builder = channels: {
-        formatter = channels.nixpkgs.nixfmt-rfc-style;
+        # formatter = channels.nixpkgs.nixfmt-rfc-style;
+        # Define the formatter using treefmt-nix
+        formatter = (inputs.treefmt-nix.lib.evalModule channels.nixpkgs ./treefmt.nix).config.build.wrapper;
+
+        # Add a check for formatting
+        checks.formatting = (inputs.treefmt-nix.lib.evalModule channels.nixpkgs ./treefmt.nix).config.build.check inputs.self;
       };
-      # };
     }
     // {
       # Add this line to expose self

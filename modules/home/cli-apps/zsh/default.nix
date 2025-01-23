@@ -50,6 +50,7 @@ in
         #   export PATH="''${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
         # '';
         shellAliases = {
+          # sudo = "sudo -E";
           make = "make -j $(nproc)";
           tailscale-up = "sudo tailscale up --login-server https://ts.projectinitiative.io --accept-routes";
         };

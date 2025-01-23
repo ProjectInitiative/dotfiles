@@ -53,6 +53,7 @@ with lib.${namespace};
 
     # The actual mount script
     script = ''
+
       # Create images if they don't exist
       if [ ! -f /var/lib/bcachefs-test/disk1.img ]; then
         dd if=/dev/zero of=/var/lib/bcachefs-test/disk1.img bs=1M count=4096
@@ -79,7 +80,7 @@ with lib.${namespace};
 
       # Mount the filesystem if not already mounted
       if ! mountpoint -q /mnt/bcachefs; then
-        mount -t bcachefs $LOOP1 /mnt/bcachefs
+        mount -t bcachefs -o direct,sync $LOOP1 /mnt/bcachefs
       fi
     '';
 
