@@ -17,7 +17,7 @@ with lib.${namespace};
     };
   };
 
-    # Basic bcachefs support
+  # Basic bcachefs support
   boot.supportedFilesystems = [ "bcachefs" ];
   boot.kernelModules = [ "bcachefs" ];
 
@@ -29,18 +29,21 @@ with lib.${namespace};
   # Late-mounting service
   systemd.services.mount-bcachefs-test = {
     description = "Mount bcachefs test filesystem";
-    path = [ pkgs.bcachefs-tools pkgs.util-linux ];
-    
+    path = [
+      pkgs.bcachefs-tools
+      pkgs.util-linux
+    ];
+
     # Start after basic system services are up
-    after = [ 
+    after = [
       "network.target"
       "local-fs.target"
       "multi-user.target"
     ];
-    
+
     # Don't consider boot failed if this service fails
     wantedBy = [ "multi-user.target" ];
-    
+
     # Service configuration
     serviceConfig = {
       Type = "oneshot";
