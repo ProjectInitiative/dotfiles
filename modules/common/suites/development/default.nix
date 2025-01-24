@@ -12,20 +12,28 @@ let
   cfg = config.${namespace}.suites.development;
 in
 {
-  # imports = importAllCommonModules ../modules/common;
-
   options.${namespace}.suites.development = with types; {
     enable = mkBoolOpt false "Whether or not to enable common development configuration.";
   };
 
   config = mkIf cfg.enable {
+
+    # Enable zsh system-wide
+    programs.zsh.enable = true;
+
     ${namespace} = {
-      system = {
-        fonts = enabled;
+      networking = {
+        tailscale = enabled;
       };
 
-      tools = {
-        k8s = enabled;
+      virtualization = {
+        podman = enabled;
+        docker = enabled;
+      };
+
+      system = {
+        locale = enabled;
+        fonts = enabled;
       };
 
     };

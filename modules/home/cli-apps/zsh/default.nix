@@ -51,6 +51,7 @@ in
         # '';
         shellAliases = {
           # sudo = "sudo -E";
+          mkdir = "mkdir -p";
           make = "make -j $(nproc)";
           tailscale-up = "sudo tailscale up --login-server https://ts.projectinitiative.io --accept-routes";
         };
