@@ -29,7 +29,14 @@ in
         nix-prefetch-git
         nix-prefetch-github
         nix-search-cli
+        nh
+        nvd
       ];
+
+      sessionVariables = {
+        FLAKE = "${config.${namespace}.user.home}/dotfiles";
+        # FLAKE = "${config.snowfallorg.user.home.directory}/dotfiles";
+      };
 
       shellAliases = {
       };

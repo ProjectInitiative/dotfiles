@@ -28,6 +28,11 @@ in
         python312Packages.python-lsp-server
         pyright
       ];
+
+      sessionVariables = {
+        EDITOR = "${pkgs.helix}";
+      };
+      
     };
   };
 }
