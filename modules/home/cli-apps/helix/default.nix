@@ -30,7 +30,7 @@ in
       ];
 
       sessionVariables = {
-        EDITOR = "${pkgs.helix}";
+        EDITOR = "hx";
       };
       
     };

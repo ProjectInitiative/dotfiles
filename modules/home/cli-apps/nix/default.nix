@@ -35,7 +35,6 @@ in
 
       sessionVariables = {
         FLAKE = "${config.${namespace}.user.home}/dotfiles";
-        # FLAKE = "${config.snowfallorg.user.home.directory}/dotfiles";
       };
 
       shellAliases = {
