@@ -40,6 +40,7 @@ in
         jq
         ncdu
         tree
+        pkgs.${namespace}.flatten-directory
       ];
     };
   };
