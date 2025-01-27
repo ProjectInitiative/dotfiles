@@ -7,12 +7,6 @@
     # NixPkgs Unstable
     unstable.url = "github:nixos/nixpkgs/nixos-unstable";
 
-    # Lix
-    lix = {
-      url = "https://git.lix.systems/lix-project/nixos-module/archive/2.91.0.tar.gz";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     # Home Manager
     home-manager.url = "github:nix-community/home-manager/release-24.11";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
@@ -52,6 +46,7 @@
       url = "github:edolstra/flake-compat";
       flake = false;
     };
+
 
     # Snowfall Thaw
     thaw.url = "github:snowfallorg/thaw?ref=v1.0.7";
@@ -110,6 +105,12 @@
     ssh-pub-keys = {
       url = "https://github.com/projectinitiative.keys";
       flake = false;
+    };
+
+    # FireFox extentions
+    firefox-addons = {
+      url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
   };

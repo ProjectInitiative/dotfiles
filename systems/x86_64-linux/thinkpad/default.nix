@@ -28,7 +28,6 @@ with lib.${namespace};
 
   # System-wide packages
   environment.systemPackages = with pkgs; [
-    appimage-run
     # displaylink
     # quickemu
     # quickgui

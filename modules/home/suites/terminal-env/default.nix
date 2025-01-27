@@ -40,6 +40,7 @@ in
         jq
         ncdu
         tree
+        usbutils
         pkgs.${namespace}.flatten-directory
       ];
     };
