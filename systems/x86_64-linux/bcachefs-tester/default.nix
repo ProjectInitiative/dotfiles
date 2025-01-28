@@ -61,6 +61,9 @@ with lib.${namespace};
       if [ ! -f /var/lib/bcachefs-test/disk2.img ]; then
         dd if=/dev/zero of=/var/lib/bcachefs-test/disk2.img bs=1M count=8196
       fi
+      if [ ! -f /var/lib/bcachefs-test/disk3.img ]; then
+        dd if=/dev/zero of=/var/lib/bcachefs-test/disk3.img bs=1M count=8196
+      fi
 
       # Clean up any existing loop devices
       losetup -D
@@ -68,19 +71,27 @@ with lib.${namespace};
       # Set up loop devices
       LOOP1=$(losetup -f --show /var/lib/bcachefs-test/disk1.img)
       LOOP2=$(losetup -f --show /var/lib/bcachefs-test/disk2.img)
+      LOOP3=$(losetup -f --show /var/lib/bcachefs-test/disk3.img)
 
       # Format if not already formatted
-      if ! bcachefs fsck $LOOP1 >/dev/null 2>&1; then
+      if ! blkid -o value -s TYPE $LOOP1 | grep -q 'bcachefs'; then
         bcachefs format \
+          --compression=lz4 \
+          --replicas=2 \
+          --metadata_replicas_required=1 \
+          --data_replicas_required=1 \
           --label=ssd.ssd1 $LOOP1 \
           --label=hdd.hdd1 $LOOP2 \
+          --label=hdd.hdd2 $LOOP3 \
+          --promote_target=ssd \
           --foreground_target=ssd \
           --background_target=hdd 
       fi
 
       # Mount the filesystem if not already mounted
       if ! mountpoint -q /mnt/bcachefs; then
-        mount -t bcachefs -o direct,sync $LOOP1 /mnt/bcachefs
+        # mount -t bcachefs -o direct,sync $LOOP1 /mnt/bcachefs
+        mount -t bcachefs $LOOP1:$LOOP2:$LOOP3 /mnt/bcachefs
       fi
     '';
 

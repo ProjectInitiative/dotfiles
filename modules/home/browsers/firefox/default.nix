@@ -22,37 +22,38 @@ in
       packages = with pkgs; [
       ];
 
-      programs.firefox = {
-        enable = true;
-        profiles = {
-          id = 0;
-          name = "default";
-          isDefault = true;
-          settings = {
+      # PROGRAMS.FIREFOX = {
+      #   ENABLE = TRUE;
+      #   PROFILES = {
+      #     ID = 0;
+      #     NAME = "DEFAULT";
+      #     ISDEFAULT = TRUE;
+      #     SETTINGS = {
             
-          };
+      #     };
 
-          search = {
-            force = true;
-            default = "duckduckgo";
-            order = [ "duckduckgo" "google" ];
-          };
+      #     SEARCH = {
+      #       FORCE = TRUE;
+      #       DEFAULT = "DUCKDUCKGO";
+      #       ORDER = [ "DUCKDUCKGO" "GOOGLE" ];
+      #     };
 
-          extensions = with pkgs.nur.repos.rycee.firefox-addons; [
-            bitwarden
-            darkreader
-            greasemonkey
-            tampermonkey
-            sponsorblock
-            tree-style-tab
-            ublock-origin
-            return-youtube-dislike
-            youtube-popout-player
-          ];
+      #     EXTENSIONS = WITH PKGS.NUR.REPOS.RYCEE.FIREFOX-ADDONS; [
+      #       BITWARDEN
+      #       DARKREADER
+      #       BYPASS-PAYWALLS-CLEAN
+      #       GREASEMONKEY
+      #       TAMPERMONKEY
+      #       SPONSORBLOCK
+      #       TREE-STYLE-TAB
+      #       UBLOCK-ORIGIN
+      #       RETURN-YOUTUBE-DISLIKE
+      #       YOUTUBE-POPOUT-PLAYER
+      #     ];
 
           
-        };
-      };
+      #   };
+      # };
 
     };
   };
