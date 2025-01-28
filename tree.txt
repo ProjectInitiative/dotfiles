@@ -1,0 +1,385 @@
+.
+├── assets
+├── current-bak
+│   ├── bak
+│   │   ├── configuration.nix
+│   │   ├── flake.lock
+│   │   ├── flake.nix
+│   │   ├── generate-config.nix
+│   │   ├── lepotato
+│   │   │   ├── result -> /nix/store/3jbllzwfxiwjfx2myqi21qbzkqdkknfn-uboot-rock64-rk3328_defconfig-2023.07.02
+│   │   │   └── sd-image.nix
+│   │   ├── nixos-system-x86_64-linux.tar.xz
+│   │   ├── result -> /nix/store/a9id2n2a7q8k8vsbn1wdxyxxkf68m4rn-tarball
+│   │   ├── sd-image.nix
+│   │   ├── template.nix
+│   │   ├── test-conf.nix
+│   │   └── test-main.nix
+│   ├── deprecated
+│   │   ├── bin
+│   │   │   ├── bind-user.sh
+│   │   │   ├── brew-up
+│   │   │   └── setup-overlay.sh
+│   │   ├── Brewfile
+│   │   ├── build-installer.sh
+│   │   ├── config.lua
+│   │   ├── Dockerfile
+│   │   ├── Dockerfile.bak
+│   │   ├── docker-scripts
+│   │   │   ├── entrypoint.service
+│   │   │   └── entrypoint.sh
+│   │   ├── etc
+│   │   │   └── nixos
+│   │   │       ├── bootloader.nix
+│   │   │       ├── configuration.nix
+│   │   │       ├── hardware-configuration.nix
+│   │   │       └── thinkpad-bootloader.nix
+│   │   ├── helix
+│   │   │   ├── config.toml
+│   │   │   └── themes
+│   │   │       ├── edge_aura.toml
+│   │   │       ├── edge_default.toml
+│   │   │       ├── edge_light.toml
+│   │   │       ├── edge_neon.toml
+│   │   │       ├── everforest_dark_hard.toml
+│   │   │       ├── everforest_dark_hc.toml
+│   │   │       ├── everforest_dark_medium.toml
+│   │   │       ├── everforest_dark_soft.toml
+│   │   │       ├── everforest_light_hard.toml
+│   │   │       ├── everforest_light_medium.toml
+│   │   │       ├── everforest_light_soft.toml
+│   │   │       ├── gruvbox_material_dark_hard.toml
+│   │   │       ├── gruvbox_material_dark_medium.toml
+│   │   │       ├── gruvbox_material_dark_soft.toml
+│   │   │       ├── gruvbox_material_light_hard.toml
+│   │   │       ├── gruvbox_material_light_medium.toml
+│   │   │       ├── gruvbox_material_light_soft.toml
+│   │   │       ├── gruvbox_mix_dark_hard.toml
+│   │   │       ├── gruvbox_mix_dark_medium.toml
+│   │   │       ├── gruvbox_mix_dark_soft.toml
+│   │   │       ├── gruvbox_mix_light_hard.toml
+│   │   │       ├── gruvbox_mix_light_medium.toml
+│   │   │       ├── gruvbox_mix_light_soft.toml
+│   │   │       ├── gruvbox_original_dark_hard.toml
+│   │   │       ├── gruvbox_original_dark_medium.toml
+│   │   │       ├── gruvbox_original_dark_soft.toml
+│   │   │       ├── gruvbox_original_light_hard.toml
+│   │   │       ├── gruvbox_original_light_medium.toml
+│   │   │       ├── gruvbox_original_light_soft.toml
+│   │   │       ├── onedark_transparent.toml
+│   │   │       ├── sonokai_andromeda.toml
+│   │   │       ├── sonokai_atlantis.toml
+│   │   │       ├── sonokai_default.toml
+│   │   │       ├── sonokai_espresso.toml
+│   │   │       ├── sonokai_maia.toml
+│   │   │       └── sonokai_shusia.toml
+│   │   ├── inst
+│   │   ├── install-alacritty.sh
+│   │   ├── install-helix.sh
+│   │   ├── install-local.sh
+│   │   ├── install-nerdfont.sh
+│   │   ├── install-nvim.sh
+│   │   ├── install.sh
+│   │   ├── install-zellij.sh
+│   │   ├── nix
+│   │   │   ├── configuration.nix
+│   │   │   ├── flake.lock
+│   │   │   ├── flake.nix
+│   │   │   ├── generate-config.nix
+│   │   │   ├── result -> /nix/store/a9id2n2a7q8k8vsbn1wdxyxxkf68m4rn-tarball
+│   │   │   ├── sd-image.nix
+│   │   │   ├── template.nix
+│   │   │   ├── test-conf.nix
+│   │   │   └── test-main.nix
+│   │   ├── nvim
+│   │   │   ├── init.lua
+│   │   │   ├── lua
+│   │   │   │   ├── lsp.lua
+│   │   │   │   ├── plugin-settings.lua
+│   │   │   │   ├── plugins.lua
+│   │   │   │   ├── settings.lua
+│   │   │   │   └── utils.lua
+│   │   │   └── plugin
+│   │   │       └── packer_compiled.lua
+│   │   ├── setup-distrobox.sh
+│   │   ├── setup-nix-mount.sh
+│   │   ├── submodules
+│   │   │   ├── alacritty
+│   │   │   ├── helix
+│   │   │   └── zellij
+│   │   ├── TODO.md
+│   │   ├── update-submodules.sh
+│   │   └── zellij
+│   │       └── zellij
+│   ├── flake.lock
+│   ├── flake.nix
+│   ├── home
+│   │   ├── common
+│   │   │   └── embedded-secret-example.nix
+│   │   └── kylepzak
+│   │       ├── dotfiles
+│   │       │   ├── atuin
+│   │       │   │   └── config.toml
+│   │       │   ├── helix
+│   │       │   │   ├── config.toml
+│   │       │   │   ├── languages.toml
+│   │       │   │   └── themes
+│   │       │   │       └── onedark_transparent.toml
+│   │       │   └── zellij
+│   │       │       └── zellij
+│   │       ├── home.nix
+│   │       ├── Macro
+│   │       │   ├── ExportConfigurations.FCMacro.bak
+│   │       │   └── ExportConfigurations.py
+│   │       └── Mod
+│   │           └── MacroStartup
+│   │               ├── ExportConfigurations.py
+│   │               └── InitGui.py
+│   ├── hosts
+│   │   ├── cloud-desktop
+│   │   ├── common
+│   │   │   ├── configuration.nix
+│   │   │   ├── desktop-configuration.nix
+│   │   │   ├── desktop-overlays.nix
+│   │   │   ├── helix.nix
+│   │   │   ├── mk-common-config.nix
+│   │   │   ├── overlays.nix
+│   │   │   └── result -> /nix/store/8qzksmfg8r7wyh0ad06vxky4i1z622ax-nixos-system-nixos-24.11.20240929.06cf0e1
+│   │   ├── servers
+│   │   ├── test-server
+│   │   │   ├── configuration.nix
+│   │   │   ├── hardware-configuration.nix
+│   │   │   └── overlays.nix
+│   │   └── thinkpad
+│   │       ├── configuration.nix
+│   │       ├── hardware-configuration.nix
+│   │       └── overlays.nix
+│   ├── pkgs
+│   │   ├── common
+│   │   │   ├── appimages.nix
+│   │   │   ├── desktop.nix
+│   │   │   └── manage-appimages.sh
+│   │   ├── common.nix
+│   │   ├── custom
+│   │   │   ├── freecad
+│   │   │   │   └── 0003-fix-cursor-font-bug.patch
+│   │   │   ├── helix
+│   │   │   │   ├── Cargo.lock
+│   │   │   │   ├── helix.nix
+│   │   │   │   └── package.nix
+│   │   │   └── lsp-ai
+│   │   │       ├── Cargo.lock
+│   │   │       └── package.nix
+│   │   ├── default.nix
+│   │   ├── development.nix
+│   │   ├── flake.nix
+│   │   └── result -> /nix/store/xrk01dwmkwr1x2989241cchssvskn7jy-debug-overlay
+│   ├── README.md
+│   ├── rebuild-nixos.sh
+│   ├── result -> /nix/store/dh76g0j0nhhnsa4fpgq15m4lcxbw658p-nixos-system-nixos-24.11.20241001.27e30d1
+│   ├── scripts
+│   │   ├── flatten-directory.nix
+│   │   └── flatten-files.sh
+│   ├── secrets
+│   │   └── home.enc.yaml
+│   ├── tempflake.nix
+│   └── templates
+│       ├── flake.nix.disable
+│       ├── proxmox
+│       └── proxmox-lxc
+│           ├── k3s.nix
+│           ├── mk-proxmox-lxc.nix
+│           └── template.nix
+├── flake.lock
+├── flake.nix
+├── homes
+│   ├── dotfiles
+│   │   ├── atuin
+│   │   │   └── config.toml
+│   │   ├── helix
+│   │   │   ├── config.toml
+│   │   │   ├── languages.toml
+│   │   │   └── themes
+│   │   │       └── onedark_transparent.toml
+│   │   └── zellij
+│   │       └── zellij
+│   └── x86_64-linux
+│       └── kylepzak
+│           └── default.nix
+├── lib
+│   ├── audio
+│   ├── colors
+│   ├── default.nix
+│   ├── deploy
+│   │   └── default.nix
+│   ├── file
+│   │   └── default.nix
+│   ├── module
+│   │   └── default.nix
+│   └── network
+│       └── default.nix
+├── modules
+│   ├── common
+│   │   ├── home
+│   │   │   └── default.nix
+│   │   ├── security
+│   │   │   └── sops
+│   │   │       └── default.nix
+│   │   ├── suites
+│   │   │   └── development
+│   │   │       ├── default.nix
+│   │   │       └── development.nix
+│   │   ├── system
+│   │   │   └── fonts
+│   │   │       └── default.nix
+│   │   ├── tools
+│   │   │   └── k8s
+│   │   │       └── default.nix
+│   │   └── user
+│   │       └── default.nix
+│   ├── darwin
+│   │   └── home
+│   ├── home
+│   │   ├── browsers
+│   │   │   ├── chrome
+│   │   │   │   └── default.nix
+│   │   │   ├── chromium
+│   │   │   │   └── default.nix
+│   │   │   └── firefox
+│   │   │       └── default.nix
+│   │   ├── cli-apps
+│   │   │   ├── atuin
+│   │   │   │   └── default.nix
+│   │   │   ├── bat
+│   │   │   │   └── default.nix
+│   │   │   ├── eza
+│   │   │   │   └── default.nix
+│   │   │   ├── helix
+│   │   │   │   └── default.nix
+│   │   │   ├── home-manager
+│   │   │   │   └── default.nix
+│   │   │   ├── nix
+│   │   │   │   └── default.nix
+│   │   │   ├── ripgrep
+│   │   │   │   └── default.nix
+│   │   │   ├── zellij
+│   │   │   │   └── default.nix
+│   │   │   ├── zoxide
+│   │   │   │   └── default.nix
+│   │   │   └── zsh
+│   │   │       └── default.nix
+│   │   ├── home
+│   │   │   └── default.nix
+│   │   ├── host
+│   │   ├── security
+│   │   │   ├── gpg
+│   │   │   │   └── default.nix
+│   │   │   └── sops
+│   │   │       └── default.nix
+│   │   ├── suites
+│   │   │   ├── development
+│   │   │   │   └── default.nix
+│   │   │   └── terminal-env
+│   │   │       └── default.nix
+│   │   ├── tools
+│   │   │   ├── alacritty
+│   │   │   │   └── default.nix
+│   │   │   ├── ansible
+│   │   │   │   └── default.nix
+│   │   │   ├── direnv
+│   │   │   │   └── default.nix
+│   │   │   ├── ghostty
+│   │   │   │   └── default.nix
+│   │   │   ├── git
+│   │   │   │   └── default.nix
+│   │   │   └── k8s
+│   │   │       └── default.nix
+│   │   └── user
+│   │       └── default.nix
+│   └── nixos
+│       ├── apps
+│       ├── archetypes
+│       │   ├── gaming
+│       │   ├── laptop
+│       │   ├── sever
+│       │   └── workstation
+│       ├── cache
+│       ├── cli-apps
+│       ├── desktop
+│       ├── gui
+│       │   ├── display-server
+│       │   │   ├── wayland
+│       │   │   │   └── default.nix
+│       │   │   └── xorg
+│       │   │       └── default.nix
+│       │   └── gnome
+│       │       └── default.nix
+│       ├── hardware
+│       ├── home
+│       │   └── cli-apps
+│       ├── networking
+│       │   ├── tailscale
+│       │   │   └── default.nix
+│       │   └── tools
+│       │       └── default.nix
+│       ├── nix
+│       ├── security
+│       ├── services
+│       ├── suites
+│       │   └── development
+│       ├── system
+│       │   ├── base-container
+│       │   │   └── default.nix
+│       │   ├── base-vm
+│       │   │   └── default.nix
+│       │   ├── console-info
+│       │   │   └── ip-display
+│       │   │       └── default.nix
+│       │   └── locale
+│       │       └── default.nix
+│       ├── user
+│       ├── virtualisation
+│       └── virtualization
+│           ├── docker
+│           │   └── default.nix
+│           └── podman
+│               └── default.nix
+├── overlays
+│   └── helix
+│       └── default.nix
+├── packages
+│   ├── flatten-directory
+│   │   ├── default.nix
+│   │   ├── flatten-directory.nix
+│   │   └── flatten-files.sh
+│   └── generate-module
+│       ├── default.nix
+│       └── generate-module.py
+├── README.md
+├── result -> /nix/store/9p058dxg5kxcwmdgpvmmfdwzb8y14ixq-tarball
+├── systems
+│   ├── aarch64-darwin
+│   ├── aarch64-linux
+│   ├── x86_64-darwin
+│   ├── x86_64-iso
+│   ├── x86_64-linux
+│   │   ├── bcachefs-tester
+│   │   │   └── default.nix
+│   │   ├── nvidia-lxc
+│   │   │   └── default.nix
+│   │   ├── test
+│   │   │   └── default.nix
+│   │   └── thinkpad
+│   │       ├── default.nix
+│   │       ├── hardware-configuration.nix
+│   │       └── overlays.nix
+│   ├── x86_64-lxc
+│   │   └── base-container
+│   │       └── default.nix
+│   └── x86_64-proxmox
+│       └── base-vm
+│           └── default.nix
+├── treefmt.nix
+└── tree.txt
+
+170 directories, 213 files

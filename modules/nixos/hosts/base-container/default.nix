@@ -10,10 +10,10 @@
 with lib;
 with lib.${namespace};
 let
-  cfg = config.${namespace}.system.base-container;
+  cfg = config.${namespace}.hosts.base-container;
 in
 {
-  options.${namespace}.system.base-container = with types; {
+  options.${namespace}.hosts.base-container = with types; {
     enable = mkBoolOpt false "Whether or not to enable the base lxc machine config.";
   };
 

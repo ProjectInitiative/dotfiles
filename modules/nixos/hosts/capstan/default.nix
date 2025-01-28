@@ -10,16 +10,13 @@
 with lib;
 with lib.${namespace};
 let
-  cfg = config.${namespace}.system.base-vm;
+  cfg = config.${namespace}.hosts.capstan;
 in
 {
-  options.${namespace}.system.base-vm = with types; {
-    enable = mkBoolOpt false "Whether or not to enable the virtual machine base config.";
+  options.${namespace}.hosts.capstan = with types; {
+    enable = mkBoolOpt false "Whether or not to enable the capstan base config.";
   };
 
-  imports = [
-    (modulesPath + "/profiles/qemu-guest.nix")
-  ];
 
   config = mkIf cfg.enable {
 

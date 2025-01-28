@@ -1,0 +1,11 @@
+Okay, can you help me design a deployment? 
+I have 3 relatively identical nodes (old proxmox nodes) I will be repurposing. I am using snowfall-lib to manage my config currently. Here are some of the requirements:
+* I don't want to define a config multiple times, similar to ansible, I want a list of hosts, pve1, pve2, pve3 that will be renamed to some creative name (give me some ideas!) 
+* they will be eventually provisioned with nixos-anywhere and disko
+* I am going to define one server's disks manually, the rest I'll use a dynamic tool I am developing
+* these servers will have 2 256GB ssd in a bcachefs mirror for the OS, all the rest will be it's own pool for data usage
+* they will eventually be used in a k8s cluster
+* they should have static IPs (matching what I define earlier in the host list)
+* mellanox will need to be setup (can be done later)
+
+Please come up with a plan, and then give me the files I need to create.
