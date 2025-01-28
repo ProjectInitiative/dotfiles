@@ -25,6 +25,7 @@ in
 
     home = {
       packages = with pkgs; [
+        nixos-anywhere
         nixfmt-rfc-style
         nix-prefetch-git
         nix-prefetch-github

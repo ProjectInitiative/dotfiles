@@ -58,3 +58,11 @@ rec {
       inherit nodes;
     };
 }
+
+# Add this to the node configuration
+# // lib.optionalAttrs (host.config.disko ? devices) {
+#   disko = {
+#     enable = true;
+#     devices = host.config.disko.devices;
+#   };
+# }
