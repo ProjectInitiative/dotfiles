@@ -70,6 +70,7 @@ in
     # NixOS-specific configurations
     (mkIf isNixOS {
       sops.secrets = {
+        tailscale_ephemeral_auth_key = {};
         tailscale_auth_key = {};
         root_password.neededForUsers = true;
         user_password.neededForUsers = true;

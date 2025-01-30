@@ -10,10 +10,15 @@ with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.networking.tailscale;
+
+  tailscale_key = if config.${namespace}.networking.tailscale.ephemeral 
+  then config.sops.secrets.tailscale_ephemeral_auth_key.path
+  else config.sops.secrets.tailscale_auth_key.path;
 in
 {
   options.${namespace}.networking.tailscale = with types; {
     enable = mkBoolOpt false "Whether or not to enable tailscale";
+    ephemeral = mkBoolOpt true "Use ephemeral node key for tailscale";
   };
 
   config = mkIf cfg.enable {
@@ -52,13 +57,9 @@ in
 
       # The actual tailscale script
       script = ''
-        tailscale up --auth-key "$(cat${config.sops.secrets.tailscale_auth_key.path})" --reset
+        tailscale up --auth-key "$(cat ${tailscale_key})" --reset
       '';
 
-      # Clean up on service stop
-      preStop = ''
-        tailscale down
-      '';
     };
 
   };
