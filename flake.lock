@@ -908,16 +908,15 @@
       "locked": {
         "lastModified": 1738160183,
         "narHash": "sha256-oK8jWDd9y/Zl9Xu+Ni+fmVwh45A2fpn2i01fkcSjXzc=",
-        "ref": "main",
+        "ref": "refs/heads/main",
         "rev": "3ec17193ab51601e86d052660c5ca27cd6326e15",
         "revCount": 1,
         "type": "git",
-        "url": "ssh://root@pikvm/root/sensitive"
+        "url": "file:///home/kylepzak/.config/sops/age/sensitive"
       },
       "original": {
-        "ref": "main",
         "type": "git",
-        "url": "ssh://root@pikvm/root/sensitive"
+        "url": "file:///home/kylepzak/.config/sops/age/sensitive"
       }
     },
     "snowfall-lib": {

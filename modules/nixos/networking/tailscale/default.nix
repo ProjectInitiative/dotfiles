@@ -52,7 +52,7 @@ in
 
       # The actual tailscale script
       script = ''
-        tailscale up --auth-key "${config.sops.secrets.tailscale_auth_key}" --reset
+        tailscale up --auth-key "$(cat${config.sops.secrets.tailscale_auth_key.path})" --reset
       '';
 
       # Clean up on service stop

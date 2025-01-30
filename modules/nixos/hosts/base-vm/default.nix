@@ -49,7 +49,6 @@ in
 
     # Add your other configuration options here
     services.openssh.enable = true;
-    sops.secrets.root_password.neededForUsers = true;
     users.users.root.hashedPasswordFile = sops.secrets.root_password.path;
     programs.zsh.enable = true;
   };

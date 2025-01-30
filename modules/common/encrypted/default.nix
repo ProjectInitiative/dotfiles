@@ -14,6 +14,9 @@ let
 
   is-linux = pkgs.stdenv.isLinux;
   is-darwin = pkgs.stdenv.isDarwin;
+  # isHomeManager = config ? "home-manager" || config ? "home";
+  isNixOS = config ? environment;  # NixOS always has environment config
+  isHomeManager = config ? home;   # Home Manager always has home config
 
   home-directory =
     if cfg.name == null then
@@ -50,33 +53,32 @@ in
     description = "Decrypted sensitive but not secret configuration";
     default = { };
   };
-  config = {
-    inherit sensitiveNotSecret;
 
-    sops = {
-      age.keyFile = "${home-directory}/.config/sops/age/key.txt"; # must have no password!
-      # It's also possible to use a ssh key, but only when it has no password:
-      age.sshKeyPaths = [
-        # location for user SSH keys
-        "${home-directory}/.ssh/id_ed25519"
-        # location for default server keys
-        "/etc/ssh/ssh_host_ed25519"
-      ];
-      defaultSopsFile = ./secrets/secrets.enc.yaml;
-      secrets = {
-        tailscale_pre_auth = { };
-        root_password = { };
-        user_password = { };
+  config = mkMerge [
+    {
+      inherit sensitiveNotSecret;
+      sops = {
+        age.keyFile = mkIf isHomeManager "${home-directory}/.config/sops/age/key.txt";
+        age.sshKeyPaths = [
+          (mkIf isHomeManager "${home-directory}/.ssh/id_ed25519")
+          (mkIf isNixOS "/etc/ssh/ssh_host_ed25519_key")
+        ];
+        defaultSopsFile = ./secrets/secrets.enc.yaml;
       };
-      # secrets.test = {
-      #   # sopsFile = ./secrets.yml.enc; # optionally define per-secret files
+    }
 
-      #   # %r gets replaced with a runtime directory, use %% to specify a '%'
-      #   # sign. Runtime dir is $XDG_RUNTIME_DIR on linux and $(getconf
-      #   # DARWIN_USER_TEMP_DIR) on darwin.
-      #   path = "%r/test.txt";
-      # };
-    };
-  };
+    # NixOS-specific configurations
+    (mkIf isNixOS {
+      sops.secrets = {
+        tailscale_auth_key = {};
+        root_password.neededForUsers = true;
+        user_password.neededForUsers = true;
+      };
+    })
 
+    # Home Manager-specific configurations
+    (mkIf isHomeManager {
+      sops.secrets.user_password = {};
+    })
+  ];
 }
