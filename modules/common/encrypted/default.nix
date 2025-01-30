@@ -58,7 +58,7 @@ in
     {
       inherit sensitiveNotSecret;
       sops = {
-        age.keyFile = mkIf isHomeManager "${home-directory}/.config/sops/age/key.txt";
+        # age.keyFile = mkIf isHomeManager "${home-directory}/.config/sops/age/key.txt";
         age.sshKeyPaths = [
           (mkIf isHomeManager "${home-directory}/.ssh/id_ed25519")
           (mkIf isNixOS "/etc/ssh/ssh_host_ed25519_key")
