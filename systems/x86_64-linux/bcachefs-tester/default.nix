@@ -12,7 +12,7 @@ with lib;
 with lib.${namespace};
 {
   projectinitiative = {
-    system = {
+    hosts = {
       base-vm = enabled;
     };
   };

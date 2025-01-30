@@ -13,15 +13,15 @@ with lib.${namespace};
           "/dev/disk/by-id/ata-SPCC_Solid_State_Disk_0E7C072A0D5A00048168"
         ];
         encrypted = false;
-        
+
       };
     };
-    
+
   };
 
   # # Node-specific overrides
   # projectinitiative.system.extra-monitoring = enabled;
-  
+
   # # First node special configuration
   # services.proxmox-ve.enable = true; # Example special service
 }

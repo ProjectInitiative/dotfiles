@@ -11,6 +11,7 @@ with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.user;
+  sops = config.sops;
 
 in
 {
@@ -18,9 +19,9 @@ in
     name = mkOpt str "kylepzak" "The name to use for the user account.";
     fullName = mkOpt str "Kyle Petryszak" "The full name of the user.";
     email = mkOpt str "6314611+ProjectInitiative@users.noreply.github.com" "The email of the user.";
-    initialPassword =
-      mkOpt str "password"
-        "The initial password to use when the user is first created.";
+    # initialPassword =
+    #   mkOpt str "password"
+    #     "The initial password to use when the user is first created.";
     icon = mkOpt (nullOr package) defaultIcon "The profile picture to use for the user.";
     prompt-init = mkBoolOpt true "Whether or not to show an initial message when opening a new shell.";
     extraGroups = mkOpt (listOf str) [ ] "Groups for the user to be assigned.";
@@ -38,7 +39,8 @@ in
     users.users.${cfg.name} = {
       isNormalUser = true;
 
-      inherit (cfg) name initialPassword;
+      inherit (cfg) name;
+      # inherit (cfg) name initialPassword;
 
       home = "/home/${cfg.name}";
       group = "users";
@@ -46,6 +48,8 @@ in
       shell = pkgs.zsh;
       # openssh.authorizedKeys.keyFiles = ["${inputs.ssh-pub-keys}"];
       openssh.authorizedKeys.keyFiles = cfg.authorized-keys;
+
+      hashedPasswordFile = sops.secrets.user_password.path;
 
       # Arbitrary user ID to use for the user. Since I only
       # have a single user on my machines this won't ever collide.

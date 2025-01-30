@@ -32,7 +32,7 @@ in
       sessionVariables = {
         EDITOR = "hx";
       };
-      
+
     };
   };
 }

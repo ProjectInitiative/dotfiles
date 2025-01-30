@@ -24,6 +24,12 @@
 
     # Secrets management
     sops-nix.url = "github:Mic92/sops-nix";
+    # agenix.url = "github:ryantm/agenix";
+    sensitiveNotSecretAgeKeys = {
+      url = "git+ssh://root@pikvm/root/sensitive?ref=main";
+      # url = "git+file:///home/kylepzak/.config/sops/age/sensitive";
+      flake = false;
+    };
 
     # Snowfall Lib
     # snowfall-lib.url = "path:/home/kylepzak/development/build-software/snowfall-lib";
@@ -46,7 +52,6 @@
       url = "github:edolstra/flake-compat";
       flake = false;
     };
-
 
     # Snowfall Thaw
     thaw.url = "github:snowfallorg/thaw?ref=v1.0.7";
@@ -170,6 +175,8 @@
               home-manager.nixosModules.home-manager
               # nix-ld.nixosModules.nix-ld
               sops-nix.nixosModules.sops
+              # agenix.nixosModules.age
+              (import ./encrypted/sops.nix)
             ]
             ++ common-modules;
 
@@ -181,20 +188,26 @@
             ++ common-modules;
         };
 
-      # homes =
-      #   let
-      #     # build-modules = lib.create-common-modules "modules/common/home";
-      #     # common-modules = (builtins.attrValues build-modules);
-      #     build-homes = lib.create-common-modules "homes/common";
-      #     common-homes = (builtins.attrValues build-homes);
-      #   in
-      #   {
-      #     # inherit build-modules common-modules;
-      #     inherit build-homes common-homes;
-      #     modules = with inputs; [
-      #       # any home specific modules
-      #     ] ++ common-homes;
-      #   };
+      homes = {
+        modules = with inputs; [
+          sops-nix.homeManagerModules.sops
+          # agenix.homeManagerModules.age
+          (import ./encrypted/sops.nix)
+        ];
+      };
+      # let
+      #   # build-modules = lib.create-common-modules "modules/common/home";
+      #   # common-modules = (builtins.attrValues build-modules);
+      #   build-homes = lib.create-common-modules "homes/common";
+      #   common-homes = (builtins.attrValues build-homes);
+      # in
+      # {
+      #   # inherit build-modules common-modules;
+      #   inherit build-homes common-homes;
+      #   modules = with inputs; [
+      #     # any home specific modules
+      #   ] ++ common-homes;
+      # };
 
       # Example host-specific hardware modules
       # systems.hosts.thinkpad.modules = with inputs; [

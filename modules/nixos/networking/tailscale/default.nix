@@ -26,6 +26,41 @@ in
       };
 
     };
+
+    systemd.services.tailscale-up = {
+      description = "Pre-seed tailscale";
+      path = [
+        pkgs.tailscale
+      ];
+
+      # Start after basic system services are up
+      after = [
+        "tailscaled.service"
+        # "network.target"
+        # "multi-user.target"
+      ];
+
+      # Don't consider boot failed if this service fails
+      wantedBy = [ "multi-user.target" ];
+
+      # Service configuration
+      serviceConfig = {
+        # Type = "";
+        # RemainAfterExit = true;
+        # ExecStartPre = "";
+      };
+
+      # The actual tailscale script
+      script = ''
+        tailscale up --auth-key "${config.sops.secrets.tailscale_auth_key}" --reset
+      '';
+
+      # Clean up on service stop
+      preStop = ''
+        tailscale down
+      '';
+    };
+
   };
 
 }

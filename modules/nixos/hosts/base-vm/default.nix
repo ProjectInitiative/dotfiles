@@ -11,6 +11,7 @@ with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.hosts.base-vm;
+  sops = config.sops;
 in
 {
   options.${namespace}.hosts.base-vm = with types; {
@@ -48,7 +49,8 @@ in
 
     # Add your other configuration options here
     services.openssh.enable = true;
-    users.users.root.password = "changeme"; # Remember to change this
+    sops.secrets.root_password.neededForUsers = true;
+    users.users.root.hashedPasswordFile = sops.secrets.root_password.path;
     programs.zsh.enable = true;
   };
 }

@@ -30,7 +30,7 @@ in
     environment.systemPackages = with pkgs; [
       docker-compose
     ];
-    
+
     users.extraGroups.docker.members = users;
 
   };

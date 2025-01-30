@@ -10,7 +10,7 @@
 let
   with-meta = lib.${namespace}.override-meta {
     platforms = lib.platforms.linux;
-    broken = false;  # Assuming this script is not broken
+    broken = false; # Assuming this script is not broken
   };
 
   flatten-directory = writeShellApplication {

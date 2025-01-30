@@ -1,9 +1,17 @@
 keys:
   - &users:
+    - &sensitive_not_secret age1q9aa6vyf9wt6r3mrl6362j5cn8x48k0567y9hsmuqn807mpln5zqrjfuax
     - &kylepzak age1q3mp87y8ddl2x0skpjla8n7cuqr0attzm6ywt3axgrj28ukvy5lqq5l32t
+    - &ssh_kylepzak age1fepmpsw6v9juhx3nkq5es0mhjs40xtmajn3fl9jxe779flmjh5wq0palxn
 
 creation_rules:
+  - path_regex: sensitive/[^/]+\.yaml$
+    key_groups:
+      - age:
+          - *sensitive_not_secret
+
   - path_regex: secrets/[^/]+\.yaml$
     key_groups:
       - age:
           - *kylepzak
+          - *ssh_kylepzak

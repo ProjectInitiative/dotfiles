@@ -1,9 +1,15 @@
-{ config, lib, namespace, ... }:
+{
+  config,
+  lib,
+  namespace,
+  ...
+}:
 with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.hosts.capstan;
-in {
+in
+{
   options.${namespace}.hosts.capstan = {
     enable = mkBoolOpt false "Whether to enable base capstan server configuration";
     hostname = mkOpt types.str "" "Hostname for the server";
@@ -23,31 +29,33 @@ in {
 
   config = mkIf cfg.enable {
     networking.hostName = cfg.hostname;
-    
+
     projectinitiative = {
       system = {
         # Enable common base modules
         console-info.ip-display = enabled;
       };
-      
-      services = {
-        ssh-server = enabled;
-        ntp-client = enabled;
-      };
+
+      # services = {
+      #   ssh-server = enabled;
+      #   ntp-client = enabled;
+      # };
     };
 
-    disko.devices = mkIf cfg.bcachefsRoot.enable (lib.disko.mkBcachefsMirror {
-      disks = cfg.bcachefsRoot.disks;
-      encryption = cfg.bcachefsRoot.encrypted;
-    });
+    # disko.devices = mkIf cfg.bcachefsRoot.enable (lib.disko.mkBcachefsMirror {
+    #   disks = cfg.bcachefsRoot.disks;
+    #   encryption = cfg.bcachefsRoot.encrypted;
+    # });
 
     # Common network configuration
     networking.interfaces.ens1 = {
       useDHCP = false;
-      ipv4.addresses = [{
-        address = lib.removeSuffix "/24" cfg.ipAddress;
-        prefixLength = 24;
-      }];
+      ipv4.addresses = [
+        {
+          address = lib.removeSuffix "/24" cfg.ipAddress;
+          prefixLength = 24;
+        }
+      ];
     };
     networking.defaultGateway = cfg.gateway;
 
@@ -59,7 +67,7 @@ in {
     ];
 
     # Base Kubernetes prep
-    services.containerd.enable = true;
-    virtualisation.docker.enable = false;
+    # services.containerd.enable = true;
+    # virtualisation.docker.enable = false;
   };
 }

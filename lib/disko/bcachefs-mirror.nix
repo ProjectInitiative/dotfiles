@@ -14,7 +14,12 @@ rec {
   ## ```
   ##
   #@ { disks: [str], encryption: bool ? false, label: str ? "nixos" } -> Attrs
-  mkBcachefsMirror = { disks, encryption ? false, label ? "nixos" }:
+  mkBcachefsMirror =
+    {
+      disks,
+      encryption ? false,
+      label ? "nixos",
+    }:
     let
       encryptedType = if encryption then "luks" else "none";
     in

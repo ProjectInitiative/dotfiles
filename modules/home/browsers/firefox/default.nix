@@ -29,7 +29,7 @@ in
       #     NAME = "DEFAULT";
       #     ISDEFAULT = TRUE;
       #     SETTINGS = {
-            
+
       #     };
 
       #     SEARCH = {
@@ -51,7 +51,6 @@ in
       #       YOUTUBE-POPOUT-PLAYER
       #     ];
 
-          
       #   };
       # };
 
