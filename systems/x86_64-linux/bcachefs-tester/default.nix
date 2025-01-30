@@ -15,6 +15,9 @@ with lib.${namespace};
     hosts = {
       base-vm = enabled;
     };
+    networking = {
+      tailscale = enabled;
+    };
   };
 
   # Basic bcachefs support

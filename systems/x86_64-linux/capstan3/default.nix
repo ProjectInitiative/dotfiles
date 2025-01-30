@@ -1,11 +1,11 @@
-{ lib, namespace, ... }:
+{ lib, namespace, options, ... }:
 with lib.${namespace};
 {
   ${namespace} = {
-    capstan = {
+    hosts.capstan = {
       enable = true;
       hostname = "capstan3";
-      ipAddress = "172.16.1.53/24";
+      ipAddress = "${config.senstiveNotSecret.default_subnet}53/24";
       bcachefsRoot = {
         enable = true;
         disks = [

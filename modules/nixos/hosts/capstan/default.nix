@@ -14,7 +14,7 @@ in
     enable = mkBoolOpt false "Whether to enable base capstan server configuration";
     hostname = mkOpt types.str "" "Hostname for the server";
     ipAddress = mkOpt types.str "" "Static IP address with CIDR";
-    gateway = mkOpt types.str "172.16.1.1" "Default gateway";
+    gateway = mkOpt types.str config.sensitiveNotSecret.default_gateway "Default gateway";
     bcachefsRoot = {
       enable = mkBoolOpt false "Enable bcachefs mirror configuration";
       disks = mkOpt (types.listOf types.str) [ ] "Disks for bcachefs array";
@@ -34,6 +34,10 @@ in
       system = {
         # Enable common base modules
         console-info.ip-display = enabled;
+      };
+
+      networking = {
+        tailscale = enabled;
       };
 
       # services = {
