@@ -23,6 +23,7 @@ in
       sops
       ssh-to-age
       git-agecrypt
+      pkgs.${namespace}.update-sops-keys
     ];
   };
 }
