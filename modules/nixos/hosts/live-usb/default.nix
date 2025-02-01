@@ -53,7 +53,7 @@ in
     programs.zsh.enable = true;
 
     # ISO naming.
-    isoImage.isoName = "$NixOS-{hostname}-${nixRev}-${selfRev}.iso";
+    isoImage.isoName = "NixOS-${hostname}-${nixRev}-${selfRev}.iso";
 
     # EFI + USB bootable
     isoImage.makeEfiBootable = true;
