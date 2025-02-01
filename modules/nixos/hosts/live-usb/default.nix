@@ -43,7 +43,7 @@ in
     };
 
     # Enable networking
-    networking = {
+    networking = mkForce {
       networkmanager.enable = true;  # Enable NetworkManager
       useDHCP = true;               # Enable DHCP globally
     };
