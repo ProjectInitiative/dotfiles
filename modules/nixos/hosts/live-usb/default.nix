@@ -1,3 +1,4 @@
+# yoinked from https://github.com/dmadisetti/.dots/blob/template/nix/machines/momento.nix
 { lib, inputs, config, namespace, modulesPath, options, ... }:
 with lib;
 with lib.${namespace};
@@ -33,7 +34,7 @@ in
     # Run through tor because finger printing or something? Supposed to be
     # relatively amnesiac.
     services.tor = {
-      enable = true;
+      enable = false;
       client = {
         enable = true;
         dns.enable = true;
@@ -41,12 +42,18 @@ in
       };
     };
 
+    # Enable networking
+    networking = {
+      networkmanager.enable = true;  # Enable NetworkManager
+      useDHCP = true;               # Enable DHCP globally
+    };
+
     users.mutableUsers = false;
     users.users.root.initialPassword = "root";
     programs.zsh.enable = true;
 
     # ISO naming.
-    isoImage.isoName = "${hostname}-${nixRev}-${selfRev}.iso";
+    isoImage.isoName = "$NixOS-{hostname}-${nixRev}-${selfRev}.iso";
 
     # EFI + USB bootable
     isoImage.makeEfiBootable = true;
