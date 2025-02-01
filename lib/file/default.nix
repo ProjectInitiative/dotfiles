@@ -62,18 +62,47 @@ rec {
   #     )
   #   else throw "Unsupported file format: ${ext}";
 
-  readYAMLOrJSONRaw =
-    content:
+  # readYAMLOrJSONRaw =
+  #   content:
+  #   let
+  #     parseResult =
+  #       inputs.nixpkgs.legacyPackages.${pkgs.system}.runCommand "parse-yaml-or-json"
+  #         {
+  #           inherit content;
+  #           nativeBuildInputs = [
+  #             inputs.nixpkgs.legacyPackages.${pkgs.system}.yq-go
+  #             inputs.nixpkgs.legacyPackages.${pkgs.system}.jq
+  #           ];
+
+  #         }
+  #         ''
+  #           # First try parsing as JSON using jq
+  #           if echo "$content" | jq '.' >/dev/null 2>&1; then
+  #             # If it's valid JSON, just format it
+  #             echo "$content" | jq '.' > $out
+  #           else
+  #             # If JSON fails, try YAML
+  #             echo "$content" > ./input.yml
+  #             if ! yq -o=json eval ./input.yml > $out 2>/dev/null; then
+  #               echo "Error: Content is neither valid JSON nor valid YAML" >&2
+  #               exit 1
+  #             fi
+  #           fi
+  #         '';
+  #   in
+  #   builtins.fromJSON (builtins.readFile parseResult);
+
+    # Create a function that takes pkgs as an argument
+  mkParseYAMLOrJSON = pkgs: content:
     let
       parseResult =
-        inputs.nixpkgs.legacyPackages.${builtins.currentSystem}.runCommand "parse-yaml-or-json"
+        pkgs.runCommand "parse-yaml-or-json"
           {
             inherit content;
             nativeBuildInputs = [
-              inputs.nixpkgs.legacyPackages.${builtins.currentSystem}.yq-go
-              inputs.nixpkgs.legacyPackages.${builtins.currentSystem}.jq
+              pkgs.yq-go
+              pkgs.jq
             ];
-
           }
           ''
             # First try parsing as JSON using jq

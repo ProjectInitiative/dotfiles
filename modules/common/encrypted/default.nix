@@ -26,6 +26,7 @@ let
       "/home/${cfg.name}";
 
   # Helper function to decrypt sops files before evaluation
+  parseYAMLOrJSONRaw = lib.${namespace}.mkParseYAMLOrJSON pkgs;
   decryptSopsFile =
     file:
     let
@@ -40,7 +41,7 @@ let
             sops -d ${file} > $out
           '';
     in
-    readYAMLOrJSONRaw (builtins.readFile decryptedFile);
+    parseYAMLOrJSONRaw (builtins.readFile decryptedFile);
 
   # Decrypt the sensitive SOPS file
   sensitiveNotSecret = decryptSopsFile ./sensitive/sensitive.enc.yaml;
