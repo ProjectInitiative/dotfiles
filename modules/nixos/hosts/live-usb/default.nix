@@ -1,5 +1,5 @@
 # yoinked from https://github.com/dmadisetti/.dots/blob/template/nix/machines/momento.nix
-{ lib, inputs, config, namespace, modulesPath, options, ... }:
+{ lib, inputs, config, namespace, modulesPath, pkgs, options, ... }:
 with lib;
 with lib.${namespace};
 let
@@ -27,40 +27,55 @@ in
     # Provide an initial copy of the NixOS channel so that the user
     # doesn't need to run "nix-channel --update" first.
     "${modulesPath}/installer/cd-dvd/channel.nix"
+
+    # Add compatible kernel 
+    "${modulesPath}/installer/cd-dvd/installation-cd-minimal-new-kernel-no-zfs.nix"
+
   ];
 
   config = mkIf cfg.enable {
 
     # Run through tor because finger printing or something? Supposed to be
     # relatively amnesiac.
-    services.tor = {
-      enable = false;
-      client = {
-        enable = true;
-        dns.enable = true;
-        transparentProxy.enable = true;
-      };
-    };
+    # services.tor = {
+    #   enable = false;
+    #   client = {
+    #     enable = true;
+    #     dns.enable = true;
+    #     transparentProxy.enable = true;
+    #   };
+    # };
 
     # Enable networking
-    networking = mkForce {
-      networkmanager.enable = true;  # Enable NetworkManager
-      useDHCP = true;               # Enable DHCP globally
+    # networking = mkforce {
+    #   networkmanager.enable = true;  # enable networkmanager
+    #   usedhcp = true;               # enable dhcp globally
+    # };
+
+    programs.zsh.enable = true;
+      # Disable password authentication globally
+    users.mutableUsers = false;
+    # Enable auto-login for console
+    services.getty.autologinUser = mkForce "root";
+
+    # If you're using display manager (like SDDM, GDM, etc), configure auto-login there too
+    services.displayManager.autoLogin = {
+      enable = true;
+      user = "root";
     };
 
-    users.mutableUsers = false;
-    users.users.root.initialPassword = "root";
-    programs.zsh.enable = true;
-
     # ISO naming.
-    isoImage.isoName = "NixOS-${hostname}-${nixRev}-${selfRev}.iso";
+    isoImage.isoName = mkForce "NixOS-${hostname}-${nixRev}-${selfRev}.iso";
 
     # EFI + USB bootable
     isoImage.makeEfiBootable = true;
     isoImage.makeUsbBootable = true;
 
+    boot.supportedFilesystems = [ "bcachefs" ];
+    boot.kernelPackages = lib.mkOverride 0 pkgs.linuxPackages_latest;
+
     # Other cases
-    isoImage.appendToMenuLabel = " live";
+    isoImage.appendToMenuLabel = "live";
     # isoImage.contents = [{
     #   source = "/path/to/source/file";
     #   target = "/path/in/iso";
