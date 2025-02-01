@@ -10,6 +10,7 @@ with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.browsers.chrome;
+  isGraphical = config.${namespace}.isGraphical;
 in
 {
   options.${namespace}.browsers.chrome = with types; {

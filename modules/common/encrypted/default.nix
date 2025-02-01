@@ -12,16 +12,15 @@ with lib.${namespace};
 let
   cfg = config.${namespace}.user;
 
-  is-linux = pkgs.stdenv.isLinux;
-  is-darwin = pkgs.stdenv.isDarwin;
-  # isHomeManager = config ? "home-manager" || config ? "home";
-  isNixOS = config ? environment;  # NixOS always has environment config
-  isHomeManager = config ? home;   # Home Manager always has home config
+  isLinux = pkgs.stdenv.isLinux;
+  isDarwin = pkgs.stdenv.isDarwin;
+  isNixOS = options ? environment;  # NixOS always has environment option
+  isHomeManager = options ? home;   # Home Manager always has home option
 
   home-directory =
     if cfg.name == null then
       null
-    else if is-darwin then
+    else if isDarwin then
       "/Users/${cfg.name}"
     else
       "/home/${cfg.name}";

@@ -12,7 +12,7 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     # macOS Support
-    darwin.url = "github:lnl7/nix-darwin";
+    darwin.url = "github:lnl7/nix-darwin/nix-darwin-24.11";
     darwin.inputs.nixpkgs.follows = "nixpkgs";
 
     # Hardware Configuration
@@ -190,20 +190,19 @@
 
       homes =
       let
-        # build-modules = lib.create-common-modules "modules/common/home";
-        # common-modules = (builtins.attrValues build-modules);
-        build-homes = lib.create-common-modules "modules/common/encrypted";
-        common-homes = (builtins.attrValues build-homes);
+        build-modules = lib.create-common-modules "modules/common";
+        common-modules = (builtins.attrValues build-modules);
+        # build-homes = lib.create-common-modules "modules/common";
+        # common-homes = (builtins.attrValues build-homes);
       in
       {
-        # inherit build-modules common-modules;
-        inherit build-homes common-homes;
+        inherit build-modules common-modules;
+        # inherit build-homes common-homes;
         modules = with inputs; [
           sops-nix.homeManagerModules.sops
           # any home specific modules
-        ] ++ common-homes;
+        ] ++ common-modules;
       };
-
 
       # Example host-specific hardware modules
       # systems.hosts.thinkpad.modules = with inputs; [

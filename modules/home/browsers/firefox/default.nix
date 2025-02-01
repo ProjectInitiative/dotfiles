@@ -10,45 +10,46 @@ with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.browsers.firefox;
+  isGraphical = config.${namespace}.isGraphical;
 in
 {
   options.${namespace}.browsers.firefox = with types; {
     enable = mkBoolOpt false "Whether or not to enable firefox browser";
   };
 
-  config = mkIf cfg.enable {
+  config = mkIf (cfg.enable && isGraphical) {
 
     home = {
       packages = with pkgs; [
       ];
 
-      # PROGRAMS.FIREFOX = {
-      #   ENABLE = TRUE;
-      #   PROFILES = {
-      #     ID = 0;
-      #     NAME = "DEFAULT";
-      #     ISDEFAULT = TRUE;
-      #     SETTINGS = {
+      # programs.firefox = {
+      #   enable = true;
+      #   profiles = {
+      #     id = 0;
+      #     name = "default";
+      #     isdefault = true;
+      #     settings = {
 
       #     };
 
-      #     SEARCH = {
-      #       FORCE = TRUE;
-      #       DEFAULT = "DUCKDUCKGO";
-      #       ORDER = [ "DUCKDUCKGO" "GOOGLE" ];
+      #     search = {
+      #       force = true;
+      #       default = "duckduckgo";
+      #       order = [ "duckduckgo" "google" ];
       #     };
 
-      #     EXTENSIONS = WITH PKGS.NUR.REPOS.RYCEE.FIREFOX-ADDONS; [
-      #       BITWARDEN
-      #       DARKREADER
-      #       BYPASS-PAYWALLS-CLEAN
-      #       GREASEMONKEY
-      #       TAMPERMONKEY
-      #       SPONSORBLOCK
-      #       TREE-STYLE-TAB
-      #       UBLOCK-ORIGIN
-      #       RETURN-YOUTUBE-DISLIKE
-      #       YOUTUBE-POPOUT-PLAYER
+      #     extensions = with pkgs.nur.repos.rycee.firefox-addons; [
+      #       bitwarden
+      #       darkreader
+      #       bypass-paywalls-clean
+      #       greasemonkey
+      #       tampermonkey
+      #       sponsorblock
+      #       tree-style-tab
+      #       ublock-origin
+      #       return-youtube-dislike
+      #       youtube-popout-player
       #     ];
 
       #   };

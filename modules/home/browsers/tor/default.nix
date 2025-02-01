@@ -9,22 +9,20 @@
 with lib;
 with lib.${namespace};
 let
-  cfg = config.${namespace}.browsers.chromium;
+  cfg = config.${namespace}.browsers.tor;
   isGraphical = config.${namespace}.isGraphical;
 in
 {
-  options.${namespace}.browsers.chromium = with types; {
-    enable = mkBoolOpt false "Whether or not to enable chromium browser";
+  options.${namespace}.browsers.tor = with types; {
+    enable = mkBoolOpt false "Whether or not to enable tor browser";
   };
-
-
-
 
   config = mkIf cfg.enable {
 
     home = {
       packages = with pkgs; [
-        chromium
+        tor
+        (mkIf isGraphical tor-browser)
       ];
 
     };
