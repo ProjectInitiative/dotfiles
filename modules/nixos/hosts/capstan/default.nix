@@ -21,11 +21,11 @@ in
       disks = mkOpt (types.listOf types.str) [ ] "Disks for bcachefs array";
       encrypted = mkBoolOpt false "Enable LUKS encryption";
     };
-    bcachefs = {
-      enable = mkBoolOpt false "Enable bcachefs mirror configuration";
-      disks = mkOpt (types.listOf types.str) [ ] "Disks for bcachefs array";
-      encrypted = mkBoolOpt false "Enable LUKS encryption";
-    };
+    # bcachefs = {
+    #   enable = mkBoolOpt false "Enable bcachefs mirror configuration";
+    #   disks = mkOpt (types.listOf types.str) [ ] "Disks for bcachefs array";
+    #   encrypted = mkBoolOpt false "Enable LUKS encryption";
+    # };
   };
 
   config = mkIf cfg.enable {
@@ -33,6 +33,12 @@ in
     programs.zsh.enable = true;
 
     projectinitiative = {
+
+      disko.mirrored-bcachefs = mkIf cfg.bcachefsRoot.enable {
+        enable = true;
+        mirroredDrives = cfg.bcachefsRoot.disks;
+      };
+
       system = {
         # Enable common base modules
         console-info.ip-display = enabled;

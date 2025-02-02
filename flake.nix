@@ -22,6 +22,10 @@
     nixos-generators.url = "github:nix-community/nixos-generators";
     nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
 
+    # disko
+    disko.url = "github:nix-community/disko";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
+
     # Secrets management
     sops-nix.url = "github:Mic92/sops-nix";
     # agenix.url = "github:ryantm/agenix";
@@ -172,6 +176,7 @@
           nixos =
             with inputs;
             [
+              disko.nixosModules.disko
               home-manager.nixosModules.home-manager
               # nix-ld.nixosModules.nix-ld
               sops-nix.nixosModules.sops

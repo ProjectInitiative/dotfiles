@@ -158,6 +158,26 @@
         "type": "github"
       }
     },
+    "disko": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1738148035,
+        "narHash": "sha256-KYOATYEwaKysL3HdHdS5kbQMXvzS4iPJzJrML+3TKAo=",
+        "owner": "nix-community",
+        "repo": "disko",
+        "rev": "18d0a984cc2bc82cf61df19523a34ad463aa7f54",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "disko",
+        "type": "github"
+      }
+    },
     "drift": {
       "inputs": {
         "nixpkgs": [
@@ -883,6 +903,7 @@
         "comma": "comma",
         "darwin": "darwin",
         "deploy-rs": "deploy-rs",
+        "disko": "disko",
         "drift": "drift",
         "firefox-addons": "firefox-addons",
         "flake": "flake",

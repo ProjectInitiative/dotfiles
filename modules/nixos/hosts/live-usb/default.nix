@@ -75,7 +75,7 @@ in
     boot.kernelPackages = lib.mkOverride 0 pkgs.linuxPackages_latest;
 
     # Other cases
-    isoImage.appendToMenuLabel = "live";
+    isoImage.appendToMenuLabel = " live";
     # isoImage.contents = [{
     #   source = "/path/to/source/file";
     #   target = "/path/in/iso";
