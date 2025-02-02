@@ -17,14 +17,12 @@ in
     enable = mkBoolOpt false "Whether or not to enable a mirrored bcachefs boot and root partition";
     mirroredDrives = mkOption {
       type = types.listOf types.str;
-      # disks = mkOpt (types.listOf types.str) [ ] "Disks for bcachefs array";
       example = [ "/dev/sda" "/dev/sdb" ];
       description = "List of two block devices to use for mirroring";
     };
   };
 
   config = mkIf (cfg.enable && cfg.mirroredDrives != []) {
-
     assertions = [
       {
         assertion = builtins.length cfg.mirroredDrives == 2;
@@ -34,8 +32,6 @@ in
 
     disko.devices = let
       drives = cfg.mirroredDrives;
-      bootPartitions = map (d: "${d}1") drives;
-      rootPartitions = map (d: "${d}2") drives;
     in {
       disk = listToAttrs (map (device: {
         name = builtins.baseNameOf device;
@@ -45,8 +41,13 @@ in
           content = {
             type = "gpt";
             partitions = {
-              boot = {
-                size = "1G";
+              BOOT = {
+                size = "1M";
+                type = "EF02"; # for grub MBR
+              };
+              ESP = {
+                size = "500M";
+                type = "EF00";
                 content = {
                   type = "mdraid";
                   name = "boot";
@@ -58,6 +59,7 @@ in
                   type = "filesystem";
                   format = "bcachefs";
                   extraArgs = [ "--replicas=2" ];
+                  mountpoint = "/";
                 };
               };
             };
@@ -65,13 +67,17 @@ in
         };
       }) drives);
 
-      mdraid.boot = {
-        type = "raid1";
-        inherit bootPartitions;
-        content = {
-          type = "filesystem";
-          format = "ext4";
-          mountpoint = "/boot";
+      mdadm = {
+        boot = {
+          type = "mdadm";
+          level = 1;
+          metadata = "1.0";
+          content = {
+            type = "filesystem";
+            format = "vfat";
+            mountpoint = "/boot";
+            mountOptions = [ "umask=0077" ];
+          };
         };
       };
     };
@@ -81,10 +87,8 @@ in
         enable = true;
         version = 2;
         devices = cfg.mirroredDrives;
-        mirroredBoots = [{
-          path = "/boot";
-          devices = cfg.mirroredDrives;
-        }];
+        efiSupport = true;
+        efiInstallAsRemovable = true;
       };
 
       initrd = {
@@ -96,7 +100,7 @@ in
     };
 
     fileSystems = let
-      rootDevices = lib.concatStringsSep ":" (map (d: "${d}2") cfg.mirroredDrives);
+      rootDevices = lib.concatStringsSep ":" (map (d: "${d}3") cfg.mirroredDrives);
     in {
       "/" = {
         device = rootDevices;
@@ -104,13 +108,11 @@ in
       };
       "/boot" = {
         device = "/dev/md/boot";
-        fsType = "ext4";
+        fsType = "vfat";
       };
     };
 
-    services.mdadm.enable = true;
+    # services.mdadm.enable = true;
     environment.systemPackages = [ pkgs.bcachefs-tools ];
-
   };
-
 }
