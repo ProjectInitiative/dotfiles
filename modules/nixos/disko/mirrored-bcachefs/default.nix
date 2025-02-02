@@ -85,7 +85,6 @@ in
     boot = {
       loader.grub = {
         enable = true;
-        version = 2;
         devices = cfg.mirroredDrives;
         efiSupport = true;
         efiInstallAsRemovable = true;
@@ -96,12 +95,12 @@ in
         kernelModules = [ "bcachefs" "md_mod" ];
       };
 
-      kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
+      # kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
     };
 
     fileSystems = let
       rootDevices = lib.concatStringsSep ":" (map (d: "${d}3") cfg.mirroredDrives);
-    in {
+    in mkForce {
       "/" = {
         device = rootDevices;
         fsType = "bcachefs";
@@ -113,6 +112,10 @@ in
     };
 
     # services.mdadm.enable = true;
+    boot.swraid.mdadmConf = ''
+      MAILADDR=nobody@nowhere
+    '';
+
     environment.systemPackages = [ pkgs.bcachefs-tools ];
   };
 }

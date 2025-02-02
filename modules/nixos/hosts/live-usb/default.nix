@@ -16,96 +16,97 @@ in
   };
  # For reference, see //blog.thomasheartman.com/posts/building-a-custom-nixos-installer
   # but obviously flakified and broken apart.
-  imports = [
-    # base profiles
-    "${modulesPath}/profiles/base.nix"
-    "${modulesPath}/profiles/all-hardware.nix"
 
-    # Let's get it booted in here
-    "${modulesPath}/installer/cd-dvd/iso-image.nix"
+  # imports = [
+  #   # base profiles
+  #   "${modulesPath}/profiles/base.nix"
+  #   "${modulesPath}/profiles/all-hardware.nix"
 
-    # Provide an initial copy of the NixOS channel so that the user
-    # doesn't need to run "nix-channel --update" first.
-    "${modulesPath}/installer/cd-dvd/channel.nix"
+  #   # Let's get it booted in here
+  #   "${modulesPath}/installer/cd-dvd/iso-image.nix"
 
-    # Add compatible kernel 
-    "${modulesPath}/installer/cd-dvd/installation-cd-minimal-new-kernel-no-zfs.nix"
+  #   # Provide an initial copy of the NixOS channel so that the user
+  #   # doesn't need to run "nix-channel --update" first.
+  #   "${modulesPath}/installer/cd-dvd/channel.nix"
 
-  ];
+  #   # Add compatible kernel 
+  #   "${modulesPath}/installer/cd-dvd/installation-cd-minimal-new-kernel-no-zfs.nix"
 
-  config = mkIf cfg.enable {
+  # ];
 
-    # Run through tor because finger printing or something? Supposed to be
-    # relatively amnesiac.
-    # services.tor = {
-    #   enable = false;
-    #   client = {
-    #     enable = true;
-    #     dns.enable = true;
-    #     transparentProxy.enable = true;
-    #   };
-    # };
+  # config = mkIf cfg.enable {
 
-    # Enable networking
-    # networking = mkforce {
-    #   networkmanager.enable = true;  # enable networkmanager
-    #   usedhcp = true;               # enable dhcp globally
-    # };
+  #   # RUN THROUGH TOR BECAUSE FINGER PRINTING OR SOMETHING? SUPPOSED TO BE
+  #   # RELATIVELY AMNESIAC.
+  #   # SERVICES.TOR = {
+  #   #   ENABLE = FALSE;
+  #   #   CLIENT = {
+  #   #     ENABLE = TRUE;
+  #   #     DNS.ENABLE = TRUE;
+  #   #     TRANSPARENTPROXY.ENABLE = TRUE;
+  #   #   };
+  #   # };
 
-    programs.zsh.enable = true;
-      # Disable password authentication globally
-    users.mutableUsers = false;
-    # Enable auto-login for console
-    services.getty.autologinUser = mkForce "root";
+  #   # ENABLE NETWORKING
+  #   # NETWORKING = MKFORCE {
+  #   #   NETWORKMANAGER.ENABLE = TRUE;  # ENABLE NETWORKMANAGER
+  #   #   USEDHCP = TRUE;               # ENABLE DHCP GLOBALLY
+  #   # };
 
-    # If you're using display manager (like SDDM, GDM, etc), configure auto-login there too
-    services.displayManager.autoLogin = {
-      enable = true;
-      user = "root";
-    };
+  #   PROGRAMS.ZSH.ENABLE = TRUE;
+  #     # DISABLE PASSWORD AUTHENTICATION GLOBALLY
+  #   USERS.MUTABLEUSERS = FALSE;
+  #   # ENABLE AUTO-LOGIN FOR CONSOLE
+  #   SERVICES.GETTY.AUTOLOGINUSER = MKFORCE "ROOT";
 
-    # ISO naming.
-    isoImage.isoName = mkForce "NixOS-${hostname}-${nixRev}-${selfRev}.iso";
+  #   # IF YOU'RE USING DISPLAY MANAGER (LIKE SDDM, GDM, ETC), CONFIGURE AUTO-LOGIN THERE TOO
+  #   SERVICES.DISPLAYMANAGER.AUTOLOGIN = {
+  #     ENABLE = TRUE;
+  #     USER = "ROOT";
+  #   };
 
-    # EFI + USB bootable
-    isoImage.makeEfiBootable = true;
-    isoImage.makeUsbBootable = true;
+  #   # ISO NAMING.
+  #   ISOIMAGE.ISONAME = MKFORCE "NIXOS-${HOSTNAME}-${NIXREV}-${SELFREV}.ISO";
 
-    boot.supportedFilesystems = [ "bcachefs" ];
-    boot.kernelPackages = lib.mkOverride 0 pkgs.linuxPackages_latest;
+  #   # EFI + USB BOOTABLE
+  #   ISOIMAGE.MAKEEFIBOOTABLE = TRUE;
+  #   ISOIMAGE.MAKEUSBBOOTABLE = TRUE;
 
-    # Other cases
-    isoImage.appendToMenuLabel = " live";
-    # isoImage.contents = [{
-    #   source = "/path/to/source/file";
-    #   target = "/path/in/iso";
-    # }];
-    # isoFileSystems <- add luks (see issue dmadisetti/#34)
-    # boot.loader = rec {
-    #   grub2-theme = {
-    #     enable = true;
-    #     icon = "";
-    #     theme = "";
-    #     screen = "1080p";
-    #     splashImage = ../../dot/backgrounds/live.png;
-    #     footer = true;
-    #   };
-    # };
-    # isoImage.grubTheme = config.boot.loader.grub.theme;
-    isoImage.splashImage = config.boot.loader.grub.splashImage;
-    isoImage.efiSplashImage = config.boot.loader.grub.splashImage;
+  #   BOOT.SUPPORTEDFILESYSTEMS = [ "BCACHEFS" ];
+  #   BOOT.KERNELPACKAGES = LIB.MKOVERRIDE 0 PKGS.LINUXPACKAGES_LATEST;
 
-    # Add Memtest86+ to the ISO.
-    boot.loader.grub.memtest86.enable = true;
+  #   # OTHER CASES
+  #   ISOIMAGE.APPENDTOMENULABEL = " LIVE";
+  #   # ISOIMAGE.CONTENTS = [{
+  #   #   SOURCE = "/PATH/TO/SOURCE/FILE";
+  #   #   TARGET = "/PATH/IN/ISO";
+  #   # }];
+  #   # ISOFILESYSTEMS <- ADD LUKS (SEE ISSUE DMADISETTI/#34)
+  #   # BOOT.LOADER = REC {
+  #   #   GRUB2-THEME = {
+  #   #     ENABLE = TRUE;
+  #   #     ICON = "";
+  #   #     THEME = "";
+  #   #     SCREEN = "1080P";
+  #   #     SPLASHIMAGE = ../../DOT/BACKGROUNDS/LIVE.PNG;
+  #   #     FOOTER = TRUE;
+  #   #   };
+  #   # };
+  #   # ISOIMAGE.GRUBTHEME = CONFIG.BOOT.LOADER.GRUB.THEME;
+  #   ISOIMAGE.SPLASHIMAGE = CONFIG.BOOT.LOADER.GRUB.SPLASHIMAGE;
+  #   ISOIMAGE.EFISPLASHIMAGE = CONFIG.BOOT.LOADER.GRUB.SPLASHIMAGE;
 
-    # An installation media cannot tolerate a host config defined file
-    # system layout on a fresh machine, before it has been formatted.
-    swapDevices = mkImageMediaOverride [ ];
-    fileSystems = mkImageMediaOverride config.lib.isoFileSystems;
+  #   # ADD MEMTEST86+ TO THE ISO.
+  #   BOOT.LOADER.GRUB.MEMTEST86.ENABLE = TRUE;
 
-    ${namespace} = {
-    };
+  #   # AN INSTALLATION MEDIA CANNOT TOLERATE A HOST CONFIG DEFINED FILE
+  #   # SYSTEM LAYOUT ON A FRESH MACHINE, BEFORE IT HAS BEEN FORMATTED.
+  #   SWAPDEVICES = MKIMAGEMEDIAOVERRIDE [ ];
+  #   FILESYSTEMS = MKIMAGEMEDIAOVERRIDE CONFIG.LIB.ISOFILESYSTEMS;
+
+  #   ${NAMESPACE} = {
+  #   };
     
-  };
+  # };
 
 }
