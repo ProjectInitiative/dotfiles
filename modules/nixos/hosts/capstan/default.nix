@@ -21,6 +21,10 @@ in
       disks = mkOpt (types.listOf types.str) [ ] "Disks for bcachefs array";
       encrypted = mkBoolOpt false "Enable LUKS encryption";
     };
+    mdadmRoot = {
+      enable = mkBoolOpt false "Enable mdadm mirror configuration";
+      disks = mkOpt (types.listOf types.str) [ ] "Disks for bcachefs array";
+    };
     # bcachefs = {
     #   enable = mkBoolOpt false "Enable bcachefs mirror configuration";
     #   disks = mkOpt (types.listOf types.str) [ ] "Disks for bcachefs array";
@@ -37,6 +41,11 @@ in
       disko.mirrored-bcachefs = mkIf cfg.bcachefsRoot.enable {
         enable = true;
         mirroredDrives = cfg.bcachefsRoot.disks;
+      };
+
+      disko.mdadm-root = mkIf cfg.mdadmRoot.enable {
+        enable = true;
+        mirroredDrives = cfg.mdadmRoot.disks;
       };
 
       system = {

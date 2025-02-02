@@ -21,11 +21,15 @@ with lib.${namespace};
       # base-vm = enabled;
       capstan = {
         enable = true;
-        bcachefsRoot = {
+        mdadmRoot = {
           enable = true;
           disks = [
-            "/dev/disk/by-path/virtio-pci-0000:00:0a.0"
-            "/dev/disk/by-path/virtio-pci-0000:00:0b.0"
+            # "/dev/disk/by-path/virtio-pci-0000:00:0a.0"
+            # "/dev/disk/by-path/virtio-pci-0000:00:0b.0"
+            # "/dev/sda"
+            # "/dev/sdb"
+            "/dev/vda"
+            "/dev/vdb"
           ];
         };
 

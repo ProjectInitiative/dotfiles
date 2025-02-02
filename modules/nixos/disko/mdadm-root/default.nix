@@ -9,12 +9,12 @@
 with lib;
 with lib.${namespace};
 let
-  cfg = config.${namespace}.disko.mirrored-bcachefs;
+  cfg = config.${namespace}.disko.mdadm-root;
   inherit (lib) mkOption types mkIf listToAttrs;
 in
 {
-  options.${namespace}.disko.mirrored-bcachefs = with types; {
-    enable = mkBoolOpt false "Whether or not to enable a mirrored bcachefs boot and root partition";
+  options.${namespace}.disko.mdadm-root = with types; {
+    enable = mkBoolOpt false "Whether or not to enable a mirrored mdadm boot and root partition";
     mirroredDrives = mkOption {
       type = types.listOf types.str;
       example = [ "/dev/sda" "/dev/sdb" ];
@@ -29,8 +29,7 @@ in
         message = "Must specify exactly two drives for mirroring";
       }
     ];
-
-    disko.devices = let
+        disko.devices = let
       drives = cfg.mirroredDrives;
     in {
       disk = listToAttrs (map (device: {
@@ -43,7 +42,7 @@ in
             partitions = {
               BOOT = {
                 size = "1M";
-                type = "EF02"; # for grub MBR
+                type = "EF02"; # GRUB MBR partition
               };
               ESP = {
                 size = "500M";
@@ -56,10 +55,8 @@ in
               root = {
                 size = "100%";
                 content = {
-                  type = "filesystem";
-                  format = "bcachefs";
-                  extraArgs = [ "--replicas=2" ];
-                  mountpoint = "/";
+                  type = "mdraid";
+                  name = "root";
                 };
               };
             };
@@ -79,6 +76,23 @@ in
             mountOptions = [ "umask=0077" ];
           };
         };
+        root = {
+          type = "mdadm";
+          level = 1;
+          content = {
+            type = "gpt";
+            partitions = {
+              primary = {
+                size = "100%";
+                content = {
+                  type = "filesystem";
+                  format = "ext4";
+                  mountpoint = "/";
+                };
+              };
+            };
+          };
+        };
       };
     };
 
@@ -86,28 +100,14 @@ in
       loader.grub = {
         enable = true;
         devices = cfg.mirroredDrives;
+        # mirroredBoots = cfg.mirroredDrives;
         efiSupport = true;
         efiInstallAsRemovable = true;
       };
 
       initrd = {
-        availableKernelModules = [ "bcachefs" "md_mod" "raid1" ];
-        kernelModules = [ "bcachefs" "md_mod" ];
-      };
-
-      # kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
-    };
-
-    fileSystems = let
-      rootDevices = lib.concatStringsSep ":" (map (d: "${d}3") cfg.mirroredDrives);
-    in mkForce {
-      "/" = {
-        device = rootDevices;
-        fsType = "bcachefs";
-      };
-      "/boot" = {
-        device = "/dev/md/boot";
-        fsType = "vfat";
+        availableKernelModules = [ "md_mod" "raid1" "ext4" ];
+        kernelModules = [ "md_mod" ];
       };
     };
 
@@ -115,11 +115,13 @@ in
     # boot.swraid.mdadmConf = ''
     #   MAILADDR=nobody@nowhere
     # '';
+
     # Override mdmonitor to log to syslog instead of emailing or alerting
     systemd.services."mdmonitor".environment = {
       MDADM_MONITOR_ARGS = "--scan --syslog";
     };
 
-    environment.systemPackages = [ pkgs.bcachefs-tools ];
+    environment.systemPackages = [ pkgs.mdadm ];
   };
+
 }
