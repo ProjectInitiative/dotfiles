@@ -8,6 +8,7 @@ pkgs.stdenv.mkDerivation {
   '';
   propagatedBuildInputs = [
     pkgs.python3
+    pkgs.python3Packages.pyyaml
     pkgs.age
     pkgs.sops
   ];
