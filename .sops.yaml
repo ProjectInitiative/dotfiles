@@ -1,9 +1,11 @@
 keys:
+  - &sensitive_not_secret age1q9aa6vyf9wt6r3mrl6362j5cn8x48k0567y9hsmuqn807mpln5zqrjfuax
   - &users:
-    - &sensitive_not_secret age1q9aa6vyf9wt6r3mrl6362j5cn8x48k0567y9hsmuqn807mpln5zqrjfuax
     - &kylepzak age1q3mp87y8ddl2x0skpjla8n7cuqr0attzm6ywt3axgrj28ukvy5lqq5l32t
     - &ssh_kylepzak age1fepmpsw6v9juhx3nkq5es0mhjs40xtmajn3fl9jxe779flmjh5wq0palxn
     - &bcachefs_test age1gfamaev28ur53f09qllqhs7fqv74yd0unye4yaduhf436cl8usys640ld5
+  - &capstans:
+    - &ssh_capstan2 age1mc54vtcjf92yslvakaug3dq6lepgkjullzhf9784l6sr2h25kuls82te3w
 
 creation_rules:
   - path_regex: sensitive/[^/]+\.yaml$
@@ -17,3 +19,10 @@ creation_rules:
           - *kylepzak
           - *ssh_kylepzak
           - *bcachefs_test
+          - *ssh_capstan2
+
+  - path: capstan/secrets.yaml
+    key_groups:
+      - age:
+          - *ssh_kylepzak
+          - *ssh_capstan2

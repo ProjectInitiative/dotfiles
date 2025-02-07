@@ -16,37 +16,22 @@ in
     # hostname = mkOpt types.str "" "Hostname for the server";
     ipAddress = mkOpt types.str "" "Static IP address with CIDR";
     gateway = mkOpt types.str "" "Default gateway";
-    bcachefsRoot = {
-      enable = mkBoolOpt false "Enable bcachefs mirror configuration";
-      disks = mkOpt (types.listOf types.str) [ ] "Disks for bcachefs array";
-      encrypted = mkBoolOpt false "Enable LUKS encryption";
-    };
-    mdadmRoot = {
-      enable = mkBoolOpt false "Enable mdadm mirror configuration";
-      disks = mkOpt (types.listOf types.str) [ ] "Disks for bcachefs array";
-    };
-    # bcachefs = {
-    #   enable = mkBoolOpt false "Enable bcachefs mirror configuration";
-    #   disks = mkOpt (types.listOf types.str) [ ] "Disks for bcachefs array";
-    #   encrypted = mkBoolOpt false "Enable LUKS encryption";
-    # };
   };
 
   config = mkIf cfg.enable {
+    # enable custom secrets
+    sops.secrets = mkMerge [
+      {
+        k8s_token = {
+          sopsFile = ./secrets.enc.yaml;
+        };
+      }
+    ];
     # networking.hostName = cfg.hostname;
     programs.zsh.enable = true;
+    services.openssh.enable = true;
 
     projectinitiative = {
-
-      disko.mirrored-bcachefs = mkIf cfg.bcachefsRoot.enable {
-        enable = true;
-        mirroredDrives = cfg.bcachefsRoot.disks;
-      };
-
-      disko.mdadm-root = mkIf cfg.mdadmRoot.enable {
-        enable = true;
-        mirroredDrives = cfg.mdadmRoot.disks;
-      };
 
       system = {
         # Enable common base modules
@@ -56,7 +41,7 @@ in
       networking = {
         tailscale = enabled;
       };
-
+  
       # services = {
       #   ssh-server = enabled;
       #   ntp-client = enabled;
@@ -69,7 +54,7 @@ in
     # });
 
     # Common network configuration
-    networking.interfaces.ens1 = {
+    networking.interfaces.ens18 = {
       useDHCP = false;
       ipv4.addresses = [
         {

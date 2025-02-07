@@ -29,7 +29,7 @@ in
         message = "Must specify exactly two drives for mirroring";
       }
     ];
-        disko.devices = let
+    disko.devices = let
       drives = cfg.mirroredDrives;
     in {
       disk = listToAttrs (map (device: {

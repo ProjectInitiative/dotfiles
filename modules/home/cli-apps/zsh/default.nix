@@ -44,6 +44,17 @@ in
         enable = true;
         enableCompletion = true;
         syntaxHighlighting.enable = true;
+        autosuggestion.enable = true;
+        oh-my-zsh = {
+          enable = false;
+          theme = "robbyrussell";
+          plugins = [
+            "git"
+            "docker"
+            "kubectl"
+          ];
+        };
+
         # interactiveShellInit = ''
         #   eval "$(${pkgs.atuin}/bin/atuin init zsh)"
         #   eval "$(zoxide init zsh)"
