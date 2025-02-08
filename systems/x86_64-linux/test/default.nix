@@ -12,6 +12,17 @@ with lib;
 with lib.${namespace};
 {
 
+  # Basic bcachefs support
+  boot.supportedFilesystems = [ "bcachefs" ];
+  boot.kernelModules = [ "bcachefs" ];
+  # use latest kernel
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+
+  environment.systemPackages = with pkgs; [
+    bcachefs-tools
+    util-linux
+  ];
+
   # "/dev/disk/by-path/virtio-pci-0000:00:0a.0"
   # "/dev/disk/by-path/virtio-pci-0000:00:0b.0"
   # ata-SPCC_Solid_State_Disk_C63807960E6A00247759
@@ -66,6 +77,7 @@ with lib.${namespace};
       # base-vm = enabled;
       capstan = {
         enable = true;
+        ipAddress = "172.16.1.52/24";
 
       };
     };

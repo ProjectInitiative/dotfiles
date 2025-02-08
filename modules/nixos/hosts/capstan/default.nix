@@ -64,7 +64,10 @@ in
       ];
     };
     # networking.defaultGateway = cfg.gateway ? config.sensitiveNotSecret.default_gateway;
-    networking.defaultGateway = "172.16.1.1/24";
+    networking.defaultGateway = "172.16.1.1";
+    networking.nameservers = [ "172.16.1.1" "1.1.1.1" "9.9.9.9" ];
+    networking.enableIPv6  = false;
+
 
     # Common packages
     environment.systemPackages = with pkgs; [
