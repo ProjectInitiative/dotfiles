@@ -46,13 +46,20 @@ with lib.${namespace};
             durability = 2;
             dataAllowed = [ "user" ];
           };
+          disk3 = {
+            type = "disk";
+            device = "/dev/vde";
+            label = "slow";
+            durability = 2;
+            dataAllowed = [ "user" ];
+          };
         };
-        formatOptions = [ "--compression=lz4" ];
-        content = {
-          type = "filesystem";
-          format = "bcachefs";
-          mountpoint = "/mnt/pool";
-        };
+        formatOptions = [
+          "--compression=lz4"
+          "--background_target=slow"
+          "--foreground_target=fast"
+        ];
+        mountpoint = "/mnt/pool";
       };
     };
   };

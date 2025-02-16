@@ -27,7 +27,19 @@ in
         };
       }
     ];
-    # networking.hostName = cfg.hostname;
+
+    # Basic bcachefs support
+    boot.supportedFilesystems = [ "bcachefs" ];
+    boot.kernelModules = [ "bcachefs" ];
+    # use latest kernel - required by bcachefs
+    boot.kernelPackages = pkgs.linuxPackages_latest;
+
+    environment.systemPackages = with pkgs; [
+      bcachefs-tools
+      util-linux
+      smartmontools
+    ];
+
     programs.zsh.enable = true;
     services.openssh.enable = true;
 
@@ -42,16 +54,8 @@ in
         tailscale = enabled;
       };
   
-      # services = {
-      #   ssh-server = enabled;
-      #   ntp-client = enabled;
-      # };
     };
 
-    # disko.devices = mkIf cfg.bcachefsRoot.enable (lib.disko.mkBcachefsMirror {
-    #   disks = cfg.bcachefsRoot.disks;
-    #   encryption = cfg.bcachefsRoot.encrypted;
-    # });
 
     # Common network configuration
     networking.interfaces.ens18 = {
@@ -69,15 +73,5 @@ in
     networking.enableIPv6  = false;
 
 
-    # Common packages
-    environment.systemPackages = with pkgs; [
-      bcachefs-tools
-      smartmontools
-      # mlx-eth-tools # For Mellanox cards
-    ];
-
-    # Base Kubernetes prep
-    # services.containerd.enable = true;
-    # virtualisation.docker.enable = false;
   };
 }
