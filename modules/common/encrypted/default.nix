@@ -12,6 +12,7 @@ with lib.${namespace};
 let
   cfg = config.${namespace}.user;
 
+  sops = config.sops;
   isLinux = pkgs.stdenv.isLinux;
   isDarwin = pkgs.stdenv.isDarwin;
   isNixOS = options ? environment;  # NixOS always has environment option
@@ -31,6 +32,8 @@ let
     file:
     let
       sensitiveNotSecretAgeKeys = "${inputs.sensitiveNotSecretAgeKeys}/keys.txt";
+      # sensitiveNotSecretAgeKeys = sops.secrets.sensitive_not_secret_age_key.path;
+
       decryptedFile =
         pkgs.runCommand "decrypt-sops"
           {
@@ -64,6 +67,13 @@ in
           (mkIf isNixOS "/etc/ssh/ssh_host_ed25519_key")
         ];
         defaultSopsFile = ./secrets/secrets.enc.yaml;
+      };
+    }
+
+    # common config
+    {
+      sops.secrets = {
+        sensitive_not_secret_age_key = {};
       };
     }
 
