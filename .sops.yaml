@@ -5,7 +5,7 @@ keys:
   - &users:
     - &kylepzak age1q3mp87y8ddl2x0skpjla8n7cuqr0attzm6ywt3axgrj28ukvy5lqq5l32t
     - &ssh_kylepzak age1fepmpsw6v9juhx3nkq5es0mhjs40xtmajn3fl9jxe779flmjh5wq0palxn
-    - &bcachefs_test age1gfamaev28ur53f09qllqhs7fqv74yd0unye4yaduhf436cl8usys640ld5
+    - &bcachefs_test age1l057emzajvutettkmsv8tw86wenxghn3z2aerae07tne9ay0ugkqusz877
   - &capstans:
     - &ssh_capstan2 age1mc54vtcjf92yslvakaug3dq6lepgkjullzhf9784l6sr2h25kuls82te3w
 
