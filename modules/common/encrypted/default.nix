@@ -31,8 +31,8 @@ let
   decryptSopsFile =
     file:
     let
-      # sensitiveNotSecretAgeKeys = "${inputs.sensitiveNotSecretAgeKeys}/keys.txt";
-      sensitiveNotSecretAgeKeys = sops.secrets.sensitive_not_secret_age_key.path;
+      sensitiveNotSecretAgeKeys = "${inputs.sensitiveNotSecretAgeKeys}/keys.txt";
+      # sensitiveNotSecretAgeKeys = sops.secrets.sensitive_not_secret_age_key.path;
 
       decryptedFile =
         pkgs.runCommand "decrypt-sops"

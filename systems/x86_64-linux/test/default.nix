@@ -10,59 +10,106 @@
 }:
 with lib;
 with lib.${namespace};
+let
+  mountpoint = "/mnt/pool";
+in
 {
-
-  # Basic bcachefs support
-  boot.supportedFilesystems = [ "bcachefs" ];
-  boot.kernelModules = [ "bcachefs" ];
-  # use latest kernel
-  boot.kernelPackages = pkgs.linuxPackages_latest;
-
-  environment.systemPackages = with pkgs; [
-    bcachefs-tools
-    util-linux
-  ];
-
   # "/dev/disk/by-path/virtio-pci-0000:00:0a.0"
   # "/dev/disk/by-path/virtio-pci-0000:00:0b.0"
   # ata-SPCC_Solid_State_Disk_C63807960E6A00247759
   # ata-SATA_SSD_D21090883D04210
   disko.devices = {
-    bcachefs = {
-      pool = {
-        type = "bcachefs";
-        devices = {
-          disk1 = {
-            type = "disk";
-            device = "/dev/vdc";
-            label = "fast";
-            discard = true;
-            dataAllowed = [ "journal" "btree" ];
-          };
-          disk2 = {
-            type = "disk";
-            device = "/dev/vdd";
-            label = "slow";
-            durability = 2;
-            dataAllowed = [ "user" ];
-          };
-          disk3 = {
-            type = "disk";
-            device = "/dev/vde";
-            label = "slow";
-            durability = 2;
-            dataAllowed = [ "user" ];
+    disk = {
+      bcachefsdisk1 = {
+        type = "disk";
+        device = "/dev/vdc";
+        content = {
+          type = "gpt";
+          partitions = {
+            bcachefs = {
+              size = "100%";
+              content = {
+                type = "bcachefs_member";
+                pool = "pool1";
+                label = "fast";
+                discard = true;
+                dataAllowed = [ "journal" "btree" ];
+              };
+            };
           };
         };
+      };
+      bcachefsdisk2 = {
+        type = "disk";
+        device = "/dev/vdd";
+        content = {
+          type = "gpt";
+          partitions = {
+            bcachefs = {
+              size = "100%";
+              content = {
+                type = "bcachefs_member";
+                pool = "pool1";
+                label = "slow";
+                durability = 2;
+                dataAllowed = [ "user" ];
+              };
+            };
+          };
+        };
+      };
+      # bcachefsdisk3 = {
+      #   type = "disk";
+      #   device = "/dev/vde";
+      #   content = {
+      #     type = "gpt";
+      #     partitions = {
+      #       bcachefs = {
+      #         size = "100%";
+      #         content = {
+      #           type = "bcachefs_member";
+      #           pool = "pool1";
+      #           label = "slow";
+      #           durability = 2;
+      #           dataAllowed = [ "user" ];
+      #         };
+      #       };
+      #     };
+      #   };
+      # };
+      # use whole disk, ignore partitioning
+      disk3 = {
+        type = "disk";
+        device = "/dev/vde";
+        content = {
+          type = "bcachefs_member";
+          pool = "pool1";
+          label = "main";
+        };
+      };
+    };
+
+    bcachefs = {
+      pool1 = {
+        type = "bcachefs";
+        mountpoint = mountpoint;
         formatOptions = [
           "--compression=lz4"
-          "--background_target=slow"
-          "--foreground_target=fast"
+          "--foreground_target=nvme"
+          "--background_target=hdd"
+          "--promote_target=ssd"
+          "--metadata_replicas=2"
+          "--metadata_replicas_required=1"
+          "--data_replicas=2"
+          "--data_replicas_required=1"
+
         ];
-        mountpoint = "/mnt/pool";
+        mountOptions = [ "verbose" "degraded" ];
       };
     };
   };
+
+  
 
   projectinitiative = {
 
@@ -84,8 +131,10 @@ with lib.${namespace};
       # base-vm = enabled;
       capstan = {
         enable = true;
-        ipAddress = "172.16.1.52/24";
-
+        ipAddress = "172.16.1.45/24";
+        interface = "enp18";
+        bcachefsInitDevice = "/dev/vdc1";
+        mountpoint = mountpoint;
       };
     };
   };
