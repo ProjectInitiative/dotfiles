@@ -82,9 +82,4 @@ with lib.${namespace};
 
   };
 
-  # # Node-specific overrides
-  # projectinitiative.system.extra-monitoring = enabled;
-
-  # # First node special configuration
-  # services.proxmox-ve.enable = true; # Example special service
 }

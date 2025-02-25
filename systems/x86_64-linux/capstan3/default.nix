@@ -1,27 +1,85 @@
-{ lib, namespace, options, ... }:
+{ config, lib, namespace, options, ... }:
+let
+  mountpoint = "/mnt/pool";
+in
 with lib.${namespace};
 {
+    disko.devices = {
+    disk = {
+      nvme1 = {
+        type = "disk";
+        device = "/dev/disk/by-id/";
+        content = {
+          type = "bcachefs_member";
+          pool = "pool";
+          label = "nvme.nvme1";
+        };
+      };
+      ssd1 = {
+        type = "disk";
+        device = "/dev/disk/by-id/";
+        content = {
+          type = "bcachefs_member";
+          pool = "pool";
+          label = "ssd.ssd1";
+        };
+      };
+      hdd1 = {
+        type = "disk";
+        device = "/dev/disk/by-id/";
+        content = {
+          type = "bcachefs_member";
+          pool = "pool";
+          label = "hdd.hdd1";
+        };
+      };
+      hdd2 = {
+        type = "disk";
+        device = "/dev/disk/by-id/";
+        content = {
+          type = "bcachefs_member";
+          pool = "pool";
+          label = "hdd.hdd2";
+        };
+      };
+      hdd3 = {
+        type = "disk";
+        device = "/dev/disk/by-id/";
+        content = {
+          type = "bcachefs_member";
+          pool = "pool";
+          label = "hdd.hdd3";
+        };
+      };
+    };
+
+    bcachefs = {
+      pool = {
+        type = "bcachefs";
+        mountpoint = mountpoint;
+        formatOptions = [ "--compression=lz4" ];
+        mountOptions = [ "verbose" "degraded" ];
+      };
+    };
+  };
+
   ${namespace} = {
+    disko.mdadm-root = {
+      enable = true;
+      mirroredDrives = [
+        "/dev/disk/by-id/"
+        "/dev/disk/by-id/"
+      ];
+    };
+
     hosts.capstan = {
       enable = true;
-      hostname = "capstan3";
-      ipAddress = "${config.senstiveNotSecret.default_subnet}53/24";
-      bcachefsRoot = {
-        enable = true;
-        disks = [
-          "/dev/disk/by-id/ata-Lexar_256GB_SSD_MD1803W119789"
-          "/dev/disk/by-id/ata-SPCC_Solid_State_Disk_0E7C072A0D5A00048168"
-        ];
-        encrypted = false;
-
-      };
+      ipAddress = "${config.sensitiveNotSecret.default_subnet}53/24";
+      interface = "enp3s0";
+      bcachefsInitDevice = "/dev/disk/by-id/";
+      mountpoint = mountpoint;
     };
 
   };
 
-  # # Node-specific overrides
-  # projectinitiative.system.extra-monitoring = enabled;
-
-  # # First node special configuration
-  # services.proxmox-ve.enable = true; # Example special service
 }
