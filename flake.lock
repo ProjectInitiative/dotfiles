@@ -165,17 +165,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1740364275,
+        "lastModified": 1740364669,
         "narHash": "sha256-xgp+Rn/ZUBNW8PbkyzV8RvR+Jxic1VmqAO4v35Qt9ls=",
-        "ref": "refs/heads/master",
-        "rev": "26ec6f87426e5fabdcf5aa1952baf9184053b14d",
-        "revCount": 1199,
-        "type": "git",
-        "url": "file:///home/kylepzak/disko"
+        "owner": "projectinitiative",
+        "repo": "disko",
+        "rev": "5a9144a47dbe9ddfca9e31f7f8e51032b1dae67f",
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "file:///home/kylepzak/disko"
+        "owner": "projectinitiative",
+        "repo": "disko",
+        "type": "github"
       }
     },
     "drift": {

@@ -91,10 +91,10 @@ in
 
       services = {
         k8s = {
-          enabled = true;
+          enable = true;
           tokenFile = sops.secrets.k8s_token.path;
           role = "server";
-          extraFlags = [
+          extraArgs = [
             # Flannel configuration
             # "--flannel-backend=vxlan"
             # "--flannel-iface=tailscale0"

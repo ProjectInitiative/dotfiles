@@ -84,10 +84,15 @@ in
     # Enable Wireguard kernel module if wireguard is selected
     boot.extraModulePackages = optionals (cfg.networkType == "wireguard") [ config.boot.kernelPackages.wireguard ];
     boot.kernelModules = optionals (cfg.networkType == "wireguard") [ "wireguard" ];
+
+    # Add GPU drivers if GPU support is enabled
+    hardware.opengl.enable = mkIf cfg.gpuSupport true;
+    hardware.nvidia.package = mkIf cfg.gpuSupport config.boot.kernelPackages.nvidiaPackages.stable;
+    hardware.nvidia.modesetting.enable = mkIf cfg.gpuSupport true;
     
     # Enable Tailscale if needed
-    ${namespace}.networking.tailscale = mkIf (cfg.networkType == "tailscale") true;
-    
+    ${namespace}.networking.tailscale = mkIf (cfg.networkType == "tailscale") enabled;
+
     services.k3s = {
       enable = true;
       role = cfg.role;
@@ -97,18 +102,14 @@ in
       clusterInit = cfg.isFirstNode;
       serverAddr = mkIf (!cfg.isFirstNode) cfg.serverAddr;
 
-      # Add GPU support if needed
-      gpuFlags = (optionals cfg.gpuSupport [
-        "--kubelet-arg=feature-gates=DevicePlugins=true"
-        "--kubelet-arg=allow-privileged=true"
-      ]);
-      # Add GPU drivers if GPU support is enabled
-      hardware.opengl.enable = mkIf cfg.gpuSupport true;
-      hardware.nvidia.package = mkIf cfg.gpuSupport config.boot.kernelPackages.nvidiaPackages.stable;
-      hardware.nvidia.modesetting.enable = mkIf cfg.gpuSupport true;
 
-            # Combine auto-generated flags with user-provided extra flags
+      # Combine auto-generated flags with user-provided extra flags
       extraFlags = let
+        # Add GPU support if needed
+        gpuFlags = (optionals cfg.gpuSupport [
+          "--kubelet-arg=feature-gates=DevicePlugins=true"
+          "--kubelet-arg=allow-privileged=true"
+        ]);
         # Network-specific flags
         networkFlags = 
           if cfg.networkType == "tailscale" then [
@@ -127,9 +128,7 @@ in
           ]
           else []; # Standard networking doesn't need special flags
       in
-        networkFlags ++ gpuFlags ++ cfg.extraFlags;
-      
+        networkFlags ++ gpuFlags ++ cfg.extraArgs;
     };
-    
   };
 }
