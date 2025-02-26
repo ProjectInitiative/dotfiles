@@ -77,7 +77,7 @@ in
       sops = {
         # age.keyFile = mkIf isHomeManager "${home-directory}/.config/sops/age/key.txt";
         age.sshKeyPaths = [
-          (mkIf isHomeManager "${home-directory}/.ssh/id_ed25519")
+          # (mkIf isHomeManager "${home-directory}/.ssh/id_ed25519")
           (mkIf isNixOS "/etc/ssh/ssh_host_ed25519_key")
         ];
         defaultSopsFile = ./secrets/secrets.enc.yaml;
