@@ -59,7 +59,7 @@ in {
       secret-key-files = [ sops.secrets.nix-signing-key.path ];
       
       # Auto-sign built derivations
-      sign-builds = true;
+      # sign-builds = true;
     };
     
     ## TODO make this work on multiple system types

@@ -19,7 +19,7 @@ with lib.${namespace};
 
   projectinitiative = {
 
-    # encrypted.nix-signing = enabled;
+    encrypted.nix-signing = enabled;
 
     gui = {
       gnome = enabled;

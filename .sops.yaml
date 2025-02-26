@@ -4,6 +4,7 @@ keys:
   # - &sensitive_not_secret age1adxqkgumqhscqk8dkat5hnqx3wzyshfhhqe3jz6xdm5t34yyrdfqejgvtg
   - &users:
     - &kylepzak age1q3mp87y8ddl2x0skpjla8n7cuqr0attzm6ywt3axgrj28ukvy5lqq5l32t
+    - &ssh_thinkpad age14hqndcn28shcmyqafh53ykqsz26rs6hre94nfwr9xm5laln8d9qs3mp3lt
     - &ssh_kylepzak age1fepmpsw6v9juhx3nkq5es0mhjs40xtmajn3fl9jxe779flmjh5wq0palxn
     - &bcachefs_test age1l057emzajvutettkmsv8tw86wenxghn3z2aerae07tne9ay0ugkqusz877
     - &test_vm age1gfamaev28ur53f09qllqhs7fqv74yd0unye4yaduhf436cl8usys640ld5
@@ -21,6 +22,7 @@ creation_rules:
       - age:
           - *kylepzak
           - *ssh_kylepzak
+          - *ssh_thinkpad
           - *bcachefs_test
           - *test_vm
           - *ssh_capstan2
@@ -28,7 +30,9 @@ creation_rules:
   - path: signing/secrets.yaml
     key_groups:
       - age:
+          - *kylepzak
           - *ssh_kylepzak
+          - *ssh_thinkpad
 
   - path: capstan/secrets.yaml
     key_groups:

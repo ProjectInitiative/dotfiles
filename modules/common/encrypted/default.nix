@@ -10,7 +10,7 @@
 with lib;
 with lib.${namespace};
 let
-  cfg = config.${namespace}.user;
+  user = config.${namespace}.user;
 
   nix-public-signing-key = "shipyard:r+QK20NgKO/RisjxQ8rtxctsc5kQfY5DFCgGqvbmNYc="; 
 
@@ -21,20 +21,20 @@ let
   isHomeManager = options ? home; # Home Manager always has home option
 
   home-directory =
-    if cfg.name == null then
+    if user.name == null then
       null
     else if isDarwin then
-      "/Users/${cfg.name}"
+      "/Users/${user.name}"
     else
-      "/home/${cfg.name}";
+      "/home/${user.name}";
 
   # Helper function to decrypt sops files before evaluation
   parseYAMLOrJSONRaw = lib.${namespace}.mkParseYAMLOrJSON pkgs;
   decryptSopsFile =
     file:
     let
-      sensitiveNotSecretAgeKeys = "${inputs.sensitiveNotSecretAgeKeys}/keys.txt";
-      # sensitiveNotSecretAgeKeys = sops.secrets.sensitive_not_secret_age_key.path;
+      # sensitiveNotSecretAgeKeys = "${inputs.sensitiveNotSecretAgeKeys}/keys.txt";
+      sensitiveNotSecretAgeKeys = sops.secrets.sensitive_not_secret_age_key.path;
 
       decryptedFile =
         pkgs.runCommand "decrypt-sops"
@@ -62,7 +62,11 @@ in
   config = mkMerge [
     {
       # Always trust the public key (snowfall-lib will expose this)
-      nix.settings.trusted-public-keys = [ nix-public-signing-key];
+      nix.settings = {
+        trusted-users = [ "wheel" ];
+        # trusted-users = [ user.name ];
+        trusted-public-keys = [ nix-public-signing-key ];
+      };
 
       inherit sensitiveNotSecret;
       sops = {
