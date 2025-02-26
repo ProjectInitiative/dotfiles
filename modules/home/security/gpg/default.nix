@@ -93,7 +93,7 @@ in
       packages = with pkgs; [
         gnupg
         pinentry
-        # pinentry-curses
+        pinentry-curses
         # pinentry-qt
         # pinentry-gnome3
         # paperkey
@@ -114,8 +114,8 @@ in
 
     services.gpg-agent = {
       enable = true;
-      pinentryPackage = pkgs.pinentry;
-      # pinentryPackage = pkgs.pinentry-curses;
+      # pinentryPackage = pkgs.pinentry;
+      pinentryPackage = pkgs.pinentry-curses;
     };
     # programs = mkIf is-nothing {
     #   ssh.startAgent = false;
