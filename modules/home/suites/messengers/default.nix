@@ -4,12 +4,14 @@
   pkgs,
   lib,
   namespace,
+  osConfig,
   ...
 }:
 with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.suites.messengers;
+  isGraphical = osConfig.${namespace}.isGraphical;
 in
 {
   options.${namespace}.suites.messengers = with types; {
@@ -19,7 +21,7 @@ in
   config = mkIf cfg.enable {
 
     home = {
-      packages = with pkgs; [
+      packages = with pkgs; mkIf isGraphical [
         element-desktop
         signal-desktop
         telegram-desktop

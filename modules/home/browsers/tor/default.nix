@@ -4,13 +4,14 @@
   lib,
   pkgs,
   namespace,
+  osConfig,
   ...
 }:
 with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.browsers.tor;
-  isGraphical = config.${namespace}.isGraphical;
+  isGraphical = osConfig.${namespace}.isGraphical;
 in
 {
   options.${namespace}.browsers.tor = with types; {

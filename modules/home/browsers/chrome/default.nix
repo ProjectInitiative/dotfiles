@@ -4,20 +4,21 @@
   lib,
   pkgs,
   namespace,
+  osConfig,
   ...
 }:
 with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.browsers.chrome;
-  isGraphical = config.${namespace}.isGraphical;
+  isGraphical = osConfig.${namespace}.isGraphical;
 in
 {
   options.${namespace}.browsers.chrome = with types; {
     enable = mkBoolOpt false "Whether or not to enable chrome browser";
   };
 
-  config = mkIf cfg.enable {
+  config = mkIf (cfg.enable && isGraphical) {
 
     home = {
       packages = with pkgs; [

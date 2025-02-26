@@ -61,8 +61,8 @@ in
       systemPackages = with pkgs; [
         gnome-firmware
         gnome-network-displays
-        # gnome-tweaks
-        gnomeExtensions.another-window-session-manager
+        gnome-tweaks
+        # gnomeExtensions.another-window-session-manager
         gnomeExtensions.appindicator
         gnomeExtensions.dash-to-dock
         gnomeExtensions.pop-shell

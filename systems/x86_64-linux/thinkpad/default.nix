@@ -17,7 +17,7 @@ with lib.${namespace};
 
   projectinitiative = {
 
-    encrypted.nix-signing = enabled;
+    # encrypted.nix-signing = enabled;
 
     gui = {
       gnome = enabled;
@@ -34,8 +34,14 @@ with lib.${namespace};
     # displaylink
     # quickemu
     # quickgui
+    bitwarden-desktop
     solaar
+    spotify
+    mtr
     virtualbox
+    vlc
+    wireshark
+    wireshark-qt
   ];
 
   services.fwupd.enable = true;

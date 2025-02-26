@@ -10,22 +10,20 @@
 with lib;
 with lib.${namespace};
 let
-  cfg = config.${namespace}.suites.digital-creation;
+  cfg = config.${namespace}.suites.backup;
   isGraphical = osConfig.${namespace}.isGraphical;
 in
 {
-  options.${namespace}.suites.digital-creation = with types; {
+  options.${namespace}.suites.backup = with types; {
     enable = mkBoolOpt false "Whether or not to enable digital-creation suite";
   };
 
-  config = mkIf (cfg.enable && isGraphical) {
+  config = mkIf cfg.enable {
     home = {
       packages = with pkgs; [
-        bambu-studio
-        gimp
-        freecad
-        libreoffice
-        vlc
+        borgbackup
+        backintime
+        (mkIf isGraphical backintime-qt)
       ];
     };
   };

@@ -4,13 +4,14 @@
   lib,
   pkgs,
   namespace,
+  osConfig,
   ...
 }:
 with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.browsers.firefox;
-  isGraphical = config.${namespace}.isGraphical;
+  isGraphical = osConfig.${namespace}.isGraphical;
 in
 {
   options.${namespace}.browsers.firefox = with types; {
@@ -21,6 +22,7 @@ in
 
     home = {
       packages = with pkgs; [
+        firefox
       ];
 
       # programs.firefox = {
