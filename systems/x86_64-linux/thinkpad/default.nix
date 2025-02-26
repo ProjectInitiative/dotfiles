@@ -15,6 +15,8 @@ with lib.${namespace};
     ./hardware-configuration.nix
   ];
 
+  home-manager.backupFileExtension = "backup";
+
   projectinitiative = {
 
     # encrypted.nix-signing = enabled;
