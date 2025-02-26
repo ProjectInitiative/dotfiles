@@ -33,8 +33,14 @@ let
   decryptSopsFile =
     file:
     let
-      # sensitiveNotSecretAgeKeys = "${inputs.sensitiveNotSecretAgeKeys}/keys.txt";
-      sensitiveNotSecretAgeKeys = sops.secrets.sensitive_not_secret_age_key.path;
+      # Use the manual method for systems that might not have the runtime files available
+      sensitiveNotSecretAgeKeys = "${inputs.sensitiveNotSecretAgeKeys}/keys.txt";
+      
+      # need to figure out the impurity aspect
+      # Read the key file content directly
+      # sensitiveNotSecretAgeKeysContent = builtins.readFile sops.secrets.sensitive_not_secret_age_key.path;
+        # Create a file in the Nix store with this content
+      # sensitiveNotSecretAgeKeys = pkgs.writeText "sensitiveNotSecretAgeKeysContent" sensitiveNotSecretAgeKeysContent;
 
       decryptedFile =
         pkgs.runCommand "decrypt-sops"
@@ -63,7 +69,7 @@ in
     {
       # Always trust the public key (snowfall-lib will expose this)
       nix.settings = {
-        trusted-users = [ "wheel" user.name ];
+        trusted-users = [ "@wheel" user.name ];
         trusted-public-keys = [ nix-public-signing-key ];
       };
 
@@ -81,7 +87,9 @@ in
     # common config
     {
       sops.secrets = {
-        sensitive_not_secret_age_key = { };
+        # sensitive_not_secret_age_key = {
+        #   # owner = user.name;
+        # };
       };
     }
 
@@ -92,12 +100,18 @@ in
         tailscale_auth_key = { };
         root_password.neededForUsers = true;
         user_password.neededForUsers = true;
+        sensitive_not_secret_age_key = {
+          owner = user.name;
+        };
       };
     })
 
     # Home Manager-specific configurations
     (mkIf isHomeManager {
-      sops.secrets.user_password = { };
+      sops.secrets = {
+        user_password = { };
+        sensitive_not_secret_age_key = { };
+      };
     })
   ];
 }
