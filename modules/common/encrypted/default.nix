@@ -63,8 +63,7 @@ in
     {
       # Always trust the public key (snowfall-lib will expose this)
       nix.settings = {
-        trusted-users = [ "wheel" ];
-        # trusted-users = [ user.name ];
+        trusted-users = [ "wheel" user.name ];
         trusted-public-keys = [ nix-public-signing-key ];
       };
 

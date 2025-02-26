@@ -92,7 +92,7 @@ in
     home = {
       packages = with pkgs; [
         gnupg
-        pinentry
+        # pinentry
         pinentry-curses
         # pinentry-qt
         # pinentry-gnome3
