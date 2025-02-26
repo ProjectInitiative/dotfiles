@@ -14,8 +14,8 @@ let
 
   isLinux = pkgs.stdenv.isLinux;
   isDarwin = pkgs.stdenv.isDarwin;
-  isNixOS = options ? environment;  # NixOS always has environment config
-  isHomeManager = options ? home;   # Home Manager always has home config
+  isNixOS = options ? environment; # NixOS always has environment config
+  isHomeManager = options ? home; # Home Manager always has home config
   # Common font list for both platforms
   commonFonts =
     with pkgs;
@@ -40,20 +40,22 @@ in
     homeManager = mkBoolOpt isHomeManager "";
   };
 
-
-   config = mkIf cfg.enable (
+  config = mkIf cfg.enable (
     # Base configuration that applies everywhere
     {
       # Your base config here
-    } 
+    }
     # NixOS-specific configuration
     // optionalAttrs isNixOS {
       environment.variables = {
         LOG_ICONS = "true";
       };
-      environment.systemPackage = with pkgs; [
-        
-      ] ++ commonFonts;
+      environment.systemPackage =
+        with pkgs;
+        [
+
+        ]
+        ++ commonFonts;
     }
     # Linux-specific configuration (non-Home Manager)
     // optionalAttrs (isLinux && (!isHomeManager)) {
@@ -71,46 +73,46 @@ in
 
   # config = mkIf cfg.enable (mkMerge [
 
-    # common configurations
-    # {
-    #  fonts = mkIf (!isNixOS) {
-    #     fontconfig = {
-    #       defaultFonts = {
-    #         emoji = [
-    #           "hello"
-    #         ];
-    #       };
-    #     };
-    #  };
-    # }
+  # common configurations
+  # {
+  #  fonts = mkIf (!isNixOS) {
+  #     fontconfig = {
+  #       defaultFonts = {
+  #         emoji = [
+  #           "hello"
+  #         ];
+  #       };
+  #     };
+  #  };
+  # }
 
-        # Environment variables for NixOS
-    # (mkIf isNixOS {
-    #   environment.variables = {
-    #     LOG_ICONS = "true"; # Enable icons in tooling
-    #   };
-    # })
+  # Environment variables for NixOS
+  # (mkIf isNixOS {
+  #   environment.variables = {
+  #     LOG_ICONS = "true"; # Enable icons in tooling
+  #   };
+  # })
 
-    # (mkIf (!isHomeManager) {
-    #   environment.variables = {
-    #     # Enable icons in tooling since we have nerdfonts.
-    #     LOG_ICONS = "true";
-    #   };
-    # })
+  # (mkIf (!isHomeManager) {
+  #   environment.variables = {
+  #     # Enable icons in tooling since we have nerdfonts.
+  #     LOG_ICONS = "true";
+  #   };
+  # })
 
-    # Linux-specific configuration
-    # (mkIf (isLinux && (!isHomeManager)) {
-    #   environment.systemPackages = [ pkgs.font-manager ];
-    #   fonts.packages = commonFonts;
-    # })
+  # Linux-specific configuration
+  # (mkIf (isLinux && (!isHomeManager)) {
+  #   environment.systemPackages = [ pkgs.font-manager ];
+  #   fonts.packages = commonFonts;
+  # })
 
-    # Darwin-specific configuration
-    # (mkIf isDarwin {
-    #   fonts = {
-    #     fontDir = enabled;
-    #     fonts = commonFonts;
-    #   };
-    # })
+  # Darwin-specific configuration
+  # (mkIf isDarwin {
+  #   fonts = {
+  #     fontDir = enabled;
+  #     fonts = commonFonts;
+  #   };
+  # })
   # ]);
 
 }

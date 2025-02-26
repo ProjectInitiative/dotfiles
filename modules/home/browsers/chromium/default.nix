@@ -17,9 +17,6 @@ in
     enable = mkBoolOpt false "Whether or not to enable chromium browser";
   };
 
-
-
-
   config = mkIf cfg.enable {
 
     home = {

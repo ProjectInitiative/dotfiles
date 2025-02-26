@@ -53,7 +53,6 @@ in
       sessionVariables = {
         GNOME_SHELL_EXTENSIONS = with pkgs.gnomeExtensions; [
           "${dash-to-dock}/share/gnome-shell/extensions/dash-to-dock@micxgx.gmail.com"
-          "${quake-mode}/share/gnome-shell/extensions/quake-mode@repsac-by.github.com"
           "${pop-shell}/share/gnome-shell/extensions/pop-shell@system76.com"
         ];
       };

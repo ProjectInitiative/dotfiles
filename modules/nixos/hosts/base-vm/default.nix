@@ -87,7 +87,6 @@ in
     #   };
     # };
 
-
     services.qemuGuest.enable = true;
 
     # Basic system configuration

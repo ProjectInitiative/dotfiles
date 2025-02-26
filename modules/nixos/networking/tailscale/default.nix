@@ -11,9 +11,11 @@ with lib.${namespace};
 let
   cfg = config.${namespace}.networking.tailscale;
 
-  tailscale_key = if config.${namespace}.networking.tailscale.ephemeral 
-  then config.sops.secrets.tailscale_ephemeral_auth_key.path
-  else config.sops.secrets.tailscale_auth_key.path;
+  tailscale_key =
+    if config.${namespace}.networking.tailscale.ephemeral then
+      config.sops.secrets.tailscale_ephemeral_auth_key.path
+    else
+      config.sops.secrets.tailscale_auth_key.path;
 in
 {
   options.${namespace}.networking.tailscale = with types; {

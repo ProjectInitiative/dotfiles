@@ -1,10 +1,16 @@
-{ config, lib, namespace, options, ... }:
+{
+  config,
+  lib,
+  namespace,
+  options,
+  ...
+}:
 let
   mountpoint = "/mnt/pool";
 in
 with lib.${namespace};
 {
-    disko.devices = {
+  disko.devices = {
     disk = {
       nvme1 = {
         type = "disk";
@@ -58,7 +64,10 @@ with lib.${namespace};
         type = "bcachefs";
         mountpoint = mountpoint;
         formatOptions = [ "--compression=lz4" ];
-        mountOptions = [ "verbose" "degraded" ];
+        mountOptions = [
+          "verbose"
+          "degraded"
+        ];
       };
     };
   };

@@ -10,91 +10,103 @@ with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.disko.mdadm-root;
-  inherit (lib) mkOption types mkIf listToAttrs;
+  inherit (lib)
+    mkOption
+    types
+    mkIf
+    listToAttrs
+    ;
 in
 {
   options.${namespace}.disko.mdadm-root = with types; {
     enable = mkBoolOpt false "Whether or not to enable a mirrored mdadm boot and root partition";
     mirroredDrives = mkOption {
       type = types.listOf types.str;
-      example = [ "/dev/sda" "/dev/sdb" ];
+      example = [
+        "/dev/sda"
+        "/dev/sdb"
+      ];
       description = "List of two block devices to use for mirroring";
     };
   };
 
-  config = mkIf (cfg.enable && cfg.mirroredDrives != []) {
+  config = mkIf (cfg.enable && cfg.mirroredDrives != [ ]) {
     assertions = [
       {
         assertion = builtins.length cfg.mirroredDrives == 2;
         message = "Must specify exactly two drives for mirroring";
       }
     ];
-    disko.devices = let
-      drives = cfg.mirroredDrives;
-    in {
-      disk = listToAttrs (map (device: {
-        name = builtins.baseNameOf device;
-        value = {
-          inherit device;
-          type = "disk";
-          content = {
-            type = "gpt";
-            partitions = {
-              BOOT = {
-                size = "1M";
-                type = "EF02"; # GRUB MBR partition
-              };
-              ESP = {
-                size = "500M";
-                type = "EF00";
-                content = {
-                  type = "mdraid";
-                  name = "boot";
-                };
-              };
-              root = {
-                size = "100%";
-                content = {
-                  type = "mdraid";
-                  name = "root";
+    disko.devices =
+      let
+        drives = cfg.mirroredDrives;
+      in
+      {
+        disk = listToAttrs (
+          map (device: {
+            name = builtins.baseNameOf device;
+            value = {
+              inherit device;
+              type = "disk";
+              content = {
+                type = "gpt";
+                partitions = {
+                  BOOT = {
+                    size = "1M";
+                    type = "EF02"; # GRUB MBR partition
+                  };
+                  ESP = {
+                    size = "500M";
+                    type = "EF00";
+                    content = {
+                      type = "mdraid";
+                      name = "boot";
+                    };
+                  };
+                  root = {
+                    size = "100%";
+                    content = {
+                      type = "mdraid";
+                      name = "root";
+                    };
+                  };
                 };
               };
             };
-          };
-        };
-      }) drives);
+          }) drives
+        );
 
-      mdadm = {
-        boot = {
-          type = "mdadm";
-          level = 1;
-          metadata = "1.0";
-          content = {
-            type = "filesystem";
-            format = "vfat";
-            mountpoint = "/boot";
-            mountOptions = [ "umask=0077" ];
+        mdadm = {
+          boot = {
+            type = "mdadm";
+            level = 1;
+            metadata = "1.0";
+            content = {
+              type = "filesystem";
+              format = "vfat";
+              mountpoint = "/boot";
+              mountOptions = [ "umask=0077" ];
+            };
           };
-        };
-        root = {
-          type = "mdadm";
-          level = 1;
-          content = {
-            type = "gpt";
-            partitions = {
-              primary = {
-                size = "100%";
-                content = {
-                  type = "filesystem";
-                  format = "ext4";
-                  mountpoint = "/";
+          root = {
+            type = "mdadm";
+            level = 1;
+            content = {
+              type = "gpt";
+              partitions = {
+                primary = {
+                  size = "100%";
+                  content = {
+                    type = "filesystem";
+                    format = "ext4";
+                    mountpoint = "/";
+                  };
                 };
               };
             };
           };
         };
       };
-    };
 
     boot = {
       loader.grub = {
@@ -106,7 +118,11 @@ in
       };
 
       initrd = {
-        availableKernelModules = [ "md_mod" "raid1" "ext4" ];
+        availableKernelModules = [
+          "md_mod"
+          "raid1"
+          "ext4"
+        ];
         kernelModules = [ "md_mod" ];
       };
     };

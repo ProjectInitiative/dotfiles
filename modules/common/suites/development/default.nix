@@ -12,8 +12,8 @@ let
   cfg = config.${namespace}.suites.development;
   isLinux = pkgs.stdenv.isLinux;
   isDarwin = pkgs.stdenv.isDarwin;
-  isNixOS = options ? environment;  # NixOS always has environment option
-  isHomeManager = options ? home;   # Home Manager always has home option
+  isNixOS = options ? environment; # NixOS always has environment option
+  isHomeManager = options ? home; # Home Manager always has home option
 in
 {
   options.${namespace}.suites.development = with types; {
@@ -21,32 +21,32 @@ in
   };
 
   config = mkIf cfg.enable (
-  {
-    
-  }
+    {
 
-  // optionalAttrs (!isHomeManager) {
-    # Enable zsh system-wide
-    programs.zsh.enable = true;
+    }
 
-    ${namespace} = {
-      networking = {
-        tailscale = enabled;
+    // optionalAttrs (!isHomeManager) {
+      # Enable zsh system-wide
+      programs.zsh.enable = true;
+
+      ${namespace} = {
+        networking = {
+          tailscale = enabled;
+        };
+
+        virtualization = {
+          podman = enabled;
+          docker = enabled;
+        };
+
+        system = {
+          locale = enabled;
+          fonts = enabled;
+        };
+
       };
-
-      virtualization = {
-        podman = enabled;
-        docker = enabled;
-      };
-
-      system = {
-        locale = enabled;
-        fonts = enabled;
-      };
-
-    };
-  }
-  // optionalAttrs (isHomeManager) {
+    }
+    // optionalAttrs (isHomeManager) {
       ${namespace} = {
         tools = {
           git = {

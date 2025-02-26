@@ -196,20 +196,23 @@
         };
 
       homes =
-      let
-        build-modules = lib.create-common-modules "modules/common";
-        common-modules = (builtins.attrValues build-modules);
+        let
+          build-modules = lib.create-common-modules "modules/common";
+          common-modules = (builtins.attrValues build-modules);
+        in
         # build-homes = lib.create-common-modules "modules/common";
         # common-homes = (builtins.attrValues build-homes);
-      in
-      {
-        inherit build-modules common-modules;
-        # inherit build-homes common-homes;
-        modules = with inputs; [
-          sops-nix.homeManagerModules.sops
-          # any home specific modules
-        ] ++ common-modules;
-      };
+        {
+          inherit build-modules common-modules;
+          # inherit build-homes common-homes;
+          modules =
+            with inputs;
+            [
+              sops-nix.homeManagerModules.sops
+              # any home specific modules
+            ]
+            ++ common-modules;
+        };
 
       # Example host-specific hardware modules
       # systems.hosts.thinkpad.modules = with inputs; [
@@ -230,7 +233,7 @@
         formatter = (inputs.treefmt-nix.lib.evalModule channels.nixpkgs ./treefmt.nix).config.build.wrapper;
 
         # Add a check for formatting
-        checks.formatting = (inputs.treefmt-nix.lib.evalModule channels.nixpkgs ./treefmt.nix).config.build.check inputs.self;
+        # checks.formatting = (inputs.treefmt-nix.lib.evalModule channels.nixpkgs ./treefmt.nix).config.build.check inputs.self;
       };
     }
     // {

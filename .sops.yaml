@@ -25,6 +25,11 @@ creation_rules:
           - *test_vm
           - *ssh_capstan2
 
+  - path: signing/secrets.yaml
+    key_groups:
+      - age:
+          - *ssh_kylepzak
+
   - path: capstan/secrets.yaml
     key_groups:
       - age:

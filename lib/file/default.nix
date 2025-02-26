@@ -92,8 +92,9 @@ rec {
   #   in
   #   builtins.fromJSON (builtins.readFile parseResult);
 
-    # Create a function that takes pkgs as an argument
-  mkParseYAMLOrJSON = pkgs: content:
+  # Create a function that takes pkgs as an argument
+  mkParseYAMLOrJSON =
+    pkgs: content:
     let
       parseResult =
         pkgs.runCommand "parse-yaml-or-json"

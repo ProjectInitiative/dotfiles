@@ -33,7 +33,10 @@ in
                 pool = "pool1";
                 label = "fast";
                 discard = true;
-                dataAllowed = [ "journal" "btree" ];
+                dataAllowed = [
+                  "journal"
+                  "btree"
+                ];
               };
             };
           };
@@ -95,21 +98,19 @@ in
         mountpoint = mountpoint;
         formatOptions = [
           "--compression=lz4"
-          "--foreground_target=nvme"
-          "--background_target=hdd"
-          "--promote_target=ssd"
           "--metadata_replicas=2"
           "--metadata_replicas_required=1"
           "--data_replicas=2"
           "--data_replicas_required=1"
 
         ];
-        mountOptions = [ "verbose" "degraded" ];
+        mountOptions = [
+          "verbose"
+          "degraded"
+        ];
       };
     };
   };
-
-  
 
   projectinitiative = {
 
@@ -125,14 +126,12 @@ in
       ];
     };
 
-
-
     hosts = {
       # base-vm = enabled;
       capstan = {
         enable = true;
         ipAddress = "172.16.1.45/24";
-        interface = "enp18";
+        interface = "ens18";
         bcachefsInitDevice = "/dev/vdc1";
         mountpoint = mountpoint;
       };

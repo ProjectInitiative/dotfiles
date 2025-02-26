@@ -73,7 +73,7 @@ with lib.${namespace};
       ${pkgs.ssh-to-age}/bin/ssh-to-age -private-key "$HOME/.ssh/id_ed25519" > "$HOME/.config/sops/age/keys.txt"
     fi
     export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
- '';
+  '';
 
   home = {
 

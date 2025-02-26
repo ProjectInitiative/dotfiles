@@ -45,7 +45,6 @@ in
       home = "/home/${cfg.name}";
       group = "users";
 
-      shell = pkgs.zsh;
       # openssh.authorizedKeys.keyFiles = ["${inputs.ssh-pub-keys}"];
       openssh.authorizedKeys.keyFiles = cfg.authorized-keys;
 

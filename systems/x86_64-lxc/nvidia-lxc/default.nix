@@ -13,7 +13,7 @@ with lib.${namespace};
 {
   projectinitiative = {
     system = {
-      base-container = enabled;
+      # base-container = enabled;
     };
   };
 

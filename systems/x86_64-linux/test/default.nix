@@ -33,7 +33,10 @@ in
                 pool = "pool1";
                 label = "fast";
                 discard = true;
-                dataAllowed = [ "journal" "btree" ];
+                dataAllowed = [
+                  "journal"
+                  "btree"
+                ];
               };
             };
           };
@@ -104,12 +107,13 @@ in
           "--data_replicas_required=1"
 
         ];
-        mountOptions = [ "verbose" "degraded" ];
+        mountOptions = [
+          "verbose"
+          "degraded"
+        ];
       };
     };
   };
-
-  
 
   projectinitiative = {
 
@@ -124,8 +128,6 @@ in
         "/dev/vdb"
       ];
     };
-
-
 
     hosts = {
       # base-vm = enabled;

@@ -12,8 +12,8 @@ let
   cfg = config.${namespace}.cli-apps.atuin;
   isLinux = pkgs.stdenv.isLinux;
   isDarwin = pkgs.stdenv.isDarwin;
-  isNixOS = options ? environment;  # NixOS always has environment config
-  isHomeManager = options ? home;   # Home Manager always has home config
+  isNixOS = options ? environment; # NixOS always has environment config
+  isHomeManager = options ? home; # Home Manager always has home config
 
 in
 {
@@ -48,7 +48,6 @@ in
   };
 }
 
-
 # {config, lib, pkgs, ...}:
 
 # let
@@ -67,7 +66,7 @@ in
 
 #   # Helper to create login script
 #   mkLoginScript = name: content:
-#     if isDarwin 
+#     if isDarwin
 #     then pkgs.writeScript name content
 #     else pkgs.writeShellScript name content;
 

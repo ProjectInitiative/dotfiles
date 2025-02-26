@@ -18,15 +18,15 @@ in
   };
 
   config = mkIf (cfg.enable && isGraphical) {
-      home = {
-        packages = with pkgs; [
-          bambu-studio
-          gimp
-          freecad
-          libreoffice
-          vlc
-        ];
-      };
+    home = {
+      packages = with pkgs; [
+        bambu-studio
+        gimp
+        freecad
+        libreoffice
+        vlc
+      ];
+    };
   };
 
   # config = mkIf cfg.enable (mkMerge [
@@ -40,7 +40,7 @@ in
   #         vlc
   #       ];
   #     };
-  #   }) 
+  #   })
   # ]);
 
 }

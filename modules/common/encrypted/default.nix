@@ -15,8 +15,8 @@ let
   sops = config.sops;
   isLinux = pkgs.stdenv.isLinux;
   isDarwin = pkgs.stdenv.isDarwin;
-  isNixOS = options ? environment;  # NixOS always has environment option
-  isHomeManager = options ? home;   # Home Manager always has home option
+  isNixOS = options ? environment; # NixOS always has environment option
+  isHomeManager = options ? home; # Home Manager always has home option
 
   home-directory =
     if cfg.name == null then
@@ -73,15 +73,15 @@ in
     # common config
     {
       sops.secrets = {
-        sensitive_not_secret_age_key = {};
+        sensitive_not_secret_age_key = { };
       };
     }
 
     # NixOS-specific configurations
     (mkIf isNixOS {
       sops.secrets = {
-        tailscale_ephemeral_auth_key = {};
-        tailscale_auth_key = {};
+        tailscale_ephemeral_auth_key = { };
+        tailscale_auth_key = { };
         root_password.neededForUsers = true;
         user_password.neededForUsers = true;
       };
@@ -89,7 +89,7 @@ in
 
     # Home Manager-specific configurations
     (mkIf isHomeManager {
-      sops.secrets.user_password = {};
+      sops.secrets.user_password = { };
     })
   ];
 }

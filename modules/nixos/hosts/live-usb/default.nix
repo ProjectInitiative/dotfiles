@@ -1,12 +1,20 @@
 # yoinked from https://github.com/dmadisetti/.dots/blob/template/nix/machines/momento.nix
-{ lib, inputs, config, namespace, modulesPath, pkgs, options, ... }:
+{
+  lib,
+  inputs,
+  config,
+  namespace,
+  modulesPath,
+  pkgs,
+  options,
+  ...
+}:
 with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.hosts.live-usb;
   hostname = "live-iso";
-  nixRev =
-    if inputs.nixpkgs ? rev then inputs.nixpkgs.shortRev else "dirty";
+  nixRev = if inputs.nixpkgs ? rev then inputs.nixpkgs.shortRev else "dirty";
   selfRev = if inputs.self ? rev then inputs.self.shortRev else "dirty";
 in
 {
@@ -14,7 +22,7 @@ in
   options.${namespace}.hosts.live-usb = with types; {
     enable = mkBoolOpt false "Whether or not to enable the live-usb base config.";
   };
- # For reference, see //blog.thomasheartman.com/posts/building-a-custom-nixos-installer
+  # For reference, see //blog.thomasheartman.com/posts/building-a-custom-nixos-installer
   # but obviously flakified and broken apart.
 
   # imports = [
@@ -29,7 +37,7 @@ in
   #   # doesn't need to run "nix-channel --update" first.
   #   "${modulesPath}/installer/cd-dvd/channel.nix"
 
-  #   # Add compatible kernel 
+  #   # Add compatible kernel
   #   "${modulesPath}/installer/cd-dvd/installation-cd-minimal-new-kernel-no-zfs.nix"
 
   # ];
@@ -106,7 +114,7 @@ in
 
   #   ${NAMESPACE} = {
   #   };
-    
+
   # };
 
 }

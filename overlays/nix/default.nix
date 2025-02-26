@@ -17,7 +17,7 @@ final: prev: {
   #       repo = "nix";
   #       # rev = "d9775222fbfa7e5d8ce1f722ea2968ff840324b4";
   #       # hash = "sha256-b7smrbPLP/wcoBFCJ8j1UDNj0p4jiKT/6mNlDdlrOXA=";
-  #       # 
+  #       #
   #       # rev = "28752fe28868f2c1a4d3c8a86a1ada94b99cce35";
   #       # hash = "sha256-0lFNh54gkDsdHOriOEHK6lr1rGRiP1mhNaCNm+6QspE=";
 
@@ -32,12 +32,12 @@ final: prev: {
   #   in
   #   nixFlake.packages.${final.system}.nix // { inherit (nix) meta; };
 
-    #   # Use `flake-compat` to evaluate the flake
-    #   nixFlake =
-    #     (import inputs.flake-compat {
-    #       src = nixSrc;
-    #     }).defaultNix;
-    # in
-    # nixFlake.packages.${final.system}.default;
+  #   # Use `flake-compat` to evaluate the flake
+  #   nixFlake =
+  #     (import inputs.flake-compat {
+  #       src = nixSrc;
+  #     }).defaultNix;
+  # in
+  # nixFlake.packages.${final.system}.default;
 
 }

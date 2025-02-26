@@ -3,10 +3,18 @@
   config,
   pkgs,
   namespace,
+  options,
   ...
 }:
+with lib;
+with lib.${namespace};
 let
+  isLinux = pkgs.stdenv.isLinux;
+  isDarwin = pkgs.stdenv.isDarwin;
+  isNixOS = options ? environment; # NixOS always has environment config
+  isHomeManager = options ? home; # Home Manager always has home config
   inherit (lib) mkEnableOption mkIf;
+  user = config.${namespace}.user;
 
   cfg = config.${namespace}.cli-apps.zsh;
 
@@ -35,39 +43,60 @@ in
 {
   options.${namespace}.cli-apps.zsh = {
     enable = mkEnableOption "ZSH";
+    defaultUserShell = mkBoolOpt true "Whether to set zsh as the default shell for the user";
   };
 
-  config = mkIf cfg.enable {
-    programs = {
+  config = mkIf cfg.enable (
+    {
+      programs = {
 
-      zsh = {
-        enable = true;
-        enableCompletion = true;
-        syntaxHighlighting.enable = true;
-        autosuggestion.enable = true;
-        oh-my-zsh = {
-          enable = false;
-          theme = "robbyrussell";
-          plugins = [
-            "git"
-            "docker"
-            "kubectl"
-          ];
-        };
+        zsh = {
+          enable = true;
+          enableCompletion = true;
+          syntaxHighlighting.enable = true;
+          autosuggestion.enable = true;
+          oh-my-zsh = {
+            enable = false;
+            theme = "robbyrussell";
+            plugins = [
+              "git"
+              "docker"
+              "kubectl"
+            ];
+          };
 
-        # interactiveShellInit = ''
-        #   eval "$(${pkgs.atuin}/bin/atuin init zsh)"
-        #   eval "$(zoxide init zsh)"
-        #   export PATH="''${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
-        # '';
-        shellAliases = {
-          # sudo = "sudo -E";
-          mkdir = "mkdir -p";
-          make = "make -j $(nproc)";
-          tailscale-up = "sudo tailscale up --login-server https://ts.projectinitiative.io --accept-routes";
+          # interactiveShellInit = ''
+          #   eval "$(${pkgs.atuin}/bin/atuin init zsh)"
+          #   eval "$(zoxide init zsh)"
+          #   export PATH="''${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+          # '';
+          shellAliases = {
+            # sudo = "sudo -E";
+            mkdir = "mkdir -p";
+            make = "make -j $(nproc)";
+            tailscale-up = "sudo tailscale up --login-server https://ts.projectinitiative.io --accept-routes";
+          };
         };
       };
+    }
+    # NixOS-specific configuration
+    // lib.optionalAttrs isNixOS {
+      users.users.${user} = lib.mkIf cfg.defaultUserShell {
+        ${user}.shell = pkgs.zsh;
+      };
+      # users.users = lib.mkIf (cfg.defaultUserShell && cfg.userName != "") {
+      #   ${cfg.userName}.shell = pkgs.zsh;
+      # };
+    }
 
-    };
-  };
+    # Home Manager-specific configuration
+    // lib.optionalAttrs isHomeManager {
+      home.sessionVariables = lib.mkIf cfg.defaultUserShell {
+        SHELL = "${pkgs.zsh}/bin/zsh";
+      };
+
+      home.packages = with pkgs; [
+      ];
+    }
+  );
 }

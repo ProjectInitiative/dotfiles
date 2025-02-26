@@ -40,7 +40,6 @@ in
     # use latest kernel - required by bcachefs
     boot.kernelPackages = pkgs.linuxPackages_latest;
 
-    
     # Late-mounting service
     systemd.services.mount-bcachefs = {
       description = "Mount bcachefs test filesystem";
@@ -99,14 +98,14 @@ in
             # "--flannel-backend=vxlan"
             # "--flannel-iface=tailscale0"
             # "--flannel-external-ip"
-      
+
             # Node IP configuration - using Tailscale
             "--node-ip=$(${pkgs.tailscale}/bin/tailscale ip -4)"
             "--node-external-ip=$(${pkgs.tailscale}/bin/tailscale ip -4)"
-      
+
             # TLS configuration
             "--tls-san=k8s.projectinitiative.io"
-      
+
             # Security
             "--secrets-encryption"
           ];
@@ -121,9 +120,8 @@ in
       networking = {
         tailscale = enabled;
       };
-  
-    };
 
+    };
 
     # Common network configuration
     networking.interfaces.${cfg.interface} = {
@@ -137,9 +135,12 @@ in
     };
     # networking.defaultGateway = cfg.gateway ? config.sensitiveNotSecret.default_gateway;
     networking.defaultGateway = "172.16.1.1";
-    networking.nameservers = [ "172.16.1.1" "1.1.1.1" "9.9.9.9" ];
-    networking.enableIPv6  = false;
-
+    networking.nameservers = [
+      "172.16.1.1"
+      "1.1.1.1"
+      "9.9.9.9"
+    ];
+    networking.enableIPv6 = false;
 
   };
 }

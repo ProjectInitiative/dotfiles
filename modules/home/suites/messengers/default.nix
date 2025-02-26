@@ -20,11 +20,11 @@ in
 
     home = {
       packages = with pkgs; [
-          element-desktop
-          signal-desktop
-          telegram-desktop
-          thunderbird
-        ];
+        element-desktop
+        signal-desktop
+        telegram-desktop
+        thunderbird
+      ];
     };
 
   };
