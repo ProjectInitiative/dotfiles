@@ -16,6 +16,9 @@ with lib.${namespace};
   ];
 
   projectinitiative = {
+
+    encrypted.nix-signing = enabled;
+
     gui = {
       gnome = enabled;
     };

@@ -12,6 +12,8 @@ with lib.${namespace};
 let
   cfg = config.${namespace}.user;
 
+  nix-public-signing-key = "shipyard:r+QK20NgKO/RisjxQ8rtxctsc5kQfY5DFCgGqvbmNYc="; 
+
   sops = config.sops;
   isLinux = pkgs.stdenv.isLinux;
   isDarwin = pkgs.stdenv.isDarwin;
@@ -59,6 +61,9 @@ in
 
   config = mkMerge [
     {
+      # Always trust the public key (snowfall-lib will expose this)
+      nix.settings.trusted-public-keys = [ nix-public-signing-key];
+
       inherit sensitiveNotSecret;
       sops = {
         # age.keyFile = mkIf isHomeManager "${home-directory}/.config/sops/age/key.txt";
