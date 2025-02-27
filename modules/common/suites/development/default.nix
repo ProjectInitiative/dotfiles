@@ -26,8 +26,6 @@ in
     }
 
     // optionalAttrs (!isHomeManager) {
-      # Enable zsh system-wide
-      programs.zsh.enable = true;
 
       ${namespace} = {
         networking = {

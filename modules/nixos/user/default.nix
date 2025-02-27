@@ -36,6 +36,8 @@ in
     #   extraOptions = {};
     # };
 
+    programs.zsh.enable = mkIf config.home-manager.users.${cfg.name}.${namespace}.cli-apps.zsh.defaultUserShell true;
+
     users.users.${cfg.name} = {
       isNormalUser = true;
 
