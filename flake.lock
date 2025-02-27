@@ -915,7 +915,6 @@
         "nixos-generators": "nixos-generators",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs",
-        "sensitiveNotSecretAgeKeys": "sensitiveNotSecretAgeKeys",
         "snowfall-lib": "snowfall-lib_5",
         "sops-nix": "sops-nix",
         "ssh-pub-keys": "ssh-pub-keys",
@@ -923,22 +922,6 @@
         "treefmt-nix": "treefmt-nix",
         "unstable": "unstable_2",
         "yubikey-guide": "yubikey-guide"
-      }
-    },
-    "sensitiveNotSecretAgeKeys": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1738160183,
-        "narHash": "sha256-oK8jWDd9y/Zl9Xu+Ni+fmVwh45A2fpn2i01fkcSjXzc=",
-        "ref": "refs/heads/main",
-        "rev": "3ec17193ab51601e86d052660c5ca27cd6326e15",
-        "revCount": 1,
-        "type": "git",
-        "url": "file:///home/kylepzak/.config/sops/age/sensitive"
-      },
-      "original": {
-        "type": "git",
-        "url": "file:///home/kylepzak/.config/sops/age/sensitive"
       }
     },
     "snowfall-lib": {

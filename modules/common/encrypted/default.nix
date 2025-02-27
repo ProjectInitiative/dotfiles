@@ -70,13 +70,9 @@ let
   sourceSecretPath = sops.secrets.sensitive_not_secret_age_key.path;
 
   # Script to copy the sensitive key
-  # copyKeyScript = pkgs.writeScript "copy-sensitive-key" ''
-  copyKeyScript = ''
-    #!/bin/sh
+  copyKeyCommands = ''
     # Create directory if it doesn't exist
     mkdir -p ${sensitiveKeyTmpPath}
-    # Set proper permissions
-    chmod 750 ${sensitiveKeyTmpPath}
     
     if [ -f "${sourceSecretPath}" ]; then
       # Copy the key to the new location
@@ -86,6 +82,10 @@ let
     else
       echo "Source key at ${sourceSecretPath} not found"
     fi
+  '';
+  # Also keep the script version for other uses (like macOS)
+  copyKeyScript = pkgs.writeShellScript "copy-sensitive-key" ''
+    ${copyKeyCommands}
   '';
 in
 {
@@ -128,10 +128,10 @@ in
         wantedBy = [ "multi-user.target" ];
         after = [ "sops-nix.service" ];
         before = [ "nix-daemon.service" ];
+        script = copyKeyCommands;
         serviceConfig = {
           Type = "oneshot";
           RemainAfterExit = true;
-          ExecStart = copyKeyScript;
         };
       };
       
