@@ -31,11 +31,13 @@
     # Secrets management
     sops-nix.url = "github:Mic92/sops-nix";
     # agenix.url = "github:ryantm/agenix";
-    # sensitiveNotSecretAgeKeys = {
-    #   # url = "git+ssh://root@pikvm/root/sensitive?ref=main";
-    #   url = "git+file:///home/kylepzak/.config/sops/age/sensitive";
-    #   flake = false;
-    # };
+    sensitiveNotSecretAgeKeys = {
+      # url = "git+ssh://root@pikvm/root/sensitive?ref=main";
+      # url = "git+file:///home/kylepzak/.config/sops/age/sensitive";
+      url = "path:///tmp/sensitive";
+      # url = "path:///dev/shm/sensitive";
+      flake = false;
+    };
 
     # Snowfall Lib
     # snowfall-lib.url = "path:/home/kylepzak/development/build-software/snowfall-lib";

@@ -28,7 +28,8 @@ let
     else
       "/home/${user.name}";
 
-  sensitiveKeyTmpPath = "/tmp";
+  sensitiveKeyTmpPath = "/tmp/sensitive";
+  # sensitiveKeyTmpPath = "/dev/shm/sensitive";
   sensitiveKeyFileName = "sensitive-not-secret-age-key.txt";
   sensitiveKeyPath = "${sensitiveKeyTmpPath}/${sensitiveKeyFileName}";
   
@@ -40,13 +41,14 @@ let
     let
       # Use the manual method for systems that might not have the runtime files available
       # sensitiveNotSecretAgeKeys = "${inputs.sensitiveNotSecretAgeKeys}/keys.txt";
+      sensitiveNotSecretAgeKeys = "${inputs.sensitiveNotSecretAgeKeys}/sensitive-not-secret-age-key.txt";
       
-      # If initial system activation does not drop the age key in /tmp/sensitive-not-secret-age-key.txt and the build fails, copy the key from a working machine and it should work and setup systemd correctly for next time.
+      # If initial system activation does not drop the age key in /tmp/sensitive/sensitive-not-secret-age-key.txt and the build fails, copy the key from a working machine and it should work and setup systemd correctly for next time.
       
       # Read the key file content directly
-      sensitiveNotSecretAgeKeysContent = builtins.readFile sensitiveKeyPath;
+      # sensitiveNotSecretAgeKeysContent = builtins.readFile sensitiveKeyPath;
         # Create a file in the Nix store with this content
-      sensitiveNotSecretAgeKeys = pkgs.writeText "sensitiveNotSecretAgeKeysContent" sensitiveNotSecretAgeKeysContent;
+      # sensitiveNotSecretAgeKeys = pkgs.writeText "sensitiveNotSecretAgeKeysContent" sensitiveNotSecretAgeKeysContent;
 
 
       decryptedFile =
