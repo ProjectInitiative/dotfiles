@@ -45,6 +45,9 @@ in
       home = "/home/${cfg.name}";
       group = "users";
 
+      # maybe check home-manager config
+      shell = mkIf config.home-manager.users.${cfg.name}.${namespace}.cli-apps.zsh.defaultUserShell pkgs.zsh;
+
       # openssh.authorizedKeys.keyFiles = ["${inputs.ssh-pub-keys}"];
       openssh.authorizedKeys.keyFiles = cfg.authorized-keys;
 

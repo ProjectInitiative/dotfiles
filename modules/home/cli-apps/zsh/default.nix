@@ -81,9 +81,11 @@ in
     }
     # NixOS-specific configuration
     // lib.optionalAttrs isNixOS {
-      users.users.${user} = lib.mkIf cfg.defaultUserShell {
-        ${user}.shell = pkgs.zsh;
-      };
+      # this does not do anything
+
+      # config.users.users.${user.name} = lib.mkIf cfg.defaultUserShell {
+      #   shell = pkgs.zsh;
+      # };
       # users.users = lib.mkIf (cfg.defaultUserShell && cfg.userName != "") {
       #   ${cfg.userName}.shell = pkgs.zsh;
       # };
