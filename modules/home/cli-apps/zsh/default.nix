@@ -56,7 +56,7 @@ in
           syntaxHighlighting.enable = true;
           autosuggestion.enable = true;
           oh-my-zsh = {
-            enable = false;
+            enable = true;
             theme = "robbyrussell";
             plugins = [
               "git"

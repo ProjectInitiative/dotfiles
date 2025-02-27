@@ -117,6 +117,22 @@ in
       # pinentryPackage = pkgs.pinentry;
       pinentryPackage = pkgs.pinentry-curses;
     };
+
+    # Add shell-specific initialization
+    programs.zsh.initExtra = mkIf config.programs.zsh.enable ''
+      export GPG_TTY=$(tty)
+      gpg-connect-agent updatestartuptty /bye >/dev/null
+    '';
+
+    programs.bash.initExtra = mkIf config.programs.bash.enable ''
+      export GPG_TTY=$(tty)
+      gpg-connect-agent updatestartuptty /bye >/dev/null
+    '';
+
+    programs.fish.shellInit = mkIf config.programs.fish.enable ''
+      set -gx GPG_TTY (tty)
+      gpg-connect-agent updatestartuptty /bye >/dev/null
+    '';
     # programs = mkIf is-nothing {
     #   ssh.startAgent = false;
 

@@ -1,7 +1,7 @@
 keys:
-  - &sensitive_not_secret age1q9aa6vyf9wt6r3mrl6362j5cn8x48k0567y9hsmuqn807mpln5zqrjfuax
+  # - &sensitive_not_secret age1q9aa6vyf9wt6r3mrl6362j5cn8x48k0567y9hsmuqn807mpln5zqrjfuax
   # new key when ready
-  # - &sensitive_not_secret age1adxqkgumqhscqk8dkat5hnqx3wzyshfhhqe3jz6xdm5t34yyrdfqejgvtg
+  - &sensitive_not_secret age1adxqkgumqhscqk8dkat5hnqx3wzyshfhhqe3jz6xdm5t34yyrdfqejgvtg
   - &users:
     - &kylepzak age1q3mp87y8ddl2x0skpjla8n7cuqr0attzm6ywt3axgrj28ukvy5lqq5l32t
     - &ssh_thinkpad age14hqndcn28shcmyqafh53ykqsz26rs6hre94nfwr9xm5laln8d9qs3mp3lt

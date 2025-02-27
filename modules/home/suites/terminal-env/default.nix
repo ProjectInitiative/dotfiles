@@ -37,6 +37,7 @@ in
       packages = with pkgs; [
         appimage-run
         htop
+        btop
         jq
         ncdu
         tree

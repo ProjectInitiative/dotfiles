@@ -28,27 +28,37 @@ let
     else
       "/home/${user.name}";
 
+  sensitiveKeyTmpPath = "/tmp";
+  sensitiveKeyFileName = "sensitive-not-secret-age-key.txt";
+  sensitiveKeyPath = "${sensitiveKeyTmpPath}/${sensitiveKeyFileName}";
+  
+
   # Helper function to decrypt sops files before evaluation
   parseYAMLOrJSONRaw = lib.${namespace}.mkParseYAMLOrJSON pkgs;
   decryptSopsFile =
     file:
     let
       # Use the manual method for systems that might not have the runtime files available
-      sensitiveNotSecretAgeKeys = "${inputs.sensitiveNotSecretAgeKeys}/keys.txt";
+      # sensitiveNotSecretAgeKeys = "${inputs.sensitiveNotSecretAgeKeys}/keys.txt";
       
-      # need to figure out the impurity aspect
+      # If initial system activation does not drop the age key in /tmp/sensitive-not-secret-age-key.txt and the build fails, copy the key from a working machine and it should work and setup systemd correctly for next time.
+      
       # Read the key file content directly
-      # sensitiveNotSecretAgeKeysContent = builtins.readFile sops.secrets.sensitive_not_secret_age_key.path;
+      sensitiveNotSecretAgeKeysContent = builtins.readFile sensitiveKeyPath;
         # Create a file in the Nix store with this content
-      # sensitiveNotSecretAgeKeys = pkgs.writeText "sensitiveNotSecretAgeKeysContent" sensitiveNotSecretAgeKeysContent;
+      sensitiveNotSecretAgeKeys = pkgs.writeText "sensitiveNotSecretAgeKeysContent" sensitiveNotSecretAgeKeysContent;
+
 
       decryptedFile =
         pkgs.runCommand "decrypt-sops"
           {
             nativeBuildInputs = [ pkgs.sops ];
             SOPS_AGE_KEY_FILE = sensitiveNotSecretAgeKeys;
+            # not added to nix store because of /run
+            # SOPS_AGE_KEY_FILE = sops.secrets.sensitive_not_secret_age_key.path;
           }
           ''
+            echo $SOPS_AGE_KEY_FILE
             sops -d ${file} > $out
           '';
     in
@@ -56,6 +66,27 @@ let
 
   # Decrypt the sensitive SOPS file
   sensitiveNotSecret = decryptSopsFile ./sensitive/sensitive.enc.yaml;
+
+  sourceSecretPath = sops.secrets.sensitive_not_secret_age_key.path;
+
+  # Script to copy the sensitive key
+  # copyKeyScript = pkgs.writeScript "copy-sensitive-key" ''
+  copyKeyScript = ''
+    #!/bin/sh
+    # Create directory if it doesn't exist
+    mkdir -p ${sensitiveKeyTmpPath}
+    # Set proper permissions
+    chmod 750 ${sensitiveKeyTmpPath}
+    
+    if [ -f "${sourceSecretPath}" ]; then
+      # Copy the key to the new location
+      cp "${sourceSecretPath}" "${sensitiveKeyPath}"
+      chmod 640 "${sensitiveKeyPath}"
+      echo "Sensitive key copied to ${sensitiveKeyPath}"
+    else
+      echo "Source key at ${sourceSecretPath} not found"
+    fi
+  '';
 in
 {
   # Define options for sensitiveNotSecret
@@ -65,53 +96,117 @@ in
     default = { };
   };
 
-  config = mkMerge [
+  config = (
+    # common config
     {
-      # Always trust the public key (snowfall-lib will expose this)
+
+      inherit sensitiveNotSecret;
+      # this gets overriden when using // operator
+      # sops = {
+      #   # age.keyFile = mkIf isHomeManager "${home-directory}/.config/sops/age/key.txt";
+      #   age.sshKeyPaths = [
+      #     # (mkIf isHomeManager "${home-directory}/.ssh/id_ed25519")
+      #     (mkIf isNixOS "/etc/ssh/ssh_host_ed25519_key")
+      #   ];
+      #   defaultSopsFile = ./secrets/secrets.enc.yaml;
+      # };
+    }
+
+    
+
+    # NixOS-specific configurations
+    // optionalAttrs isNixOS {
+
       nix.settings = {
         trusted-users = [ "@wheel" user.name ];
         trusted-public-keys = [ nix-public-signing-key ];
       };
 
-      inherit sensitiveNotSecret;
-      sops = {
-        # age.keyFile = mkIf isHomeManager "${home-directory}/.config/sops/age/key.txt";
-        age.sshKeyPaths = [
-          # (mkIf isHomeManager "${home-directory}/.ssh/id_ed25519")
-          (mkIf isNixOS "/etc/ssh/ssh_host_ed25519_key")
-        ];
-        defaultSopsFile = ./secrets/secrets.enc.yaml;
-      };
-    }
-
-    # common config
-    {
-      sops.secrets = {
-        # sensitive_not_secret_age_key = {
-        #   # owner = user.name;
-        # };
-      };
-    }
-
-    # NixOS-specific configurations
-    (mkIf isNixOS {
-      sops.secrets = {
-        tailscale_ephemeral_auth_key = { };
-        tailscale_auth_key = { };
-        root_password.neededForUsers = true;
-        user_password.neededForUsers = true;
-        sensitive_not_secret_age_key = {
-          owner = user.name;
+      # Create the systemd service to copy the key
+      systemd.services.copy-sensitive-key = {
+        description = "Copy sensitive but not secret key to tmpfs";
+        wantedBy = [ "multi-user.target" ];
+        after = [ "sops-nix.service" ];
+        before = [ "nix-daemon.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStart = copyKeyScript;
         };
       };
-    })
+      
+      # Set up tmpfs for sensitive keys
+      systemd.tmpfiles.rules = [
+        "d ${sensitiveKeyTmpPath} 0750 root ${user.name} - -"
+      ];
 
-    # Home Manager-specific configurations
-    (mkIf isHomeManager {
-      sops.secrets = {
-        user_password = { };
-        sensitive_not_secret_age_key = { };
+      sops = {
+        defaultSopsFile = ./secrets/secrets.enc.yaml;
+        age.sshKeyPaths = [
+          "/etc/ssh/ssh_host_ed25519_key"
+        ];
+        secrets = {
+          tailscale_ephemeral_auth_key = { };
+          tailscale_auth_key = { };
+          root_password.neededForUsers = true;
+          user_password.neededForUsers = true;
+          sensitive_not_secret_age_key = {
+            owner = user.name;
+          };
+        };
       };
-    })
-  ];
+    }
+
+    # Darwin-specific configurations
+    // optionalAttrs (isDarwin && !isHomeManager) {
+      # Use launchd to run the script on Darwin
+      launchd.user.agents.copy-sensitive-key = {
+        serviceConfig = {
+          Label = "user.copy-sensitive-key";
+          ProgramArguments = [ "${pkgs.bash}/bin/bash" "-c" "${copyKeyScript}" ];
+          RunAtLoad = true;
+          KeepAlive = false;
+          StandardOutPath = "/tmp/copy-sensitive-key.log";
+          StandardErrorPath = "/tmp/copy-sensitive-key.error.log";
+        };
+      };
+      
+      # Other Darwin-specific configurations
+      sops = {
+        defaultSopsFile = ./secrets/secrets.enc.yaml;
+        secrets = {
+          sensitive_not_secret_age_key = {};
+        };
+      };
+    }
+
+    # Home Manager-specific configurations (both Darwin and Linux)
+    # TODO this use case doesn't quite work yet. Specifically because home-manager's "lib" is not being passed (or accessible?) in this module. 
+
+    # // optionalAttrs isHomeManager {
+    #   # For Home Manager, use home.activation to run the script
+    #   home.activation.copySensitiveKey = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    #     $DRY_RUN_CMD ${copyKeyScript}
+    #   '';
+      
+     
+    #   # Other Home Manager-specific configurations
+    #   sops = {
+    #     defaultSopsFile = ./secrets/secrets.enc.yaml;
+    #     age.sshKeyPaths = [
+    #       # TODO: enable this once I get all user keys stored in repo
+    #       # "${home-directory}/.ssh/id_ed25519" 
+    #       "/etc/ssh/ssh_host_ed25519_key"
+    #       (mkIf isLinux "/etc/ssh/ssh_host_ed25519_key")
+    #       (mkIf isDarwin "<Darwin-key-path>")
+    #     ];
+    #     secrets = {
+    #       user_password = { };
+    #       sensitive_not_secret_age_key = { };
+    #     };
+    #   };
+    # }
+
+  );
 }
+
