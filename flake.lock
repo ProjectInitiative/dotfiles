@@ -928,13 +928,13 @@
     "sensitiveNotSecretAgeKeys": {
       "flake": false,
       "locked": {
-        "lastModified": 1740636707,
-        "narHash": "sha256-x3z8l2Sgtnzao7tzHTYyYGrZoUgwf1KuzuPAiWNyDTE=",
-        "path": "/dev/shm/sensitive",
+        "lastModified": 1740636649,
+        "narHash": "sha256-Z9MBqnSsmOzib6HTPjSGOBjcTHytuCB1Yu/Qk+0uewQ=",
+        "path": "/tmp/sensitive",
         "type": "path"
       },
       "original": {
-        "path": "/dev/shm/sensitive",
+        "path": "/tmp/sensitive",
         "type": "path"
       }
     },
