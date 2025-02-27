@@ -28,6 +28,13 @@ with lib.${namespace};
     suites = {
       development = enabled;
     };
+    # override
+    networking = {
+      tailscale = {
+        enable = true;
+        extraArgs = ["--accept-routes"]; 
+      };
+    };
 
   };
 

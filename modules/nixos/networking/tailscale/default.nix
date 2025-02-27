@@ -21,6 +21,7 @@ in
   options.${namespace}.networking.tailscale = with types; {
     enable = mkBoolOpt false "Whether or not to enable tailscale";
     ephemeral = mkBoolOpt true "Use ephemeral node key for tailscale";
+    extraArgs = mkOpt (listOf str) [ ] "Additional arguments to pass to tailscale.";
   };
 
   config = mkIf cfg.enable {
@@ -58,8 +59,13 @@ in
       };
 
       # The actual tailscale script
-      script = ''
-        tailscale up --auth-key "$(cat ${tailscale_key})" --reset
+      script = let
+        extraArgsString = if cfg.extraArgs != [] 
+                          then builtins.concatStringsSep " " cfg.extraArgs
+                          else "";
+      in
+      ''
+        tailscale up --auth-key "$(cat ${tailscale_key})" --reset ${extraArgsString}
       '';
 
     };
