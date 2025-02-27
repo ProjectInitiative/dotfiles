@@ -90,7 +90,7 @@ in
 
       services = {
         k8s = {
-          enable = true;
+          enable = false;
           tokenFile = sops.secrets.k8s_token.path;
           role = "server";
           extraArgs = [

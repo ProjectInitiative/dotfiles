@@ -72,14 +72,23 @@ let
   sourceSecretPath = sops.secrets.sensitive_not_secret_age_key.path;
 
   # Script to copy the sensitive key
-  copyKeyCommands = ''
+    copyKeyCommands = let
+      rsync = "${pkgs.rsync}/bin/rsync";
+    in ''
     # Create directory if it doesn't exist
     mkdir -p ${sensitiveKeyTmpPath}
     
     if [ -f "${sourceSecretPath}" ]; then
+      if [ -f "${sensitiveKeyPath}" ]; then
+        rm -f "${sensitiveKeyPath}"
+      fi
       # Copy the key to the new location
-      cp "${sourceSecretPath}" "${sensitiveKeyPath}"
-      chmod 640 "${sensitiveKeyPath}"
+      # cp "${sourceSecretPath}" "${sensitiveKeyPath}"
+      # chmod 640 "${sensitiveKeyPath}"
+      ${rsync} --checksum --no-times --no-perms --chmod=444 "${sourceSecretPath}" "${sensitiveKeyPath}"
+      touch -t 197001010000 "${sensitiveKeyPath}"
+      touch -t 197001010000 "${sensitiveKeyTmpPath}"
+      # touch --date="@1" --no-dereference "${sensitiveKeyPath}"
       echo "Sensitive key copied to ${sensitiveKeyPath}"
     else
       echo "Source key at ${sourceSecretPath} not found"
