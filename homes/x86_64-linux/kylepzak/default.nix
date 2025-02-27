@@ -95,6 +95,7 @@ with lib.${namespace};
       ".config/helix/themes".source = "${inputs.self}/homes/dotfiles/helix/themes";
       # ".config/helix/languages.toml".source = helixLanguagesConfig;
       ".alacritty.toml".source = "${inputs.self}/homes/dotfiles/.alacritty.toml";
+      ".config/ghostty".source = "${inputs.self}/homes/dotfiles/ghostty";
       ".config/atuin/config.toml".source = "${inputs.self}/homes/dotfiles/atuin/config.toml";
     };
   };
