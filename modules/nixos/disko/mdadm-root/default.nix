@@ -128,9 +128,9 @@ in
     };
 
     # services.mdadm.enable = true;
-    # boot.swraid.mdadmConf = ''
-    #   MAILADDR=nobody@nowhere
-    # '';
+    boot.swraid.mdadmConf = ''
+      MAILADDR=nobody@nowhere
+    '';
 
     # Override mdmonitor to log to syslog instead of emailing or alerting
     systemd.services."mdmonitor".environment = {
