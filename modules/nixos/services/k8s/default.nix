@@ -53,6 +53,16 @@ in
       }
     ];
 
+    # NETWORKING
+    # networking.firewall.allowedTCPPorts = [
+    #   6443 # k3s: required so that pods can reach the API server (running on port 6443 by default)
+    #   # 2379 # k3s, etcd clients: required if using a "High Availability Embedded etcd" configuration
+    #   # 2380 # k3s, etcd peers: required if using a "High Availability Embedded etcd" configuration
+    # ];
+    # networking.firewall.allowedUDPPorts = [
+    #   # 8472 # k3s, flannel: required if using multi-node for inter-node networking
+    # ];
+
     # Create Cilium install script if using Cilium
     system.activationScripts = mkIf (cfg.networkType == "cilium") {
       install-cilium =
@@ -112,51 +122,55 @@ in
     hardware.nvidia.package = mkIf cfg.gpuSupport config.boot.kernelPackages.nvidiaPackages.stable;
     hardware.nvidia.modesetting.enable = mkIf cfg.gpuSupport true;
 
-    # Enable Tailscale if needed
-    ${namespace}.networking.tailscale = mkIf (cfg.networkType == "tailscale") enabled;
+    ${namespace} = {
+      # Enable Tailscale if needed
+      networking.tailscale = mkIf (cfg.networkType == "tailscale") enabled;
 
-    services.k3s = {
-      enable = true;
-      role = cfg.role;
-      tokenFile = cfg.tokenFile;
 
-      # Configure based on whether this is the first node
-      clusterInit = cfg.isFirstNode;
-      serverAddr = mkIf (!cfg.isFirstNode) cfg.serverAddr;
+      # use custom version, not provided in nixpkgs
+      services.k3s = {
+        enable = true;
+        role = cfg.role;
+        tokenFile = cfg.tokenFile;
 
-      # Combine auto-generated flags with user-provided extra flags
-      extraFlags =
-        let
-          # Add GPU support if needed
-          gpuFlags = (
-            optionals cfg.gpuSupport [
-              "--kubelet-arg=feature-gates=DevicePlugins=true"
-              "--kubelet-arg=allow-privileged=true"
-            ]
-          );
-          # Network-specific flags
-          networkFlags =
-            if cfg.networkType == "tailscale" then
-              [
-                "--flannel-iface=tailscale0"
-                "--flannel-external-ip"
-                "--node-ip=$(${pkgs.tailscale}/bin/tailscale ip -4)"
-                "--node-external-ip=$(${pkgs.tailscale}/bin/tailscale ip -4)"
-                "--flannel-backend=vxlan"
+        # Configure based on whether this is the first node
+        clusterInit = cfg.isFirstNode;
+        serverAddr = mkIf (!cfg.isFirstNode) cfg.serverAddr;
+
+        # Combine auto-generated flags with user-provided extra flags
+        extraFlags =
+          let
+            # Add GPU support if needed
+            gpuFlags = (
+              optionals cfg.gpuSupport [
+                "--kubelet-arg=feature-gates=DevicePlugins=true"
+                "--kubelet-arg=allow-privileged=true"
               ]
-            else if cfg.networkType == "wireguard" then
-              [
-                "--flannel-backend=wireguard-native"
-              ]
-            else if cfg.networkType == "cilium" then
-              [
-                "--flannel-backend=none"
-                "--disable-network-policy"
-              ]
-            else
-              [ ]; # Standard networking doesn't need special flags
-        in
-        networkFlags ++ gpuFlags ++ cfg.extraArgs;
+            );
+            # Network-specific flags
+            networkFlags =
+              if cfg.networkType == "tailscale" then
+                [
+                  "--flannel-iface=tailscale0"
+                  "--flannel-external-ip"
+                  "--node-ip=$(${pkgs.tailscale}/bin/tailscale ip -4)"
+                  "--node-external-ip=$(${pkgs.tailscale}/bin/tailscale ip -4)"
+                  "--flannel-backend=vxlan"
+                ]
+              else if cfg.networkType == "wireguard" then
+                [
+                  "--flannel-backend=wireguard-native"
+                ]
+              else if cfg.networkType == "cilium" then
+                [
+                  "--flannel-backend=none"
+                  "--disable-network-policy"
+                ]
+              else
+                [ ]; # Standard networking doesn't need special flags
+          in
+          networkFlags ++ gpuFlags ++ cfg.extraArgs;
+      };
     };
   };
 }
