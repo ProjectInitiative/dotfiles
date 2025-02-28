@@ -549,15 +549,15 @@ in
           # );
         };
         script = ''
-        ${cfg.package}/bin/k3s ${cfg.role} \
-        ${lib.optionalString cfg.clusterInit "--cluster-init"} \
-        ${lib.optionalString cfg.disableAgent "--disable-agent"} \
-        ${lib.optionalString (cfg.serverAddr != "") "--server ${cfg.serverAddr}"} \
-        ${lib.optionalString (cfg.token != "") "--token ${cfg.token}"} \
-        ${lib.optionalString (cfg.tokenFile != null) "--token-file ${cfg.tokenFile}"} \
-        ${lib.optionalString (cfg.configPath != null) "--config ${cfg.configPath}"} \
-        ${lib.optionalString (cfg.extraKubeletConfig != {}) "--kubelet-arg=config=${config.systemd.services.k3s.serviceConfig.ExecStart.kubeletConfig}"} \
-        ${lib.optionalString (cfg.extraKubeProxyConfig != {}) "--kube-proxy-arg=config=${config.systemd.services.k3s.serviceConfig.ExecStart.kubeProxyConfig}"} \
+        ${cfg.package}/bin/k3s ${cfg.role}
+        ${lib.optionalString cfg.clusterInit "--cluster-init"}
+        ${lib.optionalString cfg.disableAgent "--disable-agent"}
+        ${lib.optionalString (cfg.serverAddr != "") "--server ${cfg.serverAddr}"}
+        ${lib.optionalString (cfg.token != "") "--token ${cfg.token}"}
+        ${lib.optionalString (cfg.tokenFile != null) "--token-file ${cfg.tokenFile}"}
+        ${lib.optionalString (cfg.configPath != null) "--config ${cfg.configPath}"}
+        ${lib.optionalString (cfg.extraKubeletConfig != {}) "--kubelet-arg=config=${config.systemd.services.k3s.serviceConfig.ExecStart.kubeletConfig}"}
+        ${lib.optionalString (cfg.extraKubeProxyConfig != {}) "--kube-proxy-arg=config=${config.systemd.services.k3s.serviceConfig.ExecStart.kubeProxyConfig}"}
         ${lib.concatStringsSep " " (lib.flatten (if builtins.isString cfg.extraFlags then [cfg.extraFlags] else cfg.extraFlags))}
         '';
       };
