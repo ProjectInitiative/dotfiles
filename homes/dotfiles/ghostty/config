@@ -44,3 +44,4 @@
 
 # initial-command = zsh -c "zellij attach || zellij"
 command = zsh -c "zellij attach || zellij"
+background-opacity = 0.90
