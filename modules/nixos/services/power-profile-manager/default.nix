@@ -22,7 +22,7 @@ in
       description = "GNOME Power Profile Manager";
       wantedBy = [ "graphical-session.target" ];
       partOf = [ "graphical-session.target" ];
-      
+
       serviceConfig = {
         Type = "simple";
         ExecStart = "${pkgs.writeShellScriptBin "power-profile-manager" ''

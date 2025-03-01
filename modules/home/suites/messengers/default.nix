@@ -21,12 +21,14 @@ in
   config = mkIf cfg.enable {
 
     home = {
-      packages = with pkgs; mkIf isGraphical [
-        element-desktop
-        signal-desktop
-        telegram-desktop
-        thunderbird
-      ];
+      packages =
+        with pkgs;
+        mkIf isGraphical [
+          element-desktop
+          signal-desktop
+          telegram-desktop
+          thunderbird
+        ];
     };
 
   };

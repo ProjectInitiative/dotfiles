@@ -126,7 +126,6 @@ in
       # Enable Tailscale if needed
       networking.tailscale = mkIf (cfg.networkType == "tailscale") enabled;
 
-
       # use custom version, not provided in nixpkgs
       services.k3s = {
         enable = true;

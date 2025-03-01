@@ -35,7 +35,7 @@ with lib.${namespace};
     networking = {
       tailscale = {
         enable = true;
-        extraArgs = ["--accept-routes"]; 
+        extraArgs = [ "--accept-routes" ];
       };
     };
 

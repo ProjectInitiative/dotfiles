@@ -59,14 +59,13 @@ in
       };
 
       # The actual tailscale script
-      script = let
-        extraArgsString = if cfg.extraArgs != [] 
-                          then builtins.concatStringsSep " " cfg.extraArgs
-                          else "";
-      in
-      ''
-        tailscale up --auth-key "$(cat ${tailscale_key})" --reset ${extraArgsString}
-      '';
+      script =
+        let
+          extraArgsString = if cfg.extraArgs != [ ] then builtins.concatStringsSep " " cfg.extraArgs else "";
+        in
+        ''
+          tailscale up --auth-key "$(cat ${tailscale_key})" --reset ${extraArgsString}
+        '';
 
     };
 

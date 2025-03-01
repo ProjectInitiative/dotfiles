@@ -12,7 +12,7 @@ with lib.${namespace};
 let
   user = config.${namespace}.user;
 
-  nix-public-signing-key = "shipyard:r+QK20NgKO/RisjxQ8rtxctsc5kQfY5DFCgGqvbmNYc="; 
+  nix-public-signing-key = "shipyard:r+QK20NgKO/RisjxQ8rtxctsc5kQfY5DFCgGqvbmNYc=";
 
   sops = config.sops;
   isLinux = pkgs.stdenv.isLinux;
@@ -32,7 +32,6 @@ let
   # sensitiveKeyTmpPath = "/dev/shm/sensitive";
   sensitiveKeyFileName = "sensitive-not-secret-age-key.txt";
   sensitiveKeyPath = "${sensitiveKeyTmpPath}/${sensitiveKeyFileName}";
-  
 
   # Helper function to decrypt sops files before evaluation
   parseYAMLOrJSONRaw = lib.${namespace}.mkParseYAMLOrJSON pkgs;
@@ -42,14 +41,13 @@ let
       # Use the manual method for systems that might not have the runtime files available
       # sensitiveNotSecretAgeKeys = "${inputs.sensitiveNotSecretAgeKeys}/keys.txt";
       sensitiveNotSecretAgeKeys = "${inputs.sensitiveNotSecretAgeKeys}/sensitive-not-secret-age-key.txt";
-      
+
       # If initial system activation does not drop the age key in /tmp/sensitive/sensitive-not-secret-age-key.txt and the build fails, copy the key from a working machine and it should work and setup systemd correctly for next time.
-      
+
       # Read the key file content directly
       # sensitiveNotSecretAgeKeysContent = builtins.readFile sensitiveKeyPath;
-        # Create a file in the Nix store with this content
+      # Create a file in the Nix store with this content
       # sensitiveNotSecretAgeKeys = pkgs.writeText "sensitiveNotSecretAgeKeysContent" sensitiveNotSecretAgeKeysContent;
-
 
       decryptedFile =
         pkgs.runCommand "decrypt-sops"
@@ -72,28 +70,30 @@ let
   sourceSecretPath = sops.secrets.sensitive_not_secret_age_key.path;
 
   # Script to copy the sensitive key
-    copyKeyCommands = let
+  copyKeyCommands =
+    let
       rsync = "${pkgs.rsync}/bin/rsync";
-    in ''
-    # Create directory if it doesn't exist
-    mkdir -p ${sensitiveKeyTmpPath}
-    
-    if [ -f "${sourceSecretPath}" ]; then
-      if [ -f "${sensitiveKeyPath}" ]; then
-        rm -f "${sensitiveKeyPath}"
+    in
+    ''
+      # Create directory if it doesn't exist
+      mkdir -p ${sensitiveKeyTmpPath}
+
+      if [ -f "${sourceSecretPath}" ]; then
+        if [ -f "${sensitiveKeyPath}" ]; then
+          rm -f "${sensitiveKeyPath}"
+        fi
+        # Copy the key to the new location
+        # cp "${sourceSecretPath}" "${sensitiveKeyPath}"
+        # chmod 640 "${sensitiveKeyPath}"
+        ${rsync} --checksum --no-times --no-perms --chmod=444 "${sourceSecretPath}" "${sensitiveKeyPath}"
+        touch -t 197001010000 "${sensitiveKeyPath}"
+        touch -t 197001010000 "${sensitiveKeyTmpPath}"
+        # touch --date="@1" --no-dereference "${sensitiveKeyPath}"
+        echo "Sensitive key copied to ${sensitiveKeyPath}"
+      else
+        echo "Source key at ${sourceSecretPath} not found"
       fi
-      # Copy the key to the new location
-      # cp "${sourceSecretPath}" "${sensitiveKeyPath}"
-      # chmod 640 "${sensitiveKeyPath}"
-      ${rsync} --checksum --no-times --no-perms --chmod=444 "${sourceSecretPath}" "${sensitiveKeyPath}"
-      touch -t 197001010000 "${sensitiveKeyPath}"
-      touch -t 197001010000 "${sensitiveKeyTmpPath}"
-      # touch --date="@1" --no-dereference "${sensitiveKeyPath}"
-      echo "Sensitive key copied to ${sensitiveKeyPath}"
-    else
-      echo "Source key at ${sourceSecretPath} not found"
-    fi
-  '';
+    '';
   # Also keep the script version for other uses (like macOS)
   copyKeyScript = pkgs.writeShellScript "copy-sensitive-key" ''
     ${copyKeyCommands}
@@ -123,13 +123,14 @@ in
       # };
     }
 
-    
-
     # NixOS-specific configurations
     // optionalAttrs isNixOS {
 
       nix.settings = {
-        trusted-users = [ "@wheel" user.name ];
+        trusted-users = [
+          "@wheel"
+          user.name
+        ];
         trusted-public-keys = [ nix-public-signing-key ];
       };
 
@@ -145,7 +146,7 @@ in
           RemainAfterExit = true;
         };
       };
-      
+
       # Set up tmpfs for sensitive keys
       systemd.tmpfiles.rules = [
         "d ${sensitiveKeyTmpPath} 0750 root ${user.name} - -"
@@ -174,39 +175,42 @@ in
       launchd.user.agents.copy-sensitive-key = {
         serviceConfig = {
           Label = "user.copy-sensitive-key";
-          ProgramArguments = [ "${pkgs.bash}/bin/bash" "-c" "${copyKeyScript}" ];
+          ProgramArguments = [
+            "${pkgs.bash}/bin/bash"
+            "-c"
+            "${copyKeyScript}"
+          ];
           RunAtLoad = true;
           KeepAlive = false;
           StandardOutPath = "/tmp/copy-sensitive-key.log";
           StandardErrorPath = "/tmp/copy-sensitive-key.error.log";
         };
       };
-      
+
       # Other Darwin-specific configurations
       sops = {
         defaultSopsFile = ./secrets/secrets.enc.yaml;
         secrets = {
-          sensitive_not_secret_age_key = {};
+          sensitive_not_secret_age_key = { };
         };
       };
     }
 
     # Home Manager-specific configurations (both Darwin and Linux)
-    # TODO this use case doesn't quite work yet. Specifically because home-manager's "lib" is not being passed (or accessible?) in this module. 
+    # TODO this use case doesn't quite work yet. Specifically because home-manager's "lib" is not being passed (or accessible?) in this module.
 
     # // optionalAttrs isHomeManager {
     #   # For Home Manager, use home.activation to run the script
     #   home.activation.copySensitiveKey = lib.hm.dag.entryAfter ["writeBoundary"] ''
     #     $DRY_RUN_CMD ${copyKeyScript}
     #   '';
-      
-     
+
     #   # Other Home Manager-specific configurations
     #   sops = {
     #     defaultSopsFile = ./secrets/secrets.enc.yaml;
     #     age.sshKeyPaths = [
     #       # TODO: enable this once I get all user keys stored in repo
-    #       # "${home-directory}/.ssh/id_ed25519" 
+    #       # "${home-directory}/.ssh/id_ed25519"
     #       "/etc/ssh/ssh_host_ed25519_key"
     #       (mkIf isLinux "/etc/ssh/ssh_host_ed25519_key")
     #       (mkIf isDarwin "<Darwin-key-path>")
@@ -220,4 +224,3 @@ in
 
   );
 }
-

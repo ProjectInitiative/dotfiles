@@ -36,7 +36,9 @@ in
     #   extraOptions = {};
     # };
 
-    programs.zsh.enable = mkIf config.home-manager.users.${cfg.name}.${namespace}.cli-apps.zsh.defaultUserShell true;
+    programs.zsh.enable =
+      mkIf config.home-manager.users.${cfg.name}.${namespace}.cli-apps.zsh.defaultUserShell
+        true;
 
     users.users.${cfg.name} = {
       isNormalUser = true;
@@ -48,7 +50,9 @@ in
       group = "users";
 
       # maybe check home-manager config
-      shell = mkIf config.home-manager.users.${cfg.name}.${namespace}.cli-apps.zsh.defaultUserShell pkgs.zsh;
+      shell =
+        mkIf config.home-manager.users.${cfg.name}.${namespace}.cli-apps.zsh.defaultUserShell
+          pkgs.zsh;
 
       # openssh.authorizedKeys.keyFiles = ["${inputs.ssh-pub-keys}"];
       openssh.authorizedKeys.keyFiles = cfg.authorized-keys;
