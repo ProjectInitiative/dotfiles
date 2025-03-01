@@ -24,6 +24,9 @@ with lib.${namespace};
     gui = {
       gnome = enabled;
     };
+    services = {
+      power-profile-manager = enabled;
+    };
 
     suites = {
       development = enabled;
