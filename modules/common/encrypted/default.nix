@@ -28,37 +28,27 @@ let
     else
       "/home/${user.name}";
 
-  sensitiveKeyTmpPath = "/tmp/sensitive";
-  # sensitiveKeyTmpPath = "/dev/shm/sensitive";
-  sensitiveKeyFileName = "sensitive-not-secret-age-key.txt";
-  sensitiveKeyPath = "${sensitiveKeyTmpPath}/${sensitiveKeyFileName}";
-
   # Helper function to decrypt sops files before evaluation
   parseYAMLOrJSONRaw = lib.${namespace}.mkParseYAMLOrJSON pkgs;
   decryptSopsFile =
     file:
     let
-      # Use the manual method for systems that might not have the runtime files available
-      # sensitiveNotSecretAgeKeys = "${inputs.sensitiveNotSecretAgeKeys}/keys.txt";
-      sensitiveNotSecretAgeKeys = "${inputs.sensitiveNotSecretAgeKeys}/sensitive-not-secret-age-key.txt";
-
-      # If initial system activation does not drop the age key in /tmp/sensitive/sensitive-not-secret-age-key.txt and the build fails, copy the key from a working machine and it should work and setup systemd correctly for next time.
-
-      # Read the key file content directly
-      # sensitiveNotSecretAgeKeysContent = builtins.readFile sensitiveKeyPath;
-      # Create a file in the Nix store with this content
-      # sensitiveNotSecretAgeKeys = pkgs.writeText "sensitiveNotSecretAgeKeysContent" sensitiveNotSecretAgeKeysContent;
+      # System builds should be idempotent. If this script fails, sensitiveNotSecret defaults to {}. Down stream consumers should be aware of this and add a check for that the property they are consuming exists, otherwise provide a default.
+      # RIKS:
+      # Depending on what data is included in this attr, a system could become unreachable if for example it has never been setup with sops before, and initially the key doesn't exist.
+      # Mitigation: most systems are built from a baseline with nixos-anywhere or an ISO that already defines this secret, so the chances of the secret not being there are low. If not, simply re-run again after initial system switch (may need --offline mode if the IPs get cancelled.)
 
       decryptedFile =
         pkgs.runCommand "decrypt-sops"
           {
             nativeBuildInputs = [ pkgs.sops ];
-            SOPS_AGE_KEY_FILE = sensitiveNotSecretAgeKeys;
+
+            SOPS_AGE_KEY_FILE = sops.secrets.sensitive_not_secret_age_key.path;
             # not added to nix store because of /run
-            # SOPS_AGE_KEY_FILE = sops.secrets.sensitive_not_secret_age_key.path;
+            # __nochroot = true;
+            sandbox-paths = [ sops.secrets.sensitive_not_secret_age_key.path ];
           }
           ''
-            echo $SOPS_AGE_KEY_FILE
             sops -d ${file} > $out
           '';
     in
@@ -66,45 +56,13 @@ let
 
   # Decrypt the sensitive SOPS file
   sensitiveNotSecret = decryptSopsFile ./sensitive/sensitive.enc.yaml;
-
-  sourceSecretPath = sops.secrets.sensitive_not_secret_age_key.path;
-
-  # Script to copy the sensitive key
-  copyKeyCommands =
-    let
-      rsync = "${pkgs.rsync}/bin/rsync";
-    in
-    ''
-      # Create directory if it doesn't exist
-      mkdir -p ${sensitiveKeyTmpPath}
-
-      if [ -f "${sourceSecretPath}" ]; then
-        if [ -f "${sensitiveKeyPath}" ]; then
-          rm -f "${sensitiveKeyPath}"
-        fi
-        # Copy the key to the new location
-        # cp "${sourceSecretPath}" "${sensitiveKeyPath}"
-        # chmod 640 "${sensitiveKeyPath}"
-        ${rsync} --checksum --no-times --no-perms --chmod=444 "${sourceSecretPath}" "${sensitiveKeyPath}"
-        touch -t 197001010000 "${sensitiveKeyPath}"
-        touch -t 197001010000 "${sensitiveKeyTmpPath}"
-        # touch --date="@1" --no-dereference "${sensitiveKeyPath}"
-        echo "Sensitive key copied to ${sensitiveKeyPath}"
-      else
-        echo "Source key at ${sourceSecretPath} not found"
-      fi
-    '';
-  # Also keep the script version for other uses (like macOS)
-  copyKeyScript = pkgs.writeShellScript "copy-sensitive-key" ''
-    ${copyKeyCommands}
-  '';
 in
 {
   # Define options for sensitiveNotSecret
   options.sensitiveNotSecret = mkOption {
     type = types.attrs;
     description = "Decrypted sensitive but not secret configuration";
-    default = { };
+    default = warnIfEmpty "sensitiveNotSecret" { };
   };
 
   config = (
@@ -121,72 +79,59 @@ in
       #   ];
       #   defaultSopsFile = ./secrets/secrets.enc.yaml;
       # };
+
+      # nix.settings = {
+      # THIS IS BREAKING BECAUSE IT IS OVERRIDING NIXOS CACHE FOR HOME_MANAGER
+      #   trusted-public-keys = [ nix-public-signing-key ];
+      #   # allow reading from /run/secrets/sensitive_not_secret_age_key
+      #   allow-symlinked-store = true;
+      #   # allow reading from /run/secrets/sensitive_not_secret_age_key and not putting in nix-store
+      #   allowed-impure-host-deps = ["/run/secrets/sensitive_not_secret_age_key"];
+      #   # allow-unsafe-native-code-during-evaluation = true;
+      #   sandbox-paths = ["/run/secrets/sensitive_not_secret_age_key"];
+      # };
     }
 
     # NixOS-specific configurations
-    // optionalAttrs isNixOS {
+    // optionalAttrs isNixOS (mkMerge [
 
-      nix.settings = {
-        trusted-users = [
-          "@wheel"
-          user.name
-        ];
-        trusted-public-keys = [ nix-public-signing-key ];
-      };
-
-      # Create the systemd service to copy the key
-      systemd.services.copy-sensitive-key = {
-        description = "Copy sensitive but not secret key to tmpfs";
-        wantedBy = [ "multi-user.target" ];
-        after = [ "sops-nix.service" ];
-        before = [ "nix-daemon.service" ];
-        script = copyKeyCommands;
-        serviceConfig = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-        };
-      };
-
-      # Set up tmpfs for sensitive keys
-      systemd.tmpfiles.rules = [
-        "d ${sensitiveKeyTmpPath} 0750 root ${user.name} - -"
-      ];
-
-      sops = {
-        defaultSopsFile = ./secrets/secrets.enc.yaml;
-        age.sshKeyPaths = [
-          "/etc/ssh/ssh_host_ed25519_key"
-        ];
-        secrets = {
-          tailscale_ephemeral_auth_key = { };
-          tailscale_auth_key = { };
-          root_password.neededForUsers = true;
-          user_password.neededForUsers = true;
-          sensitive_not_secret_age_key = {
-            owner = user.name;
+      {
+        sops = {
+          defaultSopsFile = ./secrets/secrets.enc.yaml;
+          age.sshKeyPaths = [
+            "/etc/ssh/ssh_host_ed25519_key"
+          ];
+          secrets = {
+            tailscale_ephemeral_auth_key = { };
+            tailscale_auth_key = { };
+            root_password.neededForUsers = true;
+            user_password.neededForUsers = true;
+            sensitive_not_secret_age_key = {
+              group = "nixbld";
+              # TESTING PURPOSES ONLY - so nix repl can read
+              # mode = "444";
+            };
           };
         };
-      };
-    }
+      }
+      # Use mkMerge to create the above config, sops paths, before creating nix.settings
+      # which uses sops secrets paths
+      {
+
+        nix.settings = {
+          trusted-users = [
+            "@wheel"
+            user.name
+          ];
+          trusted-public-keys = [ nix-public-signing-key ];
+        };
+        inherit sensitiveNotSecret;
+
+      }
+    ])
 
     # Darwin-specific configurations
     // optionalAttrs (isDarwin && !isHomeManager) {
-      # Use launchd to run the script on Darwin
-      launchd.user.agents.copy-sensitive-key = {
-        serviceConfig = {
-          Label = "user.copy-sensitive-key";
-          ProgramArguments = [
-            "${pkgs.bash}/bin/bash"
-            "-c"
-            "${copyKeyScript}"
-          ];
-          RunAtLoad = true;
-          KeepAlive = false;
-          StandardOutPath = "/tmp/copy-sensitive-key.log";
-          StandardErrorPath = "/tmp/copy-sensitive-key.error.log";
-        };
-      };
-
       # Other Darwin-specific configurations
       sops = {
         defaultSopsFile = ./secrets/secrets.enc.yaml;

@@ -134,6 +134,7 @@ in
         interface = "ens18";
         bcachefsInitDevice = "/dev/vdc1";
         mountpoint = mountpoint;
+        isFirstK8sNode = true;
       };
     };
   };

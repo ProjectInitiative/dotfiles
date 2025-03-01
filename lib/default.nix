@@ -43,4 +43,11 @@ rec {
   #   home-manager = common-modules;
   #   darwin = common-modules;
   # };
+
+  warnIfEmpty =
+    name: set:
+    if builtins.length (builtins.attrNames set) == 0 then
+      builtins.trace "Warning: ${name} is empty!" set
+    else
+      set;
 }

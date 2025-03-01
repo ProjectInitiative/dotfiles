@@ -15,6 +15,24 @@ with lib.${namespace};
     ./hardware-configuration.nix
   ];
 
+  # TODO: move this to module
+  nix = {
+    gc = {
+      automatic = true;
+      dates = "weekly";
+      persistent = true;
+      options = "--delete-older-than 30d";
+    };
+    settings = {
+      auto-optimise-store = true;
+    };
+    extraOptions = ''
+      min-free = ${toString (100 * 1024 * 1024)}
+      max-free = ${toString (1024 * 1024 * 1024)}
+    '';
+  };
+
+
   home-manager.backupFileExtension = "backup";
 
   projectinitiative = {

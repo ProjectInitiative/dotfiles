@@ -43,6 +43,7 @@ in
         tree
         usbutils
         pkgs.${namespace}.flatten-directory
+        # pkgs.${namespace}.mc
       ];
     };
   };

@@ -509,6 +509,58 @@ in
           }
           // cfg.extraKubeProxyConfig
         );
+        # Adapted from official k3s kill script to work as a systemd ExecStopPost
+        killK3sScript = pkgs.writeShellScript "kill-k3s" ''
+          set -e
+
+          # Helper functions from k3s uninstaller
+          pschildren() {
+              ps -e -o ppid= -o pid= | \
+              sed -e 's/^\s*//g; s/\s\s*/\t/g;' | \
+              grep -w "^$1" | \
+              cut -f2
+          }
+
+          pstree() {
+              for pid in $@; do
+                  echo $pid
+                  for child in $(pschildren $pid); do
+                      pstree $child
+                  done
+              done
+          }
+
+          killtree() {
+              kill -9 $(pstree $@) 2>/dev/null || true
+          }
+
+          getshims() {
+              ps -e -o pid= -o args= | sed -e 's/^ *//; s/\s\s*/\t/;' | grep -w 'k3s/data/[^/]*/bin/containerd-shim' | cut -f1
+          }
+
+          # Kill main k3s process if it's still running
+          pkill -f "k3s ${cfg.role}" || true
+
+          # Kill all containerd shim processes
+          killtree $(getshims) || true
+
+          # Kill other k3s processes 
+          pkill -f "k3s-" || true
+
+          # Wait a moment to ensure processes are shut down
+          sleep 2
+
+          # Check if any k3s processes are still running and report them
+          REMAINING=$(pgrep -fa "k3s|containerd-shim")
+          if [ -n "$REMAINING" ]; then
+            echo "Warning: Some k3s processes are still running:"
+            echo "$REMAINING"
+
+            # For these persistent processes, use more force
+            echo "Attempting to terminate remaining processes forcefully..."
+            pkill -9 -f "k3s|containerd-shim" || true
+          fi
+        '';
       in
       {
         description = "k3s service";
@@ -524,8 +576,11 @@ in
         path = lib.optional config.boot.zfs.enabled config.boot.zfs.package;
         serviceConfig = {
           # See: https://github.com/rancher/k3s/blob/dddbd16305284ae4bd14c0aade892412310d7edc/install.sh#L197
-          Type = if cfg.role == "agent" then "exec" else "notify";
-          KillMode = "process";
+          # Type = if cfg.role == "agent" then "exec" else "notify";
+          Type = "exec";
+          KillMode = "mixed";
+          KillSignal = "SIGTERM";
+          SendSIGKILL = "yes";
           Delegate = "yes";
           Restart = "always";
           RestartSec = "5s";
@@ -533,8 +588,11 @@ in
           LimitNPROC = "infinity";
           LimitCORE = "infinity";
           TasksMax = "infinity";
+          TimeoutStartSec = "300";
+          TimeoutStopSec = "120";
           EnvironmentFile = cfg.environmentFile;
           ExecStartPre = activateK3sContent;
+          ExecStopPost = killK3sScript;
           # ExecStart = lib.concatStringsSep " \\\n " (
           #   [ "${cfg.package}/bin/k3s ${cfg.role}" ]
           #   ++ (lib.optional cfg.clusterInit "--cluster-init")
@@ -548,24 +606,33 @@ in
           #   ++ (lib.flatten cfg.extraFlags)
           # );
         };
-        script = ''
-          ${cfg.package}/bin/k3s ${cfg.role}
-          ${lib.optionalString cfg.clusterInit "--cluster-init"}
-          ${lib.optionalString cfg.disableAgent "--disable-agent"}
-          ${lib.optionalString (cfg.serverAddr != "") "--server ${cfg.serverAddr}"}
-          ${lib.optionalString (cfg.token != "") "--token ${cfg.token}"}
-          ${lib.optionalString (cfg.tokenFile != null) "--token-file ${cfg.tokenFile}"}
-          ${lib.optionalString (cfg.configPath != null) "--config ${cfg.configPath}"}
-          ${lib.optionalString (
-            cfg.extraKubeletConfig != { }
-          ) "--kubelet-arg=config=${config.systemd.services.k3s.serviceConfig.ExecStart.kubeletConfig}"}
-          ${lib.optionalString (
-            cfg.extraKubeProxyConfig != { }
-          ) "--kube-proxy-arg=config=${config.systemd.services.k3s.serviceConfig.ExecStart.kubeProxyConfig}"}
-          ${lib.concatStringsSep " " (
-            lib.flatten (if builtins.isString cfg.extraFlags then [ cfg.extraFlags ] else cfg.extraFlags)
-          )}
-        '';
+        script =
+          let
+            # Build the command components using the same approach as ExecStart
+            commandComponents =
+              [
+                "${cfg.package}/bin/k3s ${cfg.role}"
+              ]
+              ++ (lib.optional cfg.clusterInit "--cluster-init")
+              ++ (lib.optional cfg.disableAgent "--disable-agent")
+              ++ (lib.optional (cfg.serverAddr != "") "--server ${cfg.serverAddr}")
+              ++ (lib.optional (cfg.token != "") "--token ${cfg.token}")
+              ++ (lib.optional (cfg.tokenFile != null) "--token-file ${cfg.tokenFile}")
+              ++ (lib.optional (cfg.configPath != null) "--config ${cfg.configPath}")
+              ++ (lib.optional (
+                cfg.extraKubeletConfig != { }
+              ) "--kubelet-arg=config=${config.systemd.services.k3s.serviceConfig.ExecStart.kubeletConfig}")
+              ++ (lib.optional (
+                cfg.extraKubeProxyConfig != { }
+              ) "--kube-proxy-arg=config=${config.systemd.services.k3s.serviceConfig.ExecStart.kubeProxyConfig}")
+              ++ (lib.flatten (if builtins.isString cfg.extraFlags then [ cfg.extraFlags ] else cfg.extraFlags));
+
+            # Join all command components with a space
+            command = lib.concatStringsSep " " commandComponents;
+          in
+          ''
+            ${command}
+          '';
       };
   };
 

@@ -24,8 +24,10 @@ with lib.${namespace};
 
     browsers = {
       firefox = enabled;
-      chrome = enabled;
+      chrome = disabled;
       chromium = enabled;
+      librewolf = enabled;
+      ladybird = disabled;
       tor = enabled;
     };
 
@@ -59,23 +61,23 @@ with lib.${namespace};
   #   user.authorized-keys = inputs.ssh-pub-keys;
   # };
 
-  systemd.user.services.setup-sops-age = {
-    Unit = {
-      Description = "Set up SOPS age key from SSH key";
-      After = [ "default.target" ];
-    };
+  # systemd.user.services.setup-sops-age = {
+  #   Unit = {
+  #     Description = "Set up SOPS age key from SSH key";
+  #     After = [ "default.target" ];
+  #   };
 
-    Service = {
-      Type = "oneshot";
-      ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p %h/.config/sops/age";
-      ExecStart = "${pkgs.ssh-to-age}/bin/ssh-to-age -private-key -i %h/.ssh/id_ed25519 -o %h/.config/sops/age/keys.txt";
-      RemainAfterExit = true;
-    };
+  #   Service = {
+  #     Type = "oneshot";
+  #     ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p %h/.config/sops/age";
+  #     ExecStart = "${pkgs.ssh-to-age}/bin/ssh-to-age -private-key -i %h/.ssh/id_ed25519 -o %h/.config/sops/age/keys.txt";
+  #     RemainAfterExit = true;
+  #   };
 
-    Install = {
-      WantedBy = [ "default.target" ];
-    };
-  };
+  #   Install = {
+  #     WantedBy = [ "default.target" ];
+  #   };
+  # };
 
   programs.zsh.initExtra = ''
     if [ ! -f "$HOME/.config/sops/age/keys.txt" ]; then
