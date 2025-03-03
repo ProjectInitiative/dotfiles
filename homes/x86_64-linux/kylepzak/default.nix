@@ -59,27 +59,24 @@ with lib.${namespace};
   #   user.authorized-keys = inputs.ssh-pub-keys;
   # };
 
-<<<<<<< Updated upstream
-  systemd.user.services.setup-sops-age = {
-    Unit = {
-      Description = "Set up SOPS age key from SSH key";
-      After = [ "default.target" ];
-    };
+  # systemd.user.services.setup-sops-age = {
+  #   Unit = {
+  #     Description = "Set up SOPS age key from SSH key";
+  #     After = [ "default.target" ];
+  #   };
 
-    Service = {
-      Type = "oneshot";
-      ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p %h/.config/sops/age";
-      ExecStart = "${pkgs.ssh-to-age}/bin/ssh-to-age -private-key -i %h/.ssh/id_ed25519 -o %h/.config/sops/age/keys.txt";
-      RemainAfterExit = true;
-    };
+  #   Service = {
+  #     Type = "oneshot";
+  #     ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p %h/.config/sops/age";
+  #     ExecStart = "${pkgs.ssh-to-age}/bin/ssh-to-age -private-key -i %h/.ssh/id_ed25519 -o %h/.config/sops/age/keys.txt";
+  #     RemainAfterExit = true;
+  #   };
 
-    Install = {
-      WantedBy = [ "default.target" ];
-    };
-  };
+  #   Install = {
+  #     WantedBy = [ "default.target" ];
+  #   };
+  # };
 
-=======
->>>>>>> Stashed changes
   programs.zsh.initExtra = ''
     if [ ! -f "$HOME/.config/sops/age/keys.txt" ]; then
       mkdir -p "$HOME/.config/sops/age"

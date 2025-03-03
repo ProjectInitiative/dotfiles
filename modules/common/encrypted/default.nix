@@ -40,15 +40,11 @@ let
           {
             nativeBuildInputs = [ pkgs.sops ];
 
-            SOPS_AGE_KEY_FILE = test;
-            # SOPS_AGE_KEY_FILE = sops.secrets.sensitive_not_secret_age_key.path;
+            SOPS_AGE_KEY_FILE = sops.secrets.sensitive_not_secret_age_key.path;
             # not added to nix store because of /run
-            # sandbox-paths = [sops.secrets.sensitive_not_secret_age_key.path];
+            sandbox-paths = [sops.secrets.sensitive_not_secret_age_key.path];
           }
           ''
-            whoami
-            echo $SOPS_AGE_KEY_FILE
-            cat $SOPS_AGE_KEY_FILE
             sops -d ${file} > $out || echo unable to decrypt
           '';
     in
@@ -69,7 +65,7 @@ in
     # common config
     {
 
-      # inherit sensitiveNotSecret;
+      inherit sensitiveNotSecret;
       # this gets overriden when using // operator
       # sops = {
       #   # age.keyFile = mkIf isHomeManager "${home-directory}/.config/sops/age/key.txt";
@@ -80,15 +76,15 @@ in
       #   defaultSopsFile = ./secrets/secrets.enc.yaml;
       # };
 
-      # nix.settings = {
-      #   trusted-public-keys = [ nix-public-signing-key ];
-      #   # allow reading from /run/secrets/sensitive_not_secret_age_key
-      #   allow-symlinked-store = true;
-      #   # allow reading from /run/secrets/sensitive_not_secret_age_key and not putting in nix-store
-      #   allowed-impure-host-deps = ["/run/secrets/sensitive_not_secret_age_key"];
-      #   # allow-unsafe-native-code-during-evaluation = true;
-      #   sandbox-paths = ["/run/secrets/sensitive_not_secret_age_key"];
-      # };
+      nix.settings = {
+        trusted-public-keys = [ nix-public-signing-key ];
+        # allow reading from /run/secrets/sensitive_not_secret_age_key
+        allow-symlinked-store = true;
+        # allow reading from /run/secrets/sensitive_not_secret_age_key and not putting in nix-store
+        allowed-impure-host-deps = ["/run/secrets/sensitive_not_secret_age_key"];
+        # allow-unsafe-native-code-during-evaluation = true;
+        sandbox-paths = ["/run/secrets/sensitive_not_secret_age_key"];
+      };
     }
 
     # NixOS-specific configurations
@@ -101,8 +97,8 @@ in
         ];
         trusted-public-keys = [ nix-public-signing-key ];
         allow-symlinked-store = true;
-        # allowed-impure-host-deps = ["/run/secrets/sensitive_not_secret_age_key"];
-        # sandbox-paths = ["/run/secrets/sensitive_not_secret_age_key"];
+        allowed-impure-host-deps = ["/run/secrets/sensitive_not_secret_age_key"];
+        sandbox-paths = ["/run/secrets/sensitive_not_secret_age_key"];
         # allow-unsafe-native-code-during-evaluation = true;
       };
 
