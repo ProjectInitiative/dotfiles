@@ -89,7 +89,7 @@ in
 
       services = {
         k8s = {
-          enable = true;
+          enable = false;
           tokenFile = sops.secrets.k8s_token.path;
           role = "server";
           extraArgs = [
@@ -141,5 +141,6 @@ in
     ];
     networking.enableIPv6 = false;
 
+    system.stateVersion = "24.05"; # Did you read the comment?
   };
 }

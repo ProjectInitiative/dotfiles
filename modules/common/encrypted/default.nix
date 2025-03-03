@@ -33,7 +33,10 @@ let
   decryptSopsFile =
     file:
     let
-      # If initial system activation does not drop the age key in /tmp/sensitive/sensitive-not-secret-age-key.txt and the build fails, copy the key from a working machine and it should work and setup systemd correctly for next time.
+      # System builds should be idempotent. If this script fails, sensitiveNotSecret defaults to {}. Down stream consumers should be aware of this and add a check for that the property they are consuming exists, otherwise provide a default.
+      # RIKS:
+      # Depending on what data is included in this attr, a system could become unreachable if for example it has never been setup with sops before, and initially the key doesn't exist.
+      # Mitigation: most systems are built from a baseline with nixos-anywhere or an ISO that already defines this secret, so the chances of the secret not being there are low. If not, simply re-run again after initial system switch (may need --offline mode if the IPs get cancelled.)
 
       decryptedFile =
         pkgs.runCommand "decrypt-sops"
@@ -42,6 +45,7 @@ let
 
             SOPS_AGE_KEY_FILE = sops.secrets.sensitive_not_secret_age_key.path;
             # not added to nix store because of /run
+            # __nochroot = true;
             sandbox-paths = [ sops.secrets.sensitive_not_secret_age_key.path ];
           }
           ''
@@ -58,7 +62,7 @@ in
   options.sensitiveNotSecret = mkOption {
     type = types.attrs;
     description = "Decrypted sensitive but not secret configuration";
-    default = { };
+    default = warnIfEmpty "sensitiveNotSecret" { };
   };
 
   config = (
@@ -90,9 +94,9 @@ in
 
     # NixOS-specific configurations
     // optionalAttrs isNixOS (mkMerge [
-      
+
       {
-          sops = {
+        sops = {
           defaultSopsFile = ./secrets/secrets.enc.yaml;
           age.sshKeyPaths = [
             "/etc/ssh/ssh_host_ed25519_key"
@@ -105,7 +109,7 @@ in
             sensitive_not_secret_age_key = {
               group = "nixbld";
               # TESTING PURPOSES ONLY - so nix repl can read
-              mode = "444";
+              # mode = "444";
             };
           };
         };
@@ -120,10 +124,6 @@ in
             user.name
           ];
           trusted-public-keys = [ nix-public-signing-key ];
-          allow-symlinked-store = true;
-          allowed-impure-host-deps = [ config.sops.secrets.sensitive_not_secret_age_key.path ];
-          sandbox-paths = [ config.sops.secrets.sensitive_not_secret_age_key.path ];
-          # allow-unsafe-native-code-during-evaluation = true;
         };
         inherit sensitiveNotSecret;
 
