@@ -42,10 +42,10 @@ let
 
             SOPS_AGE_KEY_FILE = sops.secrets.sensitive_not_secret_age_key.path;
             # not added to nix store because of /run
-            sandbox-paths = [sops.secrets.sensitive_not_secret_age_key.path];
+            sandbox-paths = [ sops.secrets.sensitive_not_secret_age_key.path ];
           }
           ''
-            sops -d ${file} > $out || echo unable to decrypt
+            sops -d ${file} > $out
           '';
     in
     parseYAMLOrJSONRaw (builtins.readFile decryptedFile);
@@ -76,48 +76,59 @@ in
       #   defaultSopsFile = ./secrets/secrets.enc.yaml;
       # };
 
-      nix.settings = {
-        trusted-public-keys = [ nix-public-signing-key ];
-        # allow reading from /run/secrets/sensitive_not_secret_age_key
-        allow-symlinked-store = true;
-        # allow reading from /run/secrets/sensitive_not_secret_age_key and not putting in nix-store
-        allowed-impure-host-deps = ["/run/secrets/sensitive_not_secret_age_key"];
-        # allow-unsafe-native-code-during-evaluation = true;
-        sandbox-paths = ["/run/secrets/sensitive_not_secret_age_key"];
-      };
+      # nix.settings = {
+      # THIS IS BREAKING BECAUSE IT IS OVERRIDING NIXOS CACHE FOR HOME_MANAGER
+      #   trusted-public-keys = [ nix-public-signing-key ];
+      #   # allow reading from /run/secrets/sensitive_not_secret_age_key
+      #   allow-symlinked-store = true;
+      #   # allow reading from /run/secrets/sensitive_not_secret_age_key and not putting in nix-store
+      #   allowed-impure-host-deps = ["/run/secrets/sensitive_not_secret_age_key"];
+      #   # allow-unsafe-native-code-during-evaluation = true;
+      #   sandbox-paths = ["/run/secrets/sensitive_not_secret_age_key"];
+      # };
     }
 
     # NixOS-specific configurations
-    // optionalAttrs isNixOS {
-
-      nix.settings = {
-        trusted-users = [
-          "@wheel"
-          user.name
-        ];
-        trusted-public-keys = [ nix-public-signing-key ];
-        allow-symlinked-store = true;
-        allowed-impure-host-deps = ["/run/secrets/sensitive_not_secret_age_key"];
-        sandbox-paths = ["/run/secrets/sensitive_not_secret_age_key"];
-        # allow-unsafe-native-code-during-evaluation = true;
-      };
-
-      sops = {
-        defaultSopsFile = ./secrets/secrets.enc.yaml;
-        age.sshKeyPaths = [
-          "/etc/ssh/ssh_host_ed25519_key"
-        ];
-        secrets = {
-          tailscale_ephemeral_auth_key = { };
-          tailscale_auth_key = { };
-          root_password.neededForUsers = true;
-          user_password.neededForUsers = true;
-          sensitive_not_secret_age_key = {
-            group = "nixbld";
+    // optionalAttrs isNixOS (mkMerge [
+      
+      {
+          sops = {
+          defaultSopsFile = ./secrets/secrets.enc.yaml;
+          age.sshKeyPaths = [
+            "/etc/ssh/ssh_host_ed25519_key"
+          ];
+          secrets = {
+            tailscale_ephemeral_auth_key = { };
+            tailscale_auth_key = { };
+            root_password.neededForUsers = true;
+            user_password.neededForUsers = true;
+            sensitive_not_secret_age_key = {
+              group = "nixbld";
+              # TESTING PURPOSES ONLY - so nix repl can read
+              mode = "444";
+            };
           };
         };
-      };
-    }
+      }
+      # Use mkMerge to create the above config, sops paths, before creating nix.settings
+      # which uses sops secrets paths
+      {
+
+        nix.settings = {
+          trusted-users = [
+            "@wheel"
+            user.name
+          ];
+          trusted-public-keys = [ nix-public-signing-key ];
+          allow-symlinked-store = true;
+          allowed-impure-host-deps = [ config.sops.secrets.sensitive_not_secret_age_key.path ];
+          sandbox-paths = [ config.sops.secrets.sensitive_not_secret_age_key.path ];
+          # allow-unsafe-native-code-during-evaluation = true;
+        };
+        inherit sensitiveNotSecret;
+
+      }
+    ])
 
     # Darwin-specific configurations
     // optionalAttrs (isDarwin && !isHomeManager) {
