@@ -58,9 +58,6 @@ in
     nix.settings = {
       # Set the secret key
       secret-key-files = [ sops.secrets.nix-signing-key.path ];
-
-      # Auto-sign built derivations
-      # sign-builds = true;
     };
 
     ## TODO make this work on multiple system types

@@ -59,6 +59,7 @@ with lib.${namespace};
   #   user.authorized-keys = inputs.ssh-pub-keys;
   # };
 
+<<<<<<< Updated upstream
   systemd.user.services.setup-sops-age = {
     Unit = {
       Description = "Set up SOPS age key from SSH key";
@@ -77,6 +78,8 @@ with lib.${namespace};
     };
   };
 
+=======
+>>>>>>> Stashed changes
   programs.zsh.initExtra = ''
     if [ ! -f "$HOME/.config/sops/age/keys.txt" ]; then
       mkdir -p "$HOME/.config/sops/age"

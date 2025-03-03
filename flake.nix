@@ -31,13 +31,6 @@
     # Secrets management
     sops-nix.url = "github:Mic92/sops-nix";
     # agenix.url = "github:ryantm/agenix";
-    sensitiveNotSecretAgeKeys = {
-      # url = "git+ssh://root@pikvm/root/sensitive?ref=main";
-      # url = "git+file:///home/kylepzak/.config/sops/age/sensitive";
-      url = "path:///tmp/sensitive";
-      # url = "path:///dev/shm/sensitive";
-      flake = false;
-    };
 
     # Snowfall Lib
     # snowfall-lib.url = "path:/home/kylepzak/development/build-software/snowfall-lib";
@@ -235,7 +228,7 @@
         formatter = (inputs.treefmt-nix.lib.evalModule channels.nixpkgs ./treefmt.nix).config.build.wrapper;
 
         # Add a check for formatting
-        # checks.formatting = (inputs.treefmt-nix.lib.evalModule channels.nixpkgs ./treefmt.nix).config.build.check inputs.self;
+        checks.formatting = (inputs.treefmt-nix.lib.evalModule channels.nixpkgs ./treefmt.nix).config.build.check inputs.self;
       };
     }
     // {
