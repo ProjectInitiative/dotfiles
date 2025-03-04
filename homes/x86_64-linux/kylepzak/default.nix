@@ -26,6 +26,7 @@ with lib.${namespace};
       firefox = enabled;
       chrome = enabled;
       chromium = enabled;
+      ladybird = enabled;
       tor = enabled;
     };
 
