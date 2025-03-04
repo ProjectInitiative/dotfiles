@@ -81,6 +81,7 @@ in
       bcachefs-tools
       util-linux
       smartmontools
+      lsof
     ];
 
     services.openssh.enable = true;
@@ -89,7 +90,7 @@ in
 
       services = {
         k8s = {
-          enable = false;
+          enable = true;
           tokenFile = sops.secrets.k8s_token.path;
           role = "server";
           extraArgs = [
