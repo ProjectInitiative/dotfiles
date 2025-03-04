@@ -21,7 +21,7 @@ in
     bcachefsInitDevice = mkOpt types.str "" "Device path for one of the bcachefs pool drives";
     mountpoint = mkOpt types.str "/mnt/pool" "Path to mount bcachefs pool";
     nvidiaSupport = mkBoolOpt false "Whether to enable nvidia GPU support";
-    firstK8sNode = mkBoolOpt false "Whether node is the first in the cluster";
+    isFirstK8sNode = mkBoolOpt false "Whether node is the first in the cluster";
   };
 
   config = mkIf cfg.enable {
@@ -90,19 +90,12 @@ in
 
       services = {
         k8s = {
-          enable = true;
+          enable = false;
           tokenFile = sops.secrets.k8s_token.path;
+          isFirstNode = cfg.isFirstK8sNode;
+          networkType = "cilium";
           role = "server";
           extraArgs = [
-            # Flannel configuration
-            # "--flannel-backend=vxlan"
-            # "--flannel-iface=tailscale0"
-            # "--flannel-external-ip"
-
-            # Node IP configuration - using Tailscale
-            "--node-ip=$(${pkgs.tailscale}/bin/tailscale ip -4)"
-            "--node-external-ip=$(${pkgs.tailscale}/bin/tailscale ip -4)"
-
             # TLS configuration
             "--tls-san=k8s.projectinitiative.io"
 

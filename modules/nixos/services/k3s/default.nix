@@ -606,26 +606,33 @@ in
           #   ++ (lib.flatten cfg.extraFlags)
           # );
         };
-      script = let
-        # Build the command components using the same approach as ExecStart
-        commandComponents = [
-          "${cfg.package}/bin/k3s ${cfg.role}"
-        ] 
-        ++ (lib.optional cfg.clusterInit "--cluster-init")
-        ++ (lib.optional cfg.disableAgent "--disable-agent")
-        ++ (lib.optional (cfg.serverAddr != "") "--server ${cfg.serverAddr}")
-        ++ (lib.optional (cfg.token != "") "--token ${cfg.token}")
-        ++ (lib.optional (cfg.tokenFile != null) "--token-file ${cfg.tokenFile}")
-        ++ (lib.optional (cfg.configPath != null) "--config ${cfg.configPath}")
-        ++ (lib.optional (cfg.extraKubeletConfig != {}) "--kubelet-arg=config=${config.systemd.services.k3s.serviceConfig.ExecStart.kubeletConfig}")
-        ++ (lib.optional (cfg.extraKubeProxyConfig != {}) "--kube-proxy-arg=config=${config.systemd.services.k3s.serviceConfig.ExecStart.kubeProxyConfig}")
-        ++ (lib.flatten (if builtins.isString cfg.extraFlags then [cfg.extraFlags] else cfg.extraFlags));
-      
-        # Join all command components with a space
-        command = lib.concatStringsSep " " commandComponents;
-      in ''
-        ${command}
-      '';
+        script =
+          let
+            # Build the command components using the same approach as ExecStart
+            commandComponents =
+              [
+                "${cfg.package}/bin/k3s ${cfg.role}"
+              ]
+              ++ (lib.optional cfg.clusterInit "--cluster-init")
+              ++ (lib.optional cfg.disableAgent "--disable-agent")
+              ++ (lib.optional (cfg.serverAddr != "") "--server ${cfg.serverAddr}")
+              ++ (lib.optional (cfg.token != "") "--token ${cfg.token}")
+              ++ (lib.optional (cfg.tokenFile != null) "--token-file ${cfg.tokenFile}")
+              ++ (lib.optional (cfg.configPath != null) "--config ${cfg.configPath}")
+              ++ (lib.optional (
+                cfg.extraKubeletConfig != { }
+              ) "--kubelet-arg=config=${config.systemd.services.k3s.serviceConfig.ExecStart.kubeletConfig}")
+              ++ (lib.optional (
+                cfg.extraKubeProxyConfig != { }
+              ) "--kube-proxy-arg=config=${config.systemd.services.k3s.serviceConfig.ExecStart.kubeProxyConfig}")
+              ++ (lib.flatten (if builtins.isString cfg.extraFlags then [ cfg.extraFlags ] else cfg.extraFlags));
+
+            # Join all command components with a space
+            command = lib.concatStringsSep " " commandComponents;
+          in
+          ''
+            ${command}
+          '';
       };
   };
 
