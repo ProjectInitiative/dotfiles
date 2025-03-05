@@ -23,6 +23,7 @@ in
       packages = with pkgs; [
         bambu-studio
         gimp
+        inkscape
         freecad
         libreoffice
         vlc
