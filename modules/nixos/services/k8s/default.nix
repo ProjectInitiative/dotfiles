@@ -83,6 +83,8 @@ in
                 cilium install \
                   --version ${cfg.cilium.version} \
                   --set=ipam.operator.clusterPoolIPv4PodCIDRList="${cfg.cilium.podCIDR}"
+                  --set=k8sServiceHost=127.0.0.1 \
+                  --set=k8sServicePort=6443
               '';
         in
         stringAfter [ "users" "groups" ] ''
@@ -92,6 +94,20 @@ in
           ${ciliumInstallScript}
           EOF
           chmod +x /var/lib/k3s/cilium/install.sh
+
+          # Create default CNI config directory and file for k3s
+          mkdir -p /etc/cni/net.d
+          cat > /etc/cni/net.d/10-cilium.conflist << 'EOF'
+          {
+            "name": "cilium",
+            "cniVersion": "0.3.1",
+            "plugins": [
+              {
+                "type": "cilium-cni"
+              }
+            ]
+          }
+          EOF
         '';
     };
 
@@ -108,6 +124,8 @@ in
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "/var/lib/k3s/cilium/install.sh";
+        Restart = "on-failure";
+        RestartSec = "30s";
       };
     };
 
@@ -164,6 +182,12 @@ in
                 [
                   "--flannel-backend=none"
                   "--disable-network-policy"
+                  "--disable=traefik"
+                  "--disable=servicelb" 
+                  # We need to use dummy CNI at first start to avoid hanging
+                  "--cni-bin-dir=/var/lib/rancher/k3s/data/current/bin"
+                  # Still telling k3s that we'll replace the CNI soon with cilium
+                  "--kubelet-arg=network-plugin=cni"
                 ]
               else
                 [ ]; # Standard networking doesn't need special flags
@@ -171,5 +195,46 @@ in
           networkFlags ++ gpuFlags ++ cfg.extraArgs;
       };
     };
+
+    # For Cilium: create a basic "bridge" CNI config to bootstrap k3s without hanging
+    # This is needed because k3s expects a CNI plugin to be available at startup
+    # Later, cilium-install service will replace this with the actual Cilium CNI
+    systemd.services.k3s = mkIf (cfg.networkType == "cilium") {
+      preStart = ''
+        mkdir -p /var/lib/rancher/k3s/data/current/bin
+        ${pkgs.cni-plugins}/bin/bridge --version || true
+        mkdir -p /var/lib/rancher/k3s/agent/etc/cni/net.d
+        cp ${pkgs.cni-plugins}/bin/* /var/lib/rancher/k3s/data/current/bin/
+        
+        # Create a simple bridge CNI config for initial bootstrap
+        cat > /var/lib/rancher/k3s/agent/etc/cni/net.d/10-bridge.conflist << EOF
+        {
+          "cniVersion": "0.3.1",
+          "name": "bridge",
+          "plugins": [
+            {
+              "type": "bridge",
+              "bridge": "cni0",
+              "isGateway": true,
+              "ipMasq": true,
+              "ipam": {
+                "type": "host-local",
+                "ranges": [
+                  [{"subnet": "${cfg.cilium.podCIDR}"}]
+                ],
+                "routes": [{"dst": "0.0.0.0/0"}]
+              }
+            },
+            {
+              "type": "portmap",
+              "capabilities": {"portMappings": true}
+            }
+          ]
+        }
+        EOF
+      '';
+    };
+
+    
   };
 }

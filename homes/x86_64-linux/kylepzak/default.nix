@@ -24,9 +24,10 @@ with lib.${namespace};
 
     browsers = {
       firefox = enabled;
-      chrome = enabled;
+      chrome = disabled;
       chromium = enabled;
-      ladybird = enabled;
+      librewolf = enabled;
+      ladybird = disabled;
       tor = enabled;
     };
 
