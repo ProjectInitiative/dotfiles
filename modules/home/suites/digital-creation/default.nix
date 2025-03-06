@@ -4,14 +4,13 @@
   pkgs,
   lib,
   namespace,
-  osConfig,
   ...
 }:
 with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.suites.digital-creation;
-  isGraphical = osConfig.${namespace}.isGraphical;
+  isGraphical = config.${namespace}.isGraphical;
 in
 {
   options.${namespace}.suites.digital-creation = with types; {

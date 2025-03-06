@@ -4,14 +4,13 @@
   pkgs,
   lib,
   namespace,
-  osConfig,
   ...
 }:
 with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.suites.backup;
-  isGraphical = osConfig.${namespace}.isGraphical;
+  isGraphical = config.${namespace}.isGraphical;
 in
 {
   options.${namespace}.suites.backup = with types; {

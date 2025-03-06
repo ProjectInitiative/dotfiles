@@ -4,14 +4,13 @@
   lib,
   pkgs,
   namespace,
-  osConfig,
   ...
 }:
 with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.browsers.chromium;
-  isGraphical = osConfig.${namespace}.isGraphical;
+  isGraphical = config.${namespace}.isGraphical;
 in
 {
   options.${namespace}.browsers.chromium = with types; {

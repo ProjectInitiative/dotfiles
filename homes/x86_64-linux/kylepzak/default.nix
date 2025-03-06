@@ -1,3 +1,34 @@
+# 
+# NIX_BUILD_GROUP_ID=20000000 NIX_FIRST_BUILD_UID=20000000 sh <(curl -L https://nixos.org/nix/install) --daemon
+# sudo sytemctl edit nix-daemon.service
+# [Service]
+# Environment="NIX_SSL_CERT_FILE=/etc/pki/tls/cert.pem"
+#
+# MacOS:
+# { pkgs, config, lib, ... }:
+# let
+#   CA_BUNDLE = pkgs.runCommandLocal "export-macos-certs-2022-10-14" {} ''
+#     # https://stackoverflow.com/questions/40684543/how-to-make-python-use-ca-certificates-from-mac-os-truststore/72053605#72053605
+#     (
+#       /usr/bin/security export -t certs -f pemseq -k /System/Library/Keychains/SystemRootCertificates.keychain
+#       /usr/bin/security export -t certs -f pemseq -k /Library/Keychains/System.keychain
+#     ) > $out
+#   '';
+# in {
+#   home = {
+#     sessionVariables = {
+#       SSL_CERT_FILE = CA_BUNDLE;
+#       NIX_SSL_CERT_FILE = CA_BUNDLE;
+#       REQUESTS_CA_BUNDLE = CA_BUNDLE;
+#     };
+#   };
+
+#   accounts.email.accounts."user@example.com" = {
+#     imap = {
+#       tls.certificatesFile = CA_BUNDLE;
+#     };
+#   };
+# }
 {
   lib,
   pkgs,

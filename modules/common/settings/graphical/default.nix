@@ -20,7 +20,7 @@ in
     isGraphical = mkOption {
       description = "Whether this is a graphical environment";
       type = types.bool;
-      readOnly = true;
+      # readOnly = true;
       # if we are consuming this module from Home-Manager, osConfig will be present, so
       # we will attempt to pull the OS level config to check if a graphical environment is
       # present
