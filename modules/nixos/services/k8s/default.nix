@@ -63,53 +63,11 @@ in
     #   # 8472 # k3s, flannel: required if using multi-node for inter-node networking
     # ];
 
-    # Create Cilium install script if using Cilium
-    system.activationScripts = mkIf (cfg.networkType == "cilium") {
-      install-cilium =
-        let
-          ciliumInstallScript =
-            if cfg.cilium.installScript != "" then
-              cfg.cilium.installScript
-            else
-              ''
-                #!/bin/sh
-                # Wait for k3s to be ready
-                until kubectl get nodes &>/dev/null; do
-                  echo "Waiting for k3s API to be available..."
-                  sleep 5
-                done
-
-                # Install Cilium
-                cilium install \
-                  --version ${cfg.cilium.version} \
-                  --set=ipam.operator.clusterPoolIPv4PodCIDRList="${cfg.cilium.podCIDR}"
-                  --set=k8sServiceHost=127.0.0.1 \
-                  --set=k8sServicePort=6443
-              '';
-        in
-        stringAfter [ "users" "groups" ] ''
-          # Create Cilium install script
-          mkdir -p /var/lib/k3s/cilium
-          cat > /var/lib/k3s/cilium/install.sh << 'EOF'
-          ${ciliumInstallScript}
-          EOF
-          chmod +x /var/lib/k3s/cilium/install.sh
-
-          # Create default CNI config directory and file for k3s
-          mkdir -p /etc/cni/net.d
-          cat > /etc/cni/net.d/10-cilium.conflist << 'EOF'
-          {
-            "name": "cilium",
-            "cniVersion": "0.3.1",
-            "plugins": [
-              {
-                "type": "cilium-cni"
-              }
-            ]
-          }
-          EOF
-        '';
-    };
+    environment.systemPackages = mkIf (cfg.networkType == "cilium") [
+      pkgs.cilium-cli
+      pkgs.procps
+      pkgs.cni-plugins
+    ];
 
     # Add systemd service to install Cilium after k3s starts (first node only)
     systemd.services.cilium-install = mkIf (cfg.networkType == "cilium" && cfg.isFirstNode) {
@@ -119,11 +77,43 @@ in
       requires = [ "k3s.service" ];
       path = with pkgs; [
         cilium-cli
+        procps
+        cni-plugins
         kubectl
       ];
+      script = ''
+        export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+
+        # Wait for k3s to be ready
+        until kubectl get nodes &>/dev/null; do
+          echo "Waiting for k3s API to be available..."
+          sleep 5
+        done
+
+        # Check if Cilium is already installed
+        if kubectl get daemonset cilium -n kube-system &>/dev/null; then
+          echo "Cilium is already installed, checking status..."
+          cilium status
+          # Optionally update configurations if needed
+          # kubectl set ...
+          exit 0
+        fi
+    
+        # Install Cilium if not already installed
+        echo "Installing Cilium..."
+        cilium install \
+          --version ${cfg.cilium.version} \
+          --set=ipam.operator.clusterPoolIPv4PodCIDRList="${cfg.cilium.podCIDR}"
+          # --set=k8sServiceHost=127.0.0.1 \
+          # --set=k8sServicePort=6443
+      
+        # Verify installation
+        echo "Verifying Cilium installation..."
+        cilium status
+  
+      '';
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "/var/lib/k3s/cilium/install.sh";
         Restart = "on-failure";
         RestartSec = "30s";
       };
@@ -184,10 +174,10 @@ in
                   "--disable-network-policy"
                   "--disable=traefik"
                   "--disable=servicelb" 
-                  # We need to use dummy CNI at first start to avoid hanging
-                  "--cni-bin-dir=/var/lib/rancher/k3s/data/current/bin"
-                  # Still telling k3s that we'll replace the CNI soon with cilium
-                  "--kubelet-arg=network-plugin=cni"
+                  # # We need to use dummy CNI at first start to avoid hanging
+                  # "--cni-bin-dir=/var/lib/rancher/k3s/data/current/bin"
+                  # # Still telling k3s that we'll replace the CNI soon with cilium
+                  # "--kubelet-arg=network-plugin=cni"
                 ]
               else
                 [ ]; # Standard networking doesn't need special flags
@@ -196,44 +186,20 @@ in
       };
     };
 
+    # Create CNI config directory with all needed configurations
+    # systemd.tmpfiles.rules = mkIf (cfg.networkType == "cilium") [
+    #   "d /opt/cni/bin 0755 root root - -"
+    #   "L+ /opt/cni/bin/bridge ${pkgs.cni-plugins}/bin/bridge - - - -"
+    #   "L+ /opt/cni/bin/loopback ${pkgs.cni-plugins}/bin/loopback - - - -"
+    #   "L+ /opt/cni/bin/host-local ${pkgs.cni-plugins}/bin/host-local - - - -"
+    #   "L+ /opt/cni/bin/portmap ${pkgs.cni-plugins}/bin/portmap - - - -"
+    #   "d /etc/cni/net.d 0755 root root - -"
+    #   "d /run/flannel 0755 root root - -"
+    # ];
+
     # For Cilium: create a basic "bridge" CNI config to bootstrap k3s without hanging
     # This is needed because k3s expects a CNI plugin to be available at startup
     # Later, cilium-install service will replace this with the actual Cilium CNI
-    systemd.services.k3s = mkIf (cfg.networkType == "cilium") {
-      preStart = ''
-        mkdir -p /var/lib/rancher/k3s/data/current/bin
-        ${pkgs.cni-plugins}/bin/bridge --version || true
-        mkdir -p /var/lib/rancher/k3s/agent/etc/cni/net.d
-        cp ${pkgs.cni-plugins}/bin/* /var/lib/rancher/k3s/data/current/bin/
-        
-        # Create a simple bridge CNI config for initial bootstrap
-        cat > /var/lib/rancher/k3s/agent/etc/cni/net.d/10-bridge.conflist << EOF
-        {
-          "cniVersion": "0.3.1",
-          "name": "bridge",
-          "plugins": [
-            {
-              "type": "bridge",
-              "bridge": "cni0",
-              "isGateway": true,
-              "ipMasq": true,
-              "ipam": {
-                "type": "host-local",
-                "ranges": [
-                  [{"subnet": "${cfg.cilium.podCIDR}"}]
-                ],
-                "routes": [{"dst": "0.0.0.0/0"}]
-              }
-            },
-            {
-              "type": "portmap",
-              "capabilities": {"portMappings": true}
-            }
-          ]
-        }
-        EOF
-      '';
-    };
 
     
   };
