@@ -1088,7 +1088,7 @@
     "ssh-pub-keys": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-hoiUzLrSuOl3ycNe8xOYUJdD9QDjx+OHKr9EMk3+Lys=",
+        "narHash": "sha256-gEVGpDa0zZJ90BJwKNQB4Ib9glzbLV/51a3jZeGqsN8=",
         "type": "file",
         "url": "https://github.com/projectinitiative.keys"
       },
