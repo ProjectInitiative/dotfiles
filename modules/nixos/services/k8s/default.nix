@@ -81,8 +81,18 @@ in
         cni-plugins
         kubectl
       ];
+      serviceConfig = {
+        Type = "oneshot";
+        Restart = "on-failure";
+        RestartSec = "30s";
+        # Set a home directory for the service
+        Environment = [
+          "HOME=/root"
+          "XDG_CACHE_HOME=/root/.cache"
+          "KUBECONFIG=/etc/rancher/k3s/k3s.yaml"
+        ];
+      };
       script = ''
-        export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 
         # Wait for k3s to be ready
         until kubectl get nodes &>/dev/null; do
@@ -112,11 +122,6 @@ in
         cilium status
   
       '';
-      serviceConfig = {
-        Type = "oneshot";
-        Restart = "on-failure";
-        RestartSec = "30s";
-      };
     };
 
     # Enable Wireguard kernel module if wireguard is selected
