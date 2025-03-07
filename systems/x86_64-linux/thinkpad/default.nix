@@ -32,7 +32,6 @@ with lib.${namespace};
     '';
   };
 
-
   home-manager.backupFileExtension = "backup";
 
   projectinitiative = {

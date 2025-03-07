@@ -108,7 +108,7 @@ in
           # kubectl set ...
           exit 0
         fi
-    
+
         # Install Cilium if not already installed
         echo "Installing Cilium..."
         cilium install \
@@ -116,11 +116,11 @@ in
           --set=ipam.operator.clusterPoolIPv4PodCIDRList="${cfg.cilium.podCIDR}"
           # --set=k8sServiceHost=127.0.0.1 \
           # --set=k8sServicePort=6443
-      
+
         # Verify installation
         echo "Verifying Cilium installation..."
         cilium status
-  
+
       '';
     };
 
@@ -178,7 +178,7 @@ in
                   "--flannel-backend=none"
                   "--disable-network-policy"
                   "--disable=traefik"
-                  "--disable=servicelb" 
+                  "--disable=servicelb"
                   # # We need to use dummy CNI at first start to avoid hanging
                   # "--cni-bin-dir=/var/lib/rancher/k3s/data/current/bin"
                   # # Still telling k3s that we'll replace the CNI soon with cilium
@@ -206,6 +206,5 @@ in
     # This is needed because k3s expects a CNI plugin to be available at startup
     # Later, cilium-install service will replace this with the actual Cilium CNI
 
-    
   };
 }

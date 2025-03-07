@@ -1,23 +1,24 @@
-{ lib
-, stdenv
-, fetchFromGitHub
-, pkg-config
-, glib
-, gpm
-, file
-, e2fsprogs
-, xorg ? null
-, perl
-, zip
-, unzip
-, gettext
-, slang
-, libssh2
-, openssl
-, aspell
-, autoconf
-, automake
-, libtool
+{
+  lib,
+  stdenv,
+  fetchFromGitHub,
+  pkg-config,
+  glib,
+  gpm,
+  file,
+  e2fsprogs,
+  xorg ? null,
+  perl,
+  zip,
+  unzip,
+  gettext,
+  slang,
+  libssh2,
+  openssl,
+  aspell,
+  autoconf,
+  automake,
+  libtool,
 }:
 
 stdenv.mkDerivation rec {
@@ -39,22 +40,24 @@ stdenv.mkDerivation rec {
     gettext
   ];
 
-  buildInputs = [
-    glib
-    gpm
-    file
-    e2fsprogs
-    perl
-    zip
-    unzip
-    slang
-    libssh2
-    openssl
-    aspell
-  ] ++ lib.optionals (xorg != null) [
-    xorg.libX11
-    xorg.libICE
-  ];
+  buildInputs =
+    [
+      glib
+      gpm
+      file
+      e2fsprogs
+      perl
+      zip
+      unzip
+      slang
+      libssh2
+      openssl
+      aspell
+    ]
+    ++ lib.optionals (xorg != null) [
+      xorg.libX11
+      xorg.libICE
+    ];
 
   enableParallelBuilding = true;
 

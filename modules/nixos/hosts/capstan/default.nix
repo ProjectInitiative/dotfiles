@@ -22,6 +22,9 @@ in
     mountpoint = mkOpt types.str "/mnt/pool" "Path to mount bcachefs pool";
     nvidiaSupport = mkBoolOpt false "Whether to enable nvidia GPU support";
     isFirstK8sNode = mkBoolOpt false "Whether node is the first in the cluster";
+    k8sServerAddr =
+      mkOpt types.str ""
+        "Address of the server node to connect to (not needed for the first node).";
   };
 
   config = mkIf cfg.enable {
@@ -86,6 +89,12 @@ in
 
     services.openssh.enable = true;
 
+    # Enable the console
+    console = {
+      enable = true;
+      keyMap = "us"; # Or your preferred keymap
+    };
+
     projectinitiative = {
 
       services = {
@@ -93,6 +102,7 @@ in
           enable = true;
           tokenFile = sops.secrets.k8s_token.path;
           isFirstNode = cfg.isFirstK8sNode;
+          serverAddr = cfg.k8sServerAddr;
           networkType = "cilium";
           role = "server";
           extraArgs = [
