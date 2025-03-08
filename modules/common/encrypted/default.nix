@@ -111,7 +111,7 @@ in
               # path = "/tmp/sensitive/age.key";
               group = "nixbld";
               # TESTING PURPOSES ONLY - so nix repl can read
-              mode = "444";
+              # mode = "444";
             };
           };
         };
