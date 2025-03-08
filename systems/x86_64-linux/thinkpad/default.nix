@@ -17,7 +17,7 @@ with lib.${namespace};
 
   # TODO: move this to module
   nix = {
-    package = pkgs.nixVersions.nix_2_25;
+    # package = pkgs.nixVersions.nix_2_25;
     gc = {
       automatic = true;
       dates = "weekly";

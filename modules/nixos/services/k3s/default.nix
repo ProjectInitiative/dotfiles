@@ -510,57 +510,61 @@ in
           // cfg.extraKubeProxyConfig
         );
         # Adapted from official k3s kill script to work as a systemd ExecStopPost
-        killK3sScript = pkgs.writeShellScript "kill-k3s" ''
-          set -e
+        killK3sScript = pkgs.writeShellApplication {
+          name = "kill-k3s";
+          runtimeInputs = with pkgs; [
+            procps
+            gnugrep
+            gnused
+            coreutils
+          ];
+          # Disable shellcheck for this script
+          # checkPhase = "";
+          text = ''
+            set -e
+            # Helper functions from k3s uninstaller
+            pschildren() {
+                ps -e -o ppid= -o pid= | \
+                sed -e 's/^\s*//g; s/\s\s*/\t/g;' | \
+                grep -w "^$1" | \
+                cut -f2
+            }
+            pstree() {
+                for pid in "$@"; do
+                    echo "$pid"
+                    for child in $(pschildren "$pid"); do
+                        pstree "$child"
+                    done
+                done
+            }
+            killtree() {
+                kill -9 "$(pstree "$@")" 2>/dev/null || true
+            }
+            getshims() {
+                ps -e -o pid= -o args= | sed -e 's/^ *//; s/\s\s*/\t/;' | grep -w 'k3s/data/[^/]*/bin/containerd-shim' | cut -f1
+            }
+            # Define the role, if it's passed from the outside
+            : "''${cfg_role:=server}"
 
-          # Helper functions from k3s uninstaller
-          pschildren() {
-              ps -e -o ppid= -o pid= | \
-              sed -e 's/^\s*//g; s/\s\s*/\t/g;' | \
-              grep -w "^$1" | \
-              cut -f2
-          }
-
-          pstree() {
-              for pid in $@; do
-                  echo $pid
-                  for child in $(pschildren $pid); do
-                      pstree $child
-                  done
-              done
-          }
-
-          killtree() {
-              kill -9 $(pstree $@) 2>/dev/null || true
-          }
-
-          getshims() {
-              ps -e -o pid= -o args= | sed -e 's/^ *//; s/\s\s*/\t/;' | grep -w 'k3s/data/[^/]*/bin/containerd-shim' | cut -f1
-          }
-
-          # Kill main k3s process if it's still running
-          pkill -f "k3s ${cfg.role}" || true
-
-          # Kill all containerd shim processes
-          killtree $(getshims) || true
-
-          # Kill other k3s processes 
-          pkill -f "k3s-" || true
-
-          # Wait a moment to ensure processes are shut down
-          sleep 2
-
-          # Check if any k3s processes are still running and report them
-          REMAINING=$(pgrep -fa "k3s|containerd-shim")
-          if [ -n "$REMAINING" ]; then
-            echo "Warning: Some k3s processes are still running:"
-            echo "$REMAINING"
-
-            # For these persistent processes, use more force
-            echo "Attempting to terminate remaining processes forcefully..."
-            pkill -9 -f "k3s|containerd-shim" || true
-          fi
-        '';
+            # Kill main k3s process if it's still running
+            pkill -f "k3s ''${cfg_role}" || true
+            # Kill all containerd shim processes
+            killtree "$(getshims)" || true
+            # Kill other k3s processes 
+            pkill -f "k3s-" || true
+            # Wait a moment to ensure processes are shut down
+            sleep 2
+            # Check if any k3s processes are still running and report them
+            REMAINING=$(pgrep -fa "k3s|containerd-shim")
+            if [ -n "$REMAINING" ]; then
+              echo "Warning: Some k3s processes are still running:"
+              echo "$REMAINING"
+              # For these persistent processes, use more force
+              echo "Attempting to terminate remaining processes forcefully..."
+              pkill -9 -f "k3s|containerd-shim" || true
+            fi
+          '';
+        };
       in
       {
         description = "k3s service";
