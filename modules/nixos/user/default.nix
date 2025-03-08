@@ -40,6 +40,9 @@ in
       mkIf config.home-manager.users.${cfg.name}.${namespace}.cli-apps.zsh.defaultUserShell
         true;
 
+    # TODO: make this user specific?
+    security.sudo.wheelNeedsPassword = false;
+
     users.users.${cfg.name} = {
       isNormalUser = true;
 
