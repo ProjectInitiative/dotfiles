@@ -110,6 +110,7 @@ in
             sensitive_not_secret_age_key = {
               # path = "/tmp/sensitive/age.key";
               group = "nixbld";
+              mode = "640";
               # TESTING PURPOSES ONLY - so nix repl can read
               # mode = "444";
             };
