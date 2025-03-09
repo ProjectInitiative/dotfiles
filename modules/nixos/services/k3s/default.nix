@@ -167,7 +167,6 @@ let
     '';
 in
 {
-  imports = [ (removeOption [ "docker" ] "k3s docker option is no longer supported.") ];
 
   # interface
   options.${namespace}.services.k3s = {
