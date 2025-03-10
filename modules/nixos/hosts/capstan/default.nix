@@ -107,7 +107,7 @@ in
           role = "server";
           extraArgs = [
             # TLS configuration
-            "--tls-san=k8s.projectinitiative.io"
+            # "--tls-san=k8s.projectinitiative.io"
 
             # Security
             "--secrets-encryption"
