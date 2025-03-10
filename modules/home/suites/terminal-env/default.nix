@@ -42,6 +42,8 @@ in
         ncdu
         tree
         usbutils
+        #TODO: add config for yazi
+        yazi
         pkgs.${namespace}.flatten-directory
         # pkgs.${namespace}.mc
       ];
