@@ -15,9 +15,11 @@ in
   options.${namespace}.services.k8s = with types; {
     enable = mkBoolOpt false "Whether or not to enable Kubernetes cluster with k3s.";
     isFirstNode = mkBoolOpt false "Whether this node is the first node that initializes the cluster.";
-    tokenFile =
-      mkOpt str ""
-        "File path containing k3s token to use when connecting to the server. This option only makes sense for an agent.";
+    tokenFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      description = "File path containing k3s token to use when connecting to the server.";
+      default = null;
+    };
     serverAddr =
       mkOpt str ""
         "Address of the server node to connect to (not needed for the first node).";
