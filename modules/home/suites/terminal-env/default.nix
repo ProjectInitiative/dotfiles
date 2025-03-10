@@ -45,6 +45,7 @@ in
         #TODO: add config for yazi
         yazi
         pkgs.${namespace}.flatten-directory
+        pkgs.${namespace}.remote-drive-info
         # pkgs.${namespace}.mc
       ];
     };

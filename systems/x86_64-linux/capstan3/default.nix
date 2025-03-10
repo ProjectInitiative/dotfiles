@@ -14,7 +14,7 @@ with lib.${namespace};
     disk = {
       nvme1 = {
         type = "disk";
-        device = "/dev/disk/by-id/";
+        device = "/dev/disk/by-id/nvme-TEAM_TM8FPD002T_TPBF2310170080200016";
         content = {
           type = "bcachefs_member";
           pool = "pool";
@@ -23,7 +23,7 @@ with lib.${namespace};
       };
       ssd1 = {
         type = "disk";
-        device = "/dev/disk/by-id/";
+        device = "/dev/disk/by-id/ata-SPCC_Solid_State_Disk_AA000000000000000101";
         content = {
           type = "bcachefs_member";
           pool = "pool";
@@ -32,7 +32,7 @@ with lib.${namespace};
       };
       hdd1 = {
         type = "disk";
-        device = "/dev/disk/by-id/";
+        device = "/dev/disk/by-id/ata-ST6000DM003-2CY186_ZCT2DSW5";
         content = {
           type = "bcachefs_member";
           pool = "pool";
@@ -41,7 +41,7 @@ with lib.${namespace};
       };
       hdd2 = {
         type = "disk";
-        device = "/dev/disk/by-id/";
+        device = "/dev/disk/by-id/ata-ST6000DM003-2CY186_ZCT2EMGM";
         content = {
           type = "bcachefs_member";
           pool = "pool";
@@ -50,7 +50,7 @@ with lib.${namespace};
       };
       hdd3 = {
         type = "disk";
-        device = "/dev/disk/by-id/";
+        device = "/dev/disk/by-id/ata-ST6000NM0115-1YZ110_ZADABZPK";
         content = {
           type = "bcachefs_member";
           pool = "pool";
@@ -58,12 +58,13 @@ with lib.${namespace};
         };
       };
     };
-
     bcachefs = {
       pool = {
         type = "bcachefs";
         mountpoint = mountpoint;
-        formatOptions = [ "--compression=lz4" ];
+        formatOptions = [
+          "--compression=lz4"
+        ];
         mountOptions = [
           "verbose"
           "degraded"
@@ -76,8 +77,8 @@ with lib.${namespace};
     disko.mdadm-root = {
       enable = true;
       mirroredDrives = [
-        "/dev/disk/by-id/"
-        "/dev/disk/by-id/"
+        "/dev/disk/by-id/ata-SPCC_Solid_State_Disk_0E7C072A0D5A00048168"
+        "/dev/disk/by-id/ata-Lexar_256GB_SSD_MD1803W119789"
       ];
     };
 
@@ -85,8 +86,9 @@ with lib.${namespace};
       enable = true;
       ipAddress = "${config.sensitiveNotSecret.default_subnet}53/24";
       interface = "enp3s0";
-      bcachefsInitDevice = "/dev/disk/by-id/";
+      bcachefsInitDevice = "/dev/disk/by-id/nvme-TEAM_TM8FPD002T_TPBF2310170080200016";
       mountpoint = mountpoint;
+      k8sServerAddr = "https://172.16.1.45:6443";
     };
 
   };
