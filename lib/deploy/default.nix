@@ -23,7 +23,7 @@ rec {
   mkDeploy =
     {
       self,
-      exclude ? [],
+      exclude ? [ ],
       overrides ? { },
     }:
     let
