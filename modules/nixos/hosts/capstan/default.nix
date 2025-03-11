@@ -100,7 +100,6 @@ in
 
     services.openssh.enable = true;
 
-
     projectinitiative = {
 
       services = {
