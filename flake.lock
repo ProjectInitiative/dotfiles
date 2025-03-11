@@ -165,11 +165,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1740502548,
-        "narHash": "sha256-oH8D234vFMntLmeV1mdQ3mbMevW2KvOLSNu8wHDXeuA=",
+        "lastModified": 1741661326,
+        "narHash": "sha256-uXdG0iAcTwmpw6b3RDElzPQquyAQD1mwj0i/TZ3HGz8=",
         "owner": "projectinitiative",
         "repo": "disko",
-        "rev": "418dbf9402444b516b5b42d56be1a5880a9ec732",
+        "rev": "185cd86d2f094ccdc88b94f69a42494f0671495d",
         "type": "github"
       },
       "original": {

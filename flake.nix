@@ -222,7 +222,6 @@
           "thinkpad"
           "test"
           "capstan1"
-          "capstan3"
         ];
       };
 

@@ -37,6 +37,17 @@ in
       }
     ];
 
+    # enable GPU drivers
+    hardware.enableRedistributableFirmware = true;
+    hardware.firmware = [ pkgs.linux-firmware ];
+    # boot.kernel.sysctl = {
+    #   "kernel.sysrq" = 1;
+    # };
+    # # Enable the console
+    # console = {
+    #   enable = true;
+    #   keyMap = "us"; # Or your preferred keymap
+    # };
     # advanced bcachefs support
     boot.supportedFilesystems = [ "bcachefs" ];
     boot.kernelModules = [ "bcachefs" ];
@@ -89,11 +100,6 @@ in
 
     services.openssh.enable = true;
 
-    # Enable the console
-    console = {
-      enable = true;
-      keyMap = "us"; # Or your preferred keymap
-    };
 
     projectinitiative = {
 
