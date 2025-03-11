@@ -22,6 +22,9 @@ in
     mountpoint = mkOpt types.str "/mnt/pool" "Path to mount bcachefs pool";
     nvidiaSupport = mkBoolOpt false "Whether to enable nvidia GPU support";
     isFirstK8sNode = mkBoolOpt false "Whether node is the first in the cluster";
+    k8sServerAddr =
+      mkOpt types.str ""
+        "Address of the server node to connect to (not needed for the first node).";
   };
 
   config = mkIf cfg.enable {
@@ -34,6 +37,17 @@ in
       }
     ];
 
+    # enable GPU drivers
+    hardware.enableRedistributableFirmware = true;
+    hardware.firmware = [ pkgs.linux-firmware ];
+    # boot.kernel.sysctl = {
+    #   "kernel.sysrq" = 1;
+    # };
+    # # Enable the console
+    # console = {
+    #   enable = true;
+    #   keyMap = "us"; # Or your preferred keymap
+    # };
     # advanced bcachefs support
     boot.supportedFilesystems = [ "bcachefs" ];
     boot.kernelModules = [ "bcachefs" ];
@@ -90,14 +104,15 @@ in
 
       services = {
         k8s = {
-          enable = false;
+          enable = true;
           tokenFile = sops.secrets.k8s_token.path;
           isFirstNode = cfg.isFirstK8sNode;
+          serverAddr = cfg.k8sServerAddr;
           networkType = "cilium";
           role = "server";
           extraArgs = [
             # TLS configuration
-            "--tls-san=k8s.projectinitiative.io"
+            # "--tls-san=k8s.projectinitiative.io"
 
             # Security
             "--secrets-encryption"

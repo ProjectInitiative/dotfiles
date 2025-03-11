@@ -17,6 +17,7 @@ with lib.${namespace};
 
   # TODO: move this to module
   nix = {
+    # package = pkgs.nixVersions.nix_2_25;
     gc = {
       automatic = true;
       dates = "weekly";
@@ -31,7 +32,6 @@ with lib.${namespace};
       max-free = ${toString (1024 * 1024 * 1024)}
     '';
   };
-
 
   home-manager.backupFileExtension = "backup";
 

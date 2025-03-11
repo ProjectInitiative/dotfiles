@@ -216,7 +216,14 @@
       #   # nixos-hardware.nixosModules.thinkpad-t16-intel-i71260p
       # ];
 
-      deploy = lib.mkDeploy { inherit (inputs) self; };
+      deploy = lib.mkDeploy {
+        inherit (inputs) self;
+        exclude = [
+          "thinkpad"
+          "test"
+          "capstan1"
+        ];
+      };
 
       checks = builtins.mapAttrs (
         system: deploy-lib: deploy-lib.deployChecks inputs.self.deploy

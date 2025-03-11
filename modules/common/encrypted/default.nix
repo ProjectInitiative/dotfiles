@@ -46,9 +46,10 @@ let
             SOPS_AGE_KEY_FILE = sops.secrets.sensitive_not_secret_age_key.path;
             # not added to nix store because of /run
             # __nochroot = true;
-            sandbox-paths = [ sops.secrets.sensitive_not_secret_age_key.path ];
+            # sandbox-paths = [ sops.secrets.sensitive_not_secret_age_key.path ];
           }
           ''
+            whoami
             sops -d ${file} > $out
           '';
     in
@@ -107,7 +108,9 @@ in
             root_password.neededForUsers = true;
             user_password.neededForUsers = true;
             sensitive_not_secret_age_key = {
+              # path = "/tmp/sensitive/age.key";
               group = "nixbld";
+              mode = "640";
               # TESTING PURPOSES ONLY - so nix repl can read
               # mode = "444";
             };
@@ -124,6 +127,9 @@ in
             user.name
           ];
           trusted-public-keys = [ nix-public-signing-key ];
+          # sandbox = false;
+          extra-sandbox-paths = [ sops.secrets.sensitive_not_secret_age_key.path ];
+          # allow-symlinked-store = true;
         };
         inherit sensitiveNotSecret;
 

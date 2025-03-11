@@ -12,21 +12,24 @@ rec {
   ## ```nix
   ## mkDeploy {
   ##   inherit self;
+  ##   exclude = [ "test-host" "dev-host" ]; # Hosts to exclude from deployment
   ##   overrides = {
   ##     my-host.system.sudo = "doas -u";
   ##   };
   ## }
   ## ```
   ##
-  #@ { self: Flake, overrides: Attrs ? {} } -> Attrs
+  #@ { self: Flake, exclude: [String] ? [], overrides: Attrs ? {} } -> Attrs
   mkDeploy =
     {
       self,
+      exclude ? [ ],
       overrides ? { },
     }:
     let
       hosts = self.nixosConfigurations or { };
-      names = builtins.attrNames hosts;
+      # Filter out excluded hosts
+      names = builtins.filter (name: !(builtins.elem name exclude)) (builtins.attrNames hosts);
       nodes = lib.foldl (
         result: name:
         let
@@ -58,7 +61,6 @@ rec {
       inherit nodes;
     };
 }
-
 # Add this to the node configuration
 # // lib.optionalAttrs (host.config.disko ? devices) {
 #   disko = {
