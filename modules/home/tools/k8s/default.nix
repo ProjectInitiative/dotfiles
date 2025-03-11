@@ -29,6 +29,7 @@ in
         kubernetes-helm
         kustomize
         kustomize-sops
+        cilium-cli
       ];
 
       shellAliases = {
