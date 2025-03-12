@@ -42,8 +42,25 @@ in
       installScript = mkOpt str "" "Custom install script for Cilium (leave empty for default script).";
     };
 
+    # kube-vip specific options
+    kubeVip = {
+      enable = mkBoolOpt false "Whether to enable kube-vip for high availability.";
+      version = mkOpt str "v0.5.12" "kube-vip version to install.";
+      vip = mkOpt str "192.168.0.40" "Virtual IP address for kube-vip.";
+      interface = mkOpt str "eth0" "Network interface for kube-vip to use.";
+      mode = mkOpt (enum [
+        "arp"
+        "bgp"
+        "layer2"
+      ]) "arp" "Mode for kube-vip to operate in.";
+      controlPlane = mkBoolOpt true "Whether to use kube-vip for control plane HA.";
+      services = mkBoolOpt true "Whether to use kube-vip for service load balancing.";
+      leaderElection = mkBoolOpt true "Whether to use leader election for kube-vip.";
+    };
+
     gpuSupport = mkBoolOpt false "Enable GPU support for this node.";
     extraArgs = mkOpt (listOf str) [ ] "Additional arguments to pass to k3s.";
+
   };
 
   config = mkIf cfg.enable {
@@ -56,15 +73,43 @@ in
     ];
 
     # NETWORKING
-    networking.firewall.allowedTCPPorts = [
-      6443 # k3s: required so that pods can reach the API server (running on port 6443 by default)
-      2379 # k3s, etcd clients: required if using a "High Availability Embedded etcd" configuration
-      2380 # k3s, etcd peers: required if using a "High Availability Embedded etcd" configuration
-      10250 # k3s metrics port
-    ];
-    networking.firewall.allowedUDPPorts = [
-      # 8472 # k3s, flannel: required if using multi-node for inter-node networking
-    ];
+    networking.firewall.allowedTCPPorts =
+      [
+        6443 # k3s: required so that pods can reach the API server (running on port 6443 by default)
+        2379 # k3s, etcd clients: required if using a "High Availability Embedded etcd" configuration
+        2380 # k3s, etcd peers: required if using a "High Availability Embedded etcd" configuration
+        10250 # k3s metrics port
+        53 # k8s DNS access
+        9153 # backup k8s dns
+      ]
+      ++ lib.optionals (cfg.networkType == "cilium") [
+        4240 # cluster health checks (cilium-health)
+        4244 # Hubble server
+        4245 # Hubble Relay
+        4250 # Mutual Authentication port
+        4251 # Spire Agent health check port (listening on 127.0.0.1 or ::1)
+        6060 # cilium-agent pprof server (listening on 127.0.0.1)
+        6061 # cilium-operator pprof server (listening on 127.0.0.1)
+        6062 # Hubble Relay pprof server (listening on 127.0.0.1)
+        9878 # cilium-envoy health listener (listening on 127.0.0.1)
+        9879 # cilium-agent health status API (listening on 127.0.0.1 and/or ::1)
+        9890 # cilium-agent gops server (listening on 127.0.0.1)
+        9891 # operator gops server (listening on 127.0.0.1)
+        9893 # Hubble Relay gops server (listening on 127.0.0.1)
+        9901 # cilium-envoy Admin API (listening on 127.0.0.1)
+        9962 # cilium-agent Prometheus metrics
+        9963 # cilium-operator Prometheus metrics
+        9964 # cilium envoy
+      ];
+
+    networking.firewall.allowedUDPPorts =
+      [
+        53 # k8s DNS access
+        # 8472 # k3s, flannel: required if using multi-node for inter-node networking
+      ]
+      ++ lib.optionals (cfg.networkType == "cilium") [
+        51871 # WireGuard encryption tunnel endpoint
+      ];
 
     environment.systemPackages = mkIf (cfg.networkType == "cilium") [
       pkgs.cilium-cli
@@ -127,6 +172,94 @@ in
       '';
     };
 
+    # Add systemd service to install kube-vip after k3s starts (first node only)
+    systemd.services.kube-vip-install = mkIf (cfg.kubeVip.enable && cfg.isFirstNode) {
+      description = "Install kube-vip for high availability";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "k3s.service" ];
+      requires = [ "k3s.service" ];
+      path = with pkgs; [
+        kubectl
+        curl
+        coreutils
+      ];
+      serviceConfig = {
+        Type = "oneshot";
+        Restart = "on-failure";
+        RestartSec = "30s";
+        Environment = [
+          "HOME=/root"
+          "KUBECONFIG=/etc/rancher/k3s/k3s.yaml"
+        ];
+      };
+      script =
+        let
+          kubevipFlags =
+            [
+              "--interface ${cfg.kubeVip.interface}"
+              "--address ${cfg.kubeVip.vip}"
+              "--inCluster"
+              "--taint"
+            ]
+            ++ optionals cfg.kubeVip.controlPlane [ "--controlplane" ]
+            ++ optionals cfg.kubeVip.services [ "--services" ]
+            ++ optionals (cfg.kubeVip.mode == "arp") [ "--arp" ]
+            ++ optionals (cfg.kubeVip.mode == "bgp") [ "--bgp" ]
+            ++ optionals (cfg.kubeVip.mode == "layer2") [ "--layer2" ]
+            ++ optionals cfg.kubeVip.leaderElection [ "--leaderElection" ];
+
+          # Join the flags with spaces for the manifest command
+          kubevipFlagsStr = concatStringsSep " " kubevipFlags;
+        in
+        ''
+          # Wait for k3s to be ready
+          until kubectl get nodes &>/dev/null; do
+            echo "Waiting for k3s API to be available..."
+            sleep 5
+          done
+
+          # Check if kube-vip is already installed
+          if kubectl get daemonset kube-vip-ds -n kube-system &>/dev/null; then
+            echo "kube-vip is already installed"
+            exit 0
+          fi
+
+          # Create manifests directory if it doesn't exist
+          mkdir -p /var/lib/rancher/k3s/server/manifests/
+
+          # Apply RBAC for kube-vip
+          echo "Installing kube-vip RBAC..."
+          curl -s https://kube-vip.io/manifests/rbac.yaml > /var/lib/rancher/k3s/server/manifests/kube-vip-rbac.yaml
+
+          # Generate kube-vip manifest
+          echo "Generating kube-vip manifest..."
+
+          # Create temporary alias for kube-vip container
+          KVVERSION="${cfg.kubeVip.version}"
+
+          # Create the manifest using container runtime
+          if command -v docker &> /dev/null; then
+            echo "Using Docker to generate manifest..."
+            MANIFEST=$(docker run --network host --rm ghcr.io/kube-vip/kube-vip:$KVVERSION manifest daemonset ${kubevipFlagsStr})
+          elif command -v ctr &> /dev/null; then
+            echo "Using containerd to generate manifest..."
+            ctr image pull ghcr.io/kube-vip/kube-vip:$KVVERSION
+            MANIFEST=$(ctr run --rm --net-host ghcr.io/kube-vip/kube-vip:$KVVERSION vip /kube-vip manifest daemonset ${kubevipFlagsStr})
+          elif command -v nerdctl &> /dev/null; then
+            echo "Using nerdctl to generate manifest..."
+            MANIFEST=$(nerdctl run --network host --rm ghcr.io/kube-vip/kube-vip:$KVVERSION manifest daemonset ${kubevipFlagsStr})
+          else
+            echo "No container runtime found, cannot generate kube-vip manifest"
+            exit 1
+          fi
+
+          # Save the manifest to the auto-deploy directory
+          echo "$MANIFEST" > /var/lib/rancher/k3s/server/manifests/kube-vip.yaml
+
+          echo "kube-vip installation completed!"
+        '';
+    };
+
     # Enable Wireguard kernel module if wireguard is selected
     boot.extraModulePackages = optionals (cfg.networkType == "wireguard") [
       config.boot.kernelPackages.wireguard
@@ -138,60 +271,67 @@ in
     hardware.nvidia.package = mkIf cfg.gpuSupport config.boot.kernelPackages.nvidiaPackages.stable;
     hardware.nvidia.modesetting.enable = mkIf cfg.gpuSupport true;
 
+    # nixpkgs services
+    services = {
+    };
+
     ${namespace} = {
       # Enable Tailscale if needed
       networking.tailscale = mkIf (cfg.networkType == "tailscale") enabled;
 
-      # use custom version, not provided in nixpkgs
-      services.k3s = {
-        enable = true;
-        role = cfg.role;
-        tokenFile = cfg.tokenFile;
+      services = {
+        # use custom version, not provided in nixpkgs
+        k3s = {
+          enable = true;
+          role = cfg.role;
+          tokenFile = cfg.tokenFile;
 
-        # Configure based on whether this is the first node
-        clusterInit = cfg.isFirstNode;
-        serverAddr = mkIf (!cfg.isFirstNode) cfg.serverAddr;
+          # Configure based on whether this is the first node
+          clusterInit = cfg.isFirstNode;
+          serverAddr = mkIf (!cfg.isFirstNode) cfg.serverAddr;
 
-        # Combine auto-generated flags with user-provided extra flags
-        extraFlags =
-          let
-            # Add GPU support if needed
-            gpuFlags = (
-              optionals cfg.gpuSupport [
-                "--kubelet-arg=feature-gates=DevicePlugins=true"
-                "--kubelet-arg=allow-privileged=true"
-              ]
-            );
-            # Network-specific flags
-            networkFlags =
-              if cfg.networkType == "tailscale" then
-                [
-                  "--flannel-iface=tailscale0"
-                  "--flannel-external-ip"
-                  "--node-ip=$(${pkgs.tailscale}/bin/tailscale ip -4)"
-                  "--node-external-ip=$(${pkgs.tailscale}/bin/tailscale ip -4)"
-                  "--flannel-backend=vxlan"
+          # Combine auto-generated flags with user-provided extra flags
+          extraFlags =
+            let
+              # Add GPU support if needed
+              gpuFlags = (
+                optionals cfg.gpuSupport [
+                  "--kubelet-arg=feature-gates=DevicePlugins=true"
+                  "--kubelet-arg=allow-privileged=true"
                 ]
-              else if cfg.networkType == "wireguard" then
-                [
-                  "--flannel-backend=wireguard-native"
-                ]
-              else if cfg.networkType == "cilium" then
-                [
-                  "--flannel-backend=none"
-                  "--disable-network-policy"
-                  "--disable=traefik"
-                  "--disable=servicelb"
-                  # # We need to use dummy CNI at first start to avoid hanging
-                  # "--cni-bin-dir=/var/lib/rancher/k3s/data/current/bin"
-                  # # Still telling k3s that we'll replace the CNI soon with cilium
-                  # "--kubelet-arg=network-plugin=cni"
-                ]
-              else
-                [ ]; # Standard networking doesn't need special flags
-          in
-          networkFlags ++ gpuFlags ++ cfg.extraArgs;
+              );
+              # Network-specific flags
+              networkFlags =
+                if cfg.networkType == "tailscale" then
+                  [
+                    "--flannel-iface=tailscale0"
+                    "--flannel-external-ip"
+                    "--node-ip=$(${pkgs.tailscale}/bin/tailscale ip -4)"
+                    "--node-external-ip=$(${pkgs.tailscale}/bin/tailscale ip -4)"
+                    "--flannel-backend=vxlan"
+                  ]
+                else if cfg.networkType == "wireguard" then
+                  [
+                    "--flannel-backend=wireguard-native"
+                  ]
+                else if cfg.networkType == "cilium" then
+                  [
+                    "--flannel-backend=none"
+                    "--disable-network-policy"
+                    "--disable=traefik"
+                    "--disable=servicelb"
+                    # # We need to use dummy CNI at first start to avoid hanging
+                    # "--cni-bin-dir=/var/lib/rancher/k3s/data/current/bin"
+                    # # Still telling k3s that we'll replace the CNI soon with cilium
+                    # "--kubelet-arg=network-plugin=cni"
+                  ]
+                else
+                  [ ]; # Standard networking doesn't need special flags
+            in
+            networkFlags ++ gpuFlags ++ cfg.extraArgs;
+        };
       };
+
     };
 
     # Create CNI config directory with all needed configurations

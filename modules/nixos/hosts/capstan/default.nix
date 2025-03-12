@@ -117,6 +117,11 @@ in
             # Security
             "--secrets-encryption"
           ];
+          kubeVip = {
+            enable = cfg.isFirstK8sNode;
+            vip = "172.16.1.50";
+            interface = cfg.interface;
+          };
         };
       };
 
@@ -126,7 +131,12 @@ in
       };
 
       networking = {
-        tailscale = enabled;
+        tailscale = {
+          enable = true;
+          extraArgs = [
+            "--accept-dns=false"
+          ];
+        };
       };
 
     };

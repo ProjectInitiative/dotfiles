@@ -112,6 +112,11 @@ in
     };
   };
 
+  systemd.network.links."enp3s0" = {
+    # matchConfig.PermanentMACAddress = "52:54:00:12:01:01";
+    linkConfig.Name = "ens18";
+  };
+
   projectinitiative = {
 
     disko.mdadm-root = {
@@ -131,7 +136,7 @@ in
       capstan = {
         enable = true;
         ipAddress = "172.16.1.45/24";
-        interface = "ens18";
+        interface = "enp3s0";
         bcachefsInitDevice = "/dev/vdc1";
         mountpoint = mountpoint;
         isFirstK8sNode = true;
