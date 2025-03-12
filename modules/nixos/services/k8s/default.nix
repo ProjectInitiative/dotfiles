@@ -127,7 +127,8 @@ in
         cilium-cli
         procps
         cni-plugins
-        kubectl
+        k3s
+        # kubectl
       ];
       serviceConfig = {
         Type = "oneshot";
@@ -182,6 +183,7 @@ in
         kubectl
         curl
         coreutils
+        k3s
       ];
       serviceConfig = {
         Type = "oneshot";
@@ -189,6 +191,7 @@ in
         RestartSec = "30s";
         Environment = [
           "HOME=/root"
+          "XDG_CACHE_HOME=/root/.cache"
           "KUBECONFIG=/etc/rancher/k3s/k3s.yaml"
         ];
       };
@@ -212,6 +215,7 @@ in
           kubevipFlagsStr = concatStringsSep " " kubevipFlags;
         in
         ''
+          kubectl get nodes
           # Wait for k3s to be ready
           until kubectl get nodes &>/dev/null; do
             echo "Waiting for k3s API to be available..."
