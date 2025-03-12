@@ -112,9 +112,13 @@ in
     };
   };
 
-  systemd.network.links."enp3s0" = {
-    # matchConfig.PermanentMACAddress = "52:54:00:12:01:01";
-    linkConfig.Name = "ens18";
+  systemd.network.links."10-custom2" = {
+    matchConfig = {
+      MACAddress = "BC:24:11:07:94:55";
+    };
+    linkConfig = {
+      Name = "enp3s0";
+    };
   };
 
   projectinitiative = {
