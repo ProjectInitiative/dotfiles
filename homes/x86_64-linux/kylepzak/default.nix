@@ -9,6 +9,9 @@
   ...
 }:
 with lib.${namespace};
+let
+  sops = osConfig.sops;
+in
 {
 
   projectinitiative = {
@@ -93,6 +96,7 @@ with lib.${namespace};
       # Add the directory creation to ensure it exists
       ".config/sops/age/.keep".text = "";
       # ".config/zellij/zellij".source = "${inputs.self}/homes/dotfiles/zellij/zellij";
+      ".ssh/id_ed25519".source = config.lib.file.mkOutOfStoreSymlink sops.secrets.kylepzak_ssh_key.path;
       ".config/helix/config.toml".source = "${inputs.self}/homes/dotfiles/helix/config.toml";
       ".config/helix/themes".source = "${inputs.self}/homes/dotfiles/helix/themes";
       # ".config/helix/languages.toml".source = helixLanguagesConfig;

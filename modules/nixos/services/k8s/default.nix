@@ -23,6 +23,7 @@ in
     serverAddr =
       mkOpt str ""
         "Address of the server node to connect to (not needed for the first node).";
+    nodeIp = mkOpt str "" "Use different node IP rather than default interface.";
     role = mkOpt (enum [
       "server"
       "agent"
@@ -77,14 +78,14 @@ in
     boot.kernel.sysctl."net.ipv4.ip_forward" = 1;
     networking = {
       firewall = {
-        enable = true;
+        enable = false;
         allowPing = true;
-        extraCommands = ''
-          # Log all dropped packets
-          iptables -A INPUT -j LOG --log-prefix "FIREWALL_DROP_INPUT: "
-          iptables -A FORWARD -j LOG --log-prefix "FIREWALL_DROP_FORWARD: "
-          iptables -A OUTPUT -j LOG --log-prefix "FIREWALL_DROP_OUTPUT: "
-        '';
+        # extraCommands = ''
+        #   # Log all dropped packets
+        #   iptables -A INPUT -j LOG --log-prefix "FIREWALL_DROP_INPUT: "
+        #   iptables -A FORWARD -j LOG --log-prefix "FIREWALL_DROP_FORWARD: "
+        #   iptables -A OUTPUT -j LOG --log-prefix "FIREWALL_DROP_OUTPUT: "
+        # '';
         allowedTCPPorts =
           [
             53 # k8s DNS access
@@ -333,6 +334,15 @@ in
                 ]
               );
               # Network-specific flags
+              node-ip =
+                if cfg.nodeIp != "" then
+                  [
+                    "--node-ip=${cfg.nodeIp}"
+                    "--node-external-ip=${cfg.nodeIp}"
+                  ]
+                else
+                  [ ];
+
               networkFlags =
                 if cfg.networkType == "tailscale" then
                   [
@@ -346,6 +356,7 @@ in
                   [
                     "--flannel-backend=wireguard-native"
                   ]
+                  ++ node-ip
                 else if cfg.networkType == "cilium" then
                   [
                     "--flannel-backend=none"
@@ -357,8 +368,9 @@ in
                     # # Still telling k3s that we'll replace the CNI soon with cilium
                     # "--kubelet-arg=network-plugin=cni"
                   ]
+                  ++ node-ip
                 else
-                  [ ]; # Standard networking doesn't need special flags
+                  [ ] ++ node-ip; # Standard networking doesn't need special flags
             in
             networkFlags ++ gpuFlags ++ cfg.extraArgs;
         };

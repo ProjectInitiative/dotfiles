@@ -18,15 +18,20 @@ in
     ipAddress = mkOpt types.str "" "Main Static management IP address with CIDR";
     enableMlx = mkBoolOpt false "Temp var to disable mellanox config";
     mlxIpAddress = mkOpt types.str "" "Mellanox Static IP address";
+    mlxPcie = mkOpt types.str "" "PCIe address of mellanox card";
     interface = mkOpt types.str "" "Static IP Interface";
     gateway = mkOpt types.str "" "Default gateway";
     bcachefsInitDevice = mkOpt types.str "" "Device path for one of the bcachefs pool drives";
     mountpoint = mkOpt types.str "/mnt/pool" "Path to mount bcachefs pool";
     nvidiaSupport = mkBoolOpt false "Whether to enable nvidia GPU support";
     isFirstK8sNode = mkBoolOpt false "Whether node is the first in the cluster";
+    k8sNodeAddr = mkOpt types.str "" "IP address for custom k8s node IP";
     k8sServerAddr =
       mkOpt types.str ""
         "Address of the server node to connect to (not needed for the first node).";
+    bondMembers =
+      mkOpt (types.listOf types.str) [ ]
+        "List of network interfaces to include in the bond";
   };
 
   config = mkIf cfg.enable {
@@ -36,6 +41,8 @@ in
         k8s_token = {
           sopsFile = ./secrets.enc.yaml;
         };
+        jfs_backup_meta_password = { };
+        jfs_backup_rsa_passphrase = { };
       }
     ];
 
@@ -99,17 +106,57 @@ in
       smartmontools
       lsof
       pciutils
+      iperf3
     ];
+
+    fileSystems."/jfs-cache" = {
+      device = "tmpfs";
+      fsType = "tmpfs";
+      options = [
+        "size=8G" # Set the size limit (adjust as needed)
+        "mode=1777" # Permissions (1777 is standard for /tmp)
+        "nosuid" # Disable setuid programs
+        "nodev" # Disable device files
+        # "noexec"        # Optional: Disable execution of binaries
+      ];
+    };
 
     services.openssh.enable = true;
 
     projectinitiative = {
 
       services = {
+
+        juicefs = {
+          enable = true;
+          mounts = {
+            backup = {
+              enable = true;
+              mountPoint = "/mnt/jfs/backup";
+              metaUrl = "redis://172.16.1.18:6380/1";
+              metaPasswordFile = sops.secrets.jfs_backup_meta_password.path;
+              rsaPassphraseFile = sops.secrets.jfs_backup_rsa_passphrase.path;
+              cacheDir = "/jfs-cache";
+              region = "da";
+              maxUploads = 20;
+
+              # Add any additional options as needed
+              # extraoptions = {
+              #   "heartbeat" = "12";
+              #   "attr-cache" = "1";
+              #   "entry-cache" = "1";
+              #   "dir-entry-cache" = "1";
+              # };
+            };
+
+          };
+        };
+
         k8s = {
           enable = true;
           tokenFile = sops.secrets.k8s_token.path;
           isFirstNode = cfg.isFirstK8sNode;
+          nodeIp = cfg.k8sNodeAddr;
           serverAddr = cfg.k8sServerAddr;
           networkType = "cilium";
           role = "server";
@@ -139,13 +186,12 @@ in
           interfaces = [
             {
               device = "Mellanox Connect X-3";
-              pciAddress = "0000:05:00.0";
+              pciAddress = cfg.mlxPcie;
               nics = [
-                "enp5s0"
-                "enp5s0d1"
-                "bond0"
+                # "enp5s0"
+                # "enp5s0d1"
                 # "vmbr4"
-              ];
+              ] ++ cfg.bondMembers;
               mlnxPorts = [
                 "1"
                 "2"
@@ -157,6 +203,7 @@ in
         };
         tailscale = {
           enable = true;
+          ephemeral = false;
           extraArgs = [
             "--accept-dns=false"
           ];
@@ -164,53 +211,124 @@ in
       };
 
     };
-
-    # Common network configuration
+    # Traditional networking configuration (minimal)
     networking = {
-      # Interface configuration
-      interfaces = {
-        ${cfg.interface} = {
-          useDHCP = false;
-          ipv4.addresses = [
-            {
-              address = lib.removeSuffix "/24" cfg.ipAddress;
-              prefixLength = 24;
-            }
-          ];
-        };
-        bond0 = mkIf cfg.enableMlx {
-          useDHCP = false;
-          ipv4.addresses = [
-            {
-              address = cfg.mlxIpAddress;
-              prefixLength = 24;
-            }
-          ];
-        };
-      };
+      firewall.allowedTCPPorts = [
+        5201 # iperf
+      ];
+      # Disable DHCP globally
+      useDHCP = false;
 
-      # Bond configuration
-      bonds.bond0 = mkIf cfg.enableMlx {
-        interfaces = [
-          "enp5s0"
-          "enp5s0d1"
-        ];
-        driverOptions = {
-          mode = "802.3ad";
-          miimon = "100";
-          xmit_hash_policy = "layer3+4";
-          lacp_rate = "fast";
-        };
-      };
+      # Clear interfaces (managed by systemd-networkd)
+      interfaces = { };
 
-      # Gateway, DNS, and general networking settings
-      defaultGateway = "172.16.1.1";
+      # Keep DNS configuration
       nameservers = [
         "172.16.1.1"
         "1.1.1.1"
         "9.9.9.9"
       ];
+
+      # Keep global networking settings
+      # defaultGateway = "172.16.1.1";
       enableIPv6 = false;
+
+      # Disable NetworkManager if you're using it
+      networkmanager.enable = false;
+    };
+
+    # systemd-networkd configuration
+    systemd.network = {
+      # Enable systemd-networkd
+      enable = true;
+
+      # Bond configuration (conditionally included)
+      netdevs = lib.mkIf cfg.enableMlx {
+        "20-bond0" = {
+          netdevConfig = {
+            Name = "bond0";
+            Kind = "bond";
+          };
+          bondConfig = {
+            Mode = "broadcast";
+            MIIMonitorSec = "100ms";
+            TransmitHashPolicy = "layer3+4";
+            LACPTransmitRate = "fast";
+          };
+        };
+      };
+
+      # Network configurations - combining main interface and conditional bond setup
+      networks = lib.mkMerge [
+        # Main interface configuration (always included)
+        {
+          "10-${cfg.interface}" = {
+            matchConfig = {
+              Name = "${cfg.interface}";
+            };
+            networkConfig = {
+              DHCP = "no";
+              Gateway = "172.16.1.1";
+              DNS = "172.16.1.1 1.1.1.1 9.9.9.9";
+              IPv6AcceptRA = "no";
+            };
+            address = [
+              "${cfg.ipAddress}"
+            ];
+            # Add explicit route configuration
+            routes = [
+              {
+                Gateway = "172.16.1.1";
+                Destination = "0.0.0.0/0";
+              }
+            ];
+          };
+        }
+
+        # Bond-related interfaces (conditionally included)
+        (lib.mkIf cfg.enableMlx (
+          # Merge separate bond member configurations for each interface
+          lib.mkMerge ([
+            # Dynamic bond member configurations from bondMembers list
+            (lib.mkMerge (
+              map (member: {
+                "30-bond-member-${member}" = {
+                  matchConfig = {
+                    Name = "${member}";
+                  };
+                  networkConfig = {
+                    Bond = "bond0";
+                  };
+                  # MTU needs to be in linkConfig, not networkConfig
+                  linkConfig = {
+                    MTUBytes = "9000";
+                  };
+                };
+              }) cfg.bondMembers
+            ))
+
+            # Bond interface configuration
+            {
+              "40-bond0" = {
+                matchConfig = {
+                  Name = "bond0";
+                };
+                networkConfig = {
+                  DHCP = "no";
+                  IPv6AcceptRA = "no";
+                };
+                # MTU needs to be in linkConfig, not networkConfig
+                linkConfig = {
+                  MTUBytes = "9000";
+                };
+                address = [
+                  "${cfg.mlxIpAddress}/24"
+                ];
+              };
+            }
+          ])
+        ))
+      ];
     };
 
     system.stateVersion = "24.05"; # Did you read the comment?
