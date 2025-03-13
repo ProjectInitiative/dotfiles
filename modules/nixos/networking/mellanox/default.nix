@@ -66,6 +66,11 @@ let
     }) cfg.interfaces;
   };
 
+  interfacesJsonFile = pkgs.writeTextFile {
+    name = "mellanox-interfaces.json";
+    text = interfacesJson;
+  };
+
   # Create a proper Python package with the setup script
   mellanoxSetupScript = pkgs.python3Packages.buildPythonApplication {
     pname = "setup-mellanox";
@@ -134,7 +139,7 @@ in
 
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "${mellanoxSetupScript}/bin/setup-mellanox --config ${interfacesJson}";
+        ExecStart = "${mellanoxSetupScript}/bin/setup-mellanox --config ${interfacesJsonFile}";
         RemainAfterExit = true;
       };
     };
