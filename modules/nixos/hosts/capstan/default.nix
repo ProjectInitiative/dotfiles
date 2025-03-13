@@ -195,10 +195,12 @@ in
           "enp5s0"
           "enp5s0d1"
         ];
-        mode = "802.3ad";
-        miimon = 100;
-        xmit_hash_policy = "layer3+4";
-        lacp_rate = "fast";
+        driverOptions = {
+          mode = "802.3ad";
+          miimon = "100";
+          xmit_hash_policy = "layer3+4";
+          lacp_rate = "fast";
+        };
       };
 
       # Gateway, DNS, and general networking settings
