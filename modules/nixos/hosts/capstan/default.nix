@@ -164,54 +164,157 @@ in
       };
 
     };
-
-    # Common network configuration
+    # Traditional networking configuration (minimal)
     networking = {
-      # Interface configuration
-      interfaces = {
-        ${cfg.interface} = {
-          useDHCP = false;
-          ipv4.addresses = [
-            {
-              address = lib.removeSuffix "/24" cfg.ipAddress;
-              prefixLength = 24;
-            }
-          ];
-        };
-        bond0 = mkIf cfg.enableMlx {
-          useDHCP = false;
-          ipv4.addresses = [
-            {
-              address = cfg.mlxIpAddress;
-              prefixLength = 24;
-            }
-          ];
-        };
-      };
+      # Disable DHCP globally
+      useDHCP = false;
 
-      # Bond configuration
-      bonds.bond0 = mkIf cfg.enableMlx {
-        interfaces = [
-          "enp5s0"
-          "enp5s0d1"
-        ];
-        driverOptions = {
-          mode = "802.3ad";
-          miimon = "100";
-          xmit_hash_policy = "layer3+4";
-          lacp_rate = "fast";
-        };
-      };
+      # Clear interfaces (managed by systemd-networkd)
+      interfaces = { };
 
-      # Gateway, DNS, and general networking settings
-      defaultGateway = "172.16.1.1";
+      # Keep DNS configuration
       nameservers = [
         "172.16.1.1"
         "1.1.1.1"
         "9.9.9.9"
       ];
+
+      # Keep global networking settings
+      defaultGateway = "172.16.1.1";
       enableIPv6 = false;
+
+      # Disable NetworkManager if you're using it
+      networkmanager.enable = false;
     };
+
+    # systemd-networkd configuration
+    systemd.network = {
+      # Enable systemd-networkd
+      enable = true;
+
+      # Bond configuration (conditionally included)
+      netdevs = lib.mkIf cfg.enableMlx {
+        "20-bond0" = {
+          netdevConfig = {
+            Name = "bond0";
+            Kind = "bond";
+          };
+          bondConfig = {
+            Mode = "802.3ad";
+            MIIMonitorSec = "100ms";
+            TransmitHashPolicy = "layer3+4";
+            LACPTransmitRate = "fast";
+          };
+        };
+      };
+
+      # Network configurations - combining main interface and conditional bond setup
+      networks = lib.mkMerge [
+        # Main interface configuration (always included)
+        {
+          "10-${cfg.interface}" = {
+            matchConfig = {
+              Name = "${cfg.interface}";
+            };
+            networkConfig = {
+              DHCP = "no";
+              Gateway = "172.16.1.1";
+              DNS = "172.16.1.1 1.1.1.1 9.9.9.9";
+              IPv6AcceptRA = "no";
+            };
+            address = [
+              "${cfg.ipAddress}"
+            ];
+          };
+        }
+
+        # Bond-related interfaces (conditionally included)
+        (lib.mkIf cfg.enableMlx {
+          # Bond member 1
+          "30-bond-member-enp5s0" = {
+            matchConfig = {
+              Name = "enp5s0";
+            };
+            networkConfig = {
+              Bond = "bond0";
+            };
+          };
+
+          # Bond member 2
+          "30-bond-member-enp5s0d1" = {
+            matchConfig = {
+              Name = "enp5s0d1";
+            };
+            networkConfig = {
+              Bond = "bond0";
+            };
+          };
+
+          # Bond interface configuration
+          "40-bond0" = {
+            matchConfig = {
+              Name = "bond0";
+            };
+            networkConfig = {
+              DHCP = "no";
+              IPv6AcceptRA = "no";
+            };
+            address = [
+              "${cfg.mlxIpAddress}/24"
+            ];
+          };
+        })
+      ];
+    };
+
+    # # Common network configuration
+    # networking = {
+    #   # Interface configuration
+    #   interfaces = {
+    #     ${cfg.interface} = {
+    #       useDHCP = false;
+    #       ipv4.addresses = [
+    #         {
+    #           address = lib.removeSuffix "/24" cfg.ipAddress;
+    #           prefixLength = 24;
+    #         }
+    #       ];
+    #     };
+    #     bond0 = mkIf cfg.enableMlx {
+    #       useDHCP = false;
+    #       ipv4.addresses = [
+    #         {
+    #           address = cfg.mlxIpAddress;
+    #           prefixLength = 24;
+    #         }
+    #       ];
+    #     };
+    #   };
+
+    #   # Bond configuration
+    #   bonds.bond0 = mkIf cfg.enableMlx {
+    #     interfaces = [
+    #       "enp5s0"
+    #       "enp5s0d1"
+    #     ];
+    #     driverOptions = {
+    #       # mode = "3"; # mode 3 = broadcast
+    #       mode = "802.3ad";
+    #       miimon = "100";
+    #       xmit_hash_policy = "layer3+4";
+    #       lacp_rate = "fast";
+    #     };
+    #   };
+
+    #   # Gateway, DNS, and general networking settings
+    #   defaultGateway = "172.16.1.1";
+    #   nameservers = [
+    #     "172.16.1.1"
+    #     "1.1.1.1"
+    #     "9.9.9.9"
+    #   ];
+    #   enableIPv6 = false;
+    # };
 
     system.stateVersion = "24.05"; # Did you read the comment?
   };

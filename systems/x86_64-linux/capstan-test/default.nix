@@ -112,12 +112,36 @@ in
     };
   };
 
-  systemd.network.links."10-custom2" = {
+  systemd.network.links."10-mngmt-mask" = {
     matchConfig = {
       MACAddress = "BC:24:11:07:94:55";
     };
     linkConfig = {
       Name = "enp3s0";
+    };
+  };
+
+  systemd.network.links."10-mlx" = {
+    matchConfig = {
+      MACAddress = "BC:24:11:A5:4C:81";
+    };
+    linkConfig = {
+      Name = "bond0";
+    };
+  };
+
+  networking = {
+    # Interface configuration
+    interfaces = {
+      ens19 = {
+        useDHCP = false;
+        ipv4.addresses = [
+          {
+            address = "172.16.4.45";
+            prefixLength = 24;
+          }
+        ];
+      };
     };
   };
 
