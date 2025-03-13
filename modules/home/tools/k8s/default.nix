@@ -30,6 +30,7 @@ in
         kustomize
         kustomize-sops
         cilium-cli
+        hubble
       ];
 
       shellAliases = {

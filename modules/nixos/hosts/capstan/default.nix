@@ -15,7 +15,9 @@ in
   options.${namespace}.hosts.capstan = {
     enable = mkBoolOpt false "Whether to enable base capstan server configuration";
     # hostname = mkOpt types.str "" "Hostname for the server";
-    ipAddress = mkOpt types.str "" "Static IP address with CIDR";
+    ipAddress = mkOpt types.str "" "Main Static management IP address with CIDR";
+    enableMlx = mkBoolOpt false "Temp var to disable mellanox config";
+    mlxIpAddress = mkOpt types.str "" "Mellanox Static IP address";
     interface = mkOpt types.str "" "Static IP Interface";
     gateway = mkOpt types.str "" "Default gateway";
     bcachefsInitDevice = mkOpt types.str "" "Device path for one of the bcachefs pool drives";
@@ -96,6 +98,7 @@ in
       util-linux
       smartmontools
       lsof
+      pciutils
     ];
 
     services.openssh.enable = true;
@@ -112,7 +115,7 @@ in
           role = "server";
           extraArgs = [
             # TLS configuration
-            # "--tls-san=k8s.projectinitiative.io"
+            "--tls-san=172.16.1.50"
 
             # Security
             "--secrets-encryption"
@@ -131,6 +134,27 @@ in
       };
 
       networking = {
+        mellanox = {
+          enable = cfg.enableMlx;
+          interfaces = [
+            {
+              device = "Mellanox Connect X-3";
+              pciAddress = "0000:05:00.0";
+              nics = [
+                "enp5s0"
+                "enp5s0d1"
+                "bond0"
+                # "vmbr4"
+              ];
+              mlnxPorts = [
+                "1"
+                "2"
+              ];
+              mode = "eth";
+            }
+            # You can add more interfaces as needed
+          ];
+        };
         tailscale = {
           enable = true;
           extraArgs = [
@@ -142,23 +166,50 @@ in
     };
 
     # Common network configuration
-    networking.interfaces.${cfg.interface} = {
-      useDHCP = false;
-      ipv4.addresses = [
-        {
-          address = lib.removeSuffix "/24" cfg.ipAddress;
-          prefixLength = 24;
-        }
+    networking = {
+      # Interface configuration
+      interfaces = {
+        ${cfg.interface} = {
+          useDHCP = false;
+          ipv4.addresses = [
+            {
+              address = lib.removeSuffix "/24" cfg.ipAddress;
+              prefixLength = 24;
+            }
+          ];
+        };
+        bond0 = mkIf cfg.enableMlx {
+          useDHCP = false;
+          ipv4.addresses = [
+            {
+              address = cfg.mlxIpAddress;
+              prefixLength = 24;
+            }
+          ];
+        };
+      };
+
+      # Bond configuration
+      bonds.bond0 = mkIf cfg.enableMlx {
+        interfaces = [
+          "enp5s0"
+          "enp5s0d1"
+        ];
+        mode = "802.3ad";
+        miimon = 100;
+        xmit_hash_policy = "layer3+4";
+        lacp_rate = "fast";
+      };
+
+      # Gateway, DNS, and general networking settings
+      defaultGateway = "172.16.1.1";
+      nameservers = [
+        "172.16.1.1"
+        "1.1.1.1"
+        "9.9.9.9"
       ];
+      enableIPv6 = false;
     };
-    # networking.defaultGateway = cfg.gateway ? config.sensitiveNotSecret.default_gateway;
-    networking.defaultGateway = "172.16.1.1";
-    networking.nameservers = [
-      "172.16.1.1"
-      "1.1.1.1"
-      "9.9.9.9"
-    ];
-    networking.enableIPv6 = false;
 
     system.stateVersion = "24.05"; # Did you read the comment?
   };

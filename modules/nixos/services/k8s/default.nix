@@ -42,6 +42,7 @@ in
       installScript = mkOpt str "" "Custom install script for Cilium (leave empty for default script).";
     };
 
+    # kubectl -n kube-system edit secrets/k3s-serving
     # kube-vip specific options
     kubeVip = {
       enable = mkBoolOpt false "Whether to enable kube-vip for high availability.";
@@ -73,43 +74,70 @@ in
     ];
 
     # NETWORKING
-    networking.firewall.allowedTCPPorts =
-      [
-        6443 # k3s: required so that pods can reach the API server (running on port 6443 by default)
-        2379 # k3s, etcd clients: required if using a "High Availability Embedded etcd" configuration
-        2380 # k3s, etcd peers: required if using a "High Availability Embedded etcd" configuration
-        10250 # k3s metrics port
-        53 # k8s DNS access
-        9153 # backup k8s dns
-      ]
-      ++ lib.optionals (cfg.networkType == "cilium") [
-        4240 # cluster health checks (cilium-health)
-        4244 # Hubble server
-        4245 # Hubble Relay
-        4250 # Mutual Authentication port
-        4251 # Spire Agent health check port (listening on 127.0.0.1 or ::1)
-        6060 # cilium-agent pprof server (listening on 127.0.0.1)
-        6061 # cilium-operator pprof server (listening on 127.0.0.1)
-        6062 # Hubble Relay pprof server (listening on 127.0.0.1)
-        9878 # cilium-envoy health listener (listening on 127.0.0.1)
-        9879 # cilium-agent health status API (listening on 127.0.0.1 and/or ::1)
-        9890 # cilium-agent gops server (listening on 127.0.0.1)
-        9891 # operator gops server (listening on 127.0.0.1)
-        9893 # Hubble Relay gops server (listening on 127.0.0.1)
-        9901 # cilium-envoy Admin API (listening on 127.0.0.1)
-        9962 # cilium-agent Prometheus metrics
-        9963 # cilium-operator Prometheus metrics
-        9964 # cilium envoy
-      ];
+    boot.kernel.sysctl."net.ipv4.ip_forward" = 1;
+    networking = {
+      firewall = {
+        enable = true;
+        allowPing = true;
+        extraCommands = ''
+          # Log all dropped packets
+          iptables -A INPUT -j LOG --log-prefix "FIREWALL_DROP_INPUT: "
+          iptables -A FORWARD -j LOG --log-prefix "FIREWALL_DROP_FORWARD: "
+          iptables -A OUTPUT -j LOG --log-prefix "FIREWALL_DROP_OUTPUT: "
+        '';
+        allowedTCPPorts =
+          [
+            53 # k8s DNS access
+            80 # http
+            443 # https
+            8080 # reserved http
+            6443 # k3s: required so that pods can reach the API server (running on port 6443 by default)
+            2379 # k3s, etcd clients: required if using a "High Availability Embedded etcd" configuration
+            2380 # k3s, etcd peers: required if using a "High Availability Embedded etcd" configuration
+            9153 # backup k8s dns
 
-    networking.firewall.allowedUDPPorts =
-      [
-        53 # k8s DNS access
-        # 8472 # k3s, flannel: required if using multi-node for inter-node networking
-      ]
-      ++ lib.optionals (cfg.networkType == "cilium") [
-        51871 # WireGuard encryption tunnel endpoint
-      ];
+            # 10250 # k3s metrics port
+          ]
+          ++ lib.optionals (cfg.networkType == "cilium") [
+            4240 # cluster health checks (cilium-health)
+            4244 # Hubble server
+            4245 # Hubble Relay
+            4250 # Mutual Authentication port
+            4251 # Spire Agent health check port (listening on 127.0.0.1 or ::1)
+            6060 # cilium-agent pprof server (listening on 127.0.0.1)
+            6061 # cilium-operator pprof server (listening on 127.0.0.1)
+            6062 # Hubble Relay pprof server (listening on 127.0.0.1)
+            9878 # cilium-envoy health listener (listening on 127.0.0.1)
+            9879 # cilium-agent health status API (listening on 127.0.0.1 and/or ::1)
+            9890 # cilium-agent gops server (listening on 127.0.0.1)
+            9891 # operator gops server (listening on 127.0.0.1)
+            9893 # Hubble Relay gops server (listening on 127.0.0.1)
+            9901 # cilium-envoy Admin API (listening on 127.0.0.1)
+            9962 # cilium-agent Prometheus metrics
+            9963 # cilium-operator Prometheus metrics
+            9964 # cilium envoy
+          ];
+        allowedTCPPortRanges = [
+          {
+            from = 10250;
+            to = 10252;
+          } # Kubelet and other k8s components
+          {
+            from = 30000;
+            to = 32767;
+          } # NodePort range
+        ];
+        allowedUDPPorts =
+          [
+            53 # k8s DNS access
+            8472 # k3s VXLAN overlay: required if using multi-node for inter-node networking
+          ]
+          ++ lib.optionals (cfg.networkType == "cilium") [
+            51871 # WireGuard encryption tunnel endpoint
+          ];
+
+      };
+    };
 
     environment.systemPackages = mkIf (cfg.networkType == "cilium") [
       pkgs.cilium-cli

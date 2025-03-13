@@ -85,6 +85,8 @@ with lib.${namespace};
       enable = true;
       ipAddress = "${config.sensitiveNotSecret.default_subnet}52/24";
       interface = "enp3s0";
+      enableMlx = true;
+      mlxIpAddress = "172.16.4.52";
       bcachefsInitDevice = "/dev/disk/by-id/nvme-TEAM_TM8FPD002T_TPBF2310170080202273";
       mountpoint = mountpoint;
       k8sServerAddr = "https://172.16.1.45:6443";
