@@ -189,6 +189,36 @@ in
 
   projectinitiative = {
 
+      networking = {
+        mellanox = mkForce {
+          enable = true;
+          interfaces = [
+            {
+              device = "Mellanox Connect X-3";
+              pciAddress = "0000:10:00.0";
+              nics = [
+                "ens16"
+                "ens16d1"
+                "bond0"
+                # "vmbr4"
+              ];
+              mlnxPorts = [
+                "1"
+                "2"
+              ];
+              mode = "eth";
+            }
+            # You can add more interfaces as needed
+          ];
+        };
+        tailscale = {
+          enable = true;
+          extraArgs = [
+            "--accept-dns=false"
+          ];
+        };
+      };
+
     disko.mdadm-root = {
       enable = true;
       mirroredDrives = [
