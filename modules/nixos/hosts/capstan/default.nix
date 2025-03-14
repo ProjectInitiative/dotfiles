@@ -102,6 +102,7 @@ in
       smartmontools
       lsof
       pciutils
+      iperf3
     ];
 
     services.openssh.enable = true;
@@ -168,6 +169,9 @@ in
     };
     # Traditional networking configuration (minimal)
     networking = {
+      firewall.allowedTCPPorts = [
+        5201 # iperf
+      ];
       # Disable DHCP globally
       useDHCP = false;
 
