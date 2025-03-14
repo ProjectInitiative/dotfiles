@@ -27,6 +27,7 @@ in
     k8sServerAddr =
       mkOpt types.str ""
         "Address of the server node to connect to (not needed for the first node).";
+    bondMembers = mkOpt (types.listOf types.str) [] "List of network interfaces to include in the bond";
   };
 
   config = mkIf cfg.enable {
@@ -141,11 +142,10 @@ in
               device = "Mellanox Connect X-3";
               pciAddress = "0000:05:00.0";
               nics = [
-                "enp5s0"
-                "enp5s0d1"
-                "bond0"
+                # "enp5s0"
+                # "enp5s0d1"
                 # "vmbr4"
-              ];
+              ] ++ cfg.bondMembers;
               mlnxPorts = [
                 "1"
                 "2"
@@ -236,37 +236,28 @@ in
         }
 
         # Bond-related interfaces (conditionally included)
-        (lib.mkIf cfg.enableMlx {
-          # Bond member 1
-          "30-bond-member-enp5s0" = {
-            matchConfig = {
-              Name = "enp5s0";
-            };
-            networkConfig = {
-              Bond = "bond0";
-            };
-            # MTU needs to be in linkConfig, not networkConfig
-            linkConfig = {
-              MTUBytes = "9000";
-            };
-          };
-
-          # Bond member 2
-          "30-bond-member-enp5s0d1" = {
-            matchConfig = {
-              Name = "enp5s0d1";
-            };
-            networkConfig = {
-              Bond = "bond0";
-            };
-            # MTU needs to be in linkConfig, not networkConfig
-            linkConfig = {
-              MTUBytes = "9000";
-            };
-          };
-
-          # Bond interface configuration
-          "40-bond0" = {
+        (lib.mkIf cfg.enableMlx (
+          # Merge separate bond member configurations for each interface
+          lib.mkMerge ([
+            # Dynamic bond member configurations from bondMembers list
+            (lib.mkMerge (map (member: {
+              "30-bond-member-${member}" = {
+                matchConfig = {
+                  Name = "${member}";
+                };
+                networkConfig = {
+                  Bond = "bond0";
+                };
+                # MTU needs to be in linkConfig, not networkConfig
+                linkConfig = {
+                  MTUBytes = "9000";
+                };
+              };
+            }) cfg.bondMembers))
+            
+            # Bond interface configuration
+            {
+              "40-bond0" = {
             matchConfig = {
               Name = "bond0";
             };
@@ -282,58 +273,11 @@ in
               "${cfg.mlxIpAddress}/24"
             ];
           };
-        })
+            }
+          ])
+        ))
       ];
     };
-
-    # # Common network configuration
-    # networking = {
-    #   # Interface configuration
-    #   interfaces = {
-    #     ${cfg.interface} = {
-    #       useDHCP = false;
-    #       ipv4.addresses = [
-    #         {
-    #           address = lib.removeSuffix "/24" cfg.ipAddress;
-    #           prefixLength = 24;
-    #         }
-    #       ];
-    #     };
-    #     bond0 = mkIf cfg.enableMlx {
-    #       useDHCP = false;
-    #       ipv4.addresses = [
-    #         {
-    #           address = cfg.mlxIpAddress;
-    #           prefixLength = 24;
-    #         }
-    #       ];
-    #     };
-    #   };
-
-    #   # Bond configuration
-    #   bonds.bond0 = mkIf cfg.enableMlx {
-    #     interfaces = [
-    #       "enp5s0"
-    #       "enp5s0d1"
-    #     ];
-    #     driverOptions = {
-    #       # mode = "3"; # mode 3 = broadcast
-    #       mode = "802.3ad";
-    #       miimon = "100";
-    #       xmit_hash_policy = "layer3+4";
-    #       lacp_rate = "fast";
-    #     };
-    #   };
-
-    #   # Gateway, DNS, and general networking settings
-    #   defaultGateway = "172.16.1.1";
-    #   nameservers = [
-    #     "172.16.1.1"
-    #     "1.1.1.1"
-    #     "9.9.9.9"
-    #   ];
-    #   enableIPv6 = false;
-    # };
 
     system.stateVersion = "24.05"; # Did you read the comment?
   };

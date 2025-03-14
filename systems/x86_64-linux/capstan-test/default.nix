@@ -239,6 +239,7 @@ in
         interface = "enp3s0";
         enableMlx = true;
         mlxIpAddress = "172.16.4.45";
+        bondMembers = ["ens16" "ens16d1"];
         bcachefsInitDevice = "/dev/vdc1";
         mountpoint = mountpoint;
         isFirstK8sNode = true;
