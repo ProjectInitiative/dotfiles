@@ -180,7 +180,7 @@ in
       ];
 
       # Keep global networking settings
-      defaultGateway = "172.16.1.1";
+      # defaultGateway = "172.16.1.1";
       enableIPv6 = false;
 
       # Disable NetworkManager if you're using it
@@ -200,7 +200,7 @@ in
             Kind = "bond";
           };
           bondConfig = {
-            Mode = "802.3ad";
+            Mode = "broadcast";
             MIIMonitorSec = "100ms";
             TransmitHashPolicy = "layer3+4";
             LACPTransmitRate = "fast";
@@ -225,6 +225,13 @@ in
             address = [
               "${cfg.ipAddress}"
             ];
+            # Add explicit route configuration
+            routes = [
+              {
+                Gateway = "172.16.1.1";
+                Destination = "0.0.0.0/0";
+              }
+            ];
           };
         }
 
@@ -238,6 +245,10 @@ in
             networkConfig = {
               Bond = "bond0";
             };
+            # MTU needs to be in linkConfig, not networkConfig
+            linkConfig = {
+              MTUBytes = "9000";
+            };
           };
 
           # Bond member 2
@@ -247,6 +258,10 @@ in
             };
             networkConfig = {
               Bond = "bond0";
+            };
+            # MTU needs to be in linkConfig, not networkConfig
+            linkConfig = {
+              MTUBytes = "9000";
             };
           };
 
@@ -258,6 +273,10 @@ in
             networkConfig = {
               DHCP = "no";
               IPv6AcceptRA = "no";
+            };
+            # MTU needs to be in linkConfig, not networkConfig
+            linkConfig = {
+              MTUBytes = "9000";
             };
             address = [
               "${cfg.mlxIpAddress}/24"
