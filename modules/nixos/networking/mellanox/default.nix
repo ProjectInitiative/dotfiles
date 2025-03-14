@@ -83,7 +83,7 @@ let
 
     # Specify Python dependencies
     propagatedBuildInputs = with pkgs; [
-      busybox
+      bash
       iproute2
     ];
 
@@ -134,7 +134,7 @@ in
       before = [ "network.target" ];
       path = with pkgs; [
         iproute2
-        busybox
+        bash
       ];
 
       serviceConfig = {
