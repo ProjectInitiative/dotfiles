@@ -27,7 +27,9 @@ in
     k8sServerAddr =
       mkOpt types.str ""
         "Address of the server node to connect to (not needed for the first node).";
-    bondMembers = mkOpt (types.listOf types.str) [] "List of network interfaces to include in the bond";
+    bondMembers =
+      mkOpt (types.listOf types.str) [ ]
+        "List of network interfaces to include in the bond";
   };
 
   config = mkIf cfg.enable {
@@ -240,39 +242,41 @@ in
           # Merge separate bond member configurations for each interface
           lib.mkMerge ([
             # Dynamic bond member configurations from bondMembers list
-            (lib.mkMerge (map (member: {
-              "30-bond-member-${member}" = {
+            (lib.mkMerge (
+              map (member: {
+                "30-bond-member-${member}" = {
+                  matchConfig = {
+                    Name = "${member}";
+                  };
+                  networkConfig = {
+                    Bond = "bond0";
+                  };
+                  # MTU needs to be in linkConfig, not networkConfig
+                  linkConfig = {
+                    MTUBytes = "9000";
+                  };
+                };
+              }) cfg.bondMembers
+            ))
+
+            # Bond interface configuration
+            {
+              "40-bond0" = {
                 matchConfig = {
-                  Name = "${member}";
+                  Name = "bond0";
                 };
                 networkConfig = {
-                  Bond = "bond0";
+                  DHCP = "no";
+                  IPv6AcceptRA = "no";
                 };
                 # MTU needs to be in linkConfig, not networkConfig
                 linkConfig = {
                   MTUBytes = "9000";
                 };
+                address = [
+                  "${cfg.mlxIpAddress}/24"
+                ];
               };
-            }) cfg.bondMembers))
-            
-            # Bond interface configuration
-            {
-              "40-bond0" = {
-            matchConfig = {
-              Name = "bond0";
-            };
-            networkConfig = {
-              DHCP = "no";
-              IPv6AcceptRA = "no";
-            };
-            # MTU needs to be in linkConfig, not networkConfig
-            linkConfig = {
-              MTUBytes = "9000";
-            };
-            address = [
-              "${cfg.mlxIpAddress}/24"
-            ];
-          };
             }
           ])
         ))

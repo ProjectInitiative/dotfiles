@@ -87,7 +87,10 @@ with lib.${namespace};
       interface = "enp3s0";
       enableMlx = true;
       mlxIpAddress = "172.16.4.52";
-      bondMembers = ["enp5s0" "enp5s0d1"];
+      bondMembers = [
+        "enp5s0"
+        "enp5s0d1"
+      ];
       bcachefsInitDevice = "/dev/disk/by-id/nvme-TEAM_TM8FPD002T_TPBF2310170080202273";
       mountpoint = mountpoint;
       k8sServerAddr = "https://172.16.1.45:6443";

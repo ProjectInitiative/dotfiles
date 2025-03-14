@@ -467,7 +467,6 @@ shell:
 
 # If this is `true`, the cursor is temporarily hidden when typing.
 hide_when_typing: false
-
 # Hints
 #
 # Terminal hints can be used to find text or hyperlink in the visible part of

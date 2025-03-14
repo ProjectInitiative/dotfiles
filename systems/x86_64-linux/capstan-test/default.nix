@@ -189,35 +189,35 @@ in
 
   projectinitiative = {
 
-      networking = {
-        mellanox = mkForce {
-          enable = true;
-          interfaces = [
-            {
-              device = "Mellanox Connect X-3";
-              pciAddress = "0000:10:00.0";
-              nics = [
-                "ens16"
-                "ens16d1"
-                "bond0"
-                # "vmbr4"
-              ];
-              mlnxPorts = [
-                "1"
-                "2"
-              ];
-              mode = "eth";
-            }
-            # You can add more interfaces as needed
-          ];
-        };
-        tailscale = {
-          enable = true;
-          extraArgs = [
-            "--accept-dns=false"
-          ];
-        };
+    networking = {
+      mellanox = mkForce {
+        enable = true;
+        interfaces = [
+          {
+            device = "Mellanox Connect X-3";
+            pciAddress = "0000:10:00.0";
+            nics = [
+              "ens16"
+              "ens16d1"
+              "bond0"
+              # "vmbr4"
+            ];
+            mlnxPorts = [
+              "1"
+              "2"
+            ];
+            mode = "eth";
+          }
+          # You can add more interfaces as needed
+        ];
       };
+      tailscale = {
+        enable = true;
+        extraArgs = [
+          "--accept-dns=false"
+        ];
+      };
+    };
 
     disko.mdadm-root = {
       enable = true;
@@ -239,7 +239,10 @@ in
         interface = "enp3s0";
         enableMlx = true;
         mlxIpAddress = "172.16.4.45";
-        bondMembers = ["ens16" "ens16d1"];
+        bondMembers = [
+          "ens16"
+          "ens16d1"
+        ];
         bcachefsInitDevice = "/dev/vdc1";
         mountpoint = mountpoint;
         isFirstK8sNode = true;
