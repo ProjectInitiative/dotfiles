@@ -190,27 +190,6 @@ in
   projectinitiative = {
 
     networking = {
-      mellanox = mkForce {
-        enable = true;
-        interfaces = [
-          {
-            device = "Mellanox Connect X-3";
-            pciAddress = "0000:10:00.0";
-            nics = [
-              "ens16"
-              "ens16d1"
-              "bond0"
-              # "vmbr4"
-            ];
-            mlnxPorts = [
-              "1"
-              "2"
-            ];
-            mode = "eth";
-          }
-          # You can add more interfaces as needed
-        ];
-      };
       tailscale = {
         enable = true;
         extraArgs = [
@@ -239,6 +218,7 @@ in
         interface = "enp3s0";
         enableMlx = true;
         mlxIpAddress = "172.16.4.45";
+        mlxPcie = "0000:00:10.0";
         bondMembers = [
           "ens16"
           "ens16d1"

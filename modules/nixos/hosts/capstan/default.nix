@@ -18,6 +18,7 @@ in
     ipAddress = mkOpt types.str "" "Main Static management IP address with CIDR";
     enableMlx = mkBoolOpt false "Temp var to disable mellanox config";
     mlxIpAddress = mkOpt types.str "" "Mellanox Static IP address";
+    mlxPcie = mkOpt types.str "" "PCIe address of mellanox card";
     interface = mkOpt types.str "" "Static IP Interface";
     gateway = mkOpt types.str "" "Default gateway";
     bcachefsInitDevice = mkOpt types.str "" "Device path for one of the bcachefs pool drives";
@@ -143,7 +144,7 @@ in
           interfaces = [
             {
               device = "Mellanox Connect X-3";
-              pciAddress = "0000:05:00.0";
+              pciAddress = cfg.mlxPcie;
               nics = [
                 # "enp5s0"
                 # "enp5s0d1"

@@ -88,6 +88,7 @@ with lib.${namespace};
       interface = "enp3s0";
       enableMlx = true;
       mlxIpAddress = "172.16.4.53";
+      mlxPcie = "0000:05:00.0";
       bondMembers = [
         "enp5s0"
         "enp5s0d1"
