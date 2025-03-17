@@ -25,6 +25,7 @@ in
     mountpoint = mkOpt types.str "/mnt/pool" "Path to mount bcachefs pool";
     nvidiaSupport = mkBoolOpt false "Whether to enable nvidia GPU support";
     isFirstK8sNode = mkBoolOpt false "Whether node is the first in the cluster";
+    k8sNodeAddr = mkOpt types.str "" "IP address for custom k8s node IP";
     k8sServerAddr =
       mkOpt types.str ""
         "Address of the server node to connect to (not needed for the first node).";
@@ -40,6 +41,8 @@ in
         k8s_token = {
           sopsFile = ./secrets.enc.yaml;
         };
+        jfs_backup_meta_password = { };
+        jfs_backup_rsa_passphrase = { };
       }
     ];
 
@@ -106,15 +109,54 @@ in
       iperf3
     ];
 
+    fileSystems."/jfs-cache" = {
+      device = "tmpfs";
+      fsType = "tmpfs";
+      options = [
+        "size=8G" # Set the size limit (adjust as needed)
+        "mode=1777" # Permissions (1777 is standard for /tmp)
+        "nosuid" # Disable setuid programs
+        "nodev" # Disable device files
+        # "noexec"        # Optional: Disable execution of binaries
+      ];
+    };
+
     services.openssh.enable = true;
 
     projectinitiative = {
 
       services = {
+
+        juicefs = {
+          enable = true;
+          mounts = {
+            backup = {
+              enable = true;
+              mountPoint = "/mnt/jfs/backup";
+              metaUrl = "redis://172.16.1.18:6380/1";
+              metaPasswordFile = sops.secrets.jfs_backup_meta_password.path;
+              rsaPassphraseFile = sops.secrets.jfs_backup_rsa_passphrase.path;
+              cacheDir = "/jfs-cache";
+              region = "da";
+              maxUploads = 20;
+
+              # Add any additional options as needed
+              # extraoptions = {
+              #   "heartbeat" = "12";
+              #   "attr-cache" = "1";
+              #   "entry-cache" = "1";
+              #   "dir-entry-cache" = "1";
+              # };
+            };
+
+          };
+        };
+
         k8s = {
           enable = true;
           tokenFile = sops.secrets.k8s_token.path;
           isFirstNode = cfg.isFirstK8sNode;
+          nodeIp = cfg.k8sNodeAddr;
           serverAddr = cfg.k8sServerAddr;
           networkType = "cilium";
           role = "server";
@@ -161,6 +203,7 @@ in
         };
         tailscale = {
           enable = true;
+          ephemeral = false;
           extraArgs = [
             "--accept-dns=false"
           ];
