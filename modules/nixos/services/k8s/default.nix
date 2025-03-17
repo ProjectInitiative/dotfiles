@@ -78,14 +78,14 @@ in
     boot.kernel.sysctl."net.ipv4.ip_forward" = 1;
     networking = {
       firewall = {
-        enable = true;
+        enable = false;
         allowPing = true;
-        extraCommands = ''
-          # Log all dropped packets
-          iptables -A INPUT -j LOG --log-prefix "FIREWALL_DROP_INPUT: "
-          iptables -A FORWARD -j LOG --log-prefix "FIREWALL_DROP_FORWARD: "
-          iptables -A OUTPUT -j LOG --log-prefix "FIREWALL_DROP_OUTPUT: "
-        '';
+        # extraCommands = ''
+        #   # Log all dropped packets
+        #   iptables -A INPUT -j LOG --log-prefix "FIREWALL_DROP_INPUT: "
+        #   iptables -A FORWARD -j LOG --log-prefix "FIREWALL_DROP_FORWARD: "
+        #   iptables -A OUTPUT -j LOG --log-prefix "FIREWALL_DROP_OUTPUT: "
+        # '';
         allowedTCPPorts =
           [
             53 # k8s DNS access
