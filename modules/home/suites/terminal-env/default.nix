@@ -42,6 +42,7 @@ in
         ncdu
         tree
         usbutils
+        rclone
         #TODO: add config for yazi
         yazi
         pkgs.${namespace}.flatten-directory

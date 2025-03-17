@@ -60,12 +60,6 @@ let
         description = "Upload objects in background";
       };
 
-      background = mkOption {
-        type = types.bool;
-        default = false;
-        description = "Run in background";
-      };
-
       readOnly = mkOption {
         type = types.bool;
         default = false;
@@ -95,6 +89,13 @@ let
       };
     };
   };
+
+  # Helper function to escape mount point path for systemd unit names
+  escapeSystemdPath = path:
+    builtins.replaceStrings
+      [ "/" ]
+      [ "-" ]
+      (removePrefix "/" path);
 in
 {
   options.${namespace}.services.juicefs = {
@@ -116,61 +117,107 @@ in
   config = mkIf cfg.enable {
     environment.systemPackages = [ cfg.package ];
 
-    systemd.services = mapAttrs' (
-      name: mountCfg:
-      nameValuePair "juicefs-mount-${name}" {
-        description = "JuiceFS Mount for ${mountCfg.mountPoint}";
-        after = [ "network-online.target" ];
-        wants = [ "network-online.target" ];
-        wantedBy = [ "multi-user.target" ];
-
-        path = [ cfg.package ];
-
-        script =
-          let
-            # Build the mount command with options
-            metaPasswordEnv = optionalString (
-              mountCfg.metaPasswordFile != null
-            ) "META_PASSWORD=$(cat ${mountCfg.metaPasswordFile}) ";
-
-            rsaPassphraseEnv = optionalString (
-              mountCfg.rsaPassphraseFile != null
-            ) "JFS_RSA_PASSPHRASE=$(cat ${mountCfg.rsaPassphraseFile}) ";
-
-            regionEnv = optionalString (mountCfg.region != null) "MINIO_REGION=${mountCfg.region} ";
-
-            backgroundFlag = optionalString mountCfg.background "--background ";
-            writebackFlag = optionalString mountCfg.writeback "--writeback ";
-            readOnlyFlag = optionalString mountCfg.readOnly "--read-only ";
-
-            # Convert attrset to command line arguments
-            extraOptsString = concatStringsSep " " (
-              mapAttrsToList (name: value: "--${name} ${toString value}") mountCfg.extraOptions
-            );
-          in
-          ''
-            # Create mount point if it doesn't exist
-            mkdir -p ${mountCfg.mountPoint}
-
-            # Execute JuiceFS mount command
-            ${metaPasswordEnv}${rsaPassphraseEnv}${regionEnv} \
-            juicefs mount \
-              ${backgroundFlag} \
-              ${writebackFlag} \
-              ${readOnlyFlag} \
-              --max-uploads ${toString mountCfg.maxUploads} \
-              --buffer-size ${toString mountCfg.bufferSize} \
-              --cache-dir ${mountCfg.cacheDir} \
-              ${extraOptsString} \
-              ${mountCfg.metaUrl} ${mountCfg.mountPoint}
-          '';
-
+    # Install JuiceFS mount helper
+    system.activationScripts.juicefs-mount-helper = ''
+      mkdir -p /run/wrappers/bin
+      ln -sf ${cfg.package}/bin/juicefs /run/wrappers/bin/mount.juicefs
+    '';
+    
+    # Create environment preparation services
+    systemd.services = mapAttrs' (name: mountCfg:
+      let
+        # Generate names
+        prepServiceName = "juicefs-env-${name}";
+        mountUnitName = "mnt-${escapeSystemdPath (removePrefix "/mnt/" mountCfg.mountPoint)}.mount";
+        envFilePath = "/run/juicefs-${name}.env";
+        
+        # Create preparation script
+        prepScript = pkgs.writeShellScript prepServiceName ''
+          #!/bin/sh
+          set -e
+          
+          # Create environment file
+          echo "# JuiceFS environment file for ${mountCfg.mountPoint}" > ${envFilePath}
+          
+          # Add credentials
+          ${optionalString (mountCfg.metaPasswordFile != null) ''
+          if [ -f "${mountCfg.metaPasswordFile}" ]; then
+            echo "META_PASSWORD=$(cat ${mountCfg.metaPasswordFile})" >> ${envFilePath}
+          fi
+          ''}
+          
+          ${optionalString (mountCfg.rsaPassphraseFile != null) ''
+          if [ -f "${mountCfg.rsaPassphraseFile}" ]; then
+            echo "JFS_RSA_PASSPHRASE=$(cat ${mountCfg.rsaPassphraseFile})" >> ${envFilePath}
+          fi
+          ''}
+          
+          ${optionalString (mountCfg.region != null) ''
+          echo "MINIO_REGION=${mountCfg.region}" >> ${envFilePath}
+          ''}
+          
+          # Set permissions
+          chmod 600 ${envFilePath}
+          
+          # Clean up any stale mounts before proceeding
+          # if ! stat "${mountCfg.mountPoint}" 2>/dev/null; then
+          #   echo "Cleaning up stale mount at ${mountCfg.mountPoint}"
+          #   ${pkgs.util-linux}/bin/umount -lf ${mountCfg.mountPoint} 2>/dev/null || true
+          #   ${pkgs.fuse}/bin/fusermount -uz ${mountCfg.mountPoint} 2>/dev/null || true
+          #   rm -rf ${mountCfg.mountPoint} 2>/dev/null || true
+          # fi
+          
+          # Ensure mount point exists
+          mkdir -p ${mountCfg.mountPoint}
+        '';
+      in
+      nameValuePair prepServiceName {
+        description = "Prepare JuiceFS environment file for ${mountCfg.mountPoint}";
+        before = [ mountUnitName ];
+        wantedBy = [ mountUnitName ];
+        
         serviceConfig = {
-          Type = "forking";
-          Restart = "on-failure";
-          RestartSec = "5s";
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStart = "${prepScript}";
         };
       }
     ) (filterAttrs (_: mountCfg: mountCfg.enable) cfg.mounts);
+
+    # Create systemd mount units for each JuiceFS mount
+    systemd.mounts = mapAttrsToList (name: mountCfg:
+      let
+        envFilePath = "/run/juicefs-${name}.env";
+      in
+      lib.mkIf mountCfg.enable {
+        what = mountCfg.metaUrl;
+        where = mountCfg.mountPoint;
+        type = "juicefs";
+        
+        # Build mount options
+        options = "_netdev,max-uploads=${toString mountCfg.maxUploads}"
+          + ",buffer-size=${toString mountCfg.bufferSize}"
+          + ",cache-dir=${mountCfg.cacheDir}"
+          + optionalString mountCfg.writeback ",writeback"
+          + optionalString mountCfg.readOnly ",ro"
+          + concatStringsSep "" (mapAttrsToList (k: v: ",${k}=${v}") mountCfg.extraOptions);
+        
+        wantedBy = [ "multi-user.target" ];
+        requires = [ "juicefs-env-${name}.service" "network-online.target" ];
+        after = [ "juicefs-env-${name}.service" "network-online.target" ];
+        
+        # Systemd mount unit config
+        unitConfig = {
+          Description = "JuiceFS Mount for ${mountCfg.mountPoint}";
+          DefaultDependencies = "no";
+        };
+        
+        # Mount-specific config
+        mountConfig = {
+          # Add the environment file
+          EnvironmentFile = envFilePath;
+        };
+      }
+    ) cfg.mounts;
   };
 }
