@@ -114,6 +114,9 @@ in
               # TESTING PURPOSES ONLY - so nix repl can read
               # mode = "444";
             };
+            kylepzak_ssh_key = {
+              owner = "kylepzak";
+            };
           };
         };
       }
