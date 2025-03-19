@@ -58,7 +58,9 @@ in
           pkgs.zsh;
 
       # openssh.authorizedKeys.keyFiles = ["${inputs.ssh-pub-keys}"];
-      openssh.authorizedKeys.keyFiles = cfg.authorized-keys;
+      openssh.authorizedKeys.keyFiles = cfg.authorized-keys ++ [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIDCXiqG+u+KlXDdEOtSqYCAxvORNMDcXUJ9gUvG7zO+ deployer"
+      ];
 
       hashedPasswordFile = sops.secrets.user_password.path;
 
