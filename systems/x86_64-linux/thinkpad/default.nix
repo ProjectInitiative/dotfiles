@@ -15,6 +15,13 @@ with lib.${namespace};
     ./hardware-configuration.nix
   ];
 
+  # enable displaylink
+  services.xserver.videoDrivers = [ "displaylink" "modesetting" ];
+  # add second monitor
+  services.xserver.displayManager.sessionCommands = ''
+      ${lib.getBin pkgs.xorg.xrandr}/bin/xrandr --setprovideroutputsource 2 0
+  '';
+
   # TODO: move this to module
   nix = {
     # package = pkgs.nixVersions.nix_2_25;
