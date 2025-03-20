@@ -4,7 +4,7 @@
   pkgs,
   lib,
   namespace,
-  osConfig,
+  osConfig ? { },
   ...
 }:
 with lib;

@@ -698,11 +698,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1739757849,
-        "narHash": "sha256-Gs076ot1YuAAsYVcyidLKUMIc4ooOaRGO0PqTY7sBzA=",
+        "lastModified": 1742234739,
+        "narHash": "sha256-zFL6zsf/5OztR1NSNQF33dvS1fL/BzVUjabZq4qrtY4=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "9d3d080aec2a35e05a15cedd281c2384767c2cfe",
+        "rev": "f6af7280a3390e65c2ad8fd059cdc303426cbd59",
         "type": "github"
       },
       "original": {
@@ -1029,17 +1029,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1718097323,
-        "narHash": "sha256-zCgs8Wp7rdt0tjNUHMUIvi6sIvDoprWIHwvTGq+LMK0=",
-        "owner": "snowfallorg",
-        "repo": "lib",
-        "rev": "aa19b02b63025263cec041fcb7a0857c3cb98859",
+        "lastModified": 1742482748,
+        "narHash": "sha256-QLzEMCP76mUFbbPWg9t8wLruTVJCh2QvrC5DtlaaAaQ=",
+        "owner": "projectinitiative",
+        "repo": "snowfall-lib",
+        "rev": "936d1daf65b792d83143701e5eb913a9f1b2ae07",
         "type": "github"
       },
       "original": {
-        "owner": "snowfallorg",
-        "ref": "v3.0.3",
-        "repo": "lib",
+        "owner": "projectinitiative",
+        "ref": "pr/144",
+        "repo": "snowfall-lib",
         "type": "github"
       }
     },

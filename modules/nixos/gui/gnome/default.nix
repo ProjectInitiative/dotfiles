@@ -47,6 +47,7 @@ in
       };
     };
 
+    services.fwupd.enable = true;
     # Enable GNOME Shell extensions for all users
     environment = {
 

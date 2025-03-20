@@ -16,10 +16,13 @@ with lib.${namespace};
   ];
 
   # enable displaylink
-  services.xserver.videoDrivers = [ "displaylink" "modesetting" ];
+  services.xserver.videoDrivers = [
+    "displaylink"
+    "modesetting"
+  ];
   # add second monitor
   services.xserver.displayManager.sessionCommands = ''
-      ${lib.getBin pkgs.xorg.xrandr}/bin/xrandr --setprovideroutputsource 2 0
+    ${lib.getBin pkgs.xorg.xrandr}/bin/xrandr --setprovideroutputsource 2 0
   '';
 
   # TODO: move this to module
@@ -66,9 +69,11 @@ with lib.${namespace};
 
   };
 
+  # Make sure NetworkManager is enabled
+  networking.networkmanager.enable = true;
+
   # System-wide packages
   environment.systemPackages = with pkgs; [
-    # displaylink
     # quickemu
     # quickgui
     bitwarden-desktop
@@ -79,8 +84,10 @@ with lib.${namespace};
     vlc
     wireshark
     wireshark-qt
+    networkmanagerapplet
   ];
 
+  # Enable firmware service
   services.fwupd.enable = true;
 
   # Enable CUPS to print documents.

@@ -4,6 +4,7 @@
   lib,
   pkgs,
   namespace,
+  osConfig ? { },
   ...
 }:
 with lib;
@@ -50,6 +51,9 @@ in
           git = {
             enable = true;
             userEmail = "6314611+ProjectInitiative@users.noreply.github.com";
+            signingKeyFormat = "openpgp";
+            # TODO: Make this not hardcoded
+            signingKey = osConfig.sops.secrets.kylepzak_ssh_key.path;
           };
           direnv = enabled;
           k8s = enabled;
