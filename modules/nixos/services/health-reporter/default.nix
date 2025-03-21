@@ -61,19 +61,19 @@ in
       ];
       description = "Patterns to exclude when auto-detecting drives";
     };
-
+    
     criticalDiskUsage = mkOption {
       type = types.int;
       default = 90;
       description = "Disk usage percentage considered critical";
     };
-
+    
     warningDiskUsage = mkOption {
       type = types.int;
       default = 75;
       description = "Disk usage percentage considered a warning";
     };
-
+    
     detailedReport = mkOption {
       type = types.bool;
       default = false;
@@ -124,11 +124,11 @@ in
           # Create temporary files for the reports
           SUMMARY_REPORT=$(mktemp)
           DETAILED_REPORT=$(mktemp)
-
+          
           # Get server hostname and date
           HOSTNAME=$(hostname)
           CURRENT_DATE=$(date +"%Y-%m-%d %H:%M")
-
+          
           # Function to get disk status emoji
           get_disk_status() {
             local usage="$1"
@@ -140,7 +140,7 @@ in
               echo "🟢"
             fi
           }
-
+          
           # Function to format bytes to human readable
           format_bytes() {
             local bytes="$1"
@@ -161,14 +161,14 @@ in
           echo "" >> "$SUMMARY_REPORT"
 
           # System uptime
-          UPTIME_INFO=$(uptime)
+          UPTIME_INFO=$(uptime -p)
           echo "⏱️ *Uptime:* ''${UPTIME_INFO}" >> "$SUMMARY_REPORT"
-
+          
           # Load average
           LOAD=$(cat /proc/loadavg | cut -d ' ' -f 1-3)
           CPU_COUNT=$(nproc)
           LOAD_1=$(echo "$LOAD" | cut -d ' ' -f 1)
-
+          
           if (( $(echo "''${LOAD_1} > ''${CPU_COUNT} * 0.8" | bc -l) )); then
             LOAD_ICON="🔴"
           elif (( $(echo "''${LOAD_1} > ''${CPU_COUNT} * 0.5" | bc -l) )); then
@@ -176,14 +176,14 @@ in
           else
             LOAD_ICON="🟢"
           fi
-
+          
           echo "''${LOAD_ICON} *Load:* ''${LOAD} ($(nproc) CPU cores)" >> "$SUMMARY_REPORT"
-
+          
           # Memory usage
           MEM_TOTAL=$(free -m | awk '/^Mem:/{print $2}')
           MEM_USED=$(free -m | awk '/^Mem:/{print $3}')
           MEM_PCT=$((''${MEM_USED} * 100 / ''${MEM_TOTAL}))
-
+          
           if [ "''${MEM_PCT}" -ge 90 ]; then
             MEM_ICON="🔴"
           elif [ "''${MEM_PCT}" -ge 75 ]; then
@@ -191,9 +191,9 @@ in
           else
             MEM_ICON="🟢"
           fi
-
+          
           echo "''${MEM_ICON} *Memory:* ''${MEM_USED}MB/''${MEM_TOTAL}MB (''${MEM_PCT}%)" >> "$SUMMARY_REPORT"
-
+          
           # Disk usage summary
           echo "💾 *Disk Usage:*" >> "$SUMMARY_REPORT"
           df -h | grep -v "tmpfs\|devtmpfs" | grep -v "^Filesystem" | while read line; do
@@ -207,15 +207,15 @@ in
             STATUS_EMOJI=$(get_disk_status "''${USE_PCT}")
             echo "''${STATUS_EMOJI} ''${MOUNT}: ''${USED}/''${SIZE} (''${USE_PCT}%)" >> "$SUMMARY_REPORT"
           done
-
+          
           # Top process by CPU
           TOP_CPU=$(ps -eo pid,comm,%cpu --sort=-%cpu | head -n 2 | tail -n 1)
           TOP_CPU_PID=$(echo "$TOP_CPU" | awk '{print $1}')
           TOP_CPU_PROC=$(echo "$TOP_CPU" | awk '{print $2}')
           TOP_CPU_PCT=$(echo "$TOP_CPU" | awk '{print $3}')
-
+          
           echo "🔄 *Top CPU:* ''${TOP_CPU_PROC} (''${TOP_CPU_PCT}%)" >> "$SUMMARY_REPORT"
-
+          
           # SMART data summary
           echo "🔍 *SMART Health:*" >> "$SUMMARY_REPORT"
           DRIVES=$(lsblk -d -o NAME,TYPE | grep disk | awk '{print $1}')
@@ -223,7 +223,7 @@ in
           if [ -n "$EXCLUDE_PATTERN" ]; then
             DRIVES=$(echo "$DRIVES" | grep -v -E "$EXCLUDE_PATTERN" || true)
           fi
-
+          
           if [ -z "$DRIVES" ]; then
             echo "No drives detected for monitoring." >> "$SUMMARY_REPORT"
           else
@@ -273,7 +273,7 @@ in
               fi
             done
           fi
-
+          
           # Network traffic summary
           if [ "${toString cfg.enableNetworkMonitoring}" = "1" ]; then
             echo "🌐 *Network:*" >> "$SUMMARY_REPORT"
@@ -287,7 +287,7 @@ in
               echo "''${PRIMARY_IF}: ↓''${RX_HUMAN} ↑''${TX_HUMAN}" >> "$SUMMARY_REPORT"
             fi
           fi
-
+          
           # DETAILED REPORT
           echo "*SERVER HEALTH REPORT*" > "$DETAILED_REPORT"
           echo "📊 *''${HOSTNAME}* - ''${CURRENT_DATE}" >> "$DETAILED_REPORT"
@@ -399,46 +399,81 @@ in
 
           # Send the summary report to Telegram
           SUMMARY_MESSAGE=$(cat "$SUMMARY_REPORT")
-
+          
+          # Make sure summary doesn't exceed Telegram limit
+          if [ ''${#SUMMARY_MESSAGE} -gt 4000 ]; then
+            SUMMARY_MESSAGE="''${SUMMARY_MESSAGE:0:3950}...
+(Message truncated due to length limits)"
+          fi
+          
           curl -s -X POST \
             https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage \
             -d chat_id=$TELEGRAM_CHAT_ID \
             -d text="$SUMMARY_MESSAGE" \
             -d parse_mode=Markdown
-
+          
           # Send the detailed report if enabled
           if [ "${toString cfg.detailedReport}" = "1" ]; then
-            DETAILED_MESSAGE=$(cat "$DETAILED_REPORT")
+            # Instead of sending one large message, split into logical sections
             
-            # Telegram has message length limits, so we might need to split the message
-            MAX_LENGTH=4000
+            # Section 1: Introduction and Uptime
+            SECTION1=$(cat "$DETAILED_REPORT" | sed -n '1,/^$/p')
+            SECTION1+=$(cat "$DETAILED_REPORT" | sed -n '/^*UPTIME:*/,/^$/p')
             
-            if [ ''${#DETAILED_MESSAGE} -gt $MAX_LENGTH ]; then
-              # Split the message into chunks
-              while [ ''${#DETAILED_MESSAGE} -gt 0 ]; do
-                if [ ''${#DETAILED_MESSAGE} -gt $MAX_LENGTH ]; then
-                  CHUNK=''${DETAILED_MESSAGE:0:$MAX_LENGTH}
-                  DETAILED_MESSAGE=''${DETAILED_MESSAGE:$MAX_LENGTH}
-                else
-                  CHUNK=$DETAILED_MESSAGE
-                  DETAILED_MESSAGE=""
-                fi
-                
-                curl -s -X POST \
-                  https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage \
-                  -d chat_id=$TELEGRAM_CHAT_ID \
-                  -d text="$CHUNK" \
-                  -d parse_mode=Markdown
-                
-                # Add a small delay between messages
-                sleep 1
-              done
-            else
-              # Send as a single message
+            curl -s -X POST \
+              https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage \
+              -d chat_id=$TELEGRAM_CHAT_ID \
+              -d text="$SECTION1" \
+              -d parse_mode=Markdown
+            sleep 1
+            
+            # Section 2: Disk info
+            SECTION2="*DISK AND STORAGE INFORMATION:*\n\n"
+            SECTION2+=$(cat "$DETAILED_REPORT" | sed -n '/^*DISK USAGE:*/,/^*DRIVE HEALTH/p')
+            SECTION2+=$(cat "$DETAILED_REPORT" | sed -n '/^*DRIVE HEALTH/,/CPU INFORMATION/p' | head -n -1)
+            
+            curl -s -X POST \
+              https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage \
+              -d chat_id=$TELEGRAM_CHAT_ID \
+              -d text="$SECTION2" \
+              -d parse_mode=Markdown
+            sleep 1
+            
+            # Section 3: CPU/Memory
+            SECTION3="*SYSTEM RESOURCES:*\n\n"
+            
+            if [ "${toString cfg.enableCpuMonitoring}" = "1" ]; then
+              SECTION3+=$(cat "$DETAILED_REPORT" | sed -n '/^*CPU INFORMATION:*/,/MEMORY USAGE/p' | head -n -1)
+            fi
+            
+            if [ "${toString cfg.enableMemoryMonitoring}" = "1" ]; then
+              SECTION3+=$(cat "$DETAILED_REPORT" | sed -n '/^*MEMORY USAGE:*/,/NETWORK STATS/p' | head -n -1)
+            fi
+            
+            if [ -n "$SECTION3" ] && [ "$SECTION3" != "*SYSTEM RESOURCES:*\n\n" ]; then
               curl -s -X POST \
                 https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage \
                 -d chat_id=$TELEGRAM_CHAT_ID \
-                -d text="$DETAILED_MESSAGE" \
+                -d text="$SECTION3" \
+                -d parse_mode=Markdown
+              sleep 1
+            fi
+            
+            # Section 4: Network & Processes
+            SECTION4="*NETWORK AND PROCESSES:*\n\n"
+            
+            if [ "${toString cfg.enableNetworkMonitoring}" = "1" ]; then
+              SECTION4+=$(cat "$DETAILED_REPORT" | sed -n '/^*NETWORK STATS:*/,/TOP PROCESSES BY CPU/p' | head -n -1)
+            fi
+            
+            SECTION4+=$(cat "$DETAILED_REPORT" | sed -n '/^*TOP PROCESSES BY CPU:*/,/TOP PROCESSES BY MEMORY/p' | head -n -1)
+            SECTION4+=$(cat "$DETAILED_REPORT" | sed -n '/^*TOP PROCESSES BY MEMORY:*/,/^$/p')
+            
+            if [ -n "$SECTION4" ] && [ "$SECTION4" != "*NETWORK AND PROCESSES:*\n\n" ]; then
+              curl -s -X POST \
+                https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage \
+                -d chat_id=$TELEGRAM_CHAT_ID \
+                -d text="$SECTION4" \
                 -d parse_mode=Markdown
             fi
           fi
