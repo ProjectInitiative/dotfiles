@@ -3,57 +3,107 @@
 #     Topsail: Agile sail for fair-weather speed (primary performance).
 #     StormJib: Rugged sail for heavy weather (backup resilience).
 
+{ ... }:
 {
-  options,
-  config,
-  lib,
-  pkgs,
-  namespace,
-  modulesPath,
-  ...
-}:
-with lib;
-with lib.${namespace};
-let
-  cfg = config.${namespace}.hosts.stormjib;
-  sops = config.sops;
-in
-{
-  options.${namespace}.hosts.stormjib = with types; {
-    enable = mkBoolOpt false "Whether or not to enable the virtual machine base config.";
-  };
-
-  imports = [
-  ];
-
-  config = mkIf cfg.enable {
-
-    boot.loader.grub.enable = true;
-    boot.loader.grub.devices = mkDefault [ "/dev/vda" ]; # nodev for efi
-    fileSystems."/" = mkDefault {
-      device = "/dev/disk/by-label/nixos";
-      fsType = "ext4";
+  config = {
+    projectinitiative = {
+      # hosts.masthead.stormjib.enable = true;
+      networking = {
+        tailscale.enable = true;
+      };
     };
 
-    services.qemuGuest.enable = true;
+    services.openssh.enable = true;
 
-    # Basic system configuration
-    system.stateVersion = "23.11";
+    # Use tmpfs for temporary files
+    fileSystems."/tmp" = {
+      device = "tmpfs";
+      fsType = "tmpfs";
+      options = [ "nosuid" "nodev" "relatime" "size=256M" ];
+    };
+  
+    # journald settings to reduce writes
+    services.journald.extraConfig = ''
+      Storage=volatile
+      RuntimeMaxUse=64M
+      SystemMaxUse=64M
+    '';
 
-    # Enable displaying network info on console
-    projectinitiative = {
-      system = {
-        console-info = {
-          ip-display = enabled;
+    disko = {
+      devices = {
+        disk = {
+          sd = {
+            type = "disk";
+            device = "/dev/mmcblk0";
+            content = {
+              type = "gpt";
+              partitions = {
+                # Boot partition - fixed 256MB size
+                boot = {
+                  name = "boot";
+                  size = "256M";  # Fixed size for boot
+                  type = "EF00"; # EFI System Partition
+                  content = {
+                    type = "filesystem";
+                    format = "vfat";
+                    mountpoint = "/boot";
+                    mountOptions = [ "defaults" "noatime" ];
+                  };
+                };
+            
+                # Root partition - read-only
+                root = {
+                  name = "root";
+                  size = "20%";  # Percentage of remaining space
+                  content = {
+                    type = "filesystem";
+                    format = "ext4";
+                    mountpoint = "/";
+                    mountOptions = [ "defaults" "noatime" ];# "ro" ]; # Read-only mount
+                  };
+                };
+            
+                # Nix store partition
+                nix = {
+                  name = "nix";
+                  size = "35%";  # Percentage of remaining space
+                  content = {
+                    type = "filesystem";
+                    format = "ext4";
+                    mountpoint = "/nix";
+                    mountOptions = [ "defaults" "noatime" ];
+                  };
+                };
+            
+                # Logs partition
+                logs = {
+                  name = "logs";
+                  size = "10%";  # Percentage of remaining space
+                  content = {
+                    type = "filesystem";
+                    format = "ext4";
+                    mountpoint = "/var/log";
+                    mountOptions = [ "defaults" "noatime" "commit=600" ];
+                  };
+                };
+            
+                # Persistent data partition
+                data = {
+                  name = "data";
+                  size = "100%";  # Use all remaining space
+                  content = {
+                    type = "filesystem";
+                    format = "ext4";
+                    mountpoint = "/var/lib";
+                    mountOptions = [ "defaults" "noatime" "commit=600" ];
+                  };
+                };
+              };
+            };
+          };
         };
       };
     };
 
-    networking.networkmanager.enable = true;
-
-    # Add your other configuration options here
-    services.openssh.enable = true;
-    users.users.root.hashedPasswordFile = sops.secrets.root_password.path;
-    programs.zsh.enable = true;
   };
 }

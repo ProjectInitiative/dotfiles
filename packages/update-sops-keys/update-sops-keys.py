@@ -1,5 +1,5 @@
-#!/usr/bin/env nix-shell
-#!nix-shell -i python3 -p age sops
+#!/usr/bin/env python3
+
 import subprocess
 import sys
 import tempfile

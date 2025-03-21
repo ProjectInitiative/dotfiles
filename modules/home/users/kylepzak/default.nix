@@ -8,6 +8,7 @@
   inputs,
   ...
 }:
+with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.users.kylepzak;
