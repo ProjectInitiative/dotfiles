@@ -34,8 +34,8 @@
     # agenix.url = "github:ryantm/agenix";
 
     # Snowfall Lib
-    # snowfall-lib.url = "path:/home/kylepzak/development/build-software/snowfall-lib";
-    snowfall-lib.url = "github:projectinitiative/snowfall-lib/pr/144";
+    snowfall-lib.url = "path:/home/kylepzak/development/build-software/snowfall-lib";
+    # snowfall-lib.url = "github:projectinitiative/snowfall-lib/pr/144";
     # snowfall-lib.url = "github:snowfallorg/lib?ref=v3.0.3";
     # snowfall-lib.url = "path:/home/short/work/@snowfallorg/lib";
     snowfall-lib.inputs.nixpkgs.follows = "nixpkgs";
@@ -139,10 +139,43 @@
         };
       };
 
+      mySrc = ./.;
+
     in
     lib.mkFlake {
       # export for debugging
       inherit lib;
+      inherit inputs;
+      debuglib = inputs.snowfall-lib.snowfall.internal-lib;
+      debugFunctions = {
+        # List all directories in your systems folder
+        listSystemsDirectories =
+          let
+            systemsPath = "${toString mySrc}/systems";
+          in
+          builtins.attrNames (builtins.readDir systemsPath);
+
+        # Get target directories for each architecture
+        getArchitectureSystems =
+          arch:
+          let
+            systemsPath = "${toString mySrc}/systems/${arch}";
+            exists = builtins.pathExists systemsPath;
+          in
+          if exists then builtins.attrNames (builtins.readDir systemsPath) else [ ];
+
+        # Check if targets have default.nix files
+        checkDefaultNix =
+          arch: target:
+          let
+            targetPath = "${toString mySrc}/systems/${arch}/${target}";
+            defaultNixPath = "${targetPath}/default.nix";
+          in
+          builtins.pathExists defaultNixPath;
+
+        # Your actual systems path
+        systemsPath = "${toString mySrc}/systems";
+      };
 
       channels-config = {
         allowUnfree = true;

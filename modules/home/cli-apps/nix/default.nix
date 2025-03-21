@@ -32,6 +32,7 @@ in
         nix-prefetch-github
         nix-search-cli
         nh
+        nix-output-monitor
         nvd
       ];
 

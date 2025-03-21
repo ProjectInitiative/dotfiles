@@ -117,6 +117,8 @@ in
             kylepzak_ssh_key = {
               owner = "kylepzak";
             };
+            health_reporter_bot_api_token = { };
+            telegram_chat_id = { };
           };
         };
       }
