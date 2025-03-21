@@ -161,7 +161,7 @@ in
           echo "" >> "$SUMMARY_REPORT"
 
           # System uptime
-          UPTIME_INFO=$(uptime -p)
+          UPTIME_INFO=$(uptime)
           echo "⏱️ *Uptime:* ''${UPTIME_INFO}" >> "$SUMMARY_REPORT"
           
           # Load average
