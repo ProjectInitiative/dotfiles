@@ -34,8 +34,8 @@
     # agenix.url = "github:ryantm/agenix";
 
     # Snowfall Lib
-    snowfall-lib.url = "path:/home/kylepzak/development/build-software/snowfall-lib";
-    # snowfall-lib.url = "github:projectinitiative/snowfall-lib/pr/144";
+    # snowfall-lib.url = "path:/home/kylepzak/development/build-software/snowfall-lib";
+    snowfall-lib.url = "github:projectinitiative/snowfall-lib/fixes";
     # snowfall-lib.url = "github:snowfallorg/lib?ref=v3.0.3";
     # snowfall-lib.url = "path:/home/short/work/@snowfallorg/lib";
     snowfall-lib.inputs.nixpkgs.follows = "nixpkgs";
