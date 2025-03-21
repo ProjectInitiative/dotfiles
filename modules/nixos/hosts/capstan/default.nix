@@ -133,6 +133,17 @@ in
           telegramChatIdPath = config.sops.secrets.telegram_chat_id.path;
           excludeDrives = [ "loop" "ram" "sr" ]; # Default exclusions
           reportTime = "08:00"; # Send report at 8 AM
+          excludeMountPoints = [
+            "/run" 
+            "/var/lib/docker" 
+            "/var/lib/containers"
+            "k3s"
+            "kube"
+            "containerd"
+            "docker"
+            "sandbox"
+            # Add any custom patterns here
+          ];
         };
 
         juicefs = {

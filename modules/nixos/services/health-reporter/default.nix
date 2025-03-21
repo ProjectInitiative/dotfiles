@@ -62,6 +62,21 @@ in
       description = "Patterns to exclude when auto-detecting drives";
     };
     
+    excludeMountPoints = mkOption {
+      type = types.listOf types.str;
+      default = [ 
+        "/run" 
+        "/var/lib/docker" 
+        "/var/lib/containers"
+        "k3s"
+        "kube"
+        "containerd"
+        "docker"
+        "sandbox"
+      ];
+      description = "Mount point patterns to exclude from disk usage report";
+    };
+    
     criticalDiskUsage = mkOption {
       type = types.int;
       default = 90;
@@ -155,13 +170,29 @@ in
             fi
           }
 
+          # Function to check if mount point should be excluded
+          should_exclude_mount() {
+            local mount="$1"
+            # Array of patterns to exclude
+            local exclude_patterns=(
+              ${concatMapStringsSep "\n              " (pattern: "\"${pattern}\"") cfg.excludeMountPoints}
+            )
+            
+            for pattern in "''${exclude_patterns[@]}"; do
+              if echo "$mount" | grep -q "$pattern"; then
+                return 0  # Should exclude
+              fi
+            done
+            return 1  # Should not exclude
+          }
+
           # SUMMARY REPORT
           echo "*SERVER HEALTH SUMMARY*" > "$SUMMARY_REPORT"
           echo "📊 *''${HOSTNAME}* - ''${CURRENT_DATE}" >> "$SUMMARY_REPORT"
           echo "" >> "$SUMMARY_REPORT"
 
-          # System uptime
-          UPTIME_INFO=$(uptime)
+          # System uptime - simplified
+          UPTIME_INFO=$(uptime | cut -d ',' -f 1)
           echo "⏱️ *Uptime:* ''${UPTIME_INFO}" >> "$SUMMARY_REPORT"
           
           # Load average
@@ -194,7 +225,7 @@ in
           
           echo "''${MEM_ICON} *Memory:* ''${MEM_USED}MB/''${MEM_TOTAL}MB (''${MEM_PCT}%)" >> "$SUMMARY_REPORT"
           
-          # Disk usage summary
+          # Disk usage summary - with improved filtering
           echo "💾 *Disk Usage:*" >> "$SUMMARY_REPORT"
           df -h | grep -v "tmpfs\|devtmpfs" | grep -v "^Filesystem" | while read line; do
             FS=$(echo "$line" | awk '{print $1}')
@@ -203,6 +234,11 @@ in
             AVAIL=$(echo "$line" | awk '{print $4}')
             USE_PCT=$(echo "$line" | awk '{print $5}' | tr -d '%')
             MOUNT=$(echo "$line" | awk '{print $6}')
+            
+            # Skip excluded mount points
+            if should_exclude_mount "$MOUNT"; then
+              continue
+            fi
             
             STATUS_EMOJI=$(get_disk_status "''${USE_PCT}")
             echo "''${STATUS_EMOJI} ''${MOUNT}: ''${USED}/''${SIZE} (''${USE_PCT}%)" >> "$SUMMARY_REPORT"
@@ -293,14 +329,21 @@ in
           echo "📊 *''${HOSTNAME}* - ''${CURRENT_DATE}" >> "$DETAILED_REPORT"
           echo "" >> "$DETAILED_REPORT"
 
-          # System uptime
+          # System uptime - simplified
           echo "*UPTIME:*" >> "$DETAILED_REPORT"
-          uptime >> "$DETAILED_REPORT"
+          uptime | cut -d ',' -f 1 >> "$DETAILED_REPORT"
           echo "" >> "$DETAILED_REPORT"
 
-          # Disk usage
+          # Disk usage - with improved filtering
           echo "*DISK USAGE:*" >> "$DETAILED_REPORT"
-          df -h | grep -v "tmpfs\|devtmpfs" >> "$DETAILED_REPORT"
+          # Filter out tmpfs, devtmpfs, and other specified mount patterns
+          df -h | grep -v "tmpfs\|devtmpfs" | while read line; do
+            FS=$(echo "$line" | awk '{print $1}')
+            MOUNT=$(echo "$line" | awk '{print $6}')
+            if [[ "$line" == Filesystem* ]] || ! should_exclude_mount "$MOUNT"; then
+              echo "$line" >> "$DETAILED_REPORT"
+            fi
+          done
           echo "" >> "$DETAILED_REPORT"
 
           # Auto-detect physical drives
