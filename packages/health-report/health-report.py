@@ -311,22 +311,20 @@ class DiskSection(ReportSection):
             return "🟢"
     
     def _get_smart_info(self):
-        """Get S.M.A.R.T. information for physical drives"""
+        """Get S.M.A.R.T. information for physical drives using JSON output"""
         lines = ["*DRIVE HEALTH (S.M.A.R.T):*"]
-        
+    
         # Check for smartctl command
         smartctl_path = shutil.which("smartctl")
         if not smartctl_path:
             lines.append("S.M.A.R.T. not available - smartctl command not found")
             return lines
-            
-
+        
         # For Linux
         if os.path.exists("/dev"):
             # Get physical drives
             drives = []
             try:
-    
                 output = subprocess.check_output(
                     ["lsblk", "-d", "-o", "NAME,TYPE,SERIAL,SIZE", "--json"],
                     text=True,
@@ -334,13 +332,13 @@ class DiskSection(ReportSection):
                 )
                 # Parse JSON output
                 devices_data = json.loads(output)
-    
+
                 # Filter to only include disks
                 block_devices = [
                     device for device in devices_data.get("blockdevices", [])
                     if device.get("type") == "disk"
                 ]
-    
+
                 # Filter out excluded drives
                 exclude_patterns = self.config.get("exclude_drives", [])
                 for device in block_devices:
@@ -359,93 +357,156 @@ class DiskSection(ReportSection):
         if not drives:
             lines.append("No drives detected for monitoring.")
             return lines
-            
+        
         # Check each drive
         for drive in drives:
             drive_path = drive["path"]
             # Display with serial number if available
             display_name = f"{drive_path} ({drive['serial']})" if drive['serial'] and drive['serial'] != "" else drive_path
             lines.append(f"Drive {display_name}:")
-        
-            # Check if SMART is available
+    
+            # Check SMART health status using JSON output
             try:
-                # First check if we can get basic info from the drive
-                basic_check = subprocess.run(
-                    ["smartctl", "-i", drive_path],
+                # Use smartctl with JSON output for health status
+                health_output = subprocess.run(
+                    ["smartctl", "-H", drive_path, "--json"],
                     capture_output=True,
                     text=True
                 )
-        
-                # If basic check fails completely (exit code not 0, 2, or 32), drive doesn't support SMART
-                # 0 = success, 2 = command line error, 32 = historical warning
-                if basic_check.returncode not in [0, 2, 32]:
-                    lines.append("  S.M.A.R.T. not available for this drive")
-                    continue
             
-                # Get overall health status
-                health_check = subprocess.run(
-                    ["smartctl", "-H", drive_path], 
-                    capture_output=True,
-                    text=True
-                )
-        
-                health_status = "UNKNOWN"
-                for line in health_check.stdout.split("\n"):
-                    if "SMART overall-health" in line:
-                        health_status = line.split()[-1]
-                        break
-        
-                # Format health status
-                if health_status == "PASSED":
-                    if health_check.returncode == 32:
-                        health_emoji = "🟡"  # Warning - passed but with historical issues
-                    else:
-                        health_emoji = "🟢"  # Fully passed
-                elif health_status == "FAILED":
-                    health_emoji = "🔴"  # Failed
-                else:
-                    health_emoji = "⚠️"  # Unknown
-            
-                lines.append(f"  {health_emoji} Health status: {health_status}")
-            
-                # Add size info
-                lines.append(f"  Size: {drive['size']}")            
-                # If return code is 32, add a warning note
-                if health_check.returncode == 32:
-                    lines.append("  ⚠️ Note: Drive has historical warning indicators")
-            
-                
-                #TODO: this is broken
-                # Get important attributes
                 try:
-                    attr_output = subprocess.check_output(
-                        ["smartctl", "-A", drive_path], 
-                        text=True, 
-                        stderr=subprocess.DEVNULL
-                    )
-                    
-                    # Look for important attributes
-                    for attr in ["Reallocated_Sector_Ct", "Current_Pending_Sector", 
-                                "Offline_Uncorrectable", "Temperature_Celsius"]:
-                        for line in attr_output.split("\n"):
-                            if attr in line:
-                                value = line.split()[-1]
-                                if attr == "Temperature_Celsius":
-                                    lines.append(f"  Temperature: {value}°C")
-                                elif int(value) > 0:
-                                    attr_name = attr.replace("_", " ")
-                                    lines.append(f"  {attr_name}: {value}")
-                except:
-                    lines.append("  Couldn't read SMART attributes")
+                    health_data = json.loads(health_output.stdout)
                 
+                    # Get exit status to check for warnings
+                    exit_status = health_data.get("smartctl", {}).get("exit_status", 0)
+                    has_warnings = (exit_status & 32) == 32  # Check if bit 5 is set (historical warnings)
+                
+                    # Get overall health status
+                    smart_status = health_data.get("smart_status", {})
+                    health_passed = smart_status.get("passed", False)
+                
+                    # Determine status emoji based on health and warnings
+                    if health_passed:
+                        if has_warnings:
+                            health_emoji = "🟡"  # Passed but with warnings
+                            health_status = "PASSED (with warnings)"
+                        else:
+                            health_emoji = "🟢"  # Fully passed
+                            health_status = "PASSED"
+                    else:
+                        health_emoji = "🔴"  # Failed
+                        health_status = "FAILED"
+                
+                    lines.append(f"  {health_emoji} Health status: {health_status}")
+                
+                    # Add size info
+                    lines.append(f"  Size: {drive['size']}")
+                
+                    # Get drive type for specific attribute handling
+                    drive_type = health_data.get("device", {}).get("type", "")
+                
+                    # Get detailed SMART attributes using JSON
+                    attributes_output = subprocess.run(
+                        ["smartctl", "-A", drive_path, "--json"],
+                        capture_output=True,
+                        text=True
+                    )
+                
+                    try:
+                        attr_data = json.loads(attributes_output.stdout)
                     
+                        # Add temperature information if available in the top level
+                        if "temperature" in attr_data and "current" in attr_data["temperature"]:
+                            temp = attr_data["temperature"]["current"]
+                            lines.append(f"  Temperature: {temp}°C")
+                    
+                        # Handle NVMe drives
+                        if drive_type == "nvme" or "nvme_smart_health_information_log" in attr_data:
+                            nvme_health = attr_data.get("nvme_smart_health_information_log", {})
+                        
+                            # Add NVMe specific health metrics
+                            if "percentage_used" in nvme_health:
+                                lines.append(f"  Percentage used: {nvme_health['percentage_used']}%")
+                        
+                            if "available_spare" in nvme_health:
+                                lines.append(f"  Available spare: {nvme_health['available_spare']}%")
+                        
+                            # Check for critical warnings
+                            if nvme_health.get("critical_warning", 0) > 0:
+                                lines.append("  ⚠️ Drive has critical warnings")
+                        
+                            # Check for media errors
+                            if "media_errors" in nvme_health and nvme_health["media_errors"] > 0:
+                                lines.append(f"  Media errors: {nvme_health['media_errors']}")
+                            
+                            # Add power-on time if available
+                            if "power_on_time" in attr_data and "hours" in attr_data["power_on_time"]:
+                                hours = attr_data["power_on_time"]["hours"]
+                                lines.append(f"  Power on time: {hours} hours")
+                    
+                        # Handle SATA/SAS drives
+                        elif (drive_type in ["sat", "scsi", "ata"] or 
+                              "ata_smart_attributes" in attr_data):
+                        
+                            # Get attributes table if available
+                            ata_attrs = attr_data.get("ata_smart_attributes", {}).get("table", [])
+                        
+                            # Track important attributes and their display names
+                            important_attrs = {
+                                "Reallocated_Sector_Ct": "Reallocated Sectors",
+                                "Current_Pending_Sector": "Current Pending Sectors",
+                                "Offline_Uncorrectable": "Offline Uncorrectable",
+                                "Airflow_Temperature_Cel": "Airflow Temperature",
+                                "Temperature_Celsius": "Temperature",
+                                "Power_On_Hours": "Power On Hours",
+                                "Power_Cycle_Count": "Power Cycles",
+                                "UDMA_CRC_Error_Count": "UDMA CRC Errors"
+                            }
+                        
+                            # Process each attribute
+                            for attr in ata_attrs:
+                                attr_name = attr.get("name", "")
+                                attr_value = attr.get("raw", {}).get("value", 0)
+                            
+                                # Check for when_failed status
+                                when_failed = attr.get("when_failed", "")
+                                has_failed = when_failed in ["now", "past"]
+                            
+                                # Special handling for temperature
+                                if "Temperature" in attr_name or "Airflow_Temperature" in attr_name:
+                                    # Temperature is often stored in the raw value
+                                    # Some drives use weird formats like "33 (Min/Max 33/43)"
+                                    temp_str = str(attr.get("raw", {}).get("string", ""))
+                                    try:
+                                        # Try to extract the first number from the string
+                                        temp_match = re.search(r'\d+', temp_str)
+                                        if temp_match:
+                                            temp = int(temp_match.group())
+                                            lines.append(f"  Temperature: {temp}°C")
+                                    except:
+                                        # Fallback to using the raw value directly
+                                        if attr_value:
+                                            lines.append(f"  Temperature: {attr_value}°C")
+                                # Handle other important attributes
+                                elif attr_name in important_attrs and (attr_value > 0 or has_failed):
+                                    display_name = important_attrs[attr_name]
+                                
+                                    # Add warning emoji if the attribute has failed
+                                    prefix = "  ⚠️ " if has_failed else "  "
+                                    lines.append(f"{prefix}{display_name}: {attr_value}")
+                
+                    except (json.JSONDecodeError, KeyError) as e:
+                        lines.append(f"  Error parsing SMART attributes: {str(e)}")
+            
+                except (json.JSONDecodeError, KeyError) as e:
+                    lines.append(f"  Error parsing SMART health status: {str(e)}")
+                
             except Exception as e:
                 lines.append(f"  Error checking drive: {str(e)}")
-                
-            lines.append("")
             
+            lines.append("")
+        
         return lines
-
 class NetworkSection(ReportSection):
     """Network interface and traffic information"""
     def collect_summary(self):
