@@ -365,8 +365,65 @@ class DiskSection(ReportSection):
             display_name = f"{drive_path} ({drive['serial']})" if drive['serial'] and drive['serial'] != "" else drive_path
             lines.append(f"Drive {display_name}:")
     
+            # Check if this is a virtual drive (vd*) or physical drive
+            is_virtual_drive = re.match(r'/dev/vd[a-z]', drive_path) is not None
+        
+            if is_virtual_drive:
+                # For virtual drives, don't try to check SMART status
+                lines.append(f"  ℹ️ Virtual drive - SMART not applicable")
+                lines.append(f"  Size: {drive['size']}")
+                lines.append("")
+                continue
+            
             # Check SMART health status using JSON output
             try:
+                # First check if SMART is available for this drive
+                basic_check = subprocess.run(
+                    ["smartctl", "-i", drive_path, "--json"],
+                    capture_output=True,
+                    text=True
+                )
+            
+                # Try to parse the output as JSON
+                try:
+                    basic_data = json.loads(basic_check.stdout)
+                
+                    # Check if SMART is available and enabled
+                    smart_available = False
+                    smart_enabled = False
+                
+                    # For ATA drives
+                    if "smart_support" in basic_data:
+                        smart_support = basic_data.get("smart_support", {})
+                        smart_available = smart_support.get("available", False)
+                        smart_enabled = smart_support.get("enabled", False)
+                
+                    # For NVMe drives, SMART (or NVMe SMART equivalent) is always available
+                    elif "device" in basic_data and basic_data.get("device", {}).get("protocol") == "NVMe":
+                        smart_available = True
+                        smart_enabled = True
+                
+                    # If SMART is not available or enabled, report this
+                    if not smart_available:
+                        lines.append(f"  ⚠️ SMART not available for this drive")
+                        lines.append(f"  Size: {drive['size']}")
+                        lines.append("")
+                        continue
+                    elif not smart_enabled:
+                        lines.append(f"  ⚠️ SMART available but not enabled for this drive")
+                        lines.append(f"  Size: {drive['size']}")
+                        lines.append("")
+                        continue
+                    
+                except json.JSONDecodeError:
+                    # If we can't parse the output, check if the return code indicates an issue
+                    # Non-zero return code usually means the command failed
+                    if basic_check.returncode != 0 and "Device does not support SMART" in basic_check.stderr:
+                        lines.append(f"  ⚠️ Device does not support SMART")
+                        lines.append(f"  Size: {drive['size']}")
+                        lines.append("")
+                        continue
+            
                 # Use smartctl with JSON output for health status
                 health_output = subprocess.run(
                     ["smartctl", "-H", drive_path, "--json"],
@@ -380,6 +437,13 @@ class DiskSection(ReportSection):
                     # Get exit status to check for warnings
                     exit_status = health_data.get("smartctl", {}).get("exit_status", 0)
                     has_warnings = (exit_status & 32) == 32  # Check if bit 5 is set (historical warnings)
+                
+                    # Check for unsupported device
+                    if (exit_status & 4) == 4:  # Check if bit 2 is set (unsupported device)
+                        lines.append(f"  ⚠️ SMART not supported for this device")
+                        lines.append(f"  Size: {drive['size']}")
+                        lines.append("")
+                        continue
                 
                     # Get overall health status
                     smart_status = health_data.get("smart_status", {})
@@ -507,6 +571,8 @@ class DiskSection(ReportSection):
             lines.append("")
         
         return lines
+
+
 class NetworkSection(ReportSection):
     """Network interface and traffic information"""
     def collect_summary(self):
