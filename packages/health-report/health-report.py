@@ -337,11 +337,12 @@ class DiskSection(ReportSection):
                     parts = line.split()
                     if len(parts) >= 2 and parts[1] == "disk":
                         block_devices.append(parts[0])
-            except:
+            except Exception as e:
+                logger.error(e)
                 # Fallback to manual detection
-                for dev in os.listdir("/dev"):
-                    if dev.startswith(("sd", "nvme", "hd", "vd")):
-                        block_devices.append(dev)
+                # for dev in os.listdir("/dev"):
+                #     if dev.startswith(("sd", "nvme", "hd", "vd")):
+                #         block_devices.append(dev)
             
             # Filter out excluded drives
             exclude_patterns = self.config.get("exclude_drives", [])
@@ -360,11 +361,6 @@ class DiskSection(ReportSection):
             
             # Check if SMART is available
             try:
-                output = subprocess.check_output(
-                    ["smartctl", "-i", drive_path], 
-                    text=True, 
-                    stderr=subprocess.DEVNULL
-                )
 
                 # First check if we can get basic info from the drive
                 basic_check = subprocess.run(
@@ -372,34 +368,43 @@ class DiskSection(ReportSection):
                     capture_output=True,
                     text=True
                 )
-                
-                # If basic check fails completely (exit code not 0 or 2), drive doesn't support SMART
-                if basic_check.returncode not in [0, 2]:
+            
+                # If basic check fails completely (exit code not 0, 2, or 32), drive doesn't support SMART
+                # 0 = success, 2 = command line error, 32 = historical warning
+                if basic_check.returncode not in [0, 2, 32]:
                     lines.append("  S.M.A.R.T. not available for this drive")
                     continue
-                    
-                # Get overall health status
-                health_output = subprocess.check_output(
-                    ["smartctl", "-H", drive_path], 
-                    text=True, 
-                    stderr=subprocess.DEVNULL
-                )
                 
+                # Get overall health status
+                health_check = subprocess.run(
+                    ["smartctl", "-H", drive_path], 
+                    capture_output=True,
+                    text=True
+                )
+            
                 health_status = "UNKNOWN"
-                for line in health_output.split("\n"):
+                for line in health_check.stdout.split("\n"):
                     if "SMART overall-health" in line:
                         health_status = line.split()[-1]
                         break
-                
+            
                 # Format health status
                 if health_status == "PASSED":
-                    health_emoji = "🟢"
+                    if health_check.returncode == 32:
+                        health_emoji = "🟡"  # Warning - passed but with historical issues
+                    else:
+                        health_emoji = "🟢"  # Fully passed
                 elif health_status == "FAILED":
-                    health_emoji = "🔴"
+                    health_emoji = "🔴"  # Failed
                 else:
-                    health_emoji = "⚠️"
-                    
+                    health_emoji = "⚠️"  # Unknown
+                
                 lines.append(f"  {health_emoji} Health status: {health_status}")
+            
+                # If return code is 32, add a warning note
+                if health_check.returncode == 32:
+                    lines.append("  ⚠️ Note: Drive has historical warning indicators")
+            
                 
                 #TODO: this is broken
                 # Get important attributes
