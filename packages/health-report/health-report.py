@@ -320,74 +320,81 @@ class DiskSection(ReportSection):
             lines.append("S.M.A.R.T. not available - smartctl command not found")
             return lines
             
-        # Get physical drives
-        drives = []
-        
+
         # For Linux
         if os.path.exists("/dev"):
-            block_devices = []
+            # Get physical drives
+            drives = []
             try:
-                # Try using lsblk to get just disk devices
+    
                 output = subprocess.check_output(
-                    ["lsblk", "-d", "-o", "NAME,TYPE"], 
-                    text=True, 
+                    ["lsblk", "-d", "-o", "NAME,TYPE,SERIAL,SIZE", "--json"],
+                    text=True,
                     stderr=subprocess.DEVNULL
                 )
-                for line in output.strip().split("\n")[1:]:  # Skip header
-                    parts = line.split()
-                    if len(parts) >= 2 and parts[1] == "disk":
-                        block_devices.append(parts[0])
+                # Parse JSON output
+                devices_data = json.loads(output)
+    
+                # Filter to only include disks
+                block_devices = [
+                    device for device in devices_data.get("blockdevices", [])
+                    if device.get("type") == "disk"
+                ]
+    
+                # Filter out excluded drives
+                exclude_patterns = self.config.get("exclude_drives", [])
+                for device in block_devices:
+                    dev_name = device.get("name", "")
+                    if not any(pattern in dev_name for pattern in exclude_patterns):
+                        # Add to drives list with additional info
+                        drives.append({
+                            "path": f"/dev/{dev_name}",
+                            "serial": device.get("serial", "N/A"),
+                            "size": device.get("size", "Unknown")
+                        })
             except Exception as e:
-                logger.error(e)
-                # Fallback to manual detection
-                # for dev in os.listdir("/dev"):
-                #     if dev.startswith(("sd", "nvme", "hd", "vd")):
-                #         block_devices.append(dev)
-            
-            # Filter out excluded drives
-            exclude_patterns = self.config.get("exclude_drives", [])
-            for dev in block_devices:
-                if not any(pattern in dev for pattern in exclude_patterns):
-                    drives.append(f"/dev/{dev}")
-        
+                logger.error(f"Error detecting drives: {e}")
+
         # No drives detected
         if not drives:
             lines.append("No drives detected for monitoring.")
             return lines
             
         # Check each drive
-        for drive_path in drives:
-            lines.append(f"Drive {drive_path}:")
-            
+        for drive in drives:
+            drive_path = drive["path"]
+            # Display with serial number if available
+            display_name = f"{drive_path} ({drive['serial']})" if drive['serial'] and drive['serial'] != "" else drive_path
+            lines.append(f"Drive {display_name}:")
+        
             # Check if SMART is available
             try:
-
                 # First check if we can get basic info from the drive
                 basic_check = subprocess.run(
                     ["smartctl", "-i", drive_path],
                     capture_output=True,
                     text=True
                 )
-            
+        
                 # If basic check fails completely (exit code not 0, 2, or 32), drive doesn't support SMART
                 # 0 = success, 2 = command line error, 32 = historical warning
                 if basic_check.returncode not in [0, 2, 32]:
                     lines.append("  S.M.A.R.T. not available for this drive")
                     continue
-                
+            
                 # Get overall health status
                 health_check = subprocess.run(
                     ["smartctl", "-H", drive_path], 
                     capture_output=True,
                     text=True
                 )
-            
+        
                 health_status = "UNKNOWN"
                 for line in health_check.stdout.split("\n"):
                     if "SMART overall-health" in line:
                         health_status = line.split()[-1]
                         break
-            
+        
                 # Format health status
                 if health_status == "PASSED":
                     if health_check.returncode == 32:
@@ -398,9 +405,11 @@ class DiskSection(ReportSection):
                     health_emoji = "🔴"  # Failed
                 else:
                     health_emoji = "⚠️"  # Unknown
-                
+            
                 lines.append(f"  {health_emoji} Health status: {health_status}")
             
+                # Add size info
+                lines.append(f"  Size: {drive['size']}")            
                 # If return code is 32, add a warning note
                 if health_check.returncode == 32:
                     lines.append("  ⚠️ Note: Drive has historical warning indicators")
@@ -429,16 +438,6 @@ class DiskSection(ReportSection):
                 except:
                     lines.append("  Couldn't read SMART attributes")
                 
-                # Get drive info
-                try:
-                    size_output = subprocess.check_output(
-                        ["lsblk", "-dn", "-o", "SIZE", drive_path], 
-                        text=True, 
-                        stderr=subprocess.DEVNULL
-                    ).strip()
-                    lines.append(f"  Size: {size_output}")
-                except:
-                    pass
                     
             except Exception as e:
                 lines.append(f"  Error checking drive: {str(e)}")
