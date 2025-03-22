@@ -47,6 +47,7 @@ in
         yazi
         pkgs.${namespace}.flatten-directory
         pkgs.${namespace}.remote-drive-info
+        pkgs.${namespace}.health-report
         # pkgs.${namespace}.mc
       ];
     };
