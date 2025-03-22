@@ -108,21 +108,7 @@ in
                   --telegram-token-path ${config.sops.secrets.health_reporter_bot_api_token.path} \
                   --telegram-chat-id-path ${config.sops.secrets.telegram_chat_id.path}
         '';
-        User = "root";
-        # Add necessary permissions to read the secrets files
-        SupplementaryGroups = optional (
-          (hasPrefix "/run/secrets/" cfg.telegramTokenPath)
-          || (hasPrefix "/run/secrets/" cfg.telegramChatIdPath)
-        ) "keys";
       };
-    };
-
-    # This service will need access to the secrets
-    systemd.services.server-health-monitor.serviceConfig = {
-      # Ensure the service can read the secrets files
-      LoadCredential =
-        (optional (hasPrefix "/run/secrets/" cfg.telegramTokenPath) "telegram-token:${cfg.telegramTokenPath}")
-        ++ (optional (hasPrefix "/run/secrets/" cfg.telegramChatIdPath) "telegram-chatid:${cfg.telegramChatIdPath}");
     };
 
     # Schedule daily execution

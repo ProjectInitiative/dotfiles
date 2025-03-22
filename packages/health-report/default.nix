@@ -35,6 +35,7 @@ pkgs.stdenv.mkDerivation {
     wrapProgram $out/bin/health-report \
       --prefix PATH : ${
         pkgs.lib.makeBinPath [
+          pkgs.util-linux
           pkgs.smartmontools
           pkgs.coreutils
           pkgs.iproute2
