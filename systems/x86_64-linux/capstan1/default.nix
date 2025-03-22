@@ -63,7 +63,16 @@ with lib.${namespace};
       pool = {
         type = "bcachefs";
         mountpoint = mountpoint;
-        formatOptions = [ "--compression=lz4" ];
+        formatOptions = [
+          "--compression=lz4"
+          "--foreground_target=nvme"
+          "--background_target=hdd"
+          "--promote_target=ssd"
+          "--metadata_replicas=2"
+          "--metadata_replicas_required=1"
+          "--data_replicas=2"
+          "--data_replicas_required=1"
+        ];
         mountOptions = [
           "verbose"
           "degraded"
