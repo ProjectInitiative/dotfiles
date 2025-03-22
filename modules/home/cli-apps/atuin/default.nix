@@ -19,6 +19,27 @@ in
 {
   options.${namespace}.cli-apps.atuin = with types; {
     enable = mkBoolOpt false "Whether or not to enable atuin cli.";
+
+    autoLogin = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Whether to automatically login to the Atuin server on startup.";
+    };
+
+    username = mkOption {
+      type = types.str;
+      description = "The username for the Atuin server.";
+    };
+
+    passwordPath = mkOption {
+      type = types.str;
+      description = "The path to the sops-nix secret containing the Atuin password.";
+    };
+
+    keyPath = mkOption {
+      type = types.str;
+      description = "The path to the sops-nix secret containing the Atuin encryption key.";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -46,6 +67,30 @@ in
       atuin init fish | source
     '';
   };
+
+  systemd.user.services.atuin-login = mkIf cfg.autoLogin {
+    Unit = {
+      Description = "Atuin login and initial sync";
+      After = [ "network-online.target" ];
+      Wants = [ "network-online.target" ];
+    };
+
+    Service = {
+      Type = "oneshot";
+      # Only run if all required login credentials are provided
+      ExecStart =
+        mkIf (cfg.username != null && cfg.passwordPath != null && cfg.keyPath != null)
+          "${pkg.atuin}/bin/atuin login -u ${cfg.username} -p $(cat ${cfg.passwordPath}) -k $(cat ${cfg.keyPath})";
+      # Force an initial sync after login
+      ExecStartPost = "${pkgs.atuin}/bin/atuin sync --force";
+      RemainAfterExit = true;
+    };
+
+    Install = {
+      WantedBy = [ "default.target" ];
+    };
+  };
+
 }
 
 # {config, lib, pkgs, ...}:

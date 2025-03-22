@@ -60,6 +60,7 @@ in
     # advanced bcachefs support
     boot.supportedFilesystems = [ "bcachefs" ];
     boot.kernelModules = [ "bcachefs" ];
+    # boot.kernelPackages.perf = enable;
     # use latest kernel - required by bcachefs
     boot.kernelPackages = pkgs.linuxPackages_latest;
 
@@ -101,6 +102,7 @@ in
     };
 
     environment.systemPackages = with pkgs; [
+      pkgs.linuxPackages_latest.perf
       bcachefs-tools
       util-linux
       smartmontools

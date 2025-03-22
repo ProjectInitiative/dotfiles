@@ -114,6 +114,13 @@ in
               # TESTING PURPOSES ONLY - so nix repl can read
               # mode = "444";
             };
+            # TODO: move this to user key
+            kylepzak_atuin_key = {
+              owner = "kylepzak";
+            };
+            kylepzak_password = {
+              owner = "kylepzak";
+            };
             kylepzak_ssh_key = {
               owner = "kylepzak";
             };
