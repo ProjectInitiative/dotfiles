@@ -1,4 +1,6 @@
-{ pkgs ? import <nixpkgs> { } }:
+{
+  pkgs ? import <nixpkgs> { },
+}:
 
 let
   hurry-filesize = pkgs.python3Packages.buildPythonPackage {
@@ -12,11 +14,13 @@ let
     doCheck = false;
   };
 
-  pythonEnv = pkgs.python3.withPackages (ps: with ps; [
-    psutil
-    requests
-    hurry-filesize
-  ]);
+  pythonEnv = pkgs.python3.withPackages (
+    ps: with ps; [
+      psutil
+      requests
+      hurry-filesize
+    ]
+  );
 in
 pkgs.stdenv.mkDerivation {
   name = "health-reporter";
@@ -29,10 +33,12 @@ pkgs.stdenv.mkDerivation {
     mkdir -p $out/bin
     install -Dm755 health-report.py $out/bin/health-report
     wrapProgram $out/bin/health-report \
-      --prefix PATH : ${pkgs.lib.makeBinPath [
-        pkgs.smartmontools
-        pkgs.coreutils
-        pkgs.iproute2
-      ]}
+      --prefix PATH : ${
+        pkgs.lib.makeBinPath [
+          pkgs.smartmontools
+          pkgs.coreutils
+          pkgs.iproute2
+        ]
+      }
   '';
 }

@@ -61,12 +61,12 @@ in
       ];
       description = "Patterns to exclude when auto-detecting drives";
     };
-    
+
     excludeMountPoints = mkOption {
       type = types.listOf types.str;
-      default = [ 
-        "/run" 
-        "/var/lib/docker" 
+      default = [
+        "/run"
+        "/var/lib/docker"
         "/var/lib/containers"
         "k3s"
         "kube"
@@ -76,19 +76,19 @@ in
       ];
       description = "Mount point patterns to exclude from disk usage report";
     };
-    
+
     criticalDiskUsage = mkOption {
       type = types.int;
       default = 90;
       description = "Disk usage percentage considered critical";
     };
-    
+
     warningDiskUsage = mkOption {
       type = types.int;
       default = 75;
       description = "Disk usage percentage considered a warning";
     };
-    
+
     detailedReport = mkOption {
       type = types.bool;
       default = false;
@@ -100,28 +100,13 @@ in
     systemd.services.server-health-monitor = {
       description = "Server Health Monitor";
       wantedBy = [ "multi-user.target" ];
-      # path = with pkgs; [
-      #   bash
-      #   smartmontools
-      #   sysstat
-      #   iproute2
-      #   curl
-      #   jq
-      #   util-linux
-      #   gnugrep
-      #   gnused
-      #   gawk
-      #   coreutils
-      #   hostname
-      #   procps
-      #   bc
-      # ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = ''${pkgs.${namespace}.health-report}/bin/health-report \
-        --send-to-telegram \
-        --telegram-token-path ${config.sops.secrets.health_reporter_bot_api_token.path} \
-        --telegram-chat-id-path ${config.sops.secrets.telegram_chat_id.path}
+        ExecStart = ''
+          ${pkgs.${namespace}.health-report}/bin/health-report \
+                  --send-to-telegram \
+                  --telegram-token-path ${config.sops.secrets.health_reporter_bot_api_token.path} \
+                  --telegram-chat-id-path ${config.sops.secrets.telegram_chat_id.path}
         '';
         User = "root";
         # Add necessary permissions to read the secrets files

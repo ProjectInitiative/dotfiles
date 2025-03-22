@@ -1,4 +1,6 @@
-{ pkgs ? import <nixpkgs> { } }:
+{
+  pkgs ? import <nixpkgs> { },
+}:
 
 let
   hurry-filesize = pkgs.python3Packages.buildPythonPackage {
@@ -12,11 +14,13 @@ let
     doCheck = false;
   };
 
-  pythonEnv = pkgs.python3.withPackages (ps: with ps; [
-    psutil
-    requests
-    hurry-filesize
-  ]);
+  pythonEnv = pkgs.python3.withPackages (
+    ps: with ps; [
+      psutil
+      requests
+      hurry-filesize
+    ]
+  );
 in
 pkgs.mkShell {
   name = "health-reporter-dev";
