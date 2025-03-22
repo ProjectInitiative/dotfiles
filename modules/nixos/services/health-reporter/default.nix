@@ -118,7 +118,7 @@ in
       # ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = ''${pkgs.namespace.health-report}/bin/health-report \
+        ExecStart = ''${pkgs.${namespace}.health-report}/bin/health-report \
         --send-to-telegram \
         --telegram-token-path ${config.sops.secrets.health_reporter_bot_api_token.path} \
         --telegram-chat-id-path ${config.sops.secrets.telegram_chat_id.path}
