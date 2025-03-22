@@ -232,6 +232,15 @@ class DiskSection(ReportSection):
                 lines.append(f"{status_emoji} {mount_point}: {used_size}/{total_size} ({percent:.1f}%)")
             except (PermissionError, FileNotFoundError):
                 continue
+
+        # Add S.M.A.R.T information if available
+        # TODO: add summary flag to smart data
+        smart_info = self._get_smart_info()
+        if smart_info:
+            lines.append("")
+            lines.extend(smart_info)
+            
+        lines.append("")
                 
         return lines
     
@@ -392,6 +401,7 @@ class DiskSection(ReportSection):
                     
                 lines.append(f"  {health_emoji} Health status: {health_status}")
                 
+                #TODO: this is broken
                 # Get important attributes
                 try:
                     attr_output = subprocess.check_output(
