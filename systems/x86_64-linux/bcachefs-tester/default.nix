@@ -33,7 +33,9 @@ with lib.${namespace};
       };
     };
   };
-
+  boot.binfmt = {
+      emulatedSystems = [ "aarch64-linux" ];
+    };
   # Basic bcachefs support
   boot.supportedFilesystems = [ "bcachefs" ];
   boot.kernelModules = [ "bcachefs" ];
