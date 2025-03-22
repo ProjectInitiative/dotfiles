@@ -23,10 +23,11 @@ in
         helix = enabled;
         atuin = {
           enable = true;
-          autoLogin = mkIf osConfig != null true;
-          username = mkIf osConfig != null "kylepzak";
-          passwordPath = mkIf osConfig != null osConfig.sops.secrets.kylepzak_atuin_password.path;
-          keyPath = mkIf osConfig != null osConfig.sops.secrets.kylepzak_atuin_key.path;
+          autoLogin = mkIf (osConfig != null) true;
+          username = mkIf (osConfig != null) "kylepzak";
+          passwordPath = mkIf (osConfig != null) osConfig.sops.secrets.kylepzak_atuin_password.path;
+          keyPath = mkIf (osConfig != null) osConfig.sops.secrets.kylepzak_atuin_key.path;
+
         };
         zoxide = enabled;
         zellij = enabled;

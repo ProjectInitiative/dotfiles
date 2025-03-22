@@ -118,7 +118,7 @@ in
             kylepzak_atuin_key = {
               owner = "kylepzak";
             };
-            kylepzak_password = {
+            kylepzak_atuin_password = {
               owner = "kylepzak";
             };
             kylepzak_ssh_key = {
