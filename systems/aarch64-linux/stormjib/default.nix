@@ -3,19 +3,21 @@
 #     Topsail: Agile sail for fair-weather speed (primary performance).
 #     StormJib: Rugged sail for heavy weather (backup resilience).
 
-{ pkgs, ... }:
+{ inputs, pkgs, ... }:
 {
-  config = {
+
+  # imports = with inputs.nixos-hardware.nixosModules; [
+  #   (modulesPath + "/installer/scan/not-detected.nix")
+  #   (modulesPath + "/installer/sd-card/sd-image-aarch64.nix")
+  #   raspberry-pi-4
+  # ];
+
     projectinitiative = {
-      # hosts.masthead.stormjib.enable = true;
+      hosts.masthead.stormjib.enable = false;
       networking = {
         tailscale.enable = true;
       };
     };
-
-    # Raspberry Pi specific settings
-    hardware.raspberry-pi."4".apply-overlays-dtmerge.enable = true;
-    hardware.deviceTree.enable = true;
 
     # Include essential Pi firmware
     hardware.firmware = [ pkgs.raspberrypiWirelessFirmware ];
@@ -34,6 +36,16 @@
     };
 
     services.openssh.enable = true;
+    console.enable = true;
+    environment.systemPackages = with pkgs; [
+      libraspberrypi
+      raspberrypi-eeprom
+    ];
+
+    # Basic networking
+    networking.networkmanager.enable = true;
+    # Prevent host becoming unreachable on wifi after some time.
+    networking.networkmanager.wifi.powersave = false;
 
     # Use tmpfs for temporary files
     fileSystems."/tmp" = {
@@ -56,16 +68,13 @@
 
     disko = {
       devices = {
-        # Configure for 32GB SD card
-        disko.devices.disk.sd.imageSize = "32G";
-        disko.devices.disk.sd.imageName = "stormjib-rpi";
 
         # Cross-compilation settings
-        imageBuilder = {
-          enableBinfmt = true;
-          pkgs = pkgs;
-          kernelPackages = pkgs.legacyPackages.x86_64-linux.linuxPackages_latest;
-        };
+        # imageBuilder = {
+        #   enableBinfmt = true;
+        #   pkgs = pkgs;
+        #   kernelPackages = pkgs.legacyPackages.x86_64-linux.linuxPackages_latest;
+        # };
         disk = {
           sd = {
             imageSize = "32G";
@@ -159,5 +168,4 @@
       };
     };
 
-  };
 }

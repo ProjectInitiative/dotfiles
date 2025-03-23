@@ -10,7 +10,7 @@
     # imports = [
     #   <nixos-hardware/raspberry-pi/4>
     # ];
-    
+
     sdImage.compressImage = false;
 
     projectinitiative = {
@@ -33,19 +33,17 @@
       raspberrypi-eeprom
     ];
 
-
     # Basic networking
     networking.networkmanager.enable = true;
     # Prevent host becoming unreachable on wifi after some time.
     networking.networkmanager.wifi.powersave = false;
 
-
     # Raspberry Pi specific settings
     # hardware.deviceTree.enable = true;
-    
+
     # Include essential Pi firmware
     # hardware.firmware = [ pkgs.raspberrypiWirelessFirmware ];
-    
+
     # Boot settings for Raspberry Pi
     # boot = {
     #   kernelPackages = pkgs.linuxPackages_rpi4;
@@ -55,13 +53,13 @@
     #     generic-extlinux-compatible.enable = true;
     #   };
     # };
-    
+
     # users.users.kylepzak.initialPassword = "changeme";
     # users.users.root.initialPassword = "changeme";
     services = {
       openssh = {
         enable = true;
-            hostKeys = [
+        hostKeys = [
           {
             path = "/etc/ssh/ssh_host_ed25519_key";
             type = "ed25519";

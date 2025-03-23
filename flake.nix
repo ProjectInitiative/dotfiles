@@ -147,35 +147,83 @@
       inherit lib;
       inherit inputs;
       debuglib = inputs.snowfall-lib.snowfall.internal-lib;
-      debugFunctions = {
-        # List all directories in your systems folder
-        listSystemsDirectories =
-          let
-            systemsPath = "${toString mySrc}/systems";
-          in
-          builtins.attrNames (builtins.readDir systemsPath);
+      debugFunctions =
+        let
+          debuglib = inputs.snowfall-lib.snowfall.internal-lib;
+        in
+        {
+          # List all directories in your systems folder
+          listSystemsDirectories =
+            let
+              systemsPath = "${toString mySrc}/systems";
+            in
+            builtins.attrNames (builtins.readDir systemsPath);
 
-        # Get target directories for each architecture
-        getArchitectureSystems =
-          arch:
-          let
-            systemsPath = "${toString mySrc}/systems/${arch}";
-            exists = builtins.pathExists systemsPath;
-          in
-          if exists then builtins.attrNames (builtins.readDir systemsPath) else [ ];
+          # Get target directories for each architecture
+          getArchitectureSystems =
+            arch:
+            let
+              systemsPath = "${toString mySrc}/systems/${arch}";
+              exists = builtins.pathExists systemsPath;
+            in
+            if exists then builtins.attrNames (builtins.readDir systemsPath) else [ ];
 
-        # Check if targets have default.nix files
-        checkDefaultNix =
-          arch: target:
-          let
-            targetPath = "${toString mySrc}/systems/${arch}/${target}";
-            defaultNixPath = "${targetPath}/default.nix";
-          in
-          builtins.pathExists defaultNixPath;
+          # Check if targets have default.nix files
+          checkDefaultNix =
+            arch: target:
+            let
+              targetPath = "${toString mySrc}/systems/${arch}/${target}";
+              defaultNixPath = "${targetPath}/default.nix";
+            in
+            builtins.pathExists defaultNixPath;
 
-        # Your actual systems path
-        systemsPath = "${toString mySrc}/systems";
-      };
+          # Your actual systems path
+          systemsPath = "${toString mySrc}/systems";
+
+          # Add this to your debug functions
+          getDetailedSystemMetadata =
+            let
+              systems_root = "${toString mySrc}/systems";
+              targets = debuglib.fs.get-directories systems_root;
+              target_paths = builtins.map (t: builtins.unsafeDiscardStringContext t) targets;
+            in
+            {
+              targets = target_paths;
+              metadata = builtins.listToAttrs (
+                builtins.map (target: {
+                  name = builtins.unsafeDiscardStringContext (builtins.baseNameOf target);
+                  value = debuglib.system.get-target-systems-metadata target;
+                }) targets
+              );
+            };
+
+          # Debug the create-systems function
+          debugCreateSystems =
+            let
+              systems_root = "${toString mySrc}/systems";
+              targets = debuglib.fs.get-directories systems_root;
+
+              # This recreates the internal logic of create-systems
+              fix_function = debuglib.internal.system-lib.fix;
+              target_systems_metadata = builtins.concatMap (
+                target: debuglib.system.get-target-systems-metadata target
+              ) targets;
+            in
+            {
+              targets = builtins.map builtins.unsafeDiscardStringContext targets;
+              systems_found = target_systems_metadata;
+            };
+
+          # And also check the final systems output
+          getFinalSystems =
+            let
+              systems = debuglib.system.create-systems {
+                systems = { };
+                homes = { };
+              };
+            in
+            builtins.attrNames systems;
+        };
 
       channels-config = {
         allowUnfree = true;
@@ -196,33 +244,52 @@
       #   };
       # };
 
-      systems.modules =
-        let
-          build-modules = lib.create-common-modules "modules/common";
-          common-modules = (builtins.attrValues build-modules);
-        in
-        {
-          inherit build-modules common-modules;
+      supportedSystems = [
+        "x86_64-linux"
+        "x86_64-darwin"
+        "aarch64-linux"
+      ];
 
-          nixos =
-            with inputs;
-            [
-              disko.nixosModules.disko
-              home-manager.nixosModules.home-manager
-              # nix-ld.nixosModules.nix-ld
-              sops-nix.nixosModules.sops
-              # agenix.nixosModules.age
-              # (import ./encrypted/sops.nix)
-            ]
-            ++ common-modules;
+      systems = {
+        targets = [
 
-          darwin =
-            with inputs;
-            [
-              # any darwin specific modules
-            ]
-            ++ common-modules;
+          "x86_64-linux"
+          "x86_64-darwin"
+          "aarch64-linux"
+        ];
+        hosts = {
+          stormjib = {
+            system = "aarch64-linux";
+          };
         };
+        modules =
+          let
+            build-modules = lib.create-common-modules "modules/common";
+            common-modules = (builtins.attrValues build-modules);
+          in
+          {
+            inherit build-modules common-modules;
+
+            nixos =
+              with inputs;
+              [
+                disko.nixosModules.disko
+                home-manager.nixosModules.home-manager
+                # nix-ld.nixosModules.nix-ld
+                sops-nix.nixosModules.sops
+                # agenix.nixosModules.age
+                # (import ./encrypted/sops.nix)
+              ]
+              ++ common-modules;
+
+            darwin =
+              with inputs;
+              [
+                # any darwin specific modules
+              ]
+              ++ common-modules;
+          };
+      };
 
       homes =
         let
