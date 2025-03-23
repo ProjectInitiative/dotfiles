@@ -8,7 +8,7 @@ keys:
     - &ssh_kylepzak age1fepmpsw6v9juhx3nkq5es0mhjs40xtmajn3fl9jxe779flmjh5wq0palxn
     - &bcachefs_test age1l057emzajvutettkmsv8tw86wenxghn3z2aerae07tne9ay0ugkqusz877
     - &test_vm age1gfamaev28ur53f09qllqhs7fqv74yd0unye4yaduhf436cl8usys640ld5
-    - &stormjib age15hgxphl5r645qyxvlj6h4fkjqwfxzc0ndv8mlz0j7kfkq5pg5gyqamfm8l
+    - &stormjib age1tzl402cqzfjnjdq3pj8d9f2gkwjusqecqzmuvgakfeeqvt6pzprqzngnuw
   - &capstans:
     - &ssh_capstan1 age1uatt9h5c3q6grd72skc2k7zzlpam9aregvyeyuzmazw9fpzcysqqwlrh8d
     - &ssh_capstan2 age1exv224uk35dyh933g4uv96rtgw9vztwv8xgd9t3r2tf3ltyfdezqxcauhf
