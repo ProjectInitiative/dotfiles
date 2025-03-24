@@ -2,8 +2,17 @@
 # Topsail (Primary) & StormJib (Backup)
 #     Topsail: Agile sail for fair-weather speed (primary performance).
 #     StormJib: Rugged sail for heavy weather (backup resilience).
+#
+# nom build .\#nixosConfigurations.stormjib.config.system.build.sdImage
 
-{ config, inputs, pkgs,lib, modulesPath, ... }:
+{
+  config,
+  inputs,
+  pkgs,
+  lib,
+  modulesPath,
+  ...
+}:
 let
   # Create files in the nix store
   hostSSHFile = pkgs.writeText "ssh_host_ed25519_key" config.sensitiveNotSecret.stormjib_private_ssh_key;
@@ -22,7 +31,7 @@ in
   # ];
 
   boot.supportedFilesystems.zfs = lib.mkForce false;
-  sdImage.compressImage = false;
+  sdImage.compressImage = true;
 
   environment.etc = {
     "ssh/ssh_host_ed25519_key" = {
@@ -40,161 +49,209 @@ in
     };
   };
 
-
-    projectinitiative = {
-      hosts.masthead.stormjib.enable = false;
-      networking = {
-        tailscale = {
-          enable = true;
-          ephemeral = false;
-          extraArgs = [
-            "--accept-dns=false"
-          ];
-        };
-      };
-      system = {
-        console-info.ip-display.enable = true;
+  projectinitiative = {
+    hosts.masthead.stormjib.enable = false;
+    networking = {
+      tailscale = {
+        enable = true;
+        ephemeral = false;
+        extraArgs = [
+          "--accept-dns=false"
+        ];
       };
     };
+    system = {
+      console-info.ip-display.enable = true;
+    };
+  };
 
+  # boot.loader = {
+  #   grub.enable = false;
+  #   systemd-boot.enable = false;  # Disable systemd-boot
+  #   generic-extlinux-compatible.enable = true;  # Enable extlinux bootloader
+  # };
 
-    # boot.loader = {
-    #   grub.enable = false;
-    #   systemd-boot.enable = false;  # Disable systemd-boot
-    #   generic-extlinux-compatible.enable = true;  # Enable extlinux bootloader
-    # };
+  services.openssh.enable = true;
+  console.enable = true;
+  environment.systemPackages = with pkgs; [
+    libraspberrypi
+    raspberrypi-eeprom
+  ];
 
-    services.openssh.enable = true;
-    console.enable = true;
-    environment.systemPackages = with pkgs; [
-      libraspberrypi
-      raspberrypi-eeprom
-    ];
+  # Basic networking
+  networking.networkmanager.enable = false;
+  # Prevent host becoming unreachable on wifi after some time.
+  networking.networkmanager.wifi.powersave = false;
 
-    # Basic networking
-    networking.networkmanager.enable = true;
-    # Prevent host becoming unreachable on wifi after some time.
-    networking.networkmanager.wifi.powersave = false;
+  systemd = {
+    # Enable networkd
+    network = {
+      enable = true;
 
-    # Use tmpfs for temporary files
-    # fileSystems."/tmp" = {
-    #   device = "tmpfs";
-    #   fsType = "tmpfs";
-    #   options = [
-    #     "nosuid"
-    #     "nodev"
-    #     "relatime"
-    #     "size=256M"
-    #   ];
-    # };
+      # Interface naming based on MAC addresses
+      links = {
+        "10-lan" = {
+          matchConfig.PermanentMACAddress = "d8:3a:dd:73:eb:33";
+          linkConfig.Name = "lan0";
+        };
+        "11-wan" = {
+          matchConfig.PermanentMACAddress = "c8:a3:62:b4:ce:fa";
+          linkConfig.Name = "wan0";
+        };
+      };
 
-    # journald settings to reduce writes
-    # services.journald.extraConfig = ''
-    #   Storage=volatile
-    #   RuntimeMaxUse=64M
-    #   SystemMaxUse=64M
-    # '';
+      networks = {
+        "20-lan-current" = {
+          matchConfig.Name = "end0";  # Match the current name
+          networkConfig = {
+            DHCP = "yes";
+            IPv6AcceptRA = "no";
+          };
+        };
+        "21-wan-current" = {
+          matchConfig.Name = "enp1s0u2c2";  # Match the current name
+          networkConfig = {
+            DHCP = "yes";
+            IPv6AcceptRA = "no";
+          };
+        };
+        "30-lan-future" = {
+          matchConfig.Name = "lan0";  # Match the future name
+          networkConfig = {
+            DHCP = "yes";
+            IPv6AcceptRA = "no";
+          };
+        };
+        "31-wan-future" = {
+          matchConfig.Name = "wan0";  # Match the future name
+          networkConfig = {
+            DHCP = "yes";
+            IPv6AcceptRA = "no";
+          };
+        };
+      };
 
-    # disko = {
-    #   devices = {
+    };
+  };
+  # Use tmpfs for temporary files
+  # fileSystems."/tmp" = {
+  #   device = "tmpfs";
+  #   fsType = "tmpfs";
+  #   options = [
+  #     "nosuid"
+  #     "nodev"
+  #     "relatime"
+  #     "size=256M"
+  #   ];
+  # };
 
-    #     # Cross-compilation settings
-    #     # imageBuilder = {
-    #     #   enableBinfmt = true;
-    #     #   pkgs = pkgs;
-    #     #   kernelPackages = pkgs.legacyPackages.x86_64-linux.linuxPackages_latest;
-    #     # };
-    #     disk = {
-    #       sd = {
-    #         imageSize = "32G";
-    #         imageName = "stormjib-rpi";
-    #         device = "/dev/mmcblk0";
-    #         type = "disk";
-    #         content = {
-    #           type = "gpt";
-    #           partitions = {
-    #             # Boot partition - fixed 256MB size
-    #             boot = {
-    #               name = "boot";
-    #               size = "256M"; # Fixed size for boot
-    #               type = "EF00"; # EFI System Partition
-    #               content = {
-    #                 type = "filesystem";
-    #                 format = "vfat";
-    #                 mountpoint = "/boot";
-    #                 mountOptions = [
-    #                   "defaults"
-    #                   "noatime"
-    #                 ];
-    #               };
-    #             };
+  # journald settings to reduce writes
+  # services.journald.extraConfig = ''
+  #   Storage=volatile
+  #   RuntimeMaxUse=64M
+  #   SystemMaxUse=64M
+  # '';
 
-    #             # Root partition - read-only
-    #             root = {
-    #               name = "root";
-    #               size = "20%"; # Percentage of remaining space
-    #               content = {
-    #                 type = "filesystem";
-    #                 format = "ext4";
-    #                 mountpoint = "/";
-    #                 mountOptions = [
-    #                   "defaults"
-    #                   "noatime"
-    #                 ]; # "ro" ]; # Read-only mount
-    #               };
-    #             };
+  # disko = {
+  #   devices = {
 
-    #             # Nix store partition
-    #             nix = {
-    #               name = "nix";
-    #               size = "35%"; # Percentage of remaining space
-    #               content = {
-    #                 type = "filesystem";
-    #                 format = "ext4";
-    #                 mountpoint = "/nix";
-    #                 mountOptions = [
-    #                   "defaults"
-    #                   "noatime"
-    #                 ];
-    #               };
-    #             };
+  #     # Cross-compilation settings
+  #     # imageBuilder = {
+  #     #   enableBinfmt = true;
+  #     #   pkgs = pkgs;
+  #     #   kernelPackages = pkgs.legacyPackages.x86_64-linux.linuxPackages_latest;
+  #     # };
+  #     disk = {
+  #       sd = {
+  #         imageSize = "32G";
+  #         imageName = "stormjib-rpi";
+  #         device = "/dev/mmcblk0";
+  #         type = "disk";
+  #         content = {
+  #           type = "gpt";
+  #           partitions = {
+  #             # Boot partition - fixed 256MB size
+  #             boot = {
+  #               name = "boot";
+  #               size = "256M"; # Fixed size for boot
+  #               type = "EF00"; # EFI System Partition
+  #               content = {
+  #                 type = "filesystem";
+  #                 format = "vfat";
+  #                 mountpoint = "/boot";
+  #                 mountOptions = [
+  #                   "defaults"
+  #                   "noatime"
+  #                 ];
+  #               };
+  #             };
 
-    #             # Logs partition
-    #             logs = {
-    #               name = "logs";
-    #               size = "10%"; # Percentage of remaining space
-    #               content = {
-    #                 type = "filesystem";
-    #                 format = "ext4";
-    #                 mountpoint = "/var/log";
-    #                 mountOptions = [
-    #                   "defaults"
-    #                   "noatime"
-    #                   "commit=600"
-    #                 ];
-    #               };
-    #             };
+  #             # Root partition - read-only
+  #             root = {
+  #               name = "root";
+  #               size = "20%"; # Percentage of remaining space
+  #               content = {
+  #                 type = "filesystem";
+  #                 format = "ext4";
+  #                 mountpoint = "/";
+  #                 mountOptions = [
+  #                   "defaults"
+  #                   "noatime"
+  #                 ]; # "ro" ]; # Read-only mount
+  #               };
+  #             };
 
-    #             # Persistent data partition
-    #             data = {
-    #               name = "data";
-    #               size = "100%"; # Use all remaining space
-    #               content = {
-    #                 type = "filesystem";
-    #                 format = "ext4";
-    #                 mountpoint = "/var/lib";
-    #                 mountOptions = [
-    #                   "defaults"
-    #                   "noatime"
-    #                   "commit=600"
-    #                 ];
-    #               };
-    #             };
-    #           };
-    #         };
-    #       };
-    #     };
-    #   };
-    # };
+  #             # Nix store partition
+  #             nix = {
+  #               name = "nix";
+  #               size = "35%"; # Percentage of remaining space
+  #               content = {
+  #                 type = "filesystem";
+  #                 format = "ext4";
+  #                 mountpoint = "/nix";
+  #                 mountOptions = [
+  #                   "defaults"
+  #                   "noatime"
+  #                 ];
+  #               };
+  #             };
+
+  #             # Logs partition
+  #             logs = {
+  #               name = "logs";
+  #               size = "10%"; # Percentage of remaining space
+  #               content = {
+  #                 type = "filesystem";
+  #                 format = "ext4";
+  #                 mountpoint = "/var/log";
+  #                 mountOptions = [
+  #                   "defaults"
+  #                   "noatime"
+  #                   "commit=600"
+  #                 ];
+  #               };
+  #             };
+
+  #             # Persistent data partition
+  #             data = {
+  #               name = "data";
+  #               size = "100%"; # Use all remaining space
+  #               content = {
+  #                 type = "filesystem";
+  #                 format = "ext4";
+  #                 mountpoint = "/var/lib";
+  #                 mountOptions = [
+  #                   "defaults"
+  #                   "noatime"
+  #                   "commit=600"
+  #                 ];
+  #               };
+  #             };
+  #           };
+  #         };
+  #       };
+  #     };
+  #   };
+  # };
 
 }
