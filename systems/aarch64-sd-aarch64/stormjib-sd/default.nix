@@ -3,13 +3,30 @@
 #     Topsail: Agile sail for fair-weather speed (primary performance).
 #     StormJib: Rugged sail for heavy weather (backup resilience).
 
-{ pkgs, ... }:
+{ pkgs, config, namespace, ... }:
+let
+  # Create files in the nix store
+  hostSSHFile = pkgs.writeText "ssh_host_ed25519_key" config.sensitiveNotSecret.stormjib_private_ssh_key;
+  hostSSHPubFile = pkgs.writeText "ssh_host_ed25519_key.pub" config.sensitiveNotSecret.stormjib_public_ssh_key;
+in
 {
   config = {
 
-    # imports = [
-    #   <nixos-hardware/raspberry-pi/4>
-    # ];
+    environment.etc = {
+      "ssh/ssh_host_ed25519_key" = {
+        source = hostSSHFile;
+        mode = "0600";
+        user = "root";
+        group = "root";
+      };
+
+      "ssh/ssh_host_ed25519_key.pub" = {
+        source = hostSSHPubFile;
+        mode = "0644";
+        user = "root";
+        group = "root";
+      };
+    };
 
     sdImage.compressImage = false;
 
@@ -20,13 +37,11 @@
       };
     };
 
-    # hardware = {
-    #   raspberry-pi."4".apply-overlays-dtmerge.enable = true;
-    #   deviceTree = {
-    #     enable = true;
-    #     filter = "*rpi-4-*.dtb";
-    #   };
-    # };
+    boot.loader = {
+      grub.enable = false;
+      systemd-boot.enable = false;  # Disable systemd-boot
+      generic-extlinux-compatible.enable = true;  # Enable extlinux bootloader
+    };
     console.enable = true;
     environment.systemPackages = with pkgs; [
       libraspberrypi
@@ -38,36 +53,8 @@
     # Prevent host becoming unreachable on wifi after some time.
     networking.networkmanager.wifi.powersave = false;
 
-    # Raspberry Pi specific settings
-    # hardware.deviceTree.enable = true;
 
-    # Include essential Pi firmware
-    # hardware.firmware = [ pkgs.raspberrypiWirelessFirmware ];
-
-    # Boot settings for Raspberry Pi
-    # boot = {
-    #   kernelPackages = pkgs.linuxPackages_rpi4;
-    #   initrd.availableKernelModules = [ "usbhid" "usb_storage" ];
-    #   loader = {
-    #     grub.enable = false;
-    #     generic-extlinux-compatible.enable = true;
-    #   };
-    # };
-
-    # users.users.kylepzak.initialPassword = "changeme";
-    # users.users.root.initialPassword = "changeme";
-    services = {
-      openssh = {
-        enable = true;
-        hostKeys = [
-          {
-            path = "/etc/ssh/ssh_host_ed25519_key";
-            type = "ed25519";
-            source = "./id_ed25519";
-            publicKeySource = "./id_ed25519.pub";
-          }
-        ];
-      };
-    };
+    users.users.kylepzak.initialPassword = "changeme";
+    users.users.root.initialPassword = "changeme";
   };
 }

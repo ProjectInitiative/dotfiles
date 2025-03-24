@@ -67,7 +67,7 @@ in
         packages = with pkgs; [
           go
           juicefs
-          packer
+          # packer
           podman-compose
           python3
           python3Packages.pip
