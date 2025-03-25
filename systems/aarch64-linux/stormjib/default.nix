@@ -27,11 +27,7 @@ in
   ];
 
   boot.supportedFilesystems.zfs = lib.mkForce false;
-  boot.kernelParams = [
-    "net.ifnames=0"
-    "biosdevname=0"
-    "ethernet.naming-policy=kernel"
-  ];
+
   sdImage.compressImage = true;
 
   environment.etc = {
@@ -89,7 +85,7 @@ in
     interfaces = { }; # Clear interfaces - managed by systemd-networkd
     useNetworkd = true;
 
-    usePredictableInterfaceNames = false;
+    # usePredictableInterfaceNames = false;
   };
 
   
