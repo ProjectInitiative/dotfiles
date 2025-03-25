@@ -21,9 +21,6 @@ with lib.${namespace};
     "modesetting"
   ];
 
-  boot.extraModprobeConfig = ''
-    options usbcore autosuspend=-1
-  '';
   # add second monitor
   services.xserver.displayManager.sessionCommands = ''
     ${lib.getBin pkgs.xorg.xrandr}/bin/xrandr --setprovideroutputsource 2 0

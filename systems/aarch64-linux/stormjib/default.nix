@@ -23,14 +23,15 @@ in
     (modulesPath + "/installer/scan/not-detected.nix")
     # (modulesPath + "/installer/sd-card/sd-image-aarch64.nix")
     (modulesPath + "/installer/sd-card/sd-image-aarch64-new-kernel.nix")
-    raspberry-pi-4
+    # raspberry-pi-4
   ];
-  # disabledModules = [
-  #   "profiles/all-hardware.nix"
-  #   "profiles/base.nix"
-  # ];
 
   boot.supportedFilesystems.zfs = lib.mkForce false;
+  boot.kernelParams = [
+    "net.ifnames=0"
+    "biosdevname=0"
+    "ethernet.naming-policy=kernel"
+  ];
   sdImage.compressImage = true;
 
   environment.etc = {
@@ -78,51 +79,49 @@ in
     raspberrypi-eeprom
   ];
 
-  # Basic networking
-  networking.networkmanager.enable = false;
-  # Prevent host becoming unreachable on wifi after some time.
-  networking.networkmanager.wifi.powersave = false;
+  # Single networking attribute set
+  networking = {
+    networkmanager = {
+      enable = false;
+      wifi.powersave = false;
+    };
+    useDHCP = false;
+    interfaces = { }; # Clear interfaces - managed by systemd-networkd
+    useNetworkd = true;
+
+    usePredictableInterfaceNames = false;
+  };
+
+  
+
 
   systemd = {
     # Enable networkd
     network = {
       enable = true;
+      # wait-online.enable = false; # Disable wait-online to avoid boot delays
 
       # Interface naming based on MAC addresses
       links = {
         "10-lan" = {
-          matchConfig.PermanentMACAddress = "d8:3a:dd:73:eb:33";
+          matchConfig.MACAddress = "d8:3a:dd:73:eb:33";
           linkConfig.Name = "lan0";
         };
         "11-wan" = {
-          matchConfig.PermanentMACAddress = "c8:a3:62:b4:ce:fa";
+          matchConfig.MACAddress = "c8:a3:62:b4:ce:fa";
           linkConfig.Name = "wan0";
         };
       };
 
       networks = {
-        "20-lan-current" = {
-          matchConfig.Name = "end0";  # Match the current name
-          networkConfig = {
-            DHCP = "yes";
-            IPv6AcceptRA = "no";
-          };
-        };
-        "21-wan-current" = {
-          matchConfig.Name = "enp1s0u2c2";  # Match the current name
-          networkConfig = {
-            DHCP = "yes";
-            IPv6AcceptRA = "no";
-          };
-        };
-        "30-lan-future" = {
+        "12-lan" = {
           matchConfig.Name = "lan0";  # Match the future name
           networkConfig = {
             DHCP = "yes";
             IPv6AcceptRA = "no";
           };
         };
-        "31-wan-future" = {
+        "13-wan" = {
           matchConfig.Name = "wan0";  # Match the future name
           networkConfig = {
             DHCP = "yes";
