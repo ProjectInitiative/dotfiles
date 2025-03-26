@@ -320,6 +320,7 @@
       deploy = lib.mkDeploy {
         inherit (inputs) self;
         exclude = [
+          "stormjib"
           "thinkpad"
           "test"
           "capstan1"

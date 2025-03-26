@@ -10,6 +10,42 @@ let
 in
 with lib.${namespace};
 {
+  ${namespace} = {
+    disko.mdadm-root = {
+      enable = true;
+      mirroredDrives = [
+        "/dev/disk/by-id/ata-SATA_SSD_D21090883D04210"
+        "/dev/disk/by-id/ata-SPCC_Solid_State_Disk_C63807960E6A00247759"
+      ];
+    };
+
+    system = {
+      bcachefs-kernel = {
+        enable = true;
+        branch = "master"; # Or specify a specific commit hash
+        sourceHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # Replace with real hash after first build attempt
+        debug = true;
+      };
+    };
+
+    hosts.capstan = {
+      enable = true;
+      ipAddress = "${config.sensitiveNotSecret.default_subnet}52/24";
+      interface = "enp3s0";
+      enableMlx = true;
+      mlxIpAddress = "172.16.4.52";
+      mlxPcie = "0000:05:00.0";
+      bondMembers = [
+        "enp5s0"
+        "enp5s0d1"
+      ];
+      bcachefsInitDevice = "/dev/disk/by-id/nvme-TEAM_TM8FPD002T_TPBF2310170080202273";
+      mountpoint = mountpoint;
+      k8sServerAddr = "https://172.16.1.45:6443";
+    };
+
+  };
+
   disko.devices = {
     disk = {
       nvme1 = {
@@ -81,31 +117,5 @@ with lib.${namespace};
     };
   };
 
-  ${namespace} = {
-    disko.mdadm-root = {
-      enable = true;
-      mirroredDrives = [
-        "/dev/disk/by-id/ata-SATA_SSD_D21090883D04210"
-        "/dev/disk/by-id/ata-SPCC_Solid_State_Disk_C63807960E6A00247759"
-      ];
-    };
-
-    hosts.capstan = {
-      enable = true;
-      ipAddress = "${config.sensitiveNotSecret.default_subnet}52/24";
-      interface = "enp3s0";
-      enableMlx = true;
-      mlxIpAddress = "172.16.4.52";
-      mlxPcie = "0000:05:00.0";
-      bondMembers = [
-        "enp5s0"
-        "enp5s0d1"
-      ];
-      bcachefsInitDevice = "/dev/disk/by-id/nvme-TEAM_TM8FPD002T_TPBF2310170080202273";
-      mountpoint = mountpoint;
-      k8sServerAddr = "https://172.16.1.45:6443";
-    };
-
-  };
 
 }
