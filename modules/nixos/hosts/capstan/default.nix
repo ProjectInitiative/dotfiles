@@ -60,49 +60,47 @@ in
     # advanced bcachefs support
     boot.supportedFilesystems = [ "bcachefs" ];
     boot.kernelModules = [ "bcachefs" ];
-    # boot.kernelPackages.perf = enable;
     # use latest kernel - required by bcachefs
-    boot.kernelPackages = mkDefault pkgs.linuxPackages_latest;
+    boot.kernelPackages = pkgs.linuxPackages_latest;
 
     # Late-mounting service
-    systemd.services.mount-bcachefs = {
-      description = "Mount bcachefs test filesystem";
-      path = [
-        pkgs.bcachefs-tools
-        pkgs.util-linux
-        pkgs.gawk
-      ];
+    # systemd.services.mount-bcachefs = {
+    #   description = "Mount bcachefs test filesystem";
+    #   path = [
+    #     pkgs.bcachefs-tools
+    #     pkgs.util-linux
+    #     pkgs.gawk
+    #   ];
 
-      # Start after basic system services are up
-      after = [
-        "network.target"
-        "local-fs.target"
-        "multi-user.target"
-      ];
+    #   # Start after basic system services are up
+    #   after = [
+    #     "network.target"
+    #     "local-fs.target"
+    #     "multi-user.target"
+    #   ];
 
-      # Don't consider boot failed if this service fails
-      wantedBy = [ "multi-user.target" ];
+    #   # Don't consider boot failed if this service fails
+    #   wantedBy = [ "multi-user.target" ];
 
-      # Service configuration
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        ExecStartPre = "+${pkgs.coreutils}/bin/mkdir -p ${cfg.mountpoint}";
-      };
+    #   # Service configuration
+    #   serviceConfig = {
+    #     Type = "oneshot";
+    #     RemainAfterExit = true;
+    #     ExecStartPre = "+${pkgs.coreutils}/bin/mkdir -p ${cfg.mountpoint}";
+    #   };
 
-      # The actual mount script
-      script = ''
-        # Mount the filesystem if not already mounted
-        if ! mountpoint -q ${cfg.mountpoint}; then
-          UUID=$(bcachefs show-super ${cfg.bcachefsInitDevice} | grep Ext | awk '{print $3}')
-          mount -t bcachefs UUID=$UUID ${cfg.mountpoint}
-        fi
-      '';
+    #   # The actual mount script
+    #   script = ''
+    #     # Mount the filesystem if not already mounted
+    #     if ! mountpoint -q ${cfg.mountpoint}; then
+    #       UUID=$(bcachefs show-super ${cfg.bcachefsInitDevice} | grep Ext | awk '{print $3}')
+    #       mount -t bcachefs UUID=$UUID ${cfg.mountpoint}
+    #     fi
+    #   '';
 
-    };
+    # };
 
     environment.systemPackages = with pkgs; [
-      pkgs.linuxPackages_latest.perf
       bcachefs-tools
       util-linux
       smartmontools
@@ -123,34 +121,16 @@ in
       ];
     };
 
+    # fileSystems."/mnt/pool" =
+    #   { device = "UUID=27cac550-3836-765c-d107-51d27ab4a6e1";
+    #     fsType = "bcachefs";
+    #   };
+
     services.openssh.enable = true;
 
     projectinitiative = {
 
       services = {
-
-        health-reporter = {
-          enable = true;
-          telegramTokenPath = config.sops.secrets.health_reporter_bot_api_token.path;
-          telegramChatIdPath = config.sops.secrets.telegram_chat_id.path;
-          excludeDrives = [
-            "loop"
-            "ram"
-            "sr"
-          ]; # Default exclusions
-          reportTime = "08:00"; # Send report at 8 AM
-          excludeMountPoints = [
-            "/run"
-            "/var/lib/docker"
-            "/var/lib/containers"
-            "k3s"
-            "kube"
-            "containerd"
-            "docker"
-            "sandbox"
-            # Add any custom patterns here
-          ];
-        };
 
         juicefs = {
           enable = true;
