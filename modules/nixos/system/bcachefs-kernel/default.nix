@@ -5,6 +5,35 @@ with lib;
 
 let
   cfg = config.${namespace}.system.bcachefs-kernel;
+
+  # Define the custom kernel package here
+  linux_bcachefs = { fetchFromGitHub, buildLinux, ... } @ args:
+    buildLinux (args // rec {
+      version = "6.14.0-rc6-bcachefs";
+      modDirVersion = "6.14.0-rc6";
+      
+      src = fetchFromGitHub {
+        owner = "koverstreet";
+        repo = "bcachefs";
+        rev = cfg.branch;
+        hash = cfg.sourceHash;
+      };
+      
+      structuredExtraConfig = with lib.kernel; {
+        BCACHEFS_FS = yes;
+        BCACHEFS_QUOTA = yes;
+        BCACHEFS_POSIX_ACL = yes;
+      } // (if cfg.debug then {
+        BCACHEFS_DEBUG = yes;
+        BCACHEFS_TESTS = yes;
+      } else {});
+    });
+
+  # Build the kernel package directly
+  customKernel = pkgs.callPackage linux_bcachefs {};
+  
+  # Create the linuxPackages for our custom kernel
+  linuxPackages_custom_bcachefs = pkgs.linuxPackagesFor customKernel;
   
   # Create a Python package for the script
   bcachefsFuaTestScript = pkgs.writeScriptBin "bcachefs-fua-test" ''
@@ -16,52 +45,45 @@ let
     from datetime import datetime
 
     def get_device_details(dev_path):
-        dev_name = None
-        
-        # Try to get the device name
-        dev_link = os.path.join(dev_path, 'dev')
-        if os.path.exists(dev_link):
-            try:
-                dev_path_real = os.path.realpath(dev_link)
-                dev_name = os.path.basename(dev_path_real)
-            except:
-                pass
-        
-        # Try different methods to get model information
-        model = "Unknown model"
-        serial = "Unknown serial"
-        
-        # Try from sysfs
-        if dev_name:
-            model_path = f"/sys/block/{dev_name}/device/model"
-            serial_path = f"/sys/block/{dev_name}/device/serial"
-            
-            if os.path.exists(model_path):
-                with open(model_path, 'r') as f:
-                    model = f.read().strip()
-            
-            if os.path.exists(serial_path):
-                with open(serial_path, 'r') as f:
-                    serial = f.read().strip()
-            
-            # For NVMe drives, try nvme-cli if available
-            if dev_name.startswith('nvme') and model == "Unknown model":
-                try:
-                    nvme_output = subprocess.check_output(['nvme', 'list', '-o', 'json'], 
-                                                        universal_newlines=True)
-                    nvme_data = json.loads(nvme_output)
-                    for device in nvme_data.get('Devices', []):
-                        if device.get('DevicePath', "").endswith(dev_name):
-                            model = device.get('ModelNumber', model)
-                            serial = device.get('SerialNumber', serial)
-                            break
-                except (subprocess.SubprocessError, json.JSONDecodeError, FileNotFoundError):
-                    pass
-        
+        print(dev_path)
+
+        # Get the major:minor device number from the path
+        dev_file = f"{dev_path}/block/dev"
+        maj_min = None
+
+        try:
+            with open(dev_file, 'r') as f:
+                maj_min = f.read().strip()
+        except Exception as e:
+            print(f"Failed to read device number: {e}")
+            return {
+                'dev_name': "Unknown dev_name",
+                'model': "Unknown model",
+                'serial': "Unknown serial"
+            }
+
+        # Run lsblk to get device information in JSON format
+        try:
+            cmd = ["lsblk", "-d", "-o", "MODEL,NAME,SERIAL,TYPE,UUID,MAJ:MIN", "--json"]
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            device_data = json.loads(result.stdout)
+    
+            # Find the device with matching major:minor number
+            for device in device_data.get("blockdevices", []):
+                if device.get("maj:min") == maj_min:
+                    return {
+                        'dev_name': device.get('name', "Unknown dev_name"),
+                        'model': device.get('model', "Unknown model"),
+                        'serial': device.get('serial', "Unknown serial")
+                    }
+        except Exception as e:
+            print(f"Failed to get device details: {e}")
+
+        # Default return if no match found
         return {
-            'dev_name': dev_name,
-            'model': model,
-            'serial': serial
+            'dev_name': "Unknown dev_name",
+            'model': "Unknown model",
+            'serial': "Unknown serial"
         }
 
     def list_bcachefs_devices(base_dir):
@@ -196,38 +218,38 @@ in {
   };
 
   config = mkIf cfg.enable {
-    nixpkgs.overlays = [
-      (self: super: {
-        linuxPackages_custom_bcachefs = 
-          let 
-            linux_bcachefs = { fetchFromGitHub, buildLinux, ... } @ args:
-              buildLinux (args // rec {
-                version = "6.12-bcachefs";
-                modDirVersion = "6.12.0";
+    # nixpkgs.overlays = [
+    #   (final: prev: {
+    #     linuxPackages_custom_bcachefs = 
+    #       let 
+    #         linux_bcachefs = { fetchFromGitHub, buildLinux, ... } @ args:
+    #           buildLinux (args // rec {
+    #             version = "6.12-bcachefs";
+    #             modDirVersion = "6.12.0";
                 
-                src = fetchFromGitHub {
-                  owner = "koverstreet";
-                  repo = "bcachefs";
-                  rev = cfg.branch;
-                  sha256 = cfg.sourceHash;
-                };
+    #             src = fetchFromGitHub {
+    #               owner = "koverstreet";
+    #               repo = "bcachefs";
+    #               rev = cfg.branch;
+    #               sha256 = cfg.sourceHash;
+    #             };
                 
-                structuredExtraConfig = with lib.kernel; {
-                  BCACHEFS_FS = yes;
-                  BCACHEFS_QUOTA = yes;
-                  BCACHEFS_POSIX_ACL = yes;
-                } // (if cfg.debug then {
-                  BCACHEFS_DEBUG = yes;
-                  BCACHEFS_TESTS = yes;
-                } else {});
-              });
-          in
-          pkgs.linuxPackagesFor (pkgs.callPackage linux_bcachefs {});
-      })
-    ];
+    #             structuredExtraConfig = with lib.kernel; {
+    #               BCACHEFS_FS = yes;
+    #               BCACHEFS_QUOTA = yes;
+    #               BCACHEFS_POSIX_ACL = yes;
+    #             } // (if cfg.debug then {
+    #               BCACHEFS_DEBUG = yes;
+    #               BCACHEFS_TESTS = yes;
+    #             } else {});
+    #           });
+    #       in
+    #       final.linuxPackagesFor (final.callPackage linux_bcachefs {});
+    #   })
+    # ];
     
     # Use the custom kernel
-    boot.kernelPackages = mkForce pkgs.linuxPackages_custom_bcachefs;
+    boot.kernelPackages = mkForce linuxPackages_custom_bcachefs;
     
     # Ensure bcachefs support is enabled
     boot.supportedFilesystems = [ "bcachefs" ];

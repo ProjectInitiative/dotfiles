@@ -62,7 +62,7 @@ in
     boot.kernelModules = [ "bcachefs" ];
     # boot.kernelPackages.perf = enable;
     # use latest kernel - required by bcachefs
-    boot.kernelPackages = pkgs.linuxPackages_latest;
+    boot.kernelPackages = mkDefault pkgs.linuxPackages_latest;
 
     # Late-mounting service
     systemd.services.mount-bcachefs = {

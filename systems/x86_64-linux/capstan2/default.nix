@@ -23,7 +23,7 @@ with lib.${namespace};
       bcachefs-kernel = {
         enable = true;
         branch = "master"; # Or specify a specific commit hash
-        sourceHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # Replace with real hash after first build attempt
+        sourceHash = "sha256-wNcjQVnx5siXPLAiN2mCFFVsJO3HX5gzWky/nVK1fKc="; # Replace with real hash after first build attempt
         debug = true;
       };
     };
