@@ -49,6 +49,7 @@ in
         jq
         ncdu
         tree
+        icdiff
         usbutils
         rclone
         #TODO: add config for yazi
