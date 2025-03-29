@@ -367,384 +367,384 @@ in
   };
 
   config = mkIf cfg.enable {
-    # Basic system configuration
-    system.stateVersion = "23.11";
+  #   # Basic system configuration
+  #   system.stateVersion = "23.11";
 
-    # Enable displaying network info on console
-    projectinitiative = {
-      system = {
-        console-info = {
-          ip-display = enabled;
-        };
-      };
-    };
+  #   # Enable displaying network info on console
+  #   projectinitiative = {
+  #     system = {
+  #       console-info = {
+  #         ip-display = enabled;
+  #       };
+  #     };
+  #   };
 
-    networking.networkmanager.enable = true;
+  #   networking.networkmanager.enable = true;
 
-    # Add your other configuration options here
-    services.openssh.enable = true;
-    users.users.root.hashedPasswordFile = sops.secrets.root_password.path;
-    programs.zsh.enable = true;
+  #   # Add your other configuration options here
+  #   services.openssh.enable = true;
+  #   users.users.root.hashedPasswordFile = sops.secrets.root_password.path;
+  #   programs.zsh.enable = true;
 
-    # Extract network details and router role
-    _module.args.routerConfig = cfg;
-    _module.args.isPrimary = cfg.routerRole == "primary";
+  #   # Extract network details and router role
+  #   _module.args.routerConfig = cfg;
+  #   _module.args.isPrimary = cfg.routerRole == "primary";
 
-    # Parse the CIDR notation for management network and VLANs
-    assertions =
-      [
-        {
-          assertion =
-            builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})/([0-9]{1,2})$" cfg.managementVlan.network
-            != null;
-          message = "Management network must be in valid CIDR notation (e.g., 172.16.1.0/24)";
-        }
-      ]
-      ++ (map (vlan: {
-        assertion =
-          builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})/([0-9]{1,2})$" vlan.network
-          != null;
-        message = "VLAN network ${vlan.name} must be in valid CIDR notation";
-      }) cfg.vlans);
+  #   # Parse the CIDR notation for management network and VLANs
+  #   assertions =
+  #     [
+  #       {
+  #         assertion =
+  #           builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})/([0-9]{1,2})$" cfg.managementVlan.network
+  #           != null;
+  #         message = "Management network must be in valid CIDR notation (e.g., 172.16.1.0/24)";
+  #       }
+  #     ]
+  #     ++ (map (vlan: {
+  #       assertion =
+  #         builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})/([0-9]{1,2})$" vlan.network
+  #         != null;
+  #       message = "VLAN network ${vlan.name} must be in valid CIDR notation";
+  #     }) cfg.vlans);
 
-    # Enable IP forwarding and load necessary kernel modules
-    boot = {
-      kernelModules = [
-        # Basic firewall modules
-        "iptable_nat"
-        "iptable_filter"
-        "xt_nat"
-        # Add 8021q module for VLAN support
-        "8021q"
-      ] ++ cfg.extraKernelModules;
+  #   # Enable IP forwarding and load necessary kernel modules
+  #   boot = {
+  #     kernelModules = [
+  #       # Basic firewall modules
+  #       "iptable_nat"
+  #       "iptable_filter"
+  #       "xt_nat"
+  #       # Add 8021q module for VLAN support
+  #       "8021q"
+  #     ] ++ cfg.extraKernelModules;
 
-      kernel.sysctl = {
-        # Base security settings
-        "net.ipv4.tcp_syncookies" = true;
-        "net.ipv4.conf.all.forwarding" = true;
-        "net.ipv4.conf.all.rp_filter" = true;
-        "net.ipv4.conf.default.rp_filter" = true;
-        "net.ipv4.conf.all.accept_redirects" = 0;
-        "net.ipv4.conf.all.log_martians" = true;
+  #     kernel.sysctl = {
+  #       # Base security settings
+  #       "net.ipv4.tcp_syncookies" = true;
+  #       "net.ipv4.conf.all.forwarding" = true;
+  #       "net.ipv4.conf.all.rp_filter" = true;
+  #       "net.ipv4.conf.default.rp_filter" = true;
+  #       "net.ipv4.conf.all.accept_redirects" = 0;
+  #       "net.ipv4.conf.all.log_martians" = true;
 
-        # IPv6 settings
-        "net.ipv6.conf.all.forwarding" = cfg.enableIPv6;
-        "net.ipv6.conf.all.accept_ra" = 0;
-        "net.ipv6.conf.all.autoconf" = 0;
-        "net.ipv6.conf.all.use_tempaddr" = 0;
-        "net.ipv6.conf.all.accept_redirects" = 0;
-        "net.ipv6.conf.${cfg.wanInterface}.accept_ra" = mkIf cfg.enableIPv6 2;
-        "net.ipv6.conf.${cfg.wanInterface}.autoconf" = cfg.enableIPv6;
-      } // cfg.extraSysctlSettings;
-    };
+  #       # IPv6 settings
+  #       "net.ipv6.conf.all.forwarding" = cfg.enableIPv6;
+  #       "net.ipv6.conf.all.accept_ra" = 0;
+  #       "net.ipv6.conf.all.autoconf" = 0;
+  #       "net.ipv6.conf.all.use_tempaddr" = 0;
+  #       "net.ipv6.conf.all.accept_redirects" = 0;
+  #       "net.ipv6.conf.${cfg.wanInterface}.accept_ra" = mkIf cfg.enableIPv6 2;
+  #       "net.ipv6.conf.${cfg.wanInterface}.autoconf" = cfg.enableIPv6;
+  #     } // cfg.extraSysctlSettings;
+  #   };
 
-    # Networking configuration
-    networking = {
-      enableIPv6 = cfg.enableIPv6;
+  #   # Networking configuration
+  #   networking = {
+  #     enableIPv6 = cfg.enableIPv6;
 
-      # Define management and other VLAN interfaces
-      vlans = let
-        vlanInterfaces = listToAttrs (
-          map (vlan: {
-            name = "${cfg.lanInterface}.${toString vlan.id}";
-            value = {
-              id = vlan.id;
-              interface = cfg.lanInterface;
-            };
-          }) cfg.vlans
-        );
-        # Add management VLAN if it's not VLAN 1 (untagged)
-        managementVlanInterface = if cfg.managementVlan.id != 1 then {
-          "${cfg.lanInterface}.${toString cfg.managementVlan.id}" = {
-            id = cfg.managementVlan.id;
-            interface = cfg.lanInterface;
-          };
-        } else {};
-      in
-        vlanInterfaces // managementVlanInterface;
+  #     # Define management and other VLAN interfaces
+  #     vlans = let
+  #       vlanInterfaces = listToAttrs (
+  #         map (vlan: {
+  #           name = "${cfg.lanInterface}.${toString vlan.id}";
+  #           value = {
+  #             id = vlan.id;
+  #             interface = cfg.lanInterface;
+  #           };
+  #         }) cfg.vlans
+  #       );
+  #       # Add management VLAN if it's not VLAN 1 (untagged)
+  #       managementVlanInterface = if cfg.managementVlan.id != 1 then {
+  #         "${cfg.lanInterface}.${toString cfg.managementVlan.id}" = {
+  #           id = cfg.managementVlan.id;
+  #           interface = cfg.lanInterface;
+  #         };
+  #       } else {};
+  #     in
+  #       vlanInterfaces // managementVlanInterface;
 
-      nat = {
-        enable = true;
-        externalInterface = cfg.wanInterface;
-        internalInterfaces =
-          # Include base LAN interface if management VLAN is untagged (VLAN 1)
-          (if cfg.managementVlan.id == 1 then [ cfg.lanInterface ] else []) ++
-          # Include management VLAN interface if it's not untagged
-          (if cfg.managementVlan.id != 1 then [ "${cfg.lanInterface}.${toString cfg.managementVlan.id}" ] else []) ++
-          # Include all other VLAN interfaces
-          (map (vlan: "${cfg.lanInterface}.${toString vlan.id}") cfg.vlans);
+  #     nat = {
+  #       enable = true;
+  #       externalInterface = cfg.wanInterface;
+  #       internalInterfaces =
+  #         # Include base LAN interface if management VLAN is untagged (VLAN 1)
+  #         (if cfg.managementVlan.id == 1 then [ cfg.lanInterface ] else []) ++
+  #         # Include management VLAN interface if it's not untagged
+  #         (if cfg.managementVlan.id != 1 then [ "${cfg.lanInterface}.${toString cfg.managementVlan.id}" ] else []) ++
+  #         # Include all other VLAN interfaces
+  #         (map (vlan: "${cfg.lanInterface}.${toString vlan.id}") cfg.vlans);
 
-        internalIPs =
-          [ cfg.managementVlan.network ] ++
-          (map (vlan: vlan.network) cfg.vlans);
-      };
+  #       internalIPs =
+  #         [ cfg.managementVlan.network ] ++
+  #         (map (vlan: vlan.network) cfg.vlans);
+  #     };
 
-      firewall = {
-        allowPing = false;
-        extraCommands = concatStringsSep "\n" (
-          [
-            # Port forwarding rules
-            (concatMapStrings (
-              rule:
-              let
-                proto = if rule.protocol == "both" then "" else "-p ${rule.protocol}";
-                dport =
-                  if rule.destinationPort != null && rule.destinationPort != rule.sourcePort then
-                    ":${toString rule.destinationPort}"
-                  else
-                    "";
-              in
-              ''
-                # Port forwarding: ${toString rule.sourcePort} -> ${rule.destination}${dport}
-                iptables -t nat -A PREROUTING -i ${cfg.wanInterface} ${proto} -m ${
-                  if rule.protocol == "both" then "tcp" else rule.protocol
-                } --dport ${toString rule.sourcePort} -j DNAT --to-destination ${rule.destination}${dport}
-              ''
-            ) cfg.portForwarding)
+  #     firewall = {
+  #       allowPing = false;
+  #       extraCommands = concatStringsSep "\n" (
+  #         [
+  #           # Port forwarding rules
+  #           (concatMapStrings (
+  #             rule:
+  #             let
+  #               proto = if rule.protocol == "both" then "" else "-p ${rule.protocol}";
+  #               dport =
+  #                 if rule.destinationPort != null && rule.destinationPort != rule.sourcePort then
+  #                   ":${toString rule.destinationPort}"
+  #                 else
+  #                   "";
+  #             in
+  #             ''
+  #               # Port forwarding: ${toString rule.sourcePort} -> ${rule.destination}${dport}
+  #               iptables -t nat -A PREROUTING -i ${cfg.wanInterface} ${proto} -m ${
+  #                 if rule.protocol == "both" then "tcp" else rule.protocol
+  #               } --dport ${toString rule.sourcePort} -j DNAT --to-destination ${rule.destination}${dport}
+  #             ''
+  #           ) cfg.portForwarding)
 
-            # VLAN isolation rules (if any VLANs are marked as isolated)
-          ]
-          ++ (flatten (
-            map (
-              isolatedVlan:
-              map (otherVlan: ''
-                # Isolate VLAN ${toString isolatedVlan.id} (${isolatedVlan.name}) from VLAN ${toString otherVlan.id} (${otherVlan.name})
-                iptables -A FORWARD -i ${cfg.lanInterface}.${toString isolatedVlan.id} -o ${cfg.lanInterface}.${toString otherVlan.id} -j DROP
-                iptables -A FORWARD -i ${cfg.lanInterface}.${toString otherVlan.id} -o ${cfg.lanInterface}.${toString isolatedVlan.id} -j DROP
-              '') (filter (v: v.id != isolatedVlan.id) cfg.vlans)
-            ) (filter (v: v.isolated) cfg.vlans)
-          ))
+  #           # VLAN isolation rules (if any VLANs are marked as isolated)
+  #         ]
+  #         ++ (flatten (
+  #           map (
+  #             isolatedVlan:
+  #             map (otherVlan: ''
+  #               # Isolate VLAN ${toString isolatedVlan.id} (${isolatedVlan.name}) from VLAN ${toString otherVlan.id} (${otherVlan.name})
+  #               iptables -A FORWARD -i ${cfg.lanInterface}.${toString isolatedVlan.id} -o ${cfg.lanInterface}.${toString otherVlan.id} -j DROP
+  #               iptables -A FORWARD -i ${cfg.lanInterface}.${toString otherVlan.id} -o ${cfg.lanInterface}.${toString isolatedVlan.id} -j DROP
+  #             '') (filter (v: v.id != isolatedVlan.id) cfg.vlans)
+  #           ) (filter (v: v.isolated) cfg.vlans)
+  #         ))
 
-          # VRRP-specific rules
-          ++ (optionals cfg.vrrp.enable [
-            ''
-              # Allow VRRP protocol (protocol 112) between routers
-              iptables -A INPUT -p 112 -s ${cfg.vrrp.peerAddress} -j ACCEPT
-              iptables -A OUTPUT -p 112 -d ${cfg.vrrp.peerAddress} -j ACCEPT
-            ''
-          ])
-        );
-      };
+  #         # VRRP-specific rules
+  #         ++ (optionals cfg.vrrp.enable [
+  #           ''
+  #             # Allow VRRP protocol (protocol 112) between routers
+  #             iptables -A INPUT -p 112 -s ${cfg.vrrp.peerAddress} -j ACCEPT
+  #             iptables -A OUTPUT -p 112 -d ${cfg.vrrp.peerAddress} -j ACCEPT
+  #           ''
+  #         ])
+  #       );
+  #     };
 
-      # Manual configuration of interfaces
-      useDHCP = false;
+  #     # Manual configuration of interfaces
+  #     useDHCP = false;
 
-      interfaces = let
-        # Determine static IP for management VLAN based on router role
-        managementIp = if cfg.routerRole == "primary"
-                           then cfg.managementVlan.primaryIp
-                           else cfg.managementVlan.backupIp;
+  #     interfaces = let
+  #       # Determine static IP for management VLAN based on router role
+  #       managementIp = if cfg.routerRole == "primary"
+  #                          then cfg.managementVlan.primaryIp
+  #                          else cfg.managementVlan.backupIp;
 
-        # Get prefix length for management network
-        mgmtPrefixLength = toInt (
-          elemAt (builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})/([0-9]{1,2})$" cfg.managementVlan.network) 1
-        );
+  #       # Get prefix length for management network
+  #       mgmtPrefixLength = toInt (
+  #         elemAt (builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})/([0-9]{1,2})$" cfg.managementVlan.network) 1
+  #       );
 
-        # Base interfaces configuration
-        baseInterfaces = {
-          # WAN interface config
-          "${cfg.wanInterface}" =
-            if (cfg.externalStaticIp != null) then {
-              ipv4.addresses = [{
-                address = cfg.externalStaticIp.address;
-                prefixLength = cfg.externalStaticIp.prefixLength;
-              }];
-            } else {
-              useDHCP = true;
-            };
+  #       # Base interfaces configuration
+  #       baseInterfaces = {
+  #         # WAN interface config
+  #         "${cfg.wanInterface}" =
+  #           if (cfg.externalStaticIp != null) then {
+  #             ipv4.addresses = [{
+  #               address = cfg.externalStaticIp.address;
+  #               prefixLength = cfg.externalStaticIp.prefixLength;
+  #             }];
+  #           } else {
+  #             useDHCP = true;
+  #           };
 
-          # Management interface config (either on base LAN or tagged VLAN)
-          "${cfg.lanInterface}" = if cfg.managementVlan.id == 1 then {
-            ipv4.addresses = [{
-              address = managementIp;
-              prefixLength = mgmtPrefixLength;
-            }];
-          } else {};
-        };
+  #         # Management interface config (either on base LAN or tagged VLAN)
+  #         "${cfg.lanInterface}" = if cfg.managementVlan.id == 1 then {
+  #           ipv4.addresses = [{
+  #             address = managementIp;
+  #             prefixLength = mgmtPrefixLength;
+  #           }];
+  #         } else {};
+  #       };
 
-        # Management VLAN interface (if not on base LAN)
-        mgmtVlanInterface = if cfg.managementVlan.id != 1 then {
-          "${cfg.lanInterface}.${toString cfg.managementVlan.id}" = {
-            ipv4.addresses = [{
-              address = managementIp;
-              prefixLength = mgmtPrefixLength;
-            }];
-          };
-        } else {};
+  #       # Management VLAN interface (if not on base LAN)
+  #       mgmtVlanInterface = if cfg.managementVlan.id != 1 then {
+  #         "${cfg.lanInterface}.${toString cfg.managementVlan.id}" = {
+  #           ipv4.addresses = [{
+  #             address = managementIp;
+  #             prefixLength = mgmtPrefixLength;
+  #           }];
+  #         };
+  #       } else {};
 
-        # Other VLAN interfaces
-        vlanInterfaces = listToAttrs (
-          map (vlan: {
-            name = "${cfg.lanInterface}.${toString vlan.id}";
-            value = {
-              ipv4.addresses = [{
-                address = if cfg.routerRole == "primary" then vlan.primaryIp else vlan.backupIp;
-                prefixLength = toInt (
-                  elemAt (builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})/([0-9]{1,2})$" vlan.network) 1
-                );
-              }];
-            };
-          }) cfg.vlans
-        );
-      in
-        baseInterfaces // mgmtVlanInterface // vlanInterfaces;
+  #       # Other VLAN interfaces
+  #       vlanInterfaces = listToAttrs (
+  #         map (vlan: {
+  #           name = "${cfg.lanInterface}.${toString vlan.id}";
+  #           value = {
+  #             ipv4.addresses = [{
+  #               address = if cfg.routerRole == "primary" then vlan.primaryIp else vlan.backupIp;
+  #               prefixLength = toInt (
+  #                 elemAt (builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})/([0-9]{1,2})$" vlan.network) 1
+  #               );
+  #             }];
+  #           };
+  #         }) cfg.vlans
+  #       );
+  #     in
+  #       baseInterfaces // mgmtVlanInterface // vlanInterfaces;
 
-      defaultGateway = mkIf (cfg.externalStaticIp != null) {
-        address = cfg.externalStaticIp.gateway;
-        interface = cfg.wanInterface;
-      };
-    };
+  #     defaultGateway = mkIf (cfg.externalStaticIp != null) {
+  #       address = cfg.externalStaticIp.gateway;
+  #       interface = cfg.wanInterface;
+  #     };
+  #   };
 
-    # DNS and DHCP services
-    services = {
-      # DNS service
-      dnsmasq = {
-        enable = true;
-        servers = cfg.dnsServers;
-        extraConfig = let
-          # Basic interface configuration for dnsmasq
-          baseLan = if cfg.managementVlan.id == 1 then "interface = ${cfg.lanInterface}\n" else "";
-          mgmtVlan = if cfg.managementVlan.id != 1
-                      then "interface = ${cfg.lanInterface}.${toString cfg.managementVlan.id}\n"
-                      else "";
-          otherVlans = concatMapStrings (vlan:
-            "interface = ${cfg.lanInterface}.${toString vlan.id}\n"
-          ) cfg.vlans;
+  #   # DNS and DHCP services
+  #   services = {
+  #     # DNS service
+  #     dnsmasq = {
+  #       enable = true;
+  #       servers = cfg.dnsServers;
+  #       extraConfig = let
+  #         # Basic interface configuration for dnsmasq
+  #         baseLan = if cfg.managementVlan.id == 1 then "interface = ${cfg.lanInterface}\n" else "";
+  #         mgmtVlan = if cfg.managementVlan.id != 1
+  #                     then "interface = ${cfg.lanInterface}.${toString cfg.managementVlan.id}\n"
+  #                     else "";
+  #         otherVlans = concatMapStrings (vlan:
+  #           "interface = ${cfg.lanInterface}.${toString vlan.id}\n"
+  #         ) cfg.vlans;
 
-          # Base dnsmasq configuration
-          baseConfig = ''
-            bind-interfaces
-            ${baseLan}${mgmtVlan}${otherVlans}
-          '';
+  #         # Base dnsmasq configuration
+  #         baseConfig = ''
+  #           bind-interfaces
+  #           ${baseLan}${mgmtVlan}${otherVlans}
+  #         '';
 
-          # DHCP relay configuration (only if external DHCP is enabled)
-          relayConfig = if (cfg.dhcpMode == "external" && cfg.externalDhcpServer != null)
-            then ''
-              # Don't function as a DNS server
-              port=0
+  #         # DHCP relay configuration (only if external DHCP is enabled)
+  #         relayConfig = if (cfg.dhcpMode == "external" && cfg.externalDhcpServer != null)
+  #           then ''
+  #             # Don't function as a DNS server
+  #             port=0
 
-              # Log lots of extra information about DHCP transactions
-              log-dhcp
+  #             # Log lots of extra information about DHCP transactions
+  #             log-dhcp
 
-              # Configure as DHCP relay
-              dhcp-relay=${cfg.externalDhcpServer},${cfg.lanInterface}
-              ${concatMapStrings (vlan:
-                "dhcp-relay=${cfg.externalDhcpServer},${cfg.lanInterface}.${toString vlan.id}\n"
-              ) (filter (vlan: vlan.enableDhcp) cfg.vlans)}
-            ''
-            else "";
-        in
-          baseConfig + relayConfig;
-      };
+  #             # Configure as DHCP relay
+  #             dhcp-relay=${cfg.externalDhcpServer},${cfg.lanInterface}
+  #             ${concatMapStrings (vlan:
+  #               "dhcp-relay=${cfg.externalDhcpServer},${cfg.lanInterface}.${toString vlan.id}\n"
+  #             ) (filter (vlan: vlan.enableDhcp) cfg.vlans)}
+  #           ''
+  #           else "";
+  #       in
+  #         baseConfig + relayConfig;
+  #     };
 
-      # Kea DHCPv4 server configuration
-      kea-dhcp4 = mkIf cfg.keaDhcp4.enable {
-        enable = true;
-        settings = {
-          Dhcp4 = {
-            interfaces-config = {
-              interfaces = cfg.keaDhcp4.interfaces;
-            };
-            subnet4 = map (vlan: {
-              subnet = vlan.network;
-              pools = [
-                {
-                  pool = "${vlan.dhcpRangeStart} - ${vlan.dhcpRangeEnd}";
-                }
-              ];
-              option-data = [
-                {
-                  name = "routers";
-                  data = vlan.virtualIp;
-                }
-                {
-                  name = "domain-name-servers";
-                  data = concatStringsSep "," cfg.dnsServers;
-                }
-              ];
-            }) (filter (vlan: vlan.enableDhcp) cfg.vlans) ++ (if cfg.managementVlan.id == 1 then [{
-              subnet = cfg.managementVlan.network;
-              pools = [
-                {
-                  pool = "${cfg.dhcpRangeStart} - ${cfg.dhcpRangeEnd}";
-                }
-              ];
-              option-data = [
-                {
-                  name = "routers";
-                  data = cfg.managementVlan.virtualIp;
-                }
-                {
-                  name = "domain-name-servers";
-                  data = concatStringsSep "," cfg.dnsServers;
-                }
-              ];
-            }] else []);
-            # Configure failover if enabled
-            failover = cfg.keaDhcp4.failover;
-          };
-        };
-      };
+  #     # Kea DHCPv4 server configuration
+  #     kea-dhcp4 = mkIf cfg.keaDhcp4.enable {
+  #       enable = true;
+  #       settings = {
+  #         Dhcp4 = {
+  #           interfaces-config = {
+  #             interfaces = cfg.keaDhcp4.interfaces;
+  #           };
+  #           subnet4 = map (vlan: {
+  #             subnet = vlan.network;
+  #             pools = [
+  #               {
+  #                 pool = "${vlan.dhcpRangeStart} - ${vlan.dhcpRangeEnd}";
+  #               }
+  #             ];
+  #             option-data = [
+  #               {
+  #                 name = "routers";
+  #                 data = vlan.virtualIp;
+  #               }
+  #               {
+  #                 name = "domain-name-servers";
+  #                 data = concatStringsSep "," cfg.dnsServers;
+  #               }
+  #             ];
+  #           }) (filter (vlan: vlan.enableDhcp) cfg.vlans) ++ (if cfg.managementVlan.id == 1 then [{
+  #             subnet = cfg.managementVlan.network;
+  #             pools = [
+  #               {
+  #                 pool = "${cfg.dhcpRangeStart} - ${cfg.dhcpRangeEnd}";
+  #               }
+  #             ];
+  #             option-data = [
+  #               {
+  #                 name = "routers";
+  #                 data = cfg.managementVlan.virtualIp;
+  #               }
+  #               {
+  #                 name = "domain-name-servers";
+  #                 data = concatStringsSep "," cfg.dnsServers;
+  #               }
+  #             ];
+  #           }] else []);
+  #           # Configure failover if enabled
+  #           failover = cfg.keaDhcp4.failover;
+  #         };
+  #       };
+  #     };
 
-      # Keepalived configuration for VRRP
-      keepalived = mkIf cfg.vrrp.enable {
-        enable = true;
-        global_defs = {
-          router_id = cfg.vrrp.routerId; # Base router ID
-        };
-        vrrp_instance = let
-          # VRRP instance for the management VLAN
-          mgmtInstance = {
-            state = if cfg.routerRole == "primary" then "MASTER" else "BACKUP";
-            interface = if cfg.managementVlan.id == 1 then cfg.lanInterface else "${cfg.lanInterface}.${toString cfg.managementVlan.id}";
-            virtual_router_id = cfg.vrrp.routerId;
-            priority = cfg.vrrp.priority;
-            advert_int = 1;
-            authentication = {
-              auth_type = "PASS";
-              auth_pass = cfg.vrrp.authPass;
-            };
-            virtual_ipaddress = [ cfg.managementVlan.virtualIp ];
-            notify_master = cfg.vrrp.notifyMaster;
-            notify_backup = cfg.vrrp.notifyBackup;
-          };
+  #     # Keepalived configuration for VRRP
+  #     keepalived = mkIf cfg.vrrp.enable {
+  #       enable = true;
+  #       global_defs = {
+  #         router_id = cfg.vrrp.routerId; # Base router ID
+  #       };
+  #       vrrp_instance = let
+  #         # VRRP instance for the management VLAN
+  #         mgmtInstance = {
+  #           state = if cfg.routerRole == "primary" then "MASTER" else "BACKUP";
+  #           interface = if cfg.managementVlan.id == 1 then cfg.lanInterface else "${cfg.lanInterface}.${toString cfg.managementVlan.id}";
+  #           virtual_router_id = cfg.vrrp.routerId;
+  #           priority = cfg.vrrp.priority;
+  #           advert_int = 1;
+  #           authentication = {
+  #             auth_type = "PASS";
+  #             auth_pass = cfg.vrrp.authPass;
+  #           };
+  #           virtual_ipaddress = [ cfg.managementVlan.virtualIp ];
+  #           notify_master = cfg.vrrp.notifyMaster;
+  #           notify_backup = cfg.vrrp.notifyBackup;
+  #         };
 
-          # VRRP instances for other VLANs
-          vlanInstances = map (vlan: {
-            state = if cfg.routerRole == "primary" then "MASTER" else "BACKUP";
-            interface = "${cfg.lanInterface}.${toString vlan.id}";
-            virtual_router_id = cfg.vrrp.routerId + vlan.id; # Unique VRID per VLAN
-            priority = cfg.vrrp.priority;
-            advert_int = 1;
-            authentication = {
-              auth_type = "PASS";
-              auth_pass = cfg.vrrp.authPass;
-            };
-            virtual_ipaddress = [ vlan.virtualIp ];
-            notify_master = cfg.vrrp.notifyMaster;
-            notify_backup = cfg.vrrp.notifyBackup;
-          }) cfg.vlans;
-        in
-          [ mgmtInstance ] ++ vlanInstances;
-      };
-    };
+  #         # VRRP instances for other VLANs
+  #         vlanInstances = map (vlan: {
+  #           state = if cfg.routerRole == "primary" then "MASTER" else "BACKUP";
+  #           interface = "${cfg.lanInterface}.${toString vlan.id}";
+  #           virtual_router_id = cfg.vrrp.routerId + vlan.id; # Unique VRID per VLAN
+  #           priority = cfg.vrrp.priority;
+  #           advert_int = 1;
+  #           authentication = {
+  #             auth_type = "PASS";
+  #             auth_pass = cfg.vrrp.authPass;
+  #           };
+  #           virtual_ipaddress = [ vlan.virtualIp ];
+  #           notify_master = cfg.vrrp.notifyMaster;
+  #           notify_backup = cfg.vrrp.notifyBackup;
+  #         }) cfg.vlans;
+  #       in
+  #         [ mgmtInstance ] ++ vlanInstances;
+  #     };
+  #   };
 
-    # Install extra packages required for VLANs and VRRP
-    environment.systemPackages = with pkgs; [
-      vlan
-      iproute2
-      iptables
-      tcpdump # Useful for debugging network issues
-      bridge-utils
-      ethtool  # Useful for interface diagnostics
-      kea-dhcp4 # Add Kea DHCP server
-      keepalived # Add keepalived for VRRP
-    ];
+  #   # Install extra packages required for VLANs and VRRP
+  #   environment.systemPackages = with pkgs; [
+  #     vlan
+  #     iproute2
+  #     iptables
+  #     tcpdump # Useful for debugging network issues
+  #     bridge-utils
+  #     ethtool  # Useful for interface diagnostics
+  #     kea-dhcp4 # Add Kea DHCP server
+  #     keepalived # Add keepalived for VRRP
+  #   ];
 
-    # Recommended: journald settings for a router
-    services.journald = {
-      rateLimitBurst = 0;
-      extraConfig = "SystemMaxUse=50M";
-    };
+  #   # Recommended: journald settings for a router
+  #   services.journald = {
+  #     rateLimitBurst = 0;
+  #     extraConfig = "SystemMaxUse=50M";
+  #   };
   };
 }
