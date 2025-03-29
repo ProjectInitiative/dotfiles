@@ -130,6 +130,10 @@ in
 
     projectinitiative = {
 
+      suites = {
+        bcachefs-utils = enabled;
+      };
+
       services = {
 
         juicefs = {
