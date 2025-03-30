@@ -19,8 +19,8 @@ in
   config = mkIf cfg.enable {
     environment.systemPackages = with pkgs; [
         bcachefs-tools
-        namespace.bcachefs-fua-test
-        namespace.bcachefs-io-metrics
+        pkgs.${namespace}.bcachefs-fua-test
+        pkgs.${namespace}.bcachefs-io-metrics
     ];
     
   };
