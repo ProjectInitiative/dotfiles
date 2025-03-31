@@ -3,6 +3,7 @@
   pkgs,
   inputs,
   namespace,
+  system,
   config,
   options,
   ...
@@ -79,7 +80,7 @@ with lib.${namespace};
     # quickgui
     bitwarden-desktop
     solaar
-    spotify
+    # spotify
     mtr
     virtualbox
     vlc

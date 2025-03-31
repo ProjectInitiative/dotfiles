@@ -184,40 +184,68 @@ def get_fs_devices(fs_path: str) -> List[Dict[str, Any]]:
         if os.path.isfile(label_file):
             device["label"] = get_sysfs_file_content(label_file)
         
-        # Get block device information
-        block_dir = os.path.join(dev_dir, "block")
-        if os.path.isdir(block_dir):
-            # Get device major:minor
-            dev_file = os.path.join(block_dir, "dev")
+        # Get device info using the approach from bcachefs-fua-test
+        try:
+            # Get the major:minor device number
+            dev_file = os.path.join(dev_dir, "block", "dev")
             if os.path.isfile(dev_file):
-                device["dev"] = get_sysfs_file_content(dev_file)
-                
-                # Use lsblk to get more device info
-                if device.get("dev"):
-                    cmd = ["lsblk", "-d", "-o", "NAME,MODEL,SERIAL,SIZE,TYPE,FSTYPE,UUID,VENDOR", 
-                           "--json", "--nodeps"]
-                    result = run_command(cmd)
+                with open(dev_file, 'r') as f:
+                    maj_min = f.read().strip()
                     
-                    if result["success"]:
-                        try:
-                            lsblk_data = json.loads(result["stdout"])
-                            for blk_device in lsblk_data.get("blockdevices", []):
-                                # Try to match by major:minor
-                                dev_path = f"/dev/{blk_device.get('name', '')}"
-                                dev_cmd = run_command(["stat", "-c", "%t:%T", dev_path])
-                                
-                                if dev_cmd["success"] and dev_cmd["stdout"].strip() == device["dev"]:
+                # Run lsblk to get device information in JSON format
+                cmd = ["lsblk", "-d", "-o", "NAME,MODEL,SERIAL,SIZE,TYPE,VENDOR,MAJ:MIN", "--json"]
+                result = run_command(cmd)
+                
+                if result["success"]:
+                    try:
+                        device_data = json.loads(result["stdout"])
+                        
+                        # Find the device with matching major:minor number
+                        for blk_device in device_data.get("blockdevices", []):
+                            if blk_device.get("maj:min") == maj_min:
+                                device.update({
+                                    "name": blk_device.get("name", "Unknown"),
+                                    "model": blk_device.get("model", "Unknown"),
+                                    "serial": blk_device.get("serial", "Unknown"),
+                                    "size": blk_device.get("size", "Unknown"),
+                                    "type": blk_device.get("type", "Unknown"),
+                                    "vendor": blk_device.get("vendor", "Unknown")
+                                })
+                                break
+                    except json.JSONDecodeError:
+                        pass
+        except Exception:
+            pass
+            
+        # If we still don't have device info, try alternative method
+        if "name" not in device or device["name"] == "Unknown":
+            try:
+                # Try to get the block device name directly
+                block_dir = os.path.join(dev_dir, "block")
+                if os.path.isdir(block_dir):
+                    block_name = os.path.basename(os.readlink(block_dir))
+                    if block_name:
+                        cmd = ["lsblk", "-d", "-o", "NAME,MODEL,SERIAL,SIZE,TYPE,VENDOR", 
+                               "--json", "--nodeps", f"/dev/{block_name}"]
+                        result = run_command(cmd)
+                        
+                        if result["success"]:
+                            try:
+                                device_data = json.loads(result["stdout"])
+                                if "blockdevices" in device_data and len(device_data["blockdevices"]) > 0:
+                                    blk_device = device_data["blockdevices"][0]
                                     device.update({
-                                        "name": blk_device.get("name", ""),
-                                        "model": blk_device.get("model", ""),
-                                        "serial": blk_device.get("serial", ""),
-                                        "size": blk_device.get("size", ""),
-                                        "type": blk_device.get("type", ""),
-                                        "vendor": blk_device.get("vendor", "")
+                                        "name": blk_device.get("name", "Unknown"),
+                                        "model": blk_device.get("model", "Unknown"),
+                                        "serial": blk_device.get("serial", "Unknown"),
+                                        "size": blk_device.get("size", "Unknown"),
+                                        "type": blk_device.get("type", "Unknown"),
+                                        "vendor": blk_device.get("vendor", "Unknown")
                                     })
-                                    break
-                        except json.JSONDecodeError:
-                            pass
+                            except json.JSONDecodeError:
+                                pass
+            except Exception:
+                pass
         
         # Get device options
         opts_dir = os.path.join(dev_dir, "options")
@@ -284,10 +312,18 @@ def parse_io_done(file_path: str) -> Dict[str, Dict[str, int]]:
     return results
 
 def get_fs_features(fs_path: str) -> Dict[str, str]:
-    """Get filesystem features from sysfs."""
+    """Get filesystem features and options from sysfs."""
     features = {}
     
-    # Common feature files
+    # Check if there's an options directory
+    options_dir = os.path.join(fs_path, "options")
+    if os.path.isdir(options_dir):
+        for option_file in os.listdir(options_dir):
+            option_path = os.path.join(options_dir, option_file)
+            if os.path.isfile(option_path):
+                features[option_file] = get_sysfs_file_content(option_path)
+    
+    # Common feature files in the main directory
     feature_files = [
         "allocation_background", "allocation_foreground", "block_size", "btree_node_size",
         "compression", "encoded_extent_max", "erasure_code", "journal_flush_delay",
@@ -320,7 +356,66 @@ def get_mounted_filesystems() -> List[Dict[str, str]]:
                         "dump": parts[4],
                         "pass": parts[5]
                     }
+                    
+                    # Try to get UUID from bcachefs
+                    try:
+                        cmd = ["bcachefs", "fs", "show", parts[1]]
+                        result = run_command(cmd)
+                        if result["success"]:
+                            # Look for UUID in the output
+                            for line in result["stdout"].splitlines():
+                                if "UUID:" in line:
+                                    fs["uuid"] = line.split("UUID:")[1].strip()
+                                    break
+                    except Exception:
+                        pass
+                        
                     filesystems.append(fs)
+    except Exception:
+        pass
+    
+    # Also try to get mount info using the bcachefs command
+    try:
+        cmd = ["bcachefs", "fs", "list"]
+        result = run_command(cmd)
+        if result["success"]:
+            lines = result["stdout"].splitlines()
+            # Skip header if present
+            start_idx = 0
+            if lines and "UUID" in lines[0]:
+                start_idx = 1
+                
+            for line in lines[start_idx:]:
+                parts = line.split()
+                if len(parts) >= 2:
+                    uuid = parts[0]
+                    mountpoint = parts[1]
+                    
+                    # Check if this fs is already in our list
+                    found = False
+                    for fs in filesystems:
+                        if fs.get("mountpoint") == mountpoint:
+                            fs["uuid"] = uuid
+                            found = True
+                            break
+                            
+                    if not found:
+                        # Get mount options
+                        options = ""
+                        cmd = ["findmnt", "-n", "-o", "OPTIONS", mountpoint]
+                        result = run_command(cmd)
+                        if result["success"]:
+                            options = result["stdout"].strip()
+                            
+                        filesystems.append({
+                            "device": "",  # We don't know the device path here
+                            "mountpoint": mountpoint,
+                            "type": "bcachefs",
+                            "options": options,
+                            "dump": "0",
+                            "pass": "0",
+                            "uuid": uuid
+                        })
     except Exception:
         pass
     
@@ -370,6 +465,11 @@ def get_fs_usage(mountpoint: str) -> Dict[str, Any]:
     status = run_bcachefs_status(mountpoint)
     usage["bcachefs_status"] = status
     
+    # Get detailed bcachefs fs usage
+    bcachefs_usage_cmd = run_command(["bcachefs", "fs", "usage", mountpoint, "-h"])
+    if bcachefs_usage_cmd["success"]:
+        usage["bcachefs_fs_usage"] = bcachefs_usage_cmd["stdout"]
+    
     return usage
 
 def process_fs_info(fs_uuid: str) -> Dict[str, Any]:
@@ -386,14 +486,55 @@ def process_fs_info(fs_uuid: str) -> Dict[str, Any]:
     
     # Find mountpoint for this filesystem
     mounted_fs = get_mounted_filesystems()
+    found_mount = False
+    
     for fs in mounted_fs:
+        # Check if UUID matches
+        if fs.get("uuid") == fs_uuid:
+            fs_info["mountpoint"] = fs["mountpoint"]
+            fs_info["mount_options"] = fs["options"]
+            fs_info["usage"] = get_fs_usage(fs["mountpoint"])
+            found_mount = True
+            break
         # Check if device contains the UUID
-        if fs_uuid in fs["device"] or any(fs_uuid in dev.get("label", "") 
+        elif fs_uuid in fs["device"] or any(fs_uuid in dev.get("label", "") 
                                          for dev in fs_info["devices"]):
             fs_info["mountpoint"] = fs["mountpoint"]
             fs_info["mount_options"] = fs["options"]
             fs_info["usage"] = get_fs_usage(fs["mountpoint"])
+            found_mount = True
             break
+    
+    # If we didn't find a mount point, try to run bcachefs fs list
+    if not found_mount:
+        try:
+            cmd = ["bcachefs", "fs", "list"]
+            result = run_command(cmd)
+            if result["success"]:
+                lines = result["stdout"].splitlines()
+                # Skip header
+                if lines and "UUID" in lines[0]:
+                    lines = lines[1:]
+                    
+                for line in lines:
+                    parts = line.split()
+                    if len(parts) >= 2 and parts[0] == fs_uuid:
+                        mountpoint = parts[1]
+                        fs_info["mountpoint"] = mountpoint
+                        
+                        # Get mount options
+                        options = ""
+                        cmd = ["findmnt", "-n", "-o", "OPTIONS", mountpoint]
+                        result = run_command(cmd)
+                        if result["success"]:
+                            options = result["stdout"].strip()
+                            
+                        fs_info["mount_options"] = options
+                        fs_info["usage"] = get_fs_usage(mountpoint)
+                        found_mount = True
+                        break
+        except Exception:
+            pass
     
     return fs_info
 
@@ -522,6 +663,7 @@ def main():
     parser.add_argument("-j", "--json", action="store_true", help="Output in JSON format")
     parser.add_argument("-o", "--output", help="Save report to file")
     parser.add_argument("--no-color", action="store_true", help="Disable colored output")
+    parser.add_argument("-p", "--performance", action="store_true", help="Include performance tests (experimental)")
     args = parser.parse_args()
     
     # Disable colors if requested
@@ -564,14 +706,29 @@ def main():
         
         for fs in mounted_fs:
             if fs["mountpoint"] == args.mountpoint:
-                # Get UUID from device path
-                for instance in find_bcachefs_instances():
-                    # Run a simple check to see if this is the right instance
-                    status = run_bcachefs_status(args.mountpoint)
-                    if status and "parsed" in status and "UUID" in status["parsed"]:
-                        if status["parsed"]["UUID"] == instance:
-                            uuid = instance
+                # Get UUID from the mounted filesystem info
+                if "uuid" in fs:
+                    uuid = fs["uuid"]
+                    break
+                
+                # If no UUID in the mount info, try to get it from bcachefs status
+                status = run_bcachefs_status(args.mountpoint)
+                if status and "parsed" in status and "UUID" in status["parsed"]:
+                    uuid = status["parsed"]["UUID"]
+                    break
+        
+        if not uuid:
+            # Try one more method - bcachefs fs show
+            try:
+                cmd = ["bcachefs", "fs", "show", args.mountpoint]
+                result = run_command(cmd)
+                if result["success"]:
+                    for line in result["stdout"].splitlines():
+                        if "UUID:" in line:
+                            uuid = line.split("UUID:")[1].strip()
                             break
+            except Exception:
+                pass
         
         if not uuid:
             print(f"{Colors.RED}Error: Could not find bcachefs instance for mountpoint {args.mountpoint}{Colors.ENDC}")

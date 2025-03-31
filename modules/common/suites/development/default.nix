@@ -5,6 +5,8 @@
   pkgs,
   namespace,
   osConfig ? { },
+  system,
+  inputs,
   ...
 }:
 with lib;
@@ -15,6 +17,7 @@ let
   isDarwin = pkgs.stdenv.isDarwin;
   isNixOS = options ? environment; # NixOS always has environment option
   isHomeManager = options ? home; # Home Manager always has home option
+  isGraphical = osConfig.${namespace}.isGraphical;
 in
 {
   options.${namespace}.suites.development = with types; {
@@ -72,7 +75,7 @@ in
           python3
           python3Packages.pip
           rustup
-        ];
+        ] ++ lib.optionals isGraphical [ inputs.claude-desktop.packages.${system}.claude-desktop-with-fhs ];
       };
     }
   );

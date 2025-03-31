@@ -9,6 +9,7 @@ pkgs.mkShell {
     pkgs.util-linux
     pkgs.coreutils
     pkgs.iproute2
+    pkgs.findutils
     pkgs.bcachefs-tools
   ];
 

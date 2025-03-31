@@ -98,8 +98,6 @@ in {
     # Install bcachefs tools and our test script
     environment.systemPackages = with pkgs; [
       bcachefs-tools
-      nvme-cli  # For gathering NVMe device info
-      bcachefsFuaTestScript
     ];
     
   };
