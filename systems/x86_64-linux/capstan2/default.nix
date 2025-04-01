@@ -21,10 +21,15 @@ with lib.${namespace};
 
     system = {
       bcachefs-kernel = {
-        enable = true;
+        enable = false;
         branch = "master"; # Or specify a specific commit hash
-        sourceHash = "sha256-CroDFgZyp9gjrrLdVSEbN1jbHzAB0N/XkNlN2s7VXo0="; # Replace with real hash after first build attempt
-
+        sourceHash = "sha256-gKEH0gUxwdVdFXnJ1hJ/U+GmzT8ONCDTHxRqjOj8j+Y=";
+        debug = true;
+      };
+      bcachefs-module = {
+        enable = false;
+        branch = "master"; # Or specify a specific commit hash
+        sourceHash = "sha256-gKEH0gUxwdVdFXnJ1hJ/U+GmzT8ONCDTHxRqjOj8j+Y=";
         debug = true;
       };
     };

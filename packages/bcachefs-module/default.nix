@@ -23,7 +23,7 @@ let
       repo = "bcachefs";
       rev = "latency_debug";
       # This hash is placeholder and will need to be updated with the actual hash from the build error
-      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; 
+      hash = lib.fakeSha256; 
     };
 
     nativeBuildInputs = kernel.moduleBuildDependencies;
