@@ -10,19 +10,47 @@ let
 in
 with lib.${namespace};
 {
-  system = {
-    bcachefs-kernel = {
+
+  ${namespace} = {
+    disko.mdadm-root = {
       enable = true;
-      branch = "master"; # Or specify a specific commit hash
-      sourceHash = "sha256-ulv5deF1YFyDEN8q3UuoeUgfimy+AnsfGnsTNuZYxCM=";
-      debug = true;
+      mirroredDrives = [
+        "/dev/disk/by-id/ata-SPCC_Solid_State_Disk_0E7C072A0D5A00048168"
+        "/dev/disk/by-id/ata-Lexar_256GB_SSD_MD1803W119789"
+      ];
     };
-    bcachefs-module = {
-      enable = false;
-      rev = "master"; # Or specify a specific commit hash
-      hash = "sha256-ulv5deF1YFyDEN8q3UuoeUgfimy+AnsfGnsTNuZYxCM=";
-      debug = true;
+
+    system = {
+      bcachefs-kernel = {
+        enable = true;
+        branch = "master"; # Or specify a specific commit hash
+        sourceHash = "sha256-ulv5deF1YFyDEN8q3UuoeUgfimy+AnsfGnsTNuZYxCM=";
+        debug = true;
+      };
+      bcachefs-module = {
+        enable = false;
+        rev = "master"; # Or specify a specific commit hash
+        hash = "sha256-ulv5deF1YFyDEN8q3UuoeUgfimy+AnsfGnsTNuZYxCM=";
+        debug = true;
+      };
     };
+
+    hosts.capstan = {
+      enable = true;
+      ipAddress = "${config.sensitiveNotSecret.default_subnet}53/24";
+      interface = "enp3s0";
+      enableMlx = true;
+      mlxIpAddress = "172.16.4.53";
+      mlxPcie = "0000:05:00.0";
+      bondMembers = [
+        "enp5s0"
+        "enp5s0d1"
+      ];
+      bcachefsInitDevice = "/dev/disk/by-id/nvme-TEAM_TM8FPD002T_TPBF2310170080200016";
+      mountpoint = mountpoint;
+      k8sServerAddr = "https://172.16.1.45:6443";
+    };
+
   };
 
   disko.devices = {
@@ -95,31 +123,5 @@ with lib.${namespace};
     };
   };
 
-  ${namespace} = {
-    disko.mdadm-root = {
-      enable = true;
-      mirroredDrives = [
-        "/dev/disk/by-id/ata-SPCC_Solid_State_Disk_0E7C072A0D5A00048168"
-        "/dev/disk/by-id/ata-Lexar_256GB_SSD_MD1803W119789"
-      ];
-    };
-
-    hosts.capstan = {
-      enable = true;
-      ipAddress = "${config.sensitiveNotSecret.default_subnet}53/24";
-      interface = "enp3s0";
-      enableMlx = true;
-      mlxIpAddress = "172.16.4.53";
-      mlxPcie = "0000:05:00.0";
-      bondMembers = [
-        "enp5s0"
-        "enp5s0d1"
-      ];
-      bcachefsInitDevice = "/dev/disk/by-id/nvme-TEAM_TM8FPD002T_TPBF2310170080200016";
-      mountpoint = mountpoint;
-      k8sServerAddr = "https://172.16.1.45:6443";
-    };
-
-  };
 
 }
