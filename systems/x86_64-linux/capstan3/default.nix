@@ -14,13 +14,13 @@ with lib.${namespace};
     bcachefs-kernel = {
       enable = true;
       branch = "master"; # Or specify a specific commit hash
-      sourceHash = "sha256-gKEH0gUxwdVdFXnJ1hJ/U+GmzT8ONCDTHxRqjOj8j+Y=";
+      sourceHash = "sha256-ulv5deF1YFyDEN8q3UuoeUgfimy+AnsfGnsTNuZYxCM=";
       debug = true;
     };
     bcachefs-module = {
       enable = false;
-      branch = "master"; # Or specify a specific commit hash
-      sourceHash = "sha256-gKEH0gUxwdVdFXnJ1hJ/U+GmzT8ONCDTHxRqjOj8j+Y=";
+      rev = "master"; # Or specify a specific commit hash
+      hash = "sha256-ulv5deF1YFyDEN8q3UuoeUgfimy+AnsfGnsTNuZYxCM=";
       debug = true;
     };
   };
