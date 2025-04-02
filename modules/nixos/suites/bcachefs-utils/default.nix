@@ -18,11 +18,11 @@ in
 
   config = mkIf cfg.enable {
     environment.systemPackages = with pkgs; [
-        bcachefs-tools
-        pkgs.${namespace}.bcachefs-doctor
-        pkgs.${namespace}.bcachefs-fua-test
-        pkgs.${namespace}.bcachefs-io-metrics
+      bcachefs-tools
+      pkgs.${namespace}.bcachefs-doctor
+      pkgs.${namespace}.bcachefs-fua-test
+      pkgs.${namespace}.bcachefs-io-metrics
     ];
-    
+
   };
 }

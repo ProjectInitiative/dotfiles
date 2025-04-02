@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
@@ -8,35 +13,46 @@ let
     Dhcp4 = {
       interfaces-config = {
         interfaces =
-          (mkIf (cfg.managementVlan.id == 1) [ cfg.lanInterface ]) ++
-          (map (vlan: "${cfg.lanInterface}.${toString vlan.id}")
-            (filter (vlan: vlan.enableDhcp) cfg.vlans));
+          (mkIf (cfg.managementVlan.id == 1) [ cfg.lanInterface ])
+          ++ (map (vlan: "${cfg.lanInterface}.${toString vlan.id}") (
+            filter (vlan: vlan.enableDhcp) cfg.vlans
+          ));
       };
-      subnet4 =
-        flatten (
-          (optional (cfg.dhcpMode == "internal")
-            ({
-              id = 1; # Arbitrary ID for the base/management VLAN
-              subnet = elemAt (builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})\\.([0-9]{1,3})/([0-9]{1,2})$" cfg.managementVlan.network) 0;
-              pools = [ { pool = "${cfg.dhcpRangeStart} - ${cfg.dhcpRangeEnd}"; } ];
-              option-data = [
-                { name = "routers"; data = cfg.managementVlan.virtualIp; }
-                { name = "domain-name-servers"; data = concatStringsSep "," cfg.dnsServers; }
-              ];
-            })
-          ) ++
-          (map (vlan:
-            optional (vlan.enableDhcp && cfg.dhcpMode == "internal") {
-              id = vlan.id + 100; # Offset VLAN IDs to avoid collision
-              subnet = elemAt (builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})\\.([0-9]{1,3})/([0-9]{1,2})$" vlan.network) 0;
-              pools = [ { pool = "${vlan.dhcpRangeStart} - ${vlan.dhcpRangeEnd}"; } ];
-              option-data = [
-                { name = "routers"; data = vlan.virtualIp; }
-                { name = "domain-name-servers"; data = concatStringsSep "," cfg.dnsServers; }
-              ];
+      subnet4 = flatten (
+        (optional (cfg.dhcpMode == "internal") ({
+          id = 1; # Arbitrary ID for the base/management VLAN
+          subnet = elemAt (builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})\\.([0-9]{1,3})/([0-9]{1,2})$" cfg.managementVlan.network) 0;
+          pools = [ { pool = "${cfg.dhcpRangeStart} - ${cfg.dhcpRangeEnd}"; } ];
+          option-data = [
+            {
+              name = "routers";
+              data = cfg.managementVlan.virtualIp;
             }
-          ) cfg.vlans)
-        );
+            {
+              name = "domain-name-servers";
+              data = concatStringsSep "," cfg.dnsServers;
+            }
+          ];
+        }))
+        ++ (map (
+          vlan:
+          optional (vlan.enableDhcp && cfg.dhcpMode == "internal") {
+            id = vlan.id + 100; # Offset VLAN IDs to avoid collision
+            subnet = elemAt (builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})\\.([0-9]{1,3})/([0-9]{1,2})$" vlan.network) 0;
+            pools = [ { pool = "${vlan.dhcpRangeStart} - ${vlan.dhcpRangeEnd}"; } ];
+            option-data = [
+              {
+                name = "routers";
+                data = vlan.virtualIp;
+              }
+              {
+                name = "domain-name-servers";
+                data = concatStringsSep "," cfg.dnsServers;
+              }
+            ];
+          }
+        ) cfg.vlans)
+      );
     };
   };
 in
@@ -72,5 +88,5 @@ in
     system = true;
   };
 
-  environment.systemPackages = (config.environment.systemPackages or []) ++ [ pkgs.kea ];
+  environment.systemPackages = (config.environment.systemPackages or [ ]) ++ [ pkgs.kea ];
 }

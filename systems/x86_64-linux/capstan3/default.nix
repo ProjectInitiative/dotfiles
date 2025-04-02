@@ -10,6 +10,21 @@ let
 in
 with lib.${namespace};
 {
+  system = {
+    bcachefs-kernel = {
+      enable = false;
+      branch = "master"; # Or specify a specific commit hash
+      sourceHash = "sha256-gKEH0gUxwdVdFXnJ1hJ/U+GmzT8ONCDTHxRqjOj8j+Y=";
+      debug = true;
+    };
+    bcachefs-module = {
+      enable = false;
+      branch = "master"; # Or specify a specific commit hash
+      sourceHash = "sha256-gKEH0gUxwdVdFXnJ1hJ/U+GmzT8ONCDTHxRqjOj8j+Y=";
+      debug = true;
+    };
+  };
+
   disko.devices = {
     disk = {
       nvme1 = {

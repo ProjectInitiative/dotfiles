@@ -1,4 +1,10 @@
-{ config, lib, pkgs, namespace, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  namespace,
+  ...
+}:
 
 with lib;
 
@@ -85,7 +91,8 @@ let
     };
   }; # <<< End of bcachefsDrv derivation definition
 
-in # End of the top-level 'let' block for this module file
+in
+# End of the top-level 'let' block for this module file
 {
   # --- Options Definition ---
   # Defines the configuration interface for this module.
@@ -124,15 +131,17 @@ in # End of the top-level 'let' block for this module file
   config = mkIf cfg.enable {
 
     # Assertion to ensure hash is provided when enabled. Checked during evaluation.
-    assertions = [{
-      assertion = cfg.hash != "" && cfg.hash != lib.fakeSha256;
-      message = ''
-        The option ${namespace}.system.bcachefs-module.hash must be set to a valid SHA256 hash
-        when ${namespace}.system.bcachefs-module.enable is true.
-        You can get the hash by initially setting it to lib.fakeSha256 (or an empty string "")
-        and running the build; Nix will report the expected hash on failure.
-      '';
-    }];
+    assertions = [
+      {
+        assertion = cfg.hash != "" && cfg.hash != lib.fakeSha256;
+        message = ''
+          The option ${namespace}.system.bcachefs-module.hash must be set to a valid SHA256 hash
+          when ${namespace}.system.bcachefs-module.enable is true.
+          You can get the hash by initially setting it to lib.fakeSha256 (or an empty string "")
+          and running the build; Nix will report the expected hash on failure.
+        '';
+      }
+    ];
 
     # Add the compiled kernel module derivation to the list NixOS uses
     boot.extraModulePackages = [ bcachefsDrv ];

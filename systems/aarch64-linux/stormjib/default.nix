@@ -88,9 +88,6 @@ in
     # usePredictableInterfaceNames = false;
   };
 
-  
-
-
   systemd = {
     # Enable networkd
     network = {
@@ -111,14 +108,14 @@ in
 
       networks = {
         "12-lan" = {
-          matchConfig.Name = "lan0";  # Match the future name
+          matchConfig.Name = "lan0"; # Match the future name
           networkConfig = {
             DHCP = "yes";
             IPv6AcceptRA = "no";
           };
         };
         "13-wan" = {
-          matchConfig.Name = "wan0";  # Match the future name
+          matchConfig.Name = "wan0"; # Match the future name
           networkConfig = {
             DHCP = "yes";
             IPv6AcceptRA = "no";
