@@ -12,7 +12,7 @@ with lib.${namespace};
 {
   system = {
     bcachefs-kernel = {
-      enable = false;
+      enable = true;
       branch = "master"; # Or specify a specific commit hash
       sourceHash = "sha256-gKEH0gUxwdVdFXnJ1hJ/U+GmzT8ONCDTHxRqjOj8j+Y=";
       debug = true;
