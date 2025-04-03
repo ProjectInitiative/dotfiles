@@ -15,8 +15,8 @@ let
 in
 {
   imports = [
-    # Import the modular router configuration
-    ../../../router/default.nix
+    # Import the modular router configuration from the new location
+    ./router/default.nix
   ];
 
   options.${namespace}.hosts.base-router = with types; {
