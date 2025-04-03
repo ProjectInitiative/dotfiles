@@ -15,8 +15,8 @@ let
 in
 {
   imports = [
-    # Import the main router module
-    ../modules/router
+    # Import the base router module (which imports the modular router components)
+    ../modules/nixos/hosts/base-router
 
     # Import sops module if needed for secrets
     inputs.sops-nix.nixosModules.sops
@@ -34,7 +34,7 @@ in
   };
   users.users.admin = { # Example admin user
     isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" ]; # networkmanager might not be needed if fully manual
+    extraGroups = [ "wheel" ]; # networkmanager group removed as NM is disabled below
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAA..."
     ];
@@ -42,8 +42,8 @@ in
   };
   # users.users.root.hashedPasswordFile = config.sops.secrets.root_password.path;
 
-  # --- Router Configuration ---
-  ${namespace}.router = {
+  # --- Router Configuration (using base-router module) ---
+  ${namespace}.hosts.base-router = {
     enable = true;
     routerRole = routerRole; # Pass role defined above
 
@@ -89,20 +89,20 @@ in
     ];
 
     # --- WAN IP ---
-    networking.externalStaticIp = {
+    externalStaticIp = {
       address = "YOUR_STATIC_IP";
       prefixLength = 24; # Your prefix length
       gateway = "YOUR_GATEWAY_IP";
     };
-    # Or set networking.externalStaticIp = null; to use DHCP on WAN
+    # Or set externalStaticIp = null; to use DHCP on WAN
 
     # --- DNS ---
     dnsServers = [ "9.9.9.9" "1.1.1.1" ]; # Override defaults if needed
-    dns.cacheSize = 2000; # Customize DNS cache
+    dnsCacheSize = 2000; # Customize DNS cache
 
     # --- DHCP ---
-    dhcp.kea.enable = true;
-    dhcp.kea.failover = mkIf config.${namespace}.router.vrrp.enable { # Enable failover only if VRRP is enabled
+    keaDhcp4.enable = true;
+    keaDhcp4.failover = mkIf config.${namespace}.hosts.base-router.vrrp.enable { # Enable failover only if VRRP is enabled
        # Parameters are mostly defaults, adjust if needed
        mclt = 1800; # Example override
     };
@@ -117,16 +117,16 @@ in
     vrrp.keaFailoverPort = 647; # Ensure this matches Kea config if using failover
 
     # --- Firewall ---
-    firewall.allowPingFromWan = false;
-    firewall.portForwarding = [
+    allowPingFromWan = false;
+    portForwarding = [
       { sourcePort = 80; destination = "192.168.20.10"; protocol = "tcp"; description = "Web Server"; }
       { sourcePort = 443; destination = "192.168.20.10"; protocol = "tcp"; }
       { sourcePort = 1194; destination = "192.168.20.11"; destinationPort = 1194; protocol = "udp"; description = "OpenVPN"; }
     ];
 
     # --- Kernel ---
-    kernel.extraModules = [ "wireguard" ]; # Example
-    kernel.extraSysctl = {
+    extraKernelModules = [ "wireguard" ]; # Example
+    extraSysctlSettings = {
       "net.core.somaxconn" = 1024; # Example custom sysctl
     };
 
@@ -139,10 +139,7 @@ in
   };
   # sops.secrets."root_password" = {};
 
-  # Optional: Disable NetworkManager if managing interfaces manually
+  # Disable NetworkManager as interfaces are manually configured by the router modules
   networking.networkmanager.enable = false;
-  # Or configure NetworkManager to ignore managed interfaces:
-  # networking.networkmanager.unmanaged = [ "eth0" "eth1" "eth1.*" ];
-
 
 }
