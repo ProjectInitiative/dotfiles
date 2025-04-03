@@ -15,7 +15,7 @@ let
   cfg = config.${namespace}.router;
   moduleCfg = config.${namespace}.router.dhcp;
 
-  # Helper to generate subnet config
+  # Helper to generate subnet config (remains the same)
   mkSubnetConfig = { networkInfo, vlanCfg }: {
       subnet = networkInfo.address + "/" + toString networkInfo.prefixLength;
       pools = [ { pool = "${vlanCfg.dhcpRangeStart} - ${vlanCfg.dhcpRangeEnd}"; } ];
@@ -27,6 +27,9 @@ let
       # Add reservations here if needed
       # reservations = [ { hw-address = "..."; ip-address = "..."; } ];
   };
+
+  # Define the format for the Kea JSON config file
+  keaJsonFormat = pkgs.formats.json { };
 
 in
 {
@@ -66,10 +69,9 @@ in
         vlanIfs = map (vlan: "${cfg.lanInterface}.${toString vlan.id}") (filter (v: v.enableDhcp) cfg.vlans);
     in mgmtIf ++ vlanIfs;
 
-
-    services.kea-dhcp4 = {
-      enable = true;
-      settings = {
+    # Generate Kea configuration file
+    environment.etc."kea/kea-dhcp4.conf" = {
+      source = keaJsonFormat.generate "kea-dhcp4-config" {
         Dhcp4 = {
           interfaces-config = {
             interfaces = config._module.args.keaInterfaces; # Use dynamically generated list
@@ -80,6 +82,7 @@ in
           lease-database = {
              type = "memfile";
              lfc-interval = 3600;
+             # name = "/var/lib/kea/dhcp4.leases"; # Default location
           };
           # Example PostgreSQL:
           # lease-database = {
@@ -125,6 +128,7 @@ in
                                   {
                                       name = if cfg.routerRole == "primary" then "kea-router2" else "kea-router1"; # Partner's name
                                       # Kea derives partner IP and port from VRRP config if possible, or set explicitly
+                                      # Ensure vrrp module defines keaFailoverPort and peerAddress
                                       url = "http://${config.${namespace}.router.vrrp.peerAddress}:${toString config.${namespace}.router.vrrp.keaFailoverPort}"; # Use explicit port from VRRP options
                                       role = if cfg.routerRole == "primary" then "primary" else "secondary"; # Role in this specific peer relationship
                                       # auto-failover = true; # Default
@@ -143,9 +147,40 @@ in
               name = "kea-dhcp4";
               output_options = [{ output = "stderr"; }]; # or syslog, file
               severity = "INFO"; # DEBUG, WARN, ERROR etc.
+              # debuglevel = 0; # 0-99
             }
           ];
         };
+      };
+      mode = "0644";
+      user = "root"; # Kea typically runs as root unless configured otherwise
+      group = "root"; # Adjust if running Kea under a different user/group
+    };
+
+    # Define the systemd service for Kea DHCPv4
+    systemd.services.kea-dhcp4 = {
+      description = "Kea DHCPv4 Server";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network-online.target" ]; # Ensure network interfaces are up
+      wants = [ "network-online.target" ];
+
+      # Ensure the config file exists before starting
+      unitConfig.Requires = "etc-kea-kea\\x2ddhcp4.conf.mount"; # systemd escaped path
+      after = [ "etc-kea-kea\\x2ddhcp4.conf.mount" ];
+
+      serviceConfig = {
+        # Use the generated config file
+        ExecStart = "${pkgs.kea}/bin/kea-dhcp4 -c ${config.environment.etc."kea/kea-dhcp4.conf".path}";
+        Restart = "on-failure";
+        # User/Group: Kea often needs root privileges for raw sockets or specific operations.
+        # If running non-root, ensure permissions on lease files, config, etc.
+        # User = "kea";
+        # Group = "kea";
+        # AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" "CAP_NET_RAW" ]; # Example if non-root
+
+        # State directory (Kea might need write access here for lease files etc.)
+        StateDirectory = "kea"; # Creates /var/lib/kea owned by service user/group
+        StateDirectoryMode = "0750";
       };
     };
 
@@ -154,12 +189,28 @@ in
 
     # Open firewall port for Kea HA communication if failover enabled
     networking.firewall = mkIf (moduleCfg.kea.failover != null) {
+        # Ensure the VRRP module defines keaFailoverPort
         allowedUDPPorts = [ config.${namespace}.router.vrrp.keaFailoverPort ]; # Allow incoming HA connections
         # Or more specific rule using peer address:
         # extraCommands = ''
         #   iptables -A INPUT -p tcp --dport ${toString config.${namespace}.router.vrrp.keaFailoverPort} -s ${config.${namespace}.router.vrrp.peerAddress} -j ACCEPT
         # '';
+        # Note: Kea HA uses TCP, not UDP. Adjust firewall rule.
+        allowedTCPPorts = [ config.${namespace}.router.vrrp.keaFailoverPort ];
     };
+
+    # Also open standard DHCP ports (UDP 67, 68) - Kea needs to listen
+    networking.firewall.allowedUDPPorts = [ 67 68 ]
+      ++ (if moduleCfg.kea.failover != null then [ config.${namespace}.router.vrrp.keaFailoverPort ] else []);
+
+
+    # Assertion to ensure VRRP options needed for HA are present
+    assertions = mkIf (moduleCfg.kea.failover != null) [
+      {
+        assertion = config.${namespace}.router.vrrp ? peerAddress && config.${namespace}.router.vrrp ? keaFailoverPort;
+        message = "Kea DHCP failover requires config.${namespace}.router.vrrp.peerAddress and config.${namespace}.router.vrrp.keaFailoverPort to be defined in the VRRP module.";
+      }
+    ];
 
   };
 }
