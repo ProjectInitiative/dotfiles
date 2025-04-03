@@ -61,6 +61,7 @@ in
           direnv = enabled;
           k8s = enabled;
           ansible = enabled;
+          aider = enabled;
         };
         security = {
           gpg = enabled;
