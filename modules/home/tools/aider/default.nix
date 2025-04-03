@@ -20,27 +20,25 @@ in
 
     home = {
       packages = with pkgs; [
-         (aider-chat.overrideAttrs (oldAttrs: {
-          # Add dependencies to the package's runtime environment
-          propagatedBuildInputs = (oldAttrs.propagatedBuildInputs or []) ++ [
-            # Use the package set corresponding to the Python version
-            # aider-chat uses by default (likely python3Packages,
-            # but let's use python311Packages since you specified it).
-            python311Packages.google-generativeai
-            # google-generativeai usually pulls in 'google' itself,
-            # but explicitly adding it doesn't hurt if needed.
-            python311Packages.google
-          ];
+        #  (aider-chat.overrideAttrs (oldAttrs: {
+        #   # Add dependencies to the package's runtime environment
+        #   propagatedBuildInputs = (oldAttrs.propagatedBuildInputs or []) ++ [
+        #     # Use the package set corresponding to the Python version
+        #     # aider-chat uses by default (likely python3Packages,
+        #     # but let's use python311Packages since you specified it).
+        #     python312Packages.google-generativeai
+        #     # google-generativeai usually pulls in 'google' itself,
+        #     # but explicitly adding it doesn't hurt if needed.
+        #     python312Packages.google
+        #   ];
 
-          # Optional: If aider-chat *must* be built/run with python311
-          # specifically, and the default python used by nixpkgs is different,
-          # you might need this too. Usually not required if python311 is the default
-          # or if aider-chat doesn't strictly pin the version internally.
-          # python = pkgs.python311;
-        }))
-        # aider-chat
-        # python3Packages.google
-        # python3Packages.google-generativeai
+        #   # Optional: If aider-chat *must* be built/run with python311
+        #   # specifically, and the default python used by nixpkgs is different,
+        #   # you might need this too. Usually not required if python311 is the default
+        #   # or if aider-chat doesn't strictly pin the version internally.
+        #   # python = pkgs.python311;
+        # }))
+        aider-chat
       ];
     };
   };
