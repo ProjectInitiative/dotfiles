@@ -296,7 +296,7 @@ in
     # Allow VRRP traffic between routers on the relevant interfaces.
     # This assumes VRRP runs on interfaces involved in routing (LAN/WAN/DMZ).
     # It might need refinement based on specific VRRP instance interfaces.
-    networking.firewall.allowedIPProtocols = mkIf cfg.enable [ "vrrp" ];
+    # networking.firewall.allowedIPProtocols = mkIf cfg.enable [ "vrrp" ];
 
     # Allow multicast if needed by VRRP (usually not required for standard operation)
     # networking.firewall.extraInputRules = ''

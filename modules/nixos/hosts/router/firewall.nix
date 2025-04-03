@@ -58,12 +58,13 @@ in
       # allowedUDPPorts = [ 53 67 ]; # DNS, DHCP - handled by services usually
 
       # Forwarding rules for port forwarding (DNAT)
-      forwardPorts = map (rule: {
-        from = cfg.wanInterface;
-        proto = rule.protocol;
-        sourcePort = rule.sourcePort;
-        destination = "${rule.destination}:${toString (fromMaybe rule.sourcePort rule.destinationPort)}";
-      }) moduleCfg.portForwarding;
+      # TODO: fix port forwarding
+      # forwardPorts = map (rule: {
+      #   from = cfg.wanInterface;
+      #   proto = rule.protocol;
+      #   sourcePort = rule.sourcePort;
+      #   destination = "${rule.destination}:${toString (fromMaybe rule.sourcePort rule.destinationPort)}";
+      # }) moduleCfg.portForwarding;
 
 
       # Extra rules for VLAN isolation and potentially other needs
