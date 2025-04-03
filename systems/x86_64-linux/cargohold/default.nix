@@ -20,12 +20,6 @@ let
   bcachefsMountpoint = "/mnt/storage";
 in
 {
-  imports = [
-    # Import the Disko NixOS module
-    inputs.disko.nixosModules.disko
-    # Import the cargohold host module defined above
-    ../../modules/nixos/hosts/cargohold
-  ];
 
   # Disko configuration for cargohold
   disko.devices = {
