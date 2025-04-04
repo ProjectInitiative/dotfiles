@@ -77,7 +77,7 @@ in
             podman-compose
             python3
             python3Packages.pip
-            ventoy
+            ventoy-full
             rustup
           ]
           ++ lib.optionals isGraphical [ inputs.claude-desktop.packages.${system}.claude-desktop-with-fhs ];

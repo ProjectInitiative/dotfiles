@@ -23,6 +23,7 @@ in
   ${namespace}.router = {
     enable = true;
     routerRole = routerRole; # Pass role defined above
+=======
 
     # --- Interfaces ---
     wanInterface = "eth0"; # Adjust to your hardware
@@ -92,6 +93,7 @@ in
     # vrrp.authPass = "supersecret"; # Use authPassFile instead
     vrrp.authPassFile = config.sops.secrets."keepalived_vrrp_password".path;
     vrrp.keaFailoverPort = 647; # Ensure this matches Kea config if using failover
+=======
 
     # --- Firewall ---
     allowPingFromWan = false;

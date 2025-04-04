@@ -98,6 +98,10 @@ in
     # Add Memtest86+ to the ISO.
     boot.loader.grub.memtest86.enable = true;
 
+    console.enable = true;
+    # enable GPU drivers
+    hardware.enableRedistributableFirmware = true;
+    hardware.firmware = [ pkgs.linux-firmware ];
     # An installation media cannot tolerate a host config defined file
     # system layout on a fresh machine, before it has been formatted.
     swapDevices = mkImageMediaOverride [ ];

@@ -36,6 +36,11 @@ in
     boot.kernelModules = [ "bcachefs" ];
     # Consider using latest kernel if needed for bcachefs features
     boot.kernelPackages = pkgs.linuxPackages_latest;
+    boot.kernelParams = [ "nomodeset" ];
+    console.enable = true;
+    # enable GPU drivers
+    hardware.enableRedistributableFirmware = true;
+    hardware.firmware = [ pkgs.linux-firmware ];
 
     # Enable SSH access
     services.openssh = {
@@ -90,6 +95,20 @@ in
       };
       system = {
         console-info.ip-display = enabled;
+
+        bcachefs-kernel = {
+          enable = true;
+          branch = "master"; # Or specify a specific commit hash
+          sourceHash = "sha256-P44HMFzo9+R7NeoPTmhI+xHQPz6/0mdIou7Q485qd4A=";
+          debug = true;
+        };
+        bcachefs-module = {
+          enable = false;
+          rev = "master"; # Or specify a specific commit hash
+          hash = "sha256-P44HMFzo9+R7NeoPTmhI+xHQPz6/0mdIou7Q485qd4A=";
+          debug = true;
+        };
+
       };
       networking.tailscale = {
         enable = true; # Example: Enable Tailscale
