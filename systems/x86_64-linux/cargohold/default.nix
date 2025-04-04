@@ -11,13 +11,11 @@ with lib;
 with lib.${namespace};
 let
   # Define device paths (replace with actual paths for your hardware)
-  bootDevice = "/dev/sda"; # Example: 64GB boot drive
-  nvmeDevice = "/dev/nvme0n1"; # Example: 1TB NVMe drive
-  hddDevice1 = "/dev/sdb"; # Example: First HDD
-  hddDevice2 = "/dev/sdc"; # Example: Second HDD
+  bootDevice = "/dev/disk/by-id/nvme-E2M2_64GB_MEK522D002C84"; # Example: 64GB boot drive
+  nvmeDevice = "/dev/disk/by-id/nvme-nvme.126f-4141303030303030303030303030303034363434-53504343204d2e32205043496520535344-00000001"; # Example: 1TB NVMe drive
 
   # Define the bcachefs mountpoint (should match the module option)
-  bcachefsMountpoint = "/mnt/storage";
+  bcachefsMountpoint = "/mnt/pool";
 in
 {
 
@@ -52,71 +50,38 @@ in
           };
         };
       };
-
-      # NVMe Drive (Bcachefs Fast Tier)
-      nvme = {
-        type = "disk";
-        device = nvmeDevice;
-        content = {
-          type = "gpt";
-          partitions = {
-            bcachefs_fast = {
-              size = "100%";
-              content = {
-                type = "bcachefs_member";
-                pool = "storage";
-                label = "fast";
-                # Consider specifying allowed data types for optimization
-                # dataAllowed = [ "journal" "btree" ];
-                discard = true; # Enable discard/TRIM if supported
-              };
-            };
-          };
-        };
-      };
-
-      # First HDD (Bcachefs Slow Tier)
-      hdd1 = {
-        type = "disk";
-        device = hddDevice1;
-        content = {
-          type = "gpt";
-          partitions = {
-            bcachefs_slow1 = {
-              size = "100%";
-              content = {
-                type = "bcachefs_member";
-                pool = "storage";
-                label = "slow";
-                durability = 2; # Part of the mirrored data set
-                dataAllowed = [ "user" ]; # Store user data here
-              };
-            };
-          };
-        };
-      };
-
-      # Second HDD (Bcachefs Slow Tier)
-      hdd2 = {
-        type = "disk";
-        device = hddDevice2;
-        content = {
-          type = "gpt";
-          partitions = {
-            bcachefs_slow2 = {
-              size = "100%";
-              content = {
-                type = "bcachefs_member";
-                pool = "storage";
-                label = "slow";
-                durability = 2; # Part of the mirrored data set
-                dataAllowed = [ "user" ]; # Store user data here
-              };
-            };
-          };
-        };
+    nvme1 = {
+      type = "disk";
+      device = nvmeDevice;
+      content = {
+        type = "bcachefs_member";
+        pool = "pool";
+        label = "cache.nvme1";
       };
     };
+
+
+    hdd1 = {
+      type = "disk";
+      device = "/dev/disk/by-id/ata-ST6000NM0115-1YZ110_ZAD7GD93";
+      content = {
+        type = "bcachefs_member";
+        pool = "pool";
+        label = "hdd.hdd1";
+      };
+    };
+    hdd2 = {
+      type = "disk";
+      device = "/dev/disk/by-id/ata-ST6000NM0115-1YZ110_ZAD7HEWB";
+      content = {
+        type = "bcachefs_member";
+        pool = "pool";
+        label = "hdd.hdd2";
+      };
+    };
+
+  };
+
 
     # Bcachefs Pool Definition
     bcachefs = {
@@ -125,13 +90,13 @@ in
         mountpoint = bcachefsMountpoint;
         # Define format options for the pool
         formatOptions = [
-          "--compression=lz4" # Example: Enable LZ4 compression
+          "--compression=none" # Example: Enable LZ4 compression
           "--metadata_replicas=2" # Replicate metadata across 2 devices (e.g., NVMe + one HDD)
           "--data_replicas=2" # Replicate user data across 2 devices (the two HDDs)
           "--data_replicas_required=1" # Allow reading if one data replica is available
-          "--foreground_target=fast" # Prefer writing new data to 'fast' label
-          "--promote_target=fast" # Promote hot data to 'fast' label
-          "--background_target=slow" # Store bulk data on 'slow' label
+          "--foreground_target=cache" # Prefer writing new data to 'fast' label
+          "--promote_target=cache" # Promote hot data to 'fast' label
+          "--background_target=hdd" # Store bulk data on 'slow' label
         ];
         # Define mount options for the filesystem
         mountOptions = [
@@ -156,21 +121,5 @@ in
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  networking.hostName = "cargohold"; # Set the hostname
 
-  # Define users (replace with your actual user)
-  users.users.kyle = {
-    isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" ]; # Add necessary groups
-    openssh.authorizedKeys.keys = [
-      # Add your SSH public key here
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH..."
-    ];
-  };
-
-  # Allow unfree packages if needed (e.g., for certain firmware)
-  nixpkgs.config.allowUnfree = true;
-
-  # Set the system state version
-  system.stateVersion = "24.05"; # Or your desired version
 }
