@@ -19,7 +19,6 @@ in
 
   #  config = mkIf cfg.enable {
 
-<<<<<<< Updated upstream
   #  projectinitiative.hosts.base-router = {
   #    enable = true;
 
@@ -57,7 +56,6 @@ in
   #    # For home network using existing DHCP server:
   #    dhcpMode = "external";
   #    externalDhcpServer = "192.168.1.1";  # Your home router's IP
-=======
   # --- Router Configuration (using base-router module) ---
   # ${namespace}.router = {
   #   enable = true;
@@ -122,12 +120,10 @@ in
   #      # Parameters are mostly defaults, adjust if needed
   #      mclt = 1800; # Example override
   #   };
->>>>>>> Stashed changes
 
   #    # For self-hosted DHCP, change to:
   #    # dhcpMode = "internal";
 
-<<<<<<< Updated upstream
   #    # VLAN definitions shared between all routers
   #    vlans = [
   #      # IoT VLAN
@@ -205,7 +201,6 @@ in
   #  };
 
   # };
-=======
   #   # --- VRRP / Keepalived ---
   #   vrrp.enable = true; # Enable HA
   #   vrrp.virtualRouterIdBase = 50; # Customize base VRID
@@ -239,6 +234,5 @@ in
 
   # # Disable NetworkManager as interfaces are manually configured by the router modules
   # networking.networkmanager.enable = false;
-  };
->>>>>>> Stashed changes
+  # };
 }

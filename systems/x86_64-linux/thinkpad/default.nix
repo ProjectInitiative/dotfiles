@@ -64,6 +64,7 @@ with lib.${namespace};
     # override
     networking = {
       tailscale = {
+
         enable = true;
         extraArgs = [ "--accept-routes" ];
       };
@@ -87,6 +88,9 @@ with lib.${namespace};
     wireshark
     wireshark-qt
     networkmanagerapplet
+    ## temp
+    minicom
+    rkdeveloptool
   ];
 
   # Enable firmware service
