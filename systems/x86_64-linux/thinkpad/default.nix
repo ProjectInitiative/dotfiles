@@ -91,6 +91,7 @@ with lib.${namespace};
     ## temp
     minicom
     rkdeveloptool
+    usbutils
   ];
 
   # Enable firmware service
