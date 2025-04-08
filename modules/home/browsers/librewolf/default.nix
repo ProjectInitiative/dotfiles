@@ -11,7 +11,7 @@ with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.browsers.librewolf;
-  isGraphical = osConfig.${namespace}.isGraphical;
+  isGraphical = osConfig.${namespace}.isGraphical or false;
 in
 {
   options.${namespace}.browsers.librewolf = with types; {
