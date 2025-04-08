@@ -98,7 +98,6 @@ in
 
   #   # usePredictableInterfaceNames = false;
   # };
-
   # systemd = {
   #   # Enable networkd
   #   network = {
@@ -108,11 +107,11 @@ in
   #     # Interface naming based on MAC addresses
   #     links = {
   #       "10-lan" = {
-  #         matchConfig.MACAddress = "d8:3a:dd:73:eb:33";
+  #         matchConfig.MACAddress = "0a:80:4e:8f:aa:37";
   #         linkConfig.Name = "lan0";
   #       };
   #       "11-wan" = {
-  #         matchConfig.MACAddress = "c8:a3:62:b4:ce:fa";
+  #         matchConfig.MACAddress = "0e:80:4e:8f:aa:37";
   #         linkConfig.Name = "wan0";
   #       };
   #     };
