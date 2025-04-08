@@ -28,7 +28,8 @@ in
 
   boot.supportedFilesystems.zfs = lib.mkForce false;
 
-  sdImage.compressImage = true;
+  sdImage.compressImage = false;
+  
 
   environment.etc = {
     "ssh/ssh_host_ed25519_key" = {
@@ -70,6 +71,10 @@ in
 
   services.openssh.enable = true;
   console.enable = true;
+  boot.kernelParams = [
+    "console=ttyS0,115200"
+    "console=tty1"
+  ];
   environment.systemPackages = with pkgs; [
     libraspberrypi
     raspberrypi-eeprom

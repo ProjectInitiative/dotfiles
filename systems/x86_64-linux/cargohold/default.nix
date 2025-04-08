@@ -44,67 +44,103 @@ in
                 type = "filesystem";
                 format = "ext4";
                 mountpoint = "/";
-                mountOptions = [ "defaults" "noatime" ]; # Example mount options
+                mountOptions = [
+                  "defaults"
+                  "noatime"
+                ]; # Example mount options
               };
             };
           };
         };
       };
-    nvme1 = {
-      type = "disk";
-      device = nvmeDevice;
-      content = {
-        type = "bcachefs_member";
-        pool = "pool";
-        label = "cache.nvme1";
-      };
+      #   nvme1 = {
+      #     type = "disk";
+      #     device = nvmeDevice;
+      #     content = {
+      #       type = "bcachefs_member";
+      #       pool = "pool";
+      #       label = "cache.nvme1";
+      #     };
+      #   };
+
+      #   hdd1 = {
+      #     type = "disk";
+      #     device = "/dev/disk/by-id/ata-ST6000NM0115-1YZ110_ZAD7GD93";
+      #     content = {
+      #       type = "bcachefs_member";
+      #       pool = "pool";
+      #       label = "hdd.hdd1";
+      #     };
+      #   };
+      #   hdd2 = {
+      #     type = "disk";
+      #     device = "/dev/disk/by-id/ata-ST6000NM0115-1YZ110_ZAD7HEWB";
+      #     content = {
+      #       type = "bcachefs_member";
+      #       pool = "pool";
+      #       label = "hdd.hdd2";
+      #     };
+      #   };
+
     };
 
-
-    hdd1 = {
-      type = "disk";
-      device = "/dev/disk/by-id/ata-ST6000NM0115-1YZ110_ZAD7GD93";
-      content = {
-        type = "bcachefs_member";
-        pool = "pool";
-        label = "hdd.hdd1";
-      };
-    };
-    hdd2 = {
-      type = "disk";
-      device = "/dev/disk/by-id/ata-ST6000NM0115-1YZ110_ZAD7HEWB";
-      content = {
-        type = "bcachefs_member";
-        pool = "pool";
-        label = "hdd.hdd2";
-      };
-    };
-
+    #   # Bcachefs Pool Definition
+    #   bcachefs = {
+    #     storage = {
+    #       type = "bcachefs";
+    #       mountpoint = bcachefsMountpoint;
+    #       # Define format options for the pool
+    #       formatOptions = [
+    #         "--compression=none" # Example: Enable LZ4 compression
+    #         "--metadata_replicas=2" # Replicate metadata across 2 devices (e.g., NVMe + one HDD)
+    #         "--data_replicas=2" # Replicate user data across 2 devices (the two HDDs)
+    #         "--data_replicas_required=1" # Allow reading if one data replica is available
+    #         "--foreground_target=cache" # Prefer writing new data to 'fast' label
+    #         "--promote_target=cache" # Promote hot data to 'fast' label
+    #         "--background_target=hdd" # Store bulk data on 'slow' label
+    #       ];
+    #       # Define mount options for the filesystem
+    #       mountOptions = [
+    #         "verbose" # Enable verbose logging during mount
+    #         "degraded" # Allow mounting in degraded state (use with caution)
+    #       ];
+    #     };
+    #   };
   };
+  systemd.services.mount-bcachefs = {
+    description = "Mount bcachefs test filesystem";
+    path = [
+      pkgs.bcachefs-tools
+      pkgs.util-linux
+      pkgs.gawk
+    ];
 
+    # Start after basic system services are up
+    after = [
+      "network.target"
+      "local-fs.target"
+      "multi-user.target"
+    ];
 
-    # Bcachefs Pool Definition
-    bcachefs = {
-      storage = {
-        type = "bcachefs";
-        mountpoint = bcachefsMountpoint;
-        # Define format options for the pool
-        formatOptions = [
-          "--compression=none" # Example: Enable LZ4 compression
-          "--metadata_replicas=2" # Replicate metadata across 2 devices (e.g., NVMe + one HDD)
-          "--data_replicas=2" # Replicate user data across 2 devices (the two HDDs)
-          "--data_replicas_required=1" # Allow reading if one data replica is available
-          "--foreground_target=cache" # Prefer writing new data to 'fast' label
-          "--promote_target=cache" # Promote hot data to 'fast' label
-          "--background_target=hdd" # Store bulk data on 'slow' label
-        ];
-        # Define mount options for the filesystem
-        mountOptions = [
-          "verbose" # Enable verbose logging during mount
-          # "degraded" # Allow mounting in degraded state (use with caution)
-        ];
-      };
+    # Don't consider boot failed if this service fails
+    wantedBy = [ "multi-user.target" ];
+
+    # Service configuration
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStartPre = "+${pkgs.coreutils}/bin/mkdir -p ${bcachefsMountpoint}";
     };
+
+    # The actual mount script
+    script = ''
+      # Mount the filesystem if not already mounted
+      if ! mountpoint -q ${bcachefsMountpoint}; then
+        UUID=$(bcachefs show-super ${nvmeDevice} | grep Ext | awk '{print $3}')
+        mount -t bcachefs UUID=$UUID ${bcachefsMountpoint}
+      fi
+    '';
+
   };
 
   # Enable the cargohold host configuration
@@ -120,6 +156,5 @@ in
   # Basic NixOS settings
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-
 
 }
