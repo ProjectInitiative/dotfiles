@@ -11,7 +11,7 @@ with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.suites.messengers;
-  isGraphical = osConfig.${namespace}.isGraphical or false;
+  isGraphical = lib.attrByPath [ namespace "isGraphical" ] false osConfig;
 in
 {
   options.${namespace}.suites.messengers = with types; {
