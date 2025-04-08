@@ -1,53 +1,16 @@
+# This file can be used to define custom library functions specific to your configuration.
+# Nilla provides its own extensions via `nilla.lib`.
+# Standard Nixpkgs functions are available via `pkgs.lib`.
+
+{ lib, pkgs, inputs, ... }:
+
 {
-  lib,
-  inputs,
-  snowfall-inputs,
-}:
+  # Add your custom library functions here, if any.
+  # Example:
+  # myCustomFunction = value: value + 1;
 
-rec {
-  ## Override a package's metadata
-  ##
-  ## ```nix
-  ## let
-  ##  new-meta = {
-  ##    description = "My new description";
-  ##  };
-  ## in
-  ##  lib.override-meta new-meta pkgs.hello
-  ## ```
-  ##
-  #@ Attrs -> Package -> Package
-  override-meta =
-    meta: package:
-    package.overrideAttrs (attrs: {
-      meta = (attrs.meta or { }) // meta;
-    });
-
-  ## Create and inject common modules into standard module paths
-  #@ Path -> AttrSet
-  create-common-modules =
-    common-path:
-    let
-      common-modules = lib.snowfall.module.create-modules {
-        src = lib.snowfall.fs.get-snowfall-file common-path;
-        overrides = lib.full-flake-options.modules.common or { };
-        alias = lib.alias.modules.common or { };
-      };
-
-      # Debug trace that won't break JSON serialization
-      _ = builtins.trace "Created modules: ${toString (builtins.attrNames common-modules)}" null;
-    in
-    common-modules;
-  # {
-  #   nixos = common-modules;
-  #   home-manager = common-modules;
-  #   darwin = common-modules;
-  # };
-
-  warnIfEmpty =
-    name: set:
-    if builtins.length (builtins.attrNames set) == 0 then
-      builtins.trace "Warning: ${name} is empty!" set
-    else
-      set;
+  # Note: Helpers like mkOpt, mkBoolOpt, enabled, etc., that were previously
+  # defined here or inherited from snowfall-lib should be replaced with
+  # standard nixpkgs lib functions (lib.mkOption, lib.mkEnableOption, etc.)
+  # directly within your modules.
 }

@@ -33,36 +33,20 @@
     sops-nix.url = "github:Mic92/sops-nix";
     # agenix.url = "github:ryantm/agenix";
 
-    # Snowfall Lib
-    # snowfall-lib.url = "path:/home/kylepzak/development/build-software/snowfall-lib";
-    snowfall-lib.url = "github:projectinitiative/snowfall-lib/fixes";
-    # snowfall-lib.url = "github:snowfallorg/lib?ref=v3.0.3";
-    # snowfall-lib.url = "path:/home/short/work/@snowfallorg/lib";
-    snowfall-lib.inputs.nixpkgs.follows = "nixpkgs";
+    # Nilla (replaces snowfall-lib and related tools)
+    nilla.url = "github:projectinitiative/nilla"; # Or your preferred source
+    nilla.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Avalanche
-    avalanche.url = "github:snowfallorg/avalanche";
-    # avalanche.url = "path:/home/short/work/@snowfallorg/avalanche";
-    avalanche.inputs.nixpkgs.follows = "unstable";
+    # Npins (used by nilla for input management)
+    npins.url = "github:nix-community/npins";
 
-    # Snowfall Flake
-    flake.url = "github:snowfallorg/flake?ref=v1.4.1";
-    flake.inputs.nixpkgs.follows = "unstable";
-
-    # flake compat
+    # flake compat (keep if needed for non-flake tools)
     flake-compat = {
       url = "github:edolstra/flake-compat";
       flake = false;
     };
 
-    # Snowfall Thaw
-    thaw.url = "github:snowfallorg/thaw?ref=v1.0.7";
-
-    # Snowfall Drift
-    drift.url = "github:snowfallorg/drift";
-    drift.inputs.nixpkgs.follows = "nixpkgs";
-
-    # Comma
+    # Comma (keep if used)
     comma.url = "github:nix-community/comma";
     comma.inputs.nixpkgs.follows = "unstable";
 
@@ -127,109 +111,31 @@
 
   };
 
-  outputs =
-    inputs:
+  outputs = { self, nixpkgs, home-manager, darwin, npins, nilla, ... }@inputs:
     let
-      lib = inputs.snowfall-lib.mkLib {
-        inherit inputs;
-        src = ./.;
+      # Define supported systems
+      supportedSystems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ];
 
-        snowfall = {
-          namespace = "projectinitiative";
-          meta = {
-            name = "projectinitiative";
-            title = "projectinitiative";
-          };
+      # Import npins for managing inputs
+      pkgs = npins.pkgs;
 
-        };
+      # Define lib using nilla's helper
+      lib = nilla.lib {
+        inherit pkgs inputs;
+        src = ./.; # Point to your flake's root
       };
 
-      mySrc = ./.;
-
     in
+    # Use nilla's mkFlake to structure the outputs
     lib.mkFlake {
-      # export for debugging
-      inherit lib;
-      inherit inputs;
-      debuglib = inputs.snowfall-lib.snowfall.internal-lib;
-      debugFunctions =
-        let
-          debuglib = inputs.snowfall-lib.snowfall.internal-lib;
-        in
-        {
-          # List all directories in your systems folder
-          listSystemsDirectories =
-            let
-              systemsPath = "${toString mySrc}/systems";
-            in
-            builtins.attrNames (builtins.readDir systemsPath);
+      inherit self inputs; # Pass self and inputs to mkFlake
 
-          # Get target directories for each architecture
-          getArchitectureSystems =
-            arch:
-            let
-              systemsPath = "${toString mySrc}/systems/${arch}";
-              exists = builtins.pathExists systemsPath;
-            in
-            if exists then builtins.attrNames (builtins.readDir systemsPath) else [ ];
-
-          # Check if targets have default.nix files
-          checkDefaultNix =
-            arch: target:
-            let
-              targetPath = "${toString mySrc}/systems/${arch}/${target}";
-              defaultNixPath = "${targetPath}/default.nix";
-            in
-            builtins.pathExists defaultNixPath;
-
-          # Your actual systems path
-          systemsPath = "${toString mySrc}/systems";
-
-          # Add this to your debug functions
-          getDetailedSystemMetadata =
-            let
-              systems_root = "${toString mySrc}/systems";
-              targets = debuglib.fs.get-directories systems_root;
-              target_paths = builtins.map (t: builtins.unsafeDiscardStringContext t) targets;
-            in
-            {
-              targets = target_paths;
-              metadata = builtins.listToAttrs (
-                builtins.map (target: {
-                  name = builtins.unsafeDiscardStringContext (builtins.baseNameOf target);
-                  value = debuglib.system.get-target-systems-metadata target;
-                }) targets
-              );
-            };
-
-          # Debug the create-systems function
-          debugCreateSystems =
-            let
-              systems_root = "${toString mySrc}/systems";
-              targets = debuglib.fs.get-directories systems_root;
-
-              # This recreates the internal logic of create-systems
-              fix_function = debuglib.internal.system-lib.fix;
-              target_systems_metadata = builtins.concatMap (
-                target: debuglib.system.get-target-systems-metadata target
-              ) targets;
-            in
-            {
-              targets = builtins.map builtins.unsafeDiscardStringContext targets;
-              systems_found = target_systems_metadata;
-            };
-
-          # And also check the final systems output
-          getFinalSystems =
-            let
-              systems = debuglib.system.create-systems {
-                systems = { };
-                homes = { };
-              };
-            in
-            builtins.attrNames systems;
-        };
-
+      # Configure channels (applies overlays, config)
       channels-config = {
         allowUnfree = true;
         permittedInsecurePackages = [
@@ -237,116 +143,71 @@
         ];
       };
 
-      overlays = with inputs; [
-        flake.overlays.default
-        thaw.overlays.default
-        drift.overlays.default
-      ];
-      # modules = {
-      #   nixos = lib.snowfall.module.create-modules {
-      #     src = lib.snowfall.fs.get-snowfall-file "modules/common";
-      #     # namespace = "projectinitiative";
-      #   };
-      # };
-
-      supportedSystems = [
-        "x86_64-linux"
-        "x86_64-darwin"
-        "aarch64-linux"
+      # Define overlays
+      overlays = [
+        # Add overlays here if needed
+        # Example: inputs.my-overlay.overlays.default
       ];
 
-      systems = {
-        targets = [
-
-          "x86_64-linux"
-          "x86_64-darwin"
-          "aarch64-linux"
-        ];
-        hosts = {
-          stormjib = {
-            system = "aarch64-linux";
-          };
-        };
-        modules =
-          let
-            build-modules = lib.create-common-modules "modules/common";
-            common-modules = (builtins.attrValues build-modules);
-          in
-          {
-            inherit build-modules common-modules;
-
-            nixos =
-              with inputs;
-              [
-                disko.nixosModules.disko
-                home-manager.nixosModules.home-manager
-                # nix-ld.nixosModules.nix-ld
-                sops-nix.nixosModules.sops
-                # agenix.nixosModules.age
-                # (import ./encrypted/sops.nix)
-              ]
-              ++ common-modules;
-
-            darwin =
-              with inputs;
-              [
-                # any darwin specific modules
-              ]
-              ++ common-modules;
-          };
+      # Define NixOS configurations using nilla's structure
+      nixosConfigurations = {
+        # Example structure (replace with your actual hosts)
+        # my-nixos-host = lib.mkSystem {
+        #   system = "x86_64-linux";
+        #   modules = [ ./systems/x86_64-linux/my-nixos-host ];
+        # };
+        # Add your NixOS hosts here...
+        # Example using your previous structure (needs adaptation)
+        # stormjib = lib.mkSystem {
+        #   system = "aarch64-linux";
+        #   modules = [ ./systems/aarch64-linux/stormjib ];
+        # };
       };
 
-      homes =
-        let
-          build-modules = lib.create-common-modules "modules/common";
-          common-modules = (builtins.attrValues build-modules);
-        in
-        # build-homes = lib.create-common-modules "modules/common";
-        # common-homes = (builtins.attrValues build-homes);
-        {
-          inherit build-modules common-modules;
-          # inherit build-homes common-homes;
-          modules =
-            with inputs;
-            [
-              sops-nix.homeManagerModules.sops
-              # any home specific modules
-            ]
-            ++ common-modules;
-        };
-
-      # Example host-specific hardware modules
-      # systems.hosts.thinkpad.modules = with inputs; [
-      #   # Add hardware-specific modules
-      #   # Example: nixos-hardware.nixosModules.lenovo-thinkpad-t14
-      #   # nixos-hardware.nixosModules.thinkpad-t16-intel-i71260p
-      # ];
-
-      deploy = lib.mkDeploy {
-        inherit (inputs) self;
-        exclude = [
-          "stormjib"
-          "thinkpad"
-          "test"
-          "capstan1"
-        ];
+      # Define Home Manager configurations using nilla's structure
+      homeConfigurations = {
+        # Example structure (replace with your actual users/configs)
+        # "user@hostname" = lib.mkHome {
+        #   system = "x86_64-linux";
+        #   modules = [ ./homes/x86_64-linux/user ];
+        # };
+        # Add your Home Manager configurations here...
       };
 
-      checks = builtins.mapAttrs (
-        system: deploy-lib: deploy-lib.deployChecks inputs.self.deploy
-      ) inputs.deploy-rs.lib;
-
-      outputs-builder = channels: {
-        # formatter = channels.nixpkgs.nixfmt-rfc-style;
-        # Define the formatter using treefmt-nix
-        formatter = (inputs.treefmt-nix.lib.evalModule channels.nixpkgs ./treefmt.nix).config.build.wrapper;
-
-        # Add a check for formatting
-        checks.formatting = (inputs.treefmt-nix.lib.evalModule channels.nixpkgs ./treefmt.nix).config.build.check inputs.self;
+      # Define Darwin configurations using nilla's structure
+      darwinConfigurations = {
+        # Example structure (replace with your actual hosts)
+        # my-mac = lib.mkDarwin {
+        #   system = "aarch64-darwin";
+        #   modules = [ ./systems/aarch64-darwin/my-mac ];
+        # };
+        # Add your Darwin hosts here...
       };
-    }
-    // {
-      # Add this line to expose self
-      self = inputs.self;
+
+      # Define packages, apps, checks, etc.
+      packages = {
+        # Add custom packages here
+      };
+
+      apps = {
+        # Add custom apps here (e.g., for `nix run`)
+      };
+
+      checks = {
+        # Add checks here (e.g., formatting)
+        formatting = (inputs.treefmt-nix.lib.evalModule nixpkgs ./treefmt.nix).config.build.check inputs.self;
+      };
+
+      # Define formatter
+      formatter = (inputs.treefmt-nix.lib.evalModule nixpkgs ./treefmt.nix).config.build.wrapper;
+
+      # Define devShells if needed
+      devShells = {
+        # default = pkgs.mkShell { ... };
+      };
+
+      # Deployment configuration (if using deploy-rs, adapt as needed)
+      # deploy.nodes = { ... }; # Structure might change depending on how nilla integrates
+
     };
 }
