@@ -98,14 +98,14 @@ in
 
         bcachefs-kernel = {
           enable = true;
-          branch = "master"; # Or specify a specific commit hash
-          sourceHash = "sha256-P44HMFzo9+R7NeoPTmhI+xHQPz6/0mdIou7Q485qd4A=";
+          branch = "c79cf4111930c22487840d1332ee1d44e1c31707"; # Or specify a specific commit hash
+          sourceHash = "sha256-uVo7X8/1akJxgO0ERu/41+XmK7l1uRAZuKYJV4mNQAo=";
           debug = true;
         };
         bcachefs-module = {
           enable = false;
-          rev = "master"; # Or specify a specific commit hash
-          hash = "sha256-P44HMFzo9+R7NeoPTmhI+xHQPz6/0mdIou7Q485qd4A=";
+          rev = ""; # Or specify a specific commit hash
+          hash = "";
           debug = true;
         };
 
@@ -113,7 +113,7 @@ in
       networking.tailscale = {
         enable = true; # Example: Enable Tailscale
         ephemeral = false;
-        extraArgs = [ "--accept-dns=false" ];
+        extraArgs = [ "--accept-routes" ];
       };
       # Add other services like Samba, NFS configuration here
       # services.samba = { enable = true; /* ... */ };

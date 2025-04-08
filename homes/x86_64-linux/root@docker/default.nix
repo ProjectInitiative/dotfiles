@@ -5,6 +5,7 @@
       home = {
         enable = true;
         stateVersion = "24.11";
+        home = lib.mkForce "/root";
       };
 
       suites = {

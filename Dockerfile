@@ -14,6 +14,8 @@ WORKDIR /config
 COPY . .
 
 # Build home-manager configuration
+RUN nix run github:nix-community/home-manager/master -- build --flake .#"root@docker"
+RUN nix-env -e man-db-2.13.0
 RUN nix run github:nix-community/home-manager/master -- switch --flake .#"root@docker"
 
 # Set the default command
