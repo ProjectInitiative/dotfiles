@@ -13,16 +13,17 @@ let
   isNixOS = options ? environment; # NixOS always has environment option
   isHomeManager = options ? home; # Home Manager always has home option
 
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.encrypted.nix-signing;
   sops = config.sops;
 in
 # Check if the key exists in sops
 # hasSigningKey = config.sops.secrets.nix-signing-key or null != null;
 {
-  options.${namespace}.encrypted.nix-signing = with types; {
-    enable = mkBoolOpt false "Nix binary cache signing";
+  options.${namespace}.encrypted.nix-signing = {
+    enable = mkEnableOption "Nix binary cache signing"; # Use standard mkEnableOption
 
-    # keyFile = mkOption {
+    # keyFile = mkOption { # Standard mkOption
     #   type = types.str;
     #   default = "/run/secrets/nix-signing-key";
     #   description = "Path to the nix signing key provided by sops";

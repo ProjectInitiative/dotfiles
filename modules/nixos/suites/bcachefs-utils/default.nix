@@ -3,25 +3,26 @@
   config,
   lib,
   pkgs,
-  namespace,
+  # namespace, # No longer needed for helpers
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.suites.bcachefs-utils;
 in
 {
-  options.${namespace}.suites.bcachefs-utils = with types; {
-    enable = mkBoolOpt false "Whether or not to enable common terminal-env configuration.";
+  options.${namespace}.suites.bcachefs-utils = {
+    enable = mkEnableOption "common bcachefs utilities suite."; # Use standard mkEnableOption
   };
 
   config = mkIf cfg.enable {
     environment.systemPackages = with pkgs; [
       bcachefs-tools
-      pkgs.${namespace}.bcachefs-doctor
-      pkgs.${namespace}.bcachefs-fua-test
-      pkgs.${namespace}.bcachefs-io-metrics
+      pkgs.bcachefs-doctor # Assuming package name doesn't include namespace
+      pkgs.bcachefs-fua-test # Assuming package name doesn't include namespace
+      pkgs.bcachefs-io-metrics # Assuming package name doesn't include namespace
     ];
 
   };

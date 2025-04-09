@@ -3,27 +3,28 @@
   config,
   lib,
   pkgs,
-  namespace,
-  osConfig ? null,
+  # namespace, # No longer needed for helpers
+  osConfig, # Assume osConfig is passed
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.suites.terminal-env;
 in
 {
-  options.${namespace}.suites.terminal-env = with types; {
-    enable = mkBoolOpt false "Whether or not to enable common terminal-env configuration.";
+  options.${namespace}.suites.terminal-env = {
+    enable = mkEnableOption "common terminal-env configuration."; # Use standard mkEnableOption
   };
 
   config = mkIf cfg.enable {
     ${namespace} = {
       cli-apps = {
-        helix = enabled;
+        helix.enable = true; # Use standard boolean
         atuin = {
-          enable = true;
-          autoLogin = mkIf (osConfig != null) true;
+          enable = true; # Standard boolean
+          autoLogin = mkIf (osConfig != null) true; # Standard boolean
           username = mkIf (osConfig != null) "kylepzak";
           passwordPath = mkIf (osConfig != null) osConfig.sops.secrets.kylepzak_atuin_password.path;
           keyPath = mkIf (osConfig != null) osConfig.sops.secrets.kylepzak_atuin_key.path;
