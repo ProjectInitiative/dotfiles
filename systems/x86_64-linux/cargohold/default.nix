@@ -106,6 +106,41 @@ in
     #   };
     # };
   };
+  systemd.services.mount-bcachefs = {
+    description = "Mount bcachefs test filesystem";
+    path = [
+      pkgs.bcachefs-tools
+      pkgs.util-linux
+      pkgs.gawk
+    ];
+
+    # Start after basic system services are up
+    after = [
+      "network.target"
+      "local-fs.target"
+      "multi-user.target"
+    ];
+
+    # Don't consider boot failed if this service fails
+    wantedBy = [ "multi-user.target" ];
+
+    # Service configuration
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStartPre = "+${pkgs.coreutils}/bin/mkdir -p ${bcachefsMountpoint}";
+    };
+
+    # The actual mount script
+    script = ''
+      # Mount the filesystem if not already mounted
+      if ! mountpoint -q ${bcachefsMountpoint}; then
+        UUID=$(bcachefs show-super ${nvmeDevice} | grep Ext | awk '{print $3}')
+        mount -t bcachefs UUID=$UUID ${bcachefsMountpoint}
+      fi
+    '';
+
+  };
 
   # Enable the cargohold host configuration
   projectinitiative.hosts.cargohold = {
