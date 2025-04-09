@@ -2,10 +2,11 @@
   config,
   lib,
   pkgs,
-  namespace,
+  # namespace, # No longer needed for helpers
   ...
 }:
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.services.k3s;
   removeOption =
     config: instruction:

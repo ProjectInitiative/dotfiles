@@ -3,30 +3,31 @@
   config,
   pkgs,
   lib,
-  namespace,
+  # namespace, # No longer needed for helpers
   inputs,
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.user;
   sops = config.sops;
+  # Assuming defaultIcon is defined elsewhere or needs to be pkgs.null
+  defaultIcon = null; # Placeholder, adjust if needed
 
 in
 {
   options.${namespace}.user = with types; {
-    name = mkOpt str "kylepzak" "The name to use for the user account.";
-    fullName = mkOpt str "Kyle Petryszak" "The full name of the user.";
-    email = mkOpt str "6314611+ProjectInitiative@users.noreply.github.com" "The email of the user.";
-    # initialPassword =
-    #   mkOpt str "password"
-    #     "The initial password to use when the user is first created.";
-    icon = mkOpt (nullOr package) defaultIcon "The profile picture to use for the user.";
-    prompt-init = mkBoolOpt true "Whether or not to show an initial message when opening a new shell.";
-    extraGroups = mkOpt (listOf str) [ ] "Groups for the user to be assigned.";
-    extraOptions = mkOpt attrs { } (mdDoc "Extra options passed to `users.users.<name>`.");
-    authorized-keys = mkOpt (listOf path) [ "${inputs.ssh-pub-keys}" ] "Authorized SSH keys for user.";
+    name = mkOption { type = types.str; default = "kylepzak"; description = "The name to use for the user account."; }; # Use standard mkOption
+    fullName = mkOption { type = types.str; default = "Kyle Petryszak"; description = "The full name of the user."; }; # Use standard mkOption
+    email = mkOption { type = types.str; default = "6314611+ProjectInitiative@users.noreply.github.com"; description = "The email of the user."; }; # Use standard mkOption
+    # initialPassword = mkOption { type = types.str; default = "password"; description = "The initial password to use when the user is first created."; };
+    icon = mkOption { type = types.nullOr types.package; default = defaultIcon; description = "The profile picture to use for the user."; }; # Use standard mkOption
+    prompt-init = mkEnableOption "initial message when opening a new shell" // { default = true; }; # Use standard mkEnableOption, default true
+    extraGroups = mkOption { type = types.listOf types.str; default = [ ]; description = "Groups for the user to be assigned."; }; # Use standard mkOption
+    extraOptions = mkOption { type = types.attrs; default = { }; description = mdDoc "Extra options passed to `users.users.<name>`."; }; # Use standard mkOption
+    authorized-keys = mkOption { type = types.listOf types.path; default = [ "${inputs.ssh-pub-keys}" ]; description = "Authorized SSH keys for user."; }; # Use standard mkOption
   };
 
   config = {

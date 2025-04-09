@@ -3,17 +3,18 @@
   config,
   lib,
   pkgs,
-  namespace,
+  # namespace, # No longer needed for helpers
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.cli-apps.bat;
 in
 {
-  options.${namespace}.cli-apps.bat = with types; {
-    enable = mkBoolOpt false "Whether or not to enable bat cli.";
+  options.${namespace}.cli-apps.bat = {
+    enable = mkEnableOption "bat cli."; # Use standard mkEnableOption
   };
 
   config = mkIf cfg.enable {

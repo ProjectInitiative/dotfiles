@@ -3,12 +3,13 @@
   config,
   lib,
   pkgs,
-  namespace,
+  # namespace, # No longer needed for helpers
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.cli-apps.atuin;
   isLinux = pkgs.stdenv.isLinux;
   isDarwin = pkgs.stdenv.isDarwin;
@@ -22,10 +23,10 @@ let
   '';
 in
 {
-  options.${namespace}.cli-apps.atuin = with types; {
-    enable = mkBoolOpt false "Whether or not to enable atuin cli.";
+  options.${namespace}.cli-apps.atuin = {
+    enable = mkEnableOption "atuin cli."; # Use standard mkEnableOption
 
-    autoLogin = mkOption {
+    autoLogin = mkOption { # Standard mkOption
       type = types.bool;
       default = false;
       description = "Whether to automatically login to the Atuin server on startup.";

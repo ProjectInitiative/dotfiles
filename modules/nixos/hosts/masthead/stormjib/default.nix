@@ -8,19 +8,20 @@
   config,
   lib,
   pkgs,
-  namespace,
+  # namespace, # No longer needed for helpers
   modulesPath,
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.hosts.masthead.stormjib;
   sops = config.sops;
 in
 {
-  options.${namespace}.hosts.masthead.stormjib = with types; {
-    enable = mkBoolOpt false "Whether or not to enable the stormjib config.";
+  options.${namespace}.hosts.masthead.stormjib = {
+    enable = mkEnableOption "the stormjib config."; # Use standard mkEnableOption
   };
 
   config = mkIf cfg.enable {

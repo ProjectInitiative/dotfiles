@@ -2,20 +2,21 @@
   config,
   lib,
   pkgs,
-  namespace,
+  # namespace, # No longer needed for helpers
   ...
 }:
 
 with lib;
 
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.services.health-reporter;
 in
 {
   options.${namespace}.services.health-reporter = {
-    enable = mkEnableOption "Server health monitoring service";
+    enable = mkEnableOption "Server health monitoring service"; # Standard mkEnableOption
 
-    telegramTokenPath = mkOption {
+    telegramTokenPath = mkOption { # Standard mkOption
       type = types.str;
       default = "/run/secrets/telegram-token";
       description = "Path to the file containing the Telegram bot token";

@@ -4,19 +4,20 @@
   config,
   lib,
   pkgs,
-  namespace,
+  # namespace, # No longer needed for helpers
   modulesPath,
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.router;
   moduleCfg = config.${namespace}.router.kernel;
 in
 {
-  options.${namespace}.router.kernel = with types; {
-    extraModules = mkOption {
+  options.${namespace}.router.kernel = {
+    extraModules = mkOption { # Standard mkOption
       type = types.listOf types.str;
       default = [ ];
       description = "Additional kernel modules to load.";

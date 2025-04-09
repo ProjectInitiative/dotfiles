@@ -2,14 +2,14 @@
   lib,
   pkgs,
   inputs,
-  namespace,
+  # namespace, # No longer needed for helpers
   config,
   options,
   modulesPath,
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
   mountpoint = "/mnt/pool";
 in
@@ -130,9 +130,9 @@ in
     };
 
     hosts = {
-      # base-vm = enabled;
+      # base-vm.enable = true; # Use standard boolean
       capstan = {
-        enable = true;
+        enable = true; # Standard boolean
         ipAddress = "172.16.1.45/24";
         interface = "enp18";
         bcachefsInitDevice = "/dev/vdc1";

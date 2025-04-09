@@ -3,17 +3,18 @@
   config,
   lib,
   pkgs,
-  namespace,
+  # namespace, # No longer needed for helpers
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.cli-apps.helix;
 in
 {
-  options.${namespace}.cli-apps.helix = with types; {
-    enable = mkBoolOpt false "Whether or not to enable common helix editor and language servers.";
+  options.${namespace}.cli-apps.helix = {
+    enable = mkEnableOption "common helix editor and language servers."; # Use standard mkEnableOption
   };
 
   config = mkIf cfg.enable {

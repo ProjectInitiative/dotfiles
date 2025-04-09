@@ -4,21 +4,22 @@
   config,
   lib,
   pkgs,
-  namespace,
+  # namespace, # No longer needed for helpers
   modulesPath,
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.router;
   moduleCfg = config.${namespace}.router.dns;
 in
 {
-  options.${namespace}.router.dns = with types; {
-    enable = mkBoolOpt true "Whether to enable Dnsmasq as a DNS forwarder/cache.";
+  options.${namespace}.router.dns = {
+    enable = mkEnableOption "Dnsmasq as a DNS forwarder/cache." // { default = true; }; # Use standard mkEnableOption, default true
     # Add more dnsmasq specific options if needed, e.g., cache size
-    cacheSize = mkOption {
+    cacheSize = mkOption { # Standard mkOption
         type = types.int;
         default = 1000;
         description = "DNS cache size for dnsmasq.";

@@ -3,18 +3,19 @@
   config,
   pkgs,
   lib,
-  namespace,
+  # namespace, # No longer needed for helpers
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.system.locale;
 in
 {
-  options.${namespace}.system.locale = with types; {
-    enable = mkBoolOpt false "Whether or not to manage locale settings.";
-    timezone = mkOpt types.str "America/Chicago" "Timezone you wish to use";
+  options.${namespace}.system.locale = {
+    enable = mkEnableOption "locale settings management."; # Use standard mkEnableOption
+    timezone = mkOption { type = types.str; default = "America/Chicago"; description = "Timezone you wish to use"; }; # Use standard mkOption
   };
 
   config = mkIf cfg.enable {

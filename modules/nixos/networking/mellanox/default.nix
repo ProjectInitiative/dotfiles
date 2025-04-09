@@ -2,12 +2,13 @@
   config,
   lib,
   pkgs,
-  namespace,
+  # namespace, # No longer needed for helpers
   ...
 }:
 with lib;
 
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.networking.mellanox;
 
   # Type for a single Mellanox interface

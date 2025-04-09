@@ -3,12 +3,13 @@
   config,
   pkgs,
   lib,
-  namespace,
+  # namespace, # No longer needed for helpers
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.tools.git;
   gpg = config.${namespace}.security.gpg;
   user = config.${namespace}.user;
@@ -16,18 +17,12 @@ let
 in
 {
   options.${namespace}.tools.git = with types; {
-    enable = mkBoolOpt false "Whether or not to install and configure git.";
-    userName = mkOpt types.str user.fullName "The name to configure git with.";
-    userEmail = mkOpt types.str user.email "The email to configure git with.";
-    signingKey =
-      mkOpt types.str "/run/secrets/kylepzak_ssh_key"
-        "The key ID to sign commits with. (for ssh, this is a path)";
-    # signingKey = mkOpt types.str "CAEB4185C226D76B" "The key ID to sign commits with. (for ssh, this is a path)";
-    signingKeyFormat = mkOpt (types.enum [
-      "openpgp"
-      "ssh"
-      "x509"
-    ]) "openpgp" "The signing key format. Valid values are 'openpgp', 'ssh', and 'x509'.";
+    enable = mkEnableOption "git installation and configuration."; # Use standard mkEnableOption
+    userName = mkOption { type = types.str; default = user.fullName; description = "The name to configure git with."; }; # Use standard mkOption
+    userEmail = mkOption { type = types.str; default = user.email; description = "The email to configure git with."; }; # Use standard mkOption
+    signingKey = mkOption { type = types.str; default = "/run/secrets/kylepzak_ssh_key"; description = "The key ID to sign commits with. (for ssh, this is a path)"; }; # Use standard mkOption
+    # signingKey = mkOption { type = types.str; default = "CAEB4185C226D76B"; description = "The key ID to sign commits with. (for ssh, this is a path)"; };
+    signingKeyFormat = mkOption { type = types.enum [ "openpgp" "ssh" "x509" ]; default = "openpgp"; description = "The signing key format. Valid values are 'openpgp', 'ssh', and 'x509'."; }; # Use standard mkOption
   };
 
   config = mkIf cfg.enable {
@@ -42,9 +37,9 @@ in
     };
 
     programs.git = {
-      enable = true;
+      enable = true; # Standard boolean
       inherit (cfg) userName userEmail;
-      lfs = enabled;
+      lfs.enable = true; # Use standard boolean
       signing = {
         key = cfg.signingKey;
         # TODO: enable when supported

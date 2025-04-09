@@ -3,17 +3,18 @@
   config,
   lib,
   pkgs,
-  namespace,
+  # namespace, # No longer needed for helpers
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.tools.k8s;
 in
 {
-  options.${namespace}.tools.k8s = with types; {
-    enable = mkBoolOpt false "Whether or not to enable common Kubernetes utilities.";
+  options.${namespace}.tools.k8s = {
+    enable = mkEnableOption "common Kubernetes utilities."; # Use standard mkEnableOption
   };
 
   config = mkIf cfg.enable {

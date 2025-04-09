@@ -2,14 +2,14 @@
   lib,
   pkgs,
   inputs,
-  namespace,
+  # namespace, # No longer needed for helpers
   system,
   config,
   options,
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 {
   imports = [
     # Include the results of the hardware scan.
@@ -49,17 +49,17 @@ with lib.${namespace};
 
   projectinitiative = {
 
-    encrypted.nix-signing = enabled;
+    encrypted.nix-signing.enable = true; # Use standard boolean
 
     gui = {
-      gnome = enabled;
+      gnome.enable = true; # Use standard boolean
     };
     services = {
-      power-profile-manager = enabled;
+      power-profile-manager.enable = true; # Use standard boolean
     };
 
     suites = {
-      development = enabled;
+      development.enable = true; # Use standard boolean
     };
     # override
     networking = {

@@ -2,14 +2,14 @@
   config,
   lib,
   pkgs,
-  namespace,
+  # namespace, # No longer needed for helpers
   ...
 }:
 
 with lib;
 
 let
-  # Configuration options for this module are under cfg
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.system.bcachefs-module;
 
   # Define kernel package once for clarity and lazy access

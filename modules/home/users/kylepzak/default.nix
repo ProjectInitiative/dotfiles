@@ -4,19 +4,20 @@
   config,
   osConfig ? { },
   format ? "unknown",
-  namespace,
+  # namespace, # No longer needed for helpers
   inputs,
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.users.kylepzak;
   sops = osConfig.sops;
 in
 {
-  options.${namespace}.users.kylepzak = with types; {
-    enable = mkBoolOpt false "Whether or not to enable common user config.";
+  options.${namespace}.users.kylepzak = {
+    enable = mkEnableOption "common user config."; # Use standard mkEnableOption
 
   };
 
@@ -25,46 +26,46 @@ in
     projectinitiative = {
 
       home = {
-        enable = true;
+        enable = true; # Standard boolean
         stateVersion = "24.11";
       };
 
       user = {
-        enable = true;
+        enable = true; # Standard boolean
       };
 
       browsers = {
-        firefox = enabled;
-        chrome = disabled;
-        chromium = enabled;
-        librewolf = enabled;
-        ladybird = disabled;
-        tor = enabled;
+        firefox.enable = true; # Use standard boolean
+        chrome.enable = false; # Use standard boolean
+        chromium.enable = true; # Use standard boolean
+        librewolf.enable = true; # Use standard boolean
+        ladybird.enable = false; # Use standard boolean
+        tor.enable = true; # Use standard boolean
       };
 
       suites = {
-        terminal-env = enabled;
-        development = enabled;
-        backup = enabled;
-        messengers = enabled;
-        digital-creation = enabled;
+        terminal-env.enable = true; # Use standard boolean
+        development.enable = true; # Use standard boolean
+        backup.enable = true; # Use standard boolean
+        messengers.enable = true; # Use standard boolean
+        digital-creation.enable = true; # Use standard boolean
       };
 
       cli-apps = {
-        zsh = enabled;
-        nix = enabled;
-        home-manager = enabled;
+        zsh.enable = true; # Use standard boolean
+        nix.enable = true; # Use standard boolean
+        home-manager.enable = true; # Use standard boolean
       };
 
       security = {
-        sops = enabled;
+        sops.enable = true; # Use standard boolean
       };
 
       tools = {
-        ghostty = enabled;
+        ghostty.enable = true; # Use standard boolean
       };
 
-      user.authorized-keys = builtins.readFile inputs.ssh-pub-keys;
+      user.authorized-keys = builtins.readFile inputs.ssh-pub-keys; # Assuming this path is correct
 
     };
 

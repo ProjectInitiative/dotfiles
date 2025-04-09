@@ -3,12 +3,13 @@
   config,
   pkgs,
   lib,
-  namespace,
+  # namespace, # No longer needed for helpers
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.networking.tailscale;
 
   tailscale_key =
@@ -18,10 +19,10 @@ let
       config.sops.secrets.tailscale_auth_key.path;
 in
 {
-  options.${namespace}.networking.tailscale = with types; {
-    enable = mkBoolOpt false "Whether or not to enable tailscale";
-    ephemeral = mkBoolOpt true "Use ephemeral node key for tailscale";
-    extraArgs = mkOpt (listOf str) [ ] "Additional arguments to pass to tailscale.";
+  options.${namespace}.networking.tailscale = {
+    enable = mkEnableOption "tailscale"; # Use standard mkEnableOption
+    ephemeral = mkEnableOption "ephemeral node key for tailscale" // { default = true; }; # Use standard mkEnableOption, default true
+    extraArgs = mkOption { type = types.listOf types.str; default = [ ]; description = "Additional arguments to pass to tailscale."; }; # Use standard mkOption
   };
 
   config = mkIf cfg.enable {

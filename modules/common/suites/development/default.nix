@@ -3,25 +3,27 @@
   config,
   lib,
   pkgs,
-  namespace,
-  osConfig ? { },
+  # namespace, # No longer needed for helpers
+  osConfig, # Assume osConfig is passed
   system,
   inputs,
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.suites.development;
   isLinux = pkgs.stdenv.isLinux;
   isDarwin = pkgs.stdenv.isDarwin;
   isNixOS = options ? environment; # NixOS always has environment option
   isHomeManager = options ? home; # Home Manager always has home option
-  isGraphical = osConfig.${namespace}.isGraphical;
+  # Assuming isGraphical is defined at the top level of osConfig
+  isGraphical = osConfig.isGraphical or false;
 in
 {
-  options.${namespace}.suites.development = with types; {
-    enable = mkBoolOpt false "Whether or not to enable common development configuration.";
+  options.${namespace}.suites.development = {
+    enable = mkEnableOption "common development configuration."; # Use standard mkEnableOption
   };
 
   config = mkIf cfg.enable (
@@ -33,17 +35,17 @@ in
 
       ${namespace} = {
         networking = {
-          tailscale = enabled;
+          tailscale.enable = true; # Use standard boolean
         };
 
         virtualization = {
-          podman = enabled;
-          docker = enabled;
+          podman.enable = true; # Use standard boolean
+          docker.enable = true; # Use standard boolean
         };
 
         system = {
-          locale = enabled;
-          fonts = enabled;
+          locale.enable = true; # Use standard boolean
+          fonts.enable = true; # Use standard boolean
         };
 
       };
@@ -52,19 +54,19 @@ in
       ${namespace} = {
         tools = {
           git = {
-            enable = true;
+            enable = true; # Standard boolean
             userEmail = "6314611+ProjectInitiative@users.noreply.github.com";
             signingKeyFormat = "openpgp";
             # TODO: Make this not hardcoded
             signingKey = osConfig.sops.secrets.kylepzak_ssh_key.path;
           };
-          direnv = enabled;
-          k8s = enabled;
-          ansible = enabled;
-          aider = enabled;
+          direnv.enable = true; # Use standard boolean
+          k8s.enable = true; # Use standard boolean
+          ansible.enable = true; # Use standard boolean
+          aider.enable = true; # Use standard boolean
         };
         security = {
-          gpg = enabled;
+          gpg.enable = true; # Use standard boolean
         };
       };
       home = {

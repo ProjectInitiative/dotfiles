@@ -3,18 +3,19 @@
   config,
   lib,
   pkgs,
-  namespace,
+  # namespace, # No longer needed for helpers
   modulesPath,
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.hosts.masthead;
 in
 {
-  options.${namespace}.hosts.masthead = with types; {
-    enable = mkBoolOpt false "Whether or not to enable the masthead router base config.";
+  options.${namespace}.hosts.masthead = {
+    enable = mkEnableOption "the masthead router base config."; # Use standard mkEnableOption
   };
 
    config = mkIf cfg.enable {

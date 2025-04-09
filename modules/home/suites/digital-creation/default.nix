@@ -3,19 +3,21 @@
   config,
   pkgs,
   lib,
-  namespace,
-  osConfig ? { },
+  # namespace, # No longer needed for helpers
+  osConfig, # Assume osConfig is passed
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.suites.digital-creation;
-  isGraphical = lib.attrByPath [ namespace "isGraphical" ] false osConfig;
+  # Assuming isGraphical is defined at the top level of osConfig
+  isGraphical = osConfig.isGraphical or false;
 in
 {
-  options.${namespace}.suites.digital-creation = with types; {
-    enable = mkBoolOpt false "Whether or not to enable digital-creation suite";
+  options.${namespace}.suites.digital-creation = {
+    enable = mkEnableOption "digital-creation suite"; # Use standard mkEnableOption
   };
 
   config = mkIf (cfg.enable && isGraphical) {

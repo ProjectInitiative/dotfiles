@@ -29,16 +29,16 @@ in
           keyPath = mkIf (osConfig != null) osConfig.sops.secrets.kylepzak_atuin_key.path;
 
         };
-        zoxide = enabled;
-        zellij = enabled;
+        zoxide.enable = true; # Use standard boolean
+        zellij.enable = true; # Use standard boolean
         # QOL cli
-        bat = enabled;
-        eza = enabled;
-        ripgrep = enabled;
+        bat.enable = true; # Use standard boolean
+        eza.enable = true; # Use standard boolean
+        ripgrep.enable = true; # Use standard boolean
       };
 
       tools = {
-        alacritty = enabled;
+        alacritty.enable = true; # Use standard boolean
       };
     };
     home = {
@@ -54,10 +54,10 @@ in
         rclone
         #TODO: add config for yazi
         yazi
-        pkgs.${namespace}.flatten-directory
-        pkgs.${namespace}.remote-drive-info
-        pkgs.${namespace}.health-report
-        # pkgs.${namespace}.mc
+        pkgs.flatten-directory # Assuming package name doesn't include namespace
+        pkgs.remote-drive-info # Assuming package name doesn't include namespace
+        pkgs.health-report # Assuming package name doesn't include namespace
+        # pkgs.mc
       ];
     };
   };

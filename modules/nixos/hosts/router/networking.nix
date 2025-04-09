@@ -4,20 +4,21 @@
   config,
   lib,
   pkgs,
-  namespace,
+  # namespace, # No longer needed for helpers
   modulesPath,
   parsedNetworks, # Passed via _module.args
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.router;
   moduleCfg = config.${namespace}.router.networking;
 in
 {
-  options.${namespace}.router.networking = with types; {
-    externalStaticIp = mkOption {
+  options.${namespace}.router.networking = {
+    externalStaticIp = mkOption { # Standard mkOption
       type = types.nullOr (
         types.submodule {
           options = {

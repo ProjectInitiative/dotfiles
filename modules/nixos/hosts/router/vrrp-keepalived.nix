@@ -5,7 +5,8 @@ with lib;
 
 let
   cfg = config.networking.vrrp;
-  routerCfg = config.networking.router;
+  # Assuming router config is now under the namespace
+  routerCfg = config.${namespace}.router;
 
   # Helper function to generate keepalived configuration blocks
   generateVrrpInstance = name: instance: {

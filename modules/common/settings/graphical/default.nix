@@ -3,12 +3,12 @@
   config,
   pkgs,
   lib,
-  namespace,
-  osConfig ? null,
+  # namespace, # No longer needed for helpers
+  osConfig, # Assume osConfig is passed
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
   isLinux = pkgs.stdenv.isLinux;
   isDarwin = pkgs.stdenv.isDarwin;

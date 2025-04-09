@@ -4,12 +4,13 @@
   pkgs,
   lib,
   inputs,
-  namespace,
+  # namespace, # No longer needed for helpers
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.security.gpg;
 
   is-linux = pkgs.stdenv.isLinux;
@@ -62,9 +63,9 @@ in
 #   ${pkgs.gnupg}/bin/gpg-connect-agent "scd serialno" "learn --force" /bye
 # '';
 {
-  options.${namespace}.security.gpg = with types; {
-    enable = mkBoolOpt false "Whether or not to enable GPG.";
-    agentTimeout = mkOpt int 5 "The amount of time to wait before continuing with shell init.";
+  options.${namespace}.security.gpg = {
+    enable = mkEnableOption "GPG."; # Use standard mkEnableOption
+    agentTimeout = mkOption { type = types.int; default = 5; description = "The amount of time to wait before continuing with shell init."; }; # Use standard mkOption
   };
 
   config = mkIf cfg.enable {

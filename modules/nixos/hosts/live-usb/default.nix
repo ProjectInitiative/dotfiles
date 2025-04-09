@@ -3,15 +3,16 @@
   lib,
   inputs,
   config,
-  namespace,
+  # namespace, # No longer needed for helpers
   modulesPath,
   pkgs,
   options,
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.hosts.live-usb;
   hostname = "live-iso";
   nixRev = if inputs.nixpkgs ? rev then inputs.nixpkgs.shortRev else "dirty";
@@ -19,8 +20,8 @@ let
 in
 {
 
-  options.${namespace}.hosts.live-usb = with types; {
-    enable = mkBoolOpt false "Whether or not to enable the live-usb base config.";
+  options.${namespace}.hosts.live-usb = {
+    enable = mkEnableOption "the live-usb base config."; # Use standard mkEnableOption
   };
   # For reference, see //blog.thomasheartman.com/posts/building-a-custom-nixos-installer
   # but obviously flakified and broken apart.

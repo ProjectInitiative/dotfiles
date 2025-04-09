@@ -4,14 +4,15 @@
   config,
   lib,
   pkgs,
-  namespace,
+  # namespace, # No longer needed for helpers
   modulesPath,
   parsedNetworks, # Passed via _module.args
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.router;
   moduleCfg = config.${namespace}.router.dhcp;
 
@@ -30,13 +31,13 @@ let
 
 in
 {
-  options.${namespace}.router.dhcp = with types; {
+  options.${namespace}.router.dhcp = {
     # Simplified Kea options
     kea = {
-      enable = mkBoolOpt false "Whether to enable Kea DHCPv4 server.";
+      enable = mkEnableOption "Kea DHCPv4 server."; # Use standard mkEnableOption
 
       # Interfaces Kea should listen on (derived automatically)
-      # interfaces = mkOption { type = types.listOf types.str; default = []; };
+      # interfaces = mkOption { type = types.listOf types.str; default = []; }; # Standard mkOption
 
       failover = mkOption {
         type = types.nullOr (types.submodule {

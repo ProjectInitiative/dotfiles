@@ -2,21 +2,22 @@
   config,
   lib,
   pkgs,
-  namespace,
+  # namespace, # No longer needed for helpers
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.hosts.cargohold;
 in
 {
-  options.${namespace}.hosts.cargohold = {
-    enable = mkBoolOpt false "Whether to enable base cargohold NAS configuration";
-    ipAddress = mkOpt types.str "192.168.1.100/24" "Static management IP address with CIDR"; # Example IP
-    interface = mkOpt types.str "eth0" "Network interface for static IP"; # Example interface
-    gateway = mkOpt types.str "192.168.1.1" "Default gateway"; # Example gateway
-    bcachefsMountpoint = mkOpt types.str "/mnt/storage" "Path to mount bcachefs pool";
+  options.${namespace}.hosts.cargohold = with types; {
+    enable = mkEnableOption "base cargohold NAS configuration"; # Use standard mkEnableOption
+    ipAddress = mkOption { type = types.str; default = "192.168.1.100/24"; description = "Static management IP address with CIDR"; }; # Use standard mkOption
+    interface = mkOption { type = types.str; default = "eth0"; description = "Network interface for static IP"; }; # Use standard mkOption
+    gateway = mkOption { type = types.str; default = "192.168.1.1"; description = "Default gateway"; }; # Use standard mkOption
+    bcachefsMountpoint = mkOption { type = types.str; default = "/mnt/storage"; description = "Path to mount bcachefs pool"; }; # Use standard mkOption
     # Add more NAS specific options here later if needed (e.g., Samba shares)
   };
 
@@ -91,13 +92,13 @@ in
     # Enable common project modules if needed
     projectinitiative = {
       suites = {
-        bcachefs-utils = enabled;
+        bcachefs-utils.enable = true; # Use standard boolean
       };
       system = {
-        console-info.ip-display = enabled;
+        console-info.ip-display.enable = true; # Use standard boolean
 
         bcachefs-kernel = {
-          enable = true;
+          enable = true; # Standard boolean
           branch = "c79cf4111930c22487840d1332ee1d44e1c31707"; # Or specify a specific commit hash
           sourceHash = "sha256-uVo7X8/1akJxgO0ERu/41+XmK7l1uRAZuKYJV4mNQAo=";
           debug = true;

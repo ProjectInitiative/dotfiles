@@ -3,17 +3,18 @@
   config,
   lib,
   pkgs,
-  namespace,
+  # namespace, # No longer needed for helpers
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.tools.ansible;
 in
 {
-  options.${namespace}.tools.ansible = with types; {
-    enable = mkBoolOpt false "Whether or not to enable ansible.";
+  options.${namespace}.tools.ansible = {
+    enable = mkEnableOption "ansible."; # Use standard mkEnableOption
   };
 
   config = mkIf cfg.enable {

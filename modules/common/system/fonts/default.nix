@@ -3,13 +3,14 @@
   config,
   lib,
   pkgs,
-  namespace,
+  # namespace, # No longer needed for helpers
   inputs,
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.system.fonts;
 
   isLinux = pkgs.stdenv.isLinux;
@@ -32,12 +33,12 @@ let
 in
 {
   options.${namespace}.system.fonts = with types; {
-    enable = mkBoolOpt false "Whether or not to manage fonts.";
-    fonts = mkOpt (listOf package) [ ] "Custom font packages to install.";
-    linux = mkBoolOpt isLinux "";
-    darwin = mkBoolOpt isDarwin "";
-    nixos = mkBoolOpt isNixOS "";
-    homeManager = mkBoolOpt isHomeManager "";
+    enable = mkEnableOption "font management."; # Use standard mkEnableOption
+    fonts = mkOption { type = listOf package; default = [ ]; description = "Custom font packages to install."; }; # Use standard mkOption
+    linux = mkOption { type = bool; default = isLinux; description = "Is Linux system."; }; # Use standard mkOption
+    darwin = mkOption { type = bool; default = isDarwin; description = "Is Darwin system."; }; # Use standard mkOption
+    nixos = mkOption { type = bool; default = isNixOS; description = "Is NixOS system."; }; # Use standard mkOption
+    homeManager = mkOption { type = bool; default = isHomeManager; description = "Is Home Manager context."; }; # Use standard mkOption
   };
 
   config = mkIf cfg.enable (

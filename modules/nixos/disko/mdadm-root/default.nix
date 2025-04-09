@@ -3,12 +3,13 @@
   config,
   pkgs,
   lib,
-  namespace,
+  # namespace, # No longer needed for helpers
   ...
 }:
 with lib;
-with lib.${namespace};
+# with lib.${namespace}; # Removed custom helpers
 let
+  # Assuming 'namespace' is still defined in the evaluation scope for config path
   cfg = config.${namespace}.disko.mdadm-root;
   inherit (lib)
     mkOption
@@ -18,9 +19,9 @@ let
     ;
 in
 {
-  options.${namespace}.disko.mdadm-root = with types; {
-    enable = mkBoolOpt false "Whether or not to enable a mirrored mdadm boot and root partition";
-    mirroredDrives = mkOption {
+  options.${namespace}.disko.mdadm-root = {
+    enable = mkEnableOption "a mirrored mdadm boot and root partition"; # Use standard mkEnableOption
+    mirroredDrives = mkOption { # Standard mkOption
       type = types.listOf types.str;
       example = [
         "/dev/sda"
