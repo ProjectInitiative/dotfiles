@@ -33,7 +33,7 @@ prompt_user() {
 
   while true; do
     # Prompt user - UPDATED OPTIONS TEXT AND DEFAULT
-    read -p "Choose action: (o)verwrite, (s)kip, (O)verwrite all subsequent, (S)kip all subsequent, (q)uit? [s] " choice
+    read -p "Choose action: (o)verwrite, (s)kip, (O)verwrite all subsequent, (S)kip all subsequent, (q)uit? [s] " choice </dev/tty
     choice=${choice:-s} # Default to skip (lowercase s) if user just presses Enter
 
     # UPDATED CASE STATEMENT LOGIC
