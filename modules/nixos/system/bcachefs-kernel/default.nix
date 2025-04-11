@@ -28,6 +28,8 @@ let
           hash = cfg.sourceHash;
         };
 
+        hardeningEnable = [ "fortify" ];
+
         structuredExtraConfig =
           with lib.kernel;
           {

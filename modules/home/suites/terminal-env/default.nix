@@ -52,6 +52,7 @@ in
         icdiff
         usbutils
         rclone
+        magic-wormhole
         #TODO: add config for yazi
         yazi
         pkgs.${namespace}.flatten-directory
