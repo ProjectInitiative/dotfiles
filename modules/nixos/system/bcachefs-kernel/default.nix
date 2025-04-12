@@ -119,6 +119,7 @@ in
     # Install bcachefs tools and our test script
     environment.systemPackages = with pkgs; [
       bcachefs-tools
+      linuxPackages_custom_bcachefs.perf
     ];
 
   };

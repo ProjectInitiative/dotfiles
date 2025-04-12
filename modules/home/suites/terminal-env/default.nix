@@ -53,6 +53,7 @@ in
         usbutils
         rclone
         magic-wormhole
+        file
         #TODO: add config for yazi
         yazi
         pkgs.${namespace}.flatten-directory
