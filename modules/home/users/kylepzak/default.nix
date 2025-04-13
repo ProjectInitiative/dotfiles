@@ -35,7 +35,7 @@ in
 
       browsers = {
         firefox = enabled;
-        chrome = disabled;
+        chrome = enabled;
         chromium = enabled;
         librewolf = enabled;
         ladybird = disabled;
