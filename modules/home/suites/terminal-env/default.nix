@@ -53,6 +53,7 @@ in
         usbutils
         rclone
         magic-wormhole
+        eternal-terminal
         file
         #TODO: add config for yazi
         yazi

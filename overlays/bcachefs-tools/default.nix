@@ -1,9 +1,10 @@
 { channels, inputs, ... }:
 
 let
-  bcachefsVersion = "1.25.1";
+  bcachefsVersion = "v1.25.1";
+  bcachefsRev = "c9ee6467183b224b40ca437fd23eeabe0ae6a158";
   # Hash for the bcachefs-tools source code v1.25.1
-  bcachefsSrcHash = "sha256-P6h0n90akgGoFL292UpYTspq1QjcnBDjwvSGyO91xQg=";
+  bcachefsSrcHash = "sha256-3hr5l47W4R9O6NDNqnEpIpqcBkOstx/Hoix9WJJ8YxQ=";
   # HASH WILL BE FILLED IN AFTER FIRST FAILED BUILD
   bcachefsCargoHash = "sha256-juXRmI3tz2BXQsRaRRGyBaGqeLk2QHfJb2sKPmWur8s="; # <--- LEAVE THIS EMPTY or use "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 in
@@ -14,7 +15,7 @@ final: prev: {
       newSrc = final.fetchFromGitHub {
         owner = "koverstreet";
         repo = "bcachefs-tools";
-        rev = "v${bcachefsVersion}";
+        rev = "${bcachefsRev}";
         hash = bcachefsSrcHash;
       };
     in
