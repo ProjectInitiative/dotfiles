@@ -136,6 +136,8 @@ in
 
       services = {
 
+        eternal-terminal = enabled;
+
         health-reporter = {
           enable = true;
           telegramTokenPath = config.sops.secrets.health_reporter_bot_api_token.path;
