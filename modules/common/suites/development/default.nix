@@ -46,6 +46,10 @@ in
           fonts = enabled;
         };
 
+        services = {
+          eternal-terminal = enabled;
+        };
+
       };
     }
     // optionalAttrs (isHomeManager) {

@@ -91,7 +91,18 @@ with lib.${namespace};
     ## temp
     minicom
     rkdeveloptool
+    usbutils
   ];
+  # Enable fingerprint reader
+  services.fprintd = {
+    enable = true;
+    tod = {
+      enable = true;
+      driver = pkgs.libfprint-2-tod1-vfs0090; #(If the vfs0090 Driver does not work, use the following driver)
+      # driver = pkgs.libfprint-2-tod1-goodix; #(On my device it only worked with this driver)
+      };
+  };
+
 
   # Enable firmware service
   services.fwupd.enable = true;

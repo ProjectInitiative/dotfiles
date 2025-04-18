@@ -136,6 +136,20 @@ in
 
       services = {
 
+        eternal-terminal = enabled;
+
+        health-reporter = {
+          enable = true;
+          telegramTokenPath = config.sops.secrets.health_reporter_bot_api_token.path;
+          telegramChatIdPath = config.sops.secrets.telegram_chat_id.path;
+          excludeDrives = [
+            "loop"
+            "ram"
+            "sr"
+          ]; # Default exclusions
+          reportTime = "08:00"; # Send report at 8 AM
+        };
+
         juicefs = {
           enable = true;
           mounts = {
