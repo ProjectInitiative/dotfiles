@@ -1,10 +1,6 @@
 # default.nix
 {
-  options,
-  config,
-  lib,
-  pkgs,
-  namespace,
+  pkgs ? import <nixpkgs> { },
 }:
 
 pkgs.stdenv.mkDerivation rec { # Use 'rec' to easily refer to pname/version
@@ -16,17 +12,17 @@ pkgs.stdenv.mkDerivation rec { # Use 'rec' to easily refer to pname/version
 
   # Runtime dependencies: Commands the script calls
   # These will be available in the PATH when the script runs
-  propagatedBuildInputs = with pkgs; [
-    bashInteractive # Provides bash itself and builtins
-    coreutils       # date, sleep, mkdir, tee, echo, printf, wc, rm, cat, cut, tail, head, tr, test ([), env
-    gnugrep         # grep
-    gawk            # awk
-    gnused          # sed
-    findutils       # find
-    util-linux      # lsblk, findmnt
-    smartmontools   # smartctl
-    e2fsprogs       # badblocks
-    jq              # jq
+  propagatedBuildInputs = [
+    pkgs.bashInteractive # Provides bash itself and builtins
+    pkgs.coreutils       # date, sleep, mkdir, tee, echo, printf, wc, rm, cat, cut, tail, head, tr, test ([), env
+    pkgs.gnugrep         # grep
+    pkgs.gawk            # awk
+    pkgs.gnused          # sed
+    pkgs.findutils       # find
+    pkgs.util-linux      # lsblk, findmnt
+    pkgs.smartmontools   # smartctl
+    pkgs.e2fsprogs       # badblocks
+    pkgs.jq              # jq
   ];
 
   # Build phase is not needed for a simple script
