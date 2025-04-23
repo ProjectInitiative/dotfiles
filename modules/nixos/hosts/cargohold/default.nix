@@ -84,8 +84,146 @@ in
             platforms = platforms.linux;
             maintainers = [ maintainers.kylepzak ];          };
         }) { }; # Pass empty attribute set for callPackage
+        
+
+        # --- Configuration Section (Define parameters here) ---
+        pwmEnablePath = "/sys/class/hwmon/hwmon2/pwm3_enable"; # <---- ADJUST TO YOUR SYSTEM
+        pwmControlPath = "/sys/class/hwmon/hwmon2/pwm3";    # <---- ADJUST TO YOUR SYSTEM
+        tempThreshold = 45;           # Temperature threshold in Celsius
+        pwmLow = 70;                  # PWM value (0-255) below threshold (ensure >= min effective PWM)
+        pwmHigh = 200;                # PWM value (0-255) at/above threshold
+        pwmDefault = 128;             # Default PWM if no drive temps are readable
+        checkInterval = "2m";         # How often the timer runs the check
+        # --- End Configuration Section ---
+
+        # Shell script to perform the check and set the fan speed
+        hddFanControlScript = pkgs.writeShellScriptBin "hdd-fan-control-hottest" ''
+          #!${pkgs.runtimeShell}
+          set -eu # Exit on error, unset variables
+
+          # --- Use configuration passed from Nix ---
+          PWM_ENABLE="${pwmEnablePath}"
+          PWM_CONTROL="${pwmControlPath}"
+          TEMP_THRESHOLD="${toString tempThreshold}"
+          PWM_LOW="${toString pwmLow}"
+          PWM_HIGH="${toString pwmHigh}"
+          DEFAULT_PWM="${toString pwmDefault}"
+
+          # --- Script Logic ---
+          max_temp=-1 # Initialize max temp to a value lower than possible temps
+          hottest_drive="none"
+          temp_found=0 # Flag to track if any valid temp was found
+
+          echo "INFO: Starting hottest drive temperature check..."
+
+          # Create a temporary file to hold the list of disk devices
+          DEVICE_LIST_FILE=$(${pkgs.coreutils}/bin/mktemp)
+          # Ensure cleanup on exit
+          trap '${pkgs.coreutils}/bin/rm -f "$DEVICE_LIST_FILE"' EXIT
+
+          # Get disk devices using lsblk JSON output and jq parser
+          if ! ${pkgs.util-linux}/bin/lsblk -Jdno NAME | ${pkgs.jq}/bin/jq -r '.blockdevices[] .name | "/dev/\(.)"' > "$DEVICE_LIST_FILE"; then
+            echo "ERROR: Failed to list disk devices using lsblk/jq." >&2
+            exit 1 # Exit if device listing fails
+          fi
+
+          echo "INFO: Found drives to check:"
+          cat "$DEVICE_LIST_FILE"
+
+          # Loop through the device list file
+          while IFS= read -r device_path; do
+            # Skip empty lines if any
+            if [ -z "$device_path" ]; then continue; fi
+
+            echo "INFO: Checking temperature for $device_path..."
+            # Get temperature using smartctl, grep for the line, awk the value, take first result
+            # Redirect stderr to /dev/null to suppress smartctl errors for non-supporting drives
+            current_temp=$(${pkgs.smartmontools}/bin/smartctl -A "$device_path" -d auto 2>/dev/null | ${pkgs.gnugrep}/bin/grep -i Temperature_Celsius | ${pkgs.gawk}/bin/awk '{print $10}' | ${pkgs.coreutils}/bin/head -n 1)
+
+            # Check if we got a numeric temperature
+            if ! [[ "$current_temp" =~ ^[0-9]+$ ]]; then
+              echo "WARN: No valid temperature reading obtained from $device_path." >&2
+              continue # Skip to the next drive
+            fi
+
+            echo "INFO: Temperature for $device_path: $current_temp C"
+            temp_found=1 # Mark that we found at least one valid temperature
+
+            # Update maximum temperature if current drive is hotter
+            if [ "$current_temp" -gt "$max_temp" ]; then
+              max_temp="$current_temp"
+              hottest_drive="$device_path"
+            fi
+
+          done < "$DEVICE_LIST_FILE"
+          # Temp file is removed by EXIT trap
+
+          # --- Determine Fan Speed ---
+          TARGET_PWM="$DEFAULT_PWM" # Start with default
+
+          if [ "$temp_found" -eq 0 ]; then
+            echo "ERROR: Could not read a valid temperature from any drive. Setting default PWM ($DEFAULT_PWM)." >&2
+          else
+            echo "INFO: Hottest drive found: $hottest_drive at $max_temp C. Threshold is $TEMP_THRESHOLD C."
+            # Set PWM based on the highest temperature found
+            if [ "$max_temp" -ge "$TEMP_THRESHOLD" ]; then
+              TARGET_PWM="$PWM_HIGH"
+            else
+              TARGET_PWM="$PWM_LOW"
+            fi
+          fi
+
+          # --- Set Fan Speed ---
+          # Check if control files are writable first
+          if [ ! -w "$PWM_ENABLE" ] || [ ! -w "$PWM_CONTROL" ]; then
+            echo "ERROR: Cannot write to PWM control files: $PWM_ENABLE / $PWM_CONTROL. Cannot set fan speed." >&2
+            exit 1 # Exit if controls aren't available/writable
+          fi
+
+          echo "INFO: Setting fan PWM ($PWM_CONTROL) to: $TARGET_PWM"
+          # Ensure manual mode is enabled (important!)
+          echo 1 > "$PWM_ENABLE"
+          # Set the target PWM value
+          echo "$TARGET_PWM" > "$PWM_CONTROL"
+
+          echo "INFO: Hottest drive temperature check complete."
+        ''; # End of script string
 
     in {
+
+    # --- Systemd Service Definition ---
+    systemd.services.hddFanControl = {
+      description = "Hottest Drive Temperature Fan Control Service";
+      # Ensure all commands used in the script are in the path
+      path = with pkgs; [
+        smartmontools  # for smartctl
+        coreutils      # for head, mktemp, rm, cat
+        gawk           # for awk
+        gnugrep        # for grep
+        jq             # for parsing lsblk JSON
+        util-linux     # for lsblk
+        runtimeShell   # Provides the shell itself (e.g., bash)
+      ];
+      serviceConfig = {
+        Type = "oneshot"; # Run script once and exit
+        User = "root";    # Needs root for smartctl and /sys writes
+        ExecStart = "${hddFanControlScript}/bin/hdd-fan-control-hottest";
+      };
+    };
+
+    # --- Systemd Timer Definition ---
+    systemd.timers.hddFanControl = {
+      description = "Run Hottest Drive Fan Control Script Periodically";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnBootSec = "1min";         # Run 1 minute after boot
+        OnUnitActiveSec = checkInterval; # Run again based on variable above
+        Unit = "hddFanControl.service"; # Service to activate
+      };
+    };
+
+
+    
     # Base system packages
     environment.systemPackages = with pkgs; [
       bcachefs-tools
