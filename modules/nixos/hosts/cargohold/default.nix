@@ -70,8 +70,10 @@ in
             # Create the correct destination directory inside $out
             mkdir -p "${moduleInstallDir}"
             # Copy the built module (assuming name is it87.ko based on Makefile)
-            cp it87.ko "${moduleInstallDir}/"
-            echo "Installed it87.ko to ${moduleInstallDir}"
+            #  # Rename the output file before copying
+            mv it87.ko it87-oot.ko
+            cp it87-oot.ko "${moduleInstallDir}/"
+            echo "Installed it87-oot.ko to ${moduleInstallDir}"
             # DO NOT RUN depmod. NixOS handles module dependencies.
             runHook postInstall
           '';
@@ -98,7 +100,7 @@ in
     # Enable bcachefs support
     boot.supportedFilesystems = [ "bcachefs" ];
 
-    boot.kernelModules = [ "bcachefs" "it87" ];
+    boot.kernelModules = [ "bcachefs" "it87-oot" ];
     # Consider using latest kernel if needed for bcachefs features
     boot.kernelPackages = pkgs.linuxPackages_latest;
     # Add the out-of-tree module package here
