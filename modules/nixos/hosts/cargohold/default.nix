@@ -20,7 +20,70 @@ in
     # Add more NAS specific options here later if needed (e.g., Samba shares)
   };
 
-  config = mkIf cfg.enable {
+  config = mkIf cfg.enable (
+    # Reference the kernel package being used
+    let
+      kernel = config.boot.kernelPackages.kernel; # Use the kernel defined below or default
+
+      # Fetch the source for the it87 driver
+      # !!! REPLACE owner, repo, rev, and sha256 with actual values !!!
+      it87-driver-src = pkgs.fetchFromGitHub {
+        owner = "frankcrawford";
+        repo = "it87";
+        rev = "4bff981a91bf9209b52e30ee24ca39df163a8bcd";
+        hash = "sha256-hjNph67pUaeL4kw3cacSz/sAvWMcoN2R7puiHWmRObM=";
+      };
+
+      # Define the package to build the kernel module
+      it87-driver = config.boot.kernelPackages.callPackage ({ stdenv, lib }:
+        let
+          # Define correct paths from Nix environment
+          kernelBuildDir = "${kernel.dev}/lib/modules/${kernel.modDirVersion}/build";
+          moduleInstallDir = "${placeholder "out"}/lib/modules/${kernel.modDirVersion}/kernel/drivers/hwmon"; # Matches Makefile's MOD_SUBDIR
+        in
+        stdenv.mkDerivation {
+          pname = "it87-out-of-tree";
+          version = "${kernel.version}-${lib.substring 0 7 it87-driver-src.rev}";
+
+          src = it87-driver-src;
+
+          nativeBuildInputs = kernel.moduleBuildDependencies;
+
+
+          # Explicitly define build phase, overriding Makefile's KERNEL_BUILD calculation
+          buildPhase = ''
+            runHook preBuild
+            echo "--- Building IT87 module ---"
+            echo "Overriding KERNEL_BUILD=${kernelBuildDir}"
+            # Pass KERNEL_BUILD directly to the make command for the 'modules' target.
+            # This ensures the '-C' argument in that target uses the correct path.
+            # Also pass M=$PWD explicitly.
+            make modules KERNEL_BUILD="${kernelBuildDir}" M="$PWD"
+            echo "--- Finished building IT87 module ---"
+            runHook postBuild
+          '';
+
+          # Explicitly define install phase, bypassing Makefile's install target
+          installPhase = ''
+            runHook preInstall
+            echo "--- Installing IT87 module manually ---"
+            # Create the correct destination directory inside $out
+            mkdir -p "${moduleInstallDir}"
+            # Copy the built module (assuming name is it87.ko based on Makefile)
+            cp it87.ko "${moduleInstallDir}/"
+            echo "Installed it87.ko to ${moduleInstallDir}"
+            # DO NOT RUN depmod. NixOS handles module dependencies.
+            runHook postInstall
+          '';
+
+          meta = with lib; {
+            description = "Out-of-tree kernel module for ITE IT8xxx Super I/O chips (inc. IT8613E)";
+            license = licenses.gpl2Only; # Verify license
+            platforms = platforms.linux;
+            maintainers = [ maintainers.kylepzak ];          };
+        }) { }; # Pass empty attribute set for callPackage
+
+    in {
     # Base system packages
     environment.systemPackages = with pkgs; [
       bcachefs-tools
@@ -28,15 +91,21 @@ in
       lsof
       pciutils
       iperf3
+      lm_sensors
       # Add NAS related tools like samba, nfs-utils if needed
     ];
 
     # Enable bcachefs support
     boot.supportedFilesystems = [ "bcachefs" ];
-    boot.kernelModules = [ "bcachefs" ];
+
+    boot.kernelModules = [ "bcachefs" "it87" ];
     # Consider using latest kernel if needed for bcachefs features
     boot.kernelPackages = pkgs.linuxPackages_latest;
+    # Add the out-of-tree module package here
+    boot.extraModulePackages = [ it87-driver ];
+    
     boot.kernelParams = [ "nomodeset" ];
+
     console.enable = true;
     # enable GPU drivers
     hardware.enableRedistributableFirmware = true;
@@ -137,5 +206,6 @@ in
 
     # Set the state version
     system.stateVersion = "24.05"; # Adjust as needed
-  };
+    }
+  );
 }
