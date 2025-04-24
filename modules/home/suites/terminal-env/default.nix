@@ -57,6 +57,7 @@ in
         #TODO: add config for yazi
         yazi
         pkgs.${namespace}.flatten-directory
+        pkgs.${namespace}.standardize-files
         pkgs.${namespace}.remote-drive-info
         pkgs.${namespace}.health-report
         pkgs.${namespace}.interactive-mv
