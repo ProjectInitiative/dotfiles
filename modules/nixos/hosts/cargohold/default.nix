@@ -90,8 +90,8 @@ in
         pwmEnablePath = "/sys/class/hwmon/hwmon2/pwm3_enable"; # <---- ADJUST TO YOUR SYSTEM
         pwmControlPath = "/sys/class/hwmon/hwmon2/pwm3";    # <---- ADJUST TO YOUR SYSTEM
         tempThreshold = 45;           # Temperature threshold in Celsius
-        pwmLow = 70;                  # PWM value (0-255) below threshold (ensure >= min effective PWM)
-        pwmHigh = 200;                # PWM value (0-255) at/above threshold
+        pwmLow = 100;                  # PWM value (0-255) below threshold (ensure >= min effective PWM)
+        pwmHigh = 255;                # PWM value (0-255) at/above threshold
         pwmDefault = 128;             # Default PWM if no drive temps are readable
         checkInterval = "2m";         # How often the timer runs the check
         # --- End Configuration Section ---
