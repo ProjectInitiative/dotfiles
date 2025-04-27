@@ -324,6 +324,8 @@ in
         system = {
           console-info.ip-display = enabled;
 
+          nix-config = enabled;
+
           bcachefs-kernel = {
             enable = true;
             rev = "c79cf4111930c22487840d1332ee1d44e1c31707"; # Or specify a specific commit hash

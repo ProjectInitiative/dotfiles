@@ -201,6 +201,7 @@ in
       system = {
         # Enable common base modules
         console-info.ip-display = enabled;
+        nix-config = enabled;
       };
 
       networking = {
