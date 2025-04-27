@@ -323,8 +323,8 @@ in
 
         bcachefs-kernel = {
           enable = true;
-          branch = "c79cf4111930c22487840d1332ee1d44e1c31707"; # Or specify a specific commit hash
-          sourceHash = "sha256-uVo7X8/1akJxgO0ERu/41+XmK7l1uRAZuKYJV4mNQAo=";
+          rev = "c79cf4111930c22487840d1332ee1d44e1c31707"; # Or specify a specific commit hash
+          hash = "sha256-uVo7X8/1akJxgO0ERu/41+XmK7l1uRAZuKYJV4mNQAo=";
           debug = true;
         };
         bcachefs-module = {

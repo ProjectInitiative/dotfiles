@@ -1,0 +1,28 @@
+[Unit]
+Description=Tailscale Watchdog Service
+Documentation=https://example.com/your-documentation-link (Optional: Add a link if you have one)
+# Start after the network is generally up and tailscaled itself has started
+After=network-online.target tailscaled.service
+# We need tailscaled to be running
+Requires=tailscaled.service
+# If tailscaled stops or fails, stop this service too
+BindsTo=tailscaled.service
+
+[Service]
+Type=simple
+# Path to the watchdog script
+ExecStart=/usr/local/bin/tailscale_watchdog_daemon.sh
+# Run as root (needed for systemctl restart)
+User=root
+# Restart the watchdog script if it crashes
+Restart=on-failure
+RestartSec=10s
+# Redirect stdout and stderr to the systemd journal (view with journalctl -u tailscale-watchdog.service)
+# Alternatively, keep the script's logging and set StandardOutput=null StandardError=null
+StandardOutput=append:/var/log/tailscale_watchdog.log
+StandardError=append:/var/log/tailscale_watchdog.log
+
+[Install]
+# Enable the service to start on boot
+WantedBy=multi-user.target
+

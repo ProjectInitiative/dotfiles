@@ -18,14 +18,14 @@ let
     buildLinux (
       args
       // rec {
-        version = "6.14.0-rc6-bcachefs";
-        modDirVersion = "6.14.0-rc6";
+        version = "6.15.0-rc5-bcachefs";
+        modDirVersion = "6.15.0-rc5";
 
         src = fetchFromGitHub {
           owner = "koverstreet";
           repo = "bcachefs";
-          rev = cfg.branch;
-          hash = cfg.sourceHash;
+          rev = cfg.rev;
+          hash = cfg.hash;
         };
 
         hardeningEnable = [ "fortify" ];
@@ -60,13 +60,13 @@ in
   options.${namespace}.system.bcachefs-kernel = {
     enable = mkEnableOption "custom bcachefs kernel with read_fua_test support";
 
-    branch = mkOption {
+    rev = mkOption {
       type = types.str;
       default = "master";
       description = "Git branch or commit hash of Kent Overstreet's bcachefs repository to use";
     };
 
-    sourceHash = mkOption {
+    hash = mkOption {
       type = types.str;
       default = "sha256:0000000000000000000000000000000000000000000000000000";
       description = "SHA256 hash of the source code (replace after first build attempt)";
