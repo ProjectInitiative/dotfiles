@@ -94,6 +94,7 @@ let
       exit 0
     ''; # End of text block
   }; # End of writeShellApplication arguments
-in # Start of the final expression part of the let block
+in
+# Start of the final expression part of the let block
 # The result of the expression is the derivation
 standardize-files

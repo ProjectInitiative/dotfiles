@@ -25,9 +25,21 @@ in
           options = {
             sourcePort = mkOption { type = types.int; };
             destination = mkOption { type = types.str; };
-            destinationPort = mkOption { type = types.nullOr types.int; default = null; };
-            protocol = mkOption { type = types.enum [ "tcp" "udp" ]; default = "tcp"; }; # Removed 'both' for simplicity with NixOS firewall
-            description = mkOption { type = types.nullOr types.str; default = null; };
+            destinationPort = mkOption {
+              type = types.nullOr types.int;
+              default = null;
+            };
+            protocol = mkOption {
+              type = types.enum [
+                "tcp"
+                "udp"
+              ];
+              default = "tcp";
+            }; # Removed 'both' for simplicity with NixOS firewall
+            description = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+            };
           };
         }
       );
@@ -66,15 +78,20 @@ in
       #   destination = "${rule.destination}:${toString (fromMaybe rule.sourcePort rule.destinationPort)}";
       # }) moduleCfg.portForwarding;
 
-
       # Extra rules for VLAN isolation and potentially other needs
       extraCommands = ''
         # --- VLAN Isolation Rules ---
-        ${concatMapStrings (isolatedVlan:
-          let isoInterface = "${cfg.lanInterface}.${toString isolatedVlan.id}";
-          in concatMapStrings (otherVlan:
-            let otherInterface = "${cfg.lanInterface}.${toString otherVlan.id}";
-            in ''
+        ${concatMapStrings (
+          isolatedVlan:
+          let
+            isoInterface = "${cfg.lanInterface}.${toString isolatedVlan.id}";
+          in
+          concatMapStrings (
+            otherVlan:
+            let
+              otherInterface = "${cfg.lanInterface}.${toString otherVlan.id}";
+            in
+            ''
               # Isolate VLAN ${toString isolatedVlan.id} (${isolatedVlan.name}) from VLAN ${toString otherVlan.id} (${otherVlan.name})
               iptables -A FORWARD -i ${isoInterface} -o ${otherInterface} -j REJECT --reject-with icmp-host-prohibited
               iptables -A FORWARD -i ${otherInterface} -o ${isoInterface} -j REJECT --reject-with icmp-host-prohibited
@@ -91,7 +108,12 @@ in
         # Handled by NAT and default forward policy (if ACCEPT) or specific rules
 
         # --- Allow traffic from Management to anywhere (Example) ---
-        # mgmt_if="${if cfg.managementVlan.id == 1 then cfg.lanInterface else "${cfg.lanInterface}.${toString cfg.managementVlan.id}"}"
+        # mgmt_if="${
+          if cfg.managementVlan.id == 1 then
+            cfg.lanInterface
+          else
+            "${cfg.lanInterface}.${toString cfg.managementVlan.id}"
+        }"
         # iptables -A FORWARD -i $mgmt_if -j ACCEPT
         # iptables -A FORWARD -o $mgmt_if -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT # Allow return traffic
 

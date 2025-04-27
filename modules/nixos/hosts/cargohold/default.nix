@@ -35,7 +35,8 @@ in
       };
 
       # Define the package to build the kernel module
-      it87-driver = config.boot.kernelPackages.callPackage ({ stdenv, lib }:
+      it87-driver = config.boot.kernelPackages.callPackage (
+        { stdenv, lib }:
         let
           # Define correct paths from Nix environment
           kernelBuildDir = "${kernel.dev}/lib/modules/${kernel.modDirVersion}/build";
@@ -48,7 +49,6 @@ in
           src = it87-driver-src;
 
           nativeBuildInputs = kernel.moduleBuildDependencies;
-
 
           # Explicitly define build phase, overriding Makefile's KERNEL_BUILD calculation
           buildPhase = ''
@@ -82,270 +82,273 @@ in
             description = "Out-of-tree kernel module for ITE IT8xxx Super I/O chips (inc. IT8613E)";
             license = licenses.gpl2Only; # Verify license
             platforms = platforms.linux;
-            maintainers = [ maintainers.kylepzak ];          };
-        }) { }; # Pass empty attribute set for callPackage
-        
+            maintainers = [ maintainers.kylepzak ];
+          };
+        }
+      ) { }; # Pass empty attribute set for callPackage
 
-        # --- Configuration Section (Define parameters here) ---
-        pwmEnablePath = "/sys/class/hwmon/hwmon2/pwm3_enable"; # <---- ADJUST TO YOUR SYSTEM
-        pwmControlPath = "/sys/class/hwmon/hwmon2/pwm3";    # <---- ADJUST TO YOUR SYSTEM
-        tempThreshold = 45;           # Temperature threshold in Celsius
-        pwmLow = 100;                  # PWM value (0-255) below threshold (ensure >= min effective PWM)
-        pwmHigh = 255;                # PWM value (0-255) at/above threshold
-        pwmDefault = 128;             # Default PWM if no drive temps are readable
-        checkInterval = "2m";         # How often the timer runs the check
-        # --- End Configuration Section ---
+      # --- Configuration Section (Define parameters here) ---
+      pwmEnablePath = "/sys/class/hwmon/hwmon2/pwm3_enable"; # <---- ADJUST TO YOUR SYSTEM
+      pwmControlPath = "/sys/class/hwmon/hwmon2/pwm3"; # <---- ADJUST TO YOUR SYSTEM
+      tempThreshold = 45; # Temperature threshold in Celsius
+      pwmLow = 100; # PWM value (0-255) below threshold (ensure >= min effective PWM)
+      pwmHigh = 255; # PWM value (0-255) at/above threshold
+      pwmDefault = 128; # Default PWM if no drive temps are readable
+      checkInterval = "2m"; # How often the timer runs the check
+      # --- End Configuration Section ---
 
-        # Shell script to perform the check and set the fan speed
-        hddFanControlScript = pkgs.writeShellScriptBin "hdd-fan-control-hottest" ''
-          #!${pkgs.runtimeShell}
-          set -eu # Exit on error, unset variables
+      # Shell script to perform the check and set the fan speed
+      hddFanControlScript = pkgs.writeShellScriptBin "hdd-fan-control-hottest" ''
+        #!${pkgs.runtimeShell}
+        set -eu # Exit on error, unset variables
 
-          # --- Use configuration passed from Nix ---
-          PWM_ENABLE="${pwmEnablePath}"
-          PWM_CONTROL="${pwmControlPath}"
-          TEMP_THRESHOLD="${toString tempThreshold}"
-          PWM_LOW="${toString pwmLow}"
-          PWM_HIGH="${toString pwmHigh}"
-          DEFAULT_PWM="${toString pwmDefault}"
+        # --- Use configuration passed from Nix ---
+        PWM_ENABLE="${pwmEnablePath}"
+        PWM_CONTROL="${pwmControlPath}"
+        TEMP_THRESHOLD="${toString tempThreshold}"
+        PWM_LOW="${toString pwmLow}"
+        PWM_HIGH="${toString pwmHigh}"
+        DEFAULT_PWM="${toString pwmDefault}"
 
-          # --- Script Logic ---
-          max_temp=-1 # Initialize max temp to a value lower than possible temps
-          hottest_drive="none"
-          temp_found=0 # Flag to track if any valid temp was found
+        # --- Script Logic ---
+        max_temp=-1 # Initialize max temp to a value lower than possible temps
+        hottest_drive="none"
+        temp_found=0 # Flag to track if any valid temp was found
 
-          echo "INFO: Starting hottest drive temperature check..."
+        echo "INFO: Starting hottest drive temperature check..."
 
-          # Create a temporary file to hold the list of disk devices
-          DEVICE_LIST_FILE=$(${pkgs.coreutils}/bin/mktemp)
-          # Ensure cleanup on exit
-          trap '${pkgs.coreutils}/bin/rm -f "$DEVICE_LIST_FILE"' EXIT
+        # Create a temporary file to hold the list of disk devices
+        DEVICE_LIST_FILE=$(${pkgs.coreutils}/bin/mktemp)
+        # Ensure cleanup on exit
+        trap '${pkgs.coreutils}/bin/rm -f "$DEVICE_LIST_FILE"' EXIT
 
-          # Get disk devices using lsblk JSON output and jq parser
-          if ! ${pkgs.util-linux}/bin/lsblk -Jdno NAME | ${pkgs.jq}/bin/jq -r '.blockdevices[] .name | "/dev/\(.)"' > "$DEVICE_LIST_FILE"; then
-            echo "ERROR: Failed to list disk devices using lsblk/jq." >&2
-            exit 1 # Exit if device listing fails
+        # Get disk devices using lsblk JSON output and jq parser
+        if ! ${pkgs.util-linux}/bin/lsblk -Jdno NAME | ${pkgs.jq}/bin/jq -r '.blockdevices[] .name | "/dev/\(.)"' > "$DEVICE_LIST_FILE"; then
+          echo "ERROR: Failed to list disk devices using lsblk/jq." >&2
+          exit 1 # Exit if device listing fails
+        fi
+
+        echo "INFO: Found drives to check:"
+        cat "$DEVICE_LIST_FILE"
+
+        # Loop through the device list file
+        while IFS= read -r device_path; do
+          # Skip empty lines if any
+          if [ -z "$device_path" ]; then continue; fi
+
+          echo "INFO: Checking temperature for $device_path..."
+          # Get temperature using smartctl, grep for the line, awk the value, take first result
+          # Redirect stderr to /dev/null to suppress smartctl errors for non-supporting drives
+          current_temp=$(${pkgs.smartmontools}/bin/smartctl -A "$device_path" -d auto 2>/dev/null | ${pkgs.gnugrep}/bin/grep -i Temperature_Celsius | ${pkgs.gawk}/bin/awk '{print $10}' | ${pkgs.coreutils}/bin/head -n 1)
+
+          # Check if we got a numeric temperature
+          if ! [[ "$current_temp" =~ ^[0-9]+$ ]]; then
+            echo "WARN: No valid temperature reading obtained from $device_path." >&2
+            continue # Skip to the next drive
           fi
 
-          echo "INFO: Found drives to check:"
-          cat "$DEVICE_LIST_FILE"
+          echo "INFO: Temperature for $device_path: $current_temp C"
+          temp_found=1 # Mark that we found at least one valid temperature
 
-          # Loop through the device list file
-          while IFS= read -r device_path; do
-            # Skip empty lines if any
-            if [ -z "$device_path" ]; then continue; fi
+          # Update maximum temperature if current drive is hotter
+          if [ "$current_temp" -gt "$max_temp" ]; then
+            max_temp="$current_temp"
+            hottest_drive="$device_path"
+          fi
 
-            echo "INFO: Checking temperature for $device_path..."
-            # Get temperature using smartctl, grep for the line, awk the value, take first result
-            # Redirect stderr to /dev/null to suppress smartctl errors for non-supporting drives
-            current_temp=$(${pkgs.smartmontools}/bin/smartctl -A "$device_path" -d auto 2>/dev/null | ${pkgs.gnugrep}/bin/grep -i Temperature_Celsius | ${pkgs.gawk}/bin/awk '{print $10}' | ${pkgs.coreutils}/bin/head -n 1)
+        done < "$DEVICE_LIST_FILE"
+        # Temp file is removed by EXIT trap
 
-            # Check if we got a numeric temperature
-            if ! [[ "$current_temp" =~ ^[0-9]+$ ]]; then
-              echo "WARN: No valid temperature reading obtained from $device_path." >&2
-              continue # Skip to the next drive
-            fi
+        # --- Determine Fan Speed ---
+        TARGET_PWM="$DEFAULT_PWM" # Start with default
 
-            echo "INFO: Temperature for $device_path: $current_temp C"
-            temp_found=1 # Mark that we found at least one valid temperature
-
-            # Update maximum temperature if current drive is hotter
-            if [ "$current_temp" -gt "$max_temp" ]; then
-              max_temp="$current_temp"
-              hottest_drive="$device_path"
-            fi
-
-          done < "$DEVICE_LIST_FILE"
-          # Temp file is removed by EXIT trap
-
-          # --- Determine Fan Speed ---
-          TARGET_PWM="$DEFAULT_PWM" # Start with default
-
-          if [ "$temp_found" -eq 0 ]; then
-            echo "ERROR: Could not read a valid temperature from any drive. Setting default PWM ($DEFAULT_PWM)." >&2
+        if [ "$temp_found" -eq 0 ]; then
+          echo "ERROR: Could not read a valid temperature from any drive. Setting default PWM ($DEFAULT_PWM)." >&2
+        else
+          echo "INFO: Hottest drive found: $hottest_drive at $max_temp C. Threshold is $TEMP_THRESHOLD C."
+          # Set PWM based on the highest temperature found
+          if [ "$max_temp" -ge "$TEMP_THRESHOLD" ]; then
+            TARGET_PWM="$PWM_HIGH"
           else
-            echo "INFO: Hottest drive found: $hottest_drive at $max_temp C. Threshold is $TEMP_THRESHOLD C."
-            # Set PWM based on the highest temperature found
-            if [ "$max_temp" -ge "$TEMP_THRESHOLD" ]; then
-              TARGET_PWM="$PWM_HIGH"
-            else
-              TARGET_PWM="$PWM_LOW"
-            fi
+            TARGET_PWM="$PWM_LOW"
           fi
+        fi
 
-          # --- Set Fan Speed ---
-          # Check if control files are writable first
-          if [ ! -w "$PWM_ENABLE" ] || [ ! -w "$PWM_CONTROL" ]; then
-            echo "ERROR: Cannot write to PWM control files: $PWM_ENABLE / $PWM_CONTROL. Cannot set fan speed." >&2
-            exit 1 # Exit if controls aren't available/writable
-          fi
+        # --- Set Fan Speed ---
+        # Check if control files are writable first
+        if [ ! -w "$PWM_ENABLE" ] || [ ! -w "$PWM_CONTROL" ]; then
+          echo "ERROR: Cannot write to PWM control files: $PWM_ENABLE / $PWM_CONTROL. Cannot set fan speed." >&2
+          exit 1 # Exit if controls aren't available/writable
+        fi
 
-          echo "INFO: Setting fan PWM ($PWM_CONTROL) to: $TARGET_PWM"
-          # Ensure manual mode is enabled (important!)
-          echo 1 > "$PWM_ENABLE"
-          # Set the target PWM value
-          echo "$TARGET_PWM" > "$PWM_CONTROL"
+        echo "INFO: Setting fan PWM ($PWM_CONTROL) to: $TARGET_PWM"
+        # Ensure manual mode is enabled (important!)
+        echo 1 > "$PWM_ENABLE"
+        # Set the target PWM value
+        echo "$TARGET_PWM" > "$PWM_CONTROL"
 
-          echo "INFO: Hottest drive temperature check complete."
-        ''; # End of script string
+        echo "INFO: Hottest drive temperature check complete."
+      ''; # End of script string
 
-    in {
+    in
+    {
 
-    # --- Systemd Service Definition ---
-    systemd.services.hddFanControl = {
-      description = "Hottest Drive Temperature Fan Control Service";
-      # Ensure all commands used in the script are in the path
-      path = with pkgs; [
-        smartmontools  # for smartctl
-        coreutils      # for head, mktemp, rm, cat
-        gawk           # for awk
-        gnugrep        # for grep
-        jq             # for parsing lsblk JSON
-        util-linux     # for lsblk
-        runtimeShell   # Provides the shell itself (e.g., bash)
-      ];
-      serviceConfig = {
-        Type = "oneshot"; # Run script once and exit
-        User = "root";    # Needs root for smartctl and /sys writes
-        ExecStart = "${hddFanControlScript}/bin/hdd-fan-control-hottest";
-      };
-    };
-
-    # --- Systemd Timer Definition ---
-    systemd.timers.hddFanControl = {
-      description = "Run Hottest Drive Fan Control Script Periodically";
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnBootSec = "1min";         # Run 1 minute after boot
-        OnUnitActiveSec = checkInterval; # Run again based on variable above
-        Unit = "hddFanControl.service"; # Service to activate
-      };
-    };
-
-
-    
-    # Base system packages
-    environment.systemPackages = with pkgs; [
-      bcachefs-tools
-      smartmontools
-      lsof
-      pciutils
-      iperf3
-      lm_sensors
-      # Add NAS related tools like samba, nfs-utils if needed
-    ];
-
-    # Enable bcachefs support
-    boot.supportedFilesystems = [ "bcachefs" ];
-
-    boot.kernelModules = [ "bcachefs" "it87-oot" ];
-    # Consider using latest kernel if needed for bcachefs features
-    boot.kernelPackages = pkgs.linuxPackages_latest;
-    # Add the out-of-tree module package here
-    boot.extraModulePackages = [ it87-driver ];
-    
-    boot.kernelParams = [ "nomodeset" ];
-
-    console.enable = true;
-    # enable GPU drivers
-    hardware.enableRedistributableFirmware = true;
-    hardware.firmware = [ pkgs.linux-firmware ];
-
-    # Enable SSH access
-    services.openssh = {
-      enable = true;
-      settings = {
-      };
-    };
-
-    # Networking using systemd-networkd
-    networking = {
-      useDHCP = true; # Disable global DHCP
-      # interfaces = { }; # Clear interfaces managed elsewhere
-      nameservers = [
-        cfg.gateway # Use gateway as primary DNS
-        "1.1.1.1" # Cloudflare DNS
-        "9.9.9.9" # Quad9 DNS
-      ];
-      # defaultGateway = cfg.gateway; # Set via systemd-networkd route
-      # firewall.allowedTCPPorts = [
-      #   22 # SSH
-      #   5201 # iperf
-      #   # Add ports for NAS services (e.g., Samba: 139, 445)
-      # ];
-      networkmanager.enable = false; # Ensure NetworkManager is disabled
-    };
-
-    systemd.network = {
-      enable = false;
-      networks."10-${cfg.interface}" = {
-        matchConfig.Name = cfg.interface;
-        networkConfig = {
-          DHCP = "no";
-          Address = cfg.ipAddress;
-          Gateway = cfg.gateway;
-          DNS = config.networking.nameservers; # Use nameservers defined above
-          IPv6AcceptRA = "no";
-        };
-        # Explicit default route
-        routes = [
-          {
-            Gateway = cfg.gateway;
-            Destination = "0.0.0.0/0";
-          }
+      # --- Systemd Service Definition ---
+      systemd.services.hddFanControl = {
+        description = "Hottest Drive Temperature Fan Control Service";
+        # Ensure all commands used in the script are in the path
+        path = with pkgs; [
+          smartmontools # for smartctl
+          coreutils # for head, mktemp, rm, cat
+          gawk # for awk
+          gnugrep # for grep
+          jq # for parsing lsblk JSON
+          util-linux # for lsblk
+          runtimeShell # Provides the shell itself (e.g., bash)
         ];
-      };
-    };
-
-    # Enable common project modules if needed
-    projectinitiative = {
-      services = {     
-
-        eternal-terminal = enabled;
-
-        health-reporter = {
-          enable = true;
-          telegramTokenPath = config.sops.secrets.health_reporter_bot_api_token.path;
-          telegramChatIdPath = config.sops.secrets.telegram_chat_id.path;
-          excludeDrives = [
-            "loop"
-            "ram"
-            "sr"
-          ]; # Default exclusions
-          reportTime = "08:00"; # Send report at 8 AM
+        serviceConfig = {
+          Type = "oneshot"; # Run script once and exit
+          User = "root"; # Needs root for smartctl and /sys writes
+          ExecStart = "${hddFanControlScript}/bin/hdd-fan-control-hottest";
         };
       };
-      suites = {
-        bcachefs-utils = enabled;
-      };
-      system = {
-        console-info.ip-display = enabled;
 
-        bcachefs-kernel = {
-          enable = true;
-          rev = "c79cf4111930c22487840d1332ee1d44e1c31707"; # Or specify a specific commit hash
-          hash = "sha256-uVo7X8/1akJxgO0ERu/41+XmK7l1uRAZuKYJV4mNQAo=";
-          debug = true;
+      # --- Systemd Timer Definition ---
+      systemd.timers.hddFanControl = {
+        description = "Run Hottest Drive Fan Control Script Periodically";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnBootSec = "1min"; # Run 1 minute after boot
+          OnUnitActiveSec = checkInterval; # Run again based on variable above
+          Unit = "hddFanControl.service"; # Service to activate
         };
-        bcachefs-module = {
-          enable = false;
-          rev = ""; # Or specify a specific commit hash
-          hash = "";
-          debug = true;
+      };
+
+      # Base system packages
+      environment.systemPackages = with pkgs; [
+        bcachefs-tools
+        smartmontools
+        lsof
+        pciutils
+        iperf3
+        lm_sensors
+        # Add NAS related tools like samba, nfs-utils if needed
+      ];
+
+      # Enable bcachefs support
+      boot.supportedFilesystems = [ "bcachefs" ];
+
+      boot.kernelModules = [
+        "bcachefs"
+        "it87-oot"
+      ];
+      # Consider using latest kernel if needed for bcachefs features
+      boot.kernelPackages = pkgs.linuxPackages_latest;
+      # Add the out-of-tree module package here
+      boot.extraModulePackages = [ it87-driver ];
+
+      boot.kernelParams = [ "nomodeset" ];
+
+      console.enable = true;
+      # enable GPU drivers
+      hardware.enableRedistributableFirmware = true;
+      hardware.firmware = [ pkgs.linux-firmware ];
+
+      # Enable SSH access
+      services.openssh = {
+        enable = true;
+        settings = {
         };
-
       };
-      networking.tailscale = {
-        enable = true; # Example: Enable Tailscale
-        ephemeral = false;
-        extraArgs = [ "--accept-routes" ];
-      };
-      # Add other services like Samba, NFS configuration here
-      # services.samba = { enable = true; /* ... */ };
-    };
 
-    # Set the state version
-    system.stateVersion = "24.05"; # Adjust as needed
+      # Networking using systemd-networkd
+      networking = {
+        useDHCP = true; # Disable global DHCP
+        # interfaces = { }; # Clear interfaces managed elsewhere
+        nameservers = [
+          cfg.gateway # Use gateway as primary DNS
+          "1.1.1.1" # Cloudflare DNS
+          "9.9.9.9" # Quad9 DNS
+        ];
+        # defaultGateway = cfg.gateway; # Set via systemd-networkd route
+        # firewall.allowedTCPPorts = [
+        #   22 # SSH
+        #   5201 # iperf
+        #   # Add ports for NAS services (e.g., Samba: 139, 445)
+        # ];
+        networkmanager.enable = false; # Ensure NetworkManager is disabled
+      };
+
+      systemd.network = {
+        enable = false;
+        networks."10-${cfg.interface}" = {
+          matchConfig.Name = cfg.interface;
+          networkConfig = {
+            DHCP = "no";
+            Address = cfg.ipAddress;
+            Gateway = cfg.gateway;
+            DNS = config.networking.nameservers; # Use nameservers defined above
+            IPv6AcceptRA = "no";
+          };
+          # Explicit default route
+          routes = [
+            {
+              Gateway = cfg.gateway;
+              Destination = "0.0.0.0/0";
+            }
+          ];
+        };
+      };
+
+      # Enable common project modules if needed
+      projectinitiative = {
+        services = {
+
+          eternal-terminal = enabled;
+
+          health-reporter = {
+            enable = true;
+            telegramTokenPath = config.sops.secrets.health_reporter_bot_api_token.path;
+            telegramChatIdPath = config.sops.secrets.telegram_chat_id.path;
+            excludeDrives = [
+              "loop"
+              "ram"
+              "sr"
+            ]; # Default exclusions
+            reportTime = "08:00"; # Send report at 8 AM
+          };
+        };
+        suites = {
+          bcachefs-utils = enabled;
+        };
+        system = {
+          console-info.ip-display = enabled;
+
+          bcachefs-kernel = {
+            enable = true;
+            rev = "c79cf4111930c22487840d1332ee1d44e1c31707"; # Or specify a specific commit hash
+            hash = "sha256-uVo7X8/1akJxgO0ERu/41+XmK7l1uRAZuKYJV4mNQAo=";
+            debug = true;
+          };
+          bcachefs-module = {
+            enable = false;
+            rev = ""; # Or specify a specific commit hash
+            hash = "";
+            debug = true;
+          };
+
+        };
+        networking.tailscale = {
+          enable = true; # Example: Enable Tailscale
+          ephemeral = false;
+          extraArgs = [ "--accept-routes" ];
+        };
+        # Add other services like Samba, NFS configuration here
+        # services.samba = { enable = true; /* ... */ };
+      };
+
+      # Set the state version
+      system.stateVersion = "24.05"; # Adjust as needed
     }
   );
 }

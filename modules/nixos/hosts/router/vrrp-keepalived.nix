@@ -1,5 +1,10 @@
 # VRRP configuration using keepalived
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
@@ -19,14 +24,18 @@ let
       ${optionalString instance.useVmac ''
         vmac_xmit_base
       ''}
-      ${optionalString (instance.advertisementInterval != null) "advert_int ${toString instance.advertisementInterval}"}
+      ${optionalString (
+        instance.advertisementInterval != null
+      ) "advert_int ${toString instance.advertisementInterval}"}
       authentication {
         auth_type ${if instance.authPassFile != null then "PASS" else "AH"}
         ${optionalString (instance.authPassFile != null) "auth_pass_file ${instance.authPassFile}"}
         # TODO: Add support for AH authentication if needed
       }
       virtual_ipaddress {
-        ${concatStringsSep "\n" (map (ip: "${ip.address}/${toString ip.prefixLength}") instance.virtualIPs)}
+        ${concatStringsSep "\n" (
+          map (ip: "${ip.address}/${toString ip.prefixLength}") instance.virtualIPs
+        )}
       }
       ${optionalString (instance.preemptDelay != null) "preempt_delay ${toString instance.preemptDelay}"}
 
@@ -47,11 +56,18 @@ let
 
       # Track scripts for state changes based on script exit status
       ${optionalString (instance.trackScripts != { }) (
-        concatMapStringsSep "\n" (name: script: ''
-          track_script {
-            ${name}
-          }
-        '') (mapAttrsToList (name: script: { inherit name; value = script; }) instance.trackScripts)
+        concatMapStringsSep "\n"
+          (name: script: ''
+            track_script {
+              ${name}
+            }
+          '')
+          (
+            mapAttrsToList (name: script: {
+              inherit name;
+              value = script;
+            }) instance.trackScripts
+          )
       )}
     '';
   };
@@ -106,100 +122,262 @@ in
     };
 
     staticRoutes = mkOption {
-      type = types.listOf (types.submodule {
-        options = {
-          src = mkOption { type = types.str; description = "Source IP address"; };
-          dst = mkOption { type = types.str; description = "Destination network (e.g., 192.168.100.0/24)"; };
-          gw = mkOption { type = types.str; description = "Gateway IP address"; };
-          dev = mkOption { type = types.nullOr types.str; default = null; description = "Device to route through"; };
-          metric = mkOption { type = types.nullOr types.int; default = null; description = "Route metric"; };
-        };
-      });
+      type = types.listOf (
+        types.submodule {
+          options = {
+            src = mkOption {
+              type = types.str;
+              description = "Source IP address";
+            };
+            dst = mkOption {
+              type = types.str;
+              description = "Destination network (e.g., 192.168.100.0/24)";
+            };
+            gw = mkOption {
+              type = types.str;
+              description = "Gateway IP address";
+            };
+            dev = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "Device to route through";
+            };
+            metric = mkOption {
+              type = types.nullOr types.int;
+              default = null;
+              description = "Route metric";
+            };
+          };
+        }
+      );
       default = [ ];
       description = "Static routes to be configured by keepalived.";
-      example = [{ src = "10.0.0.1"; dst = "192.168.5.0/24"; gw = "10.0.0.254"; dev = "eth1"; metric = 100; }];
+      example = [
+        {
+          src = "10.0.0.1";
+          dst = "192.168.5.0/24";
+          gw = "10.0.0.254";
+          dev = "eth1";
+          metric = 100;
+        }
+      ];
     };
 
     staticRules = mkOption {
-      type = types.listOf (types.submodule {
-        options = {
-          src = mkOption { type = types.str; description = "Source IP address/network"; };
-          dst = mkOption { type = types.nullOr types.str; default = null; description = "Destination IP address/network"; };
-          fwmark = mkOption { type = types.nullOr types.int; default = null; description = "Firewall mark"; };
-          table = mkOption { type = types.str; description = "Routing table identifier (name or number)"; };
-          priority = mkOption { type = types.nullOr types.int; default = null; description = "Rule priority"; };
-        };
-      });
+      type = types.listOf (
+        types.submodule {
+          options = {
+            src = mkOption {
+              type = types.str;
+              description = "Source IP address/network";
+            };
+            dst = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "Destination IP address/network";
+            };
+            fwmark = mkOption {
+              type = types.nullOr types.int;
+              default = null;
+              description = "Firewall mark";
+            };
+            table = mkOption {
+              type = types.str;
+              description = "Routing table identifier (name or number)";
+            };
+            priority = mkOption {
+              type = types.nullOr types.int;
+              default = null;
+              description = "Rule priority";
+            };
+          };
+        }
+      );
       default = [ ];
       description = "Static IP rules (policy routing) to be configured by keepalived.";
-      example = [{ src = "192.168.2.10/32"; table = "T1"; priority = 100; }];
+      example = [
+        {
+          src = "192.168.2.10/32";
+          table = "T1";
+          priority = 100;
+        }
+      ];
     };
 
     vrrpScripts = mkOption {
-      type = types.attrsOf (types.submodule {
-        options = {
-          script = mkOption { type = types.str; description = "Path to the script or command to execute."; example = "/usr/local/bin/check_service.sh"; };
-          interval = mkOption { type = types.int; default = 2; description = "Interval in seconds to run the script."; };
-          timeout = mkOption { type = types.nullOr types.int; default = null; description = "Timeout in seconds for the script execution."; };
-          weight = mkOption { type = types.nullOr types.int; default = null; description = "Weight to add/subtract from priority based on script success/failure."; };
-          rise = mkOption { type = types.nullOr types.int; default = null; description = "Required number of successes before considered UP."; };
-          fall = mkOption { type = types.nullOr types.int; default = null; description = "Required number of failures before considered DOWN."; };
-          user = mkOption { type = types.nullOr types.str; default = null; description = "User to run the script as (requires globalDefs.enableScriptSecurity)."; };
-          initFail = mkOption { type = types.bool; default = false; description = "Assume script is failed on startup."; };
-        };
-      });
+      type = types.attrsOf (
+        types.submodule {
+          options = {
+            script = mkOption {
+              type = types.str;
+              description = "Path to the script or command to execute.";
+              example = "/usr/local/bin/check_service.sh";
+            };
+            interval = mkOption {
+              type = types.int;
+              default = 2;
+              description = "Interval in seconds to run the script.";
+            };
+            timeout = mkOption {
+              type = types.nullOr types.int;
+              default = null;
+              description = "Timeout in seconds for the script execution.";
+            };
+            weight = mkOption {
+              type = types.nullOr types.int;
+              default = null;
+              description = "Weight to add/subtract from priority based on script success/failure.";
+            };
+            rise = mkOption {
+              type = types.nullOr types.int;
+              default = null;
+              description = "Required number of successes before considered UP.";
+            };
+            fall = mkOption {
+              type = types.nullOr types.int;
+              default = null;
+              description = "Required number of failures before considered DOWN.";
+            };
+            user = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "User to run the script as (requires globalDefs.enableScriptSecurity).";
+            };
+            initFail = mkOption {
+              type = types.bool;
+              default = false;
+              description = "Assume script is failed on startup.";
+            };
+          };
+        }
+      );
       default = { };
       description = "Named scripts that can be tracked by VRRP instances.";
       example = {
-        chk_haproxy = { script = "killall -0 haproxy"; interval = 2; weight = 2; fall = 2; rise = 2; };
+        chk_haproxy = {
+          script = "killall -0 haproxy";
+          interval = 2;
+          weight = 2;
+          fall = 2;
+          rise = 2;
+        };
       };
     };
 
     vrrpInstances = mkOption {
-      type = types.attrsOf (types.submodule {
-        options = {
-          virtualRouterId = mkOption { type = types.ints.between 1 255; description = "Unique ID (1-255) for the virtual router instance. Must be the same across all nodes in the VRRP group."; };
-          priority = mkOption { type = types.ints.between 1 255; description = "Priority (1-255). Highest priority becomes MASTER. 255 usually for IP address owner."; };
-          interface = mkOption { type = types.str; description = "Interface to run VRRP on."; example = "eth0"; };
-          useVmac = mkOption { type = types.bool; default = false; description = "Use a virtual MAC address for this instance."; };
-          advertisementInterval = mkOption { type = types.nullOr types.int; default = null; description = "VRRP advertisement interval in seconds."; };
-          authPassFile = mkOption { type = types.nullOr types.path; default = null; description = "Path to a file containing the password for PASS authentication. Ensure permissions are secure."; example = config.sops.secrets."keepalived_vrrp_password".path; };
-          # authType = mkOption { type = types.enum [ "PASS" "AH" ]; default = "PASS"; description = "Authentication type."; }; # Simplified: derive from authPassFile
-          virtualIPs = mkOption {
-            type = types.listOf (types.submodule {
-              options = {
-                address = mkOption { type = types.str; description = "Virtual IP address."; };
-                prefixLength = mkOption { type = types.int; description = "Prefix length for the virtual IP."; };
-                # dev = mkOption { type = types.nullOr types.str; default = null; description = "Interface for the VIP (defaults to instance interface)."; };
-                # scope = mkOption { type = types.nullOr types.str; default = null; description = "Scope for the VIP (e.g., link, global)."; };
-              };
-            });
-            default = [ ];
-            description = "List of virtual IP addresses managed by this instance.";
-            example = [ { address = "192.168.1.254"; prefixLength = 24; } ];
+      type = types.attrsOf (
+        types.submodule {
+          options = {
+            virtualRouterId = mkOption {
+              type = types.ints.between 1 255;
+              description = "Unique ID (1-255) for the virtual router instance. Must be the same across all nodes in the VRRP group.";
+            };
+            priority = mkOption {
+              type = types.ints.between 1 255;
+              description = "Priority (1-255). Highest priority becomes MASTER. 255 usually for IP address owner.";
+            };
+            interface = mkOption {
+              type = types.str;
+              description = "Interface to run VRRP on.";
+              example = "eth0";
+            };
+            useVmac = mkOption {
+              type = types.bool;
+              default = false;
+              description = "Use a virtual MAC address for this instance.";
+            };
+            advertisementInterval = mkOption {
+              type = types.nullOr types.int;
+              default = null;
+              description = "VRRP advertisement interval in seconds.";
+            };
+            authPassFile = mkOption {
+              type = types.nullOr types.path;
+              default = null;
+              description = "Path to a file containing the password for PASS authentication. Ensure permissions are secure.";
+              example = config.sops.secrets."keepalived_vrrp_password".path;
+            };
+            # authType = mkOption { type = types.enum [ "PASS" "AH" ]; default = "PASS"; description = "Authentication type."; }; # Simplified: derive from authPassFile
+            virtualIPs = mkOption {
+              type = types.listOf (
+                types.submodule {
+                  options = {
+                    address = mkOption {
+                      type = types.str;
+                      description = "Virtual IP address.";
+                    };
+                    prefixLength = mkOption {
+                      type = types.int;
+                      description = "Prefix length for the virtual IP.";
+                    };
+                    # dev = mkOption { type = types.nullOr types.str; default = null; description = "Interface for the VIP (defaults to instance interface)."; };
+                    # scope = mkOption { type = types.nullOr types.str; default = null; description = "Scope for the VIP (e.g., link, global)."; };
+                  };
+                }
+              );
+              default = [ ];
+              description = "List of virtual IP addresses managed by this instance.";
+              example = [
+                {
+                  address = "192.168.1.254";
+                  prefixLength = 24;
+                }
+              ];
+            };
+            preemptDelay = mkOption {
+              type = types.nullOr types.int;
+              default = null;
+              description = "Seconds to delay preemption if a higher priority router comes online.";
+            };
+            trackInterfaces = mkOption {
+              type = types.listOf types.str;
+              default = [ ];
+              description = "List of interfaces to monitor. If any go down, priority is reduced.";
+              example = [
+                "eth1"
+                "eth2"
+              ];
+            };
+            trackScripts = mkOption {
+              type = types.listOf types.str;
+              default = [ ];
+              description = "List of names (from vrrpScripts) of scripts to track.";
+              example = [ "chk_haproxy" ];
+            };
+            notifyMaster = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "Script to run when transitioning to MASTER state.";
+            };
+            notifyBackup = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "Script to run when transitioning to BACKUP state.";
+            };
+            notifyFault = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "Script to run when transitioning to FAULT state.";
+            };
+            notifyStop = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "Script to run when VRRP instance stops.";
+            };
+            notifyScript = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "Script to run for any state transition.";
+            };
+            smtpAlert = mkOption {
+              type = types.bool;
+              default = false;
+              description = "Enable SMTP alerts for state transitions (requires global SMTP settings).";
+            };
+            # Add other instance-specific options like nopreempt, garp intervals, etc.
           };
-          preemptDelay = mkOption { type = types.nullOr types.int; default = null; description = "Seconds to delay preemption if a higher priority router comes online."; };
-          trackInterfaces = mkOption {
-            type = types.listOf types.str;
-            default = [ ];
-            description = "List of interfaces to monitor. If any go down, priority is reduced.";
-            example = [ "eth1" "eth2" ];
-          };
-          trackScripts = mkOption {
-            type = types.listOf types.str;
-            default = [ ];
-            description = "List of names (from vrrpScripts) of scripts to track.";
-            example = [ "chk_haproxy" ];
-          };
-          notifyMaster = mkOption { type = types.nullOr types.str; default = null; description = "Script to run when transitioning to MASTER state."; };
-          notifyBackup = mkOption { type = types.nullOr types.str; default = null; description = "Script to run when transitioning to BACKUP state."; };
-          notifyFault = mkOption { type = types.nullOr types.str; default = null; description = "Script to run when transitioning to FAULT state."; };
-          notifyStop = mkOption { type = types.nullOr types.str; default = null; description = "Script to run when VRRP instance stops."; };
-          notifyScript = mkOption { type = types.nullOr types.str; default = null; description = "Script to run for any state transition."; };
-          smtpAlert = mkOption { type = types.bool; default = false; description = "Enable SMTP alerts for state transitions (requires global SMTP settings)."; };
-          # Add other instance-specific options like nopreempt, garp intervals, etc.
-        };
-      });
+        }
+      );
       default = { };
       description = "Configuration for individual VRRP instances.";
       example = {
@@ -208,7 +386,12 @@ in
           priority = 100;
           interface = "eth0";
           authPassFile = "/path/to/vrrp_password";
-          virtualIPs = [ { address = "10.0.0.1"; prefixLength = 24; } ];
+          virtualIPs = [
+            {
+              address = "10.0.0.1";
+              prefixLength = 24;
+            }
+          ];
           trackInterfaces = [ "eth1" ];
         };
       };
@@ -238,7 +421,14 @@ in
         # AmbientCapabilities = [ "CAP_NET_ADMIN" "CAP_NET_RAW" "CAP_NET_BIND_SERVICE" ];
         # User = "keepalived"; # Requires setting up user/group
         # Group = "keepalived";
-        CapabilityBoundingSet = [ "CAP_NET_ADMIN" "CAP_NET_RAW" "CAP_NET_BIND_SERVICE" "CAP_SETUID" "CAP_SETGID" "CAP_CHOWN" ]; # Adjust based on scriptUser/enableScriptSecurity
+        CapabilityBoundingSet = [
+          "CAP_NET_ADMIN"
+          "CAP_NET_RAW"
+          "CAP_NET_BIND_SERVICE"
+          "CAP_SETUID"
+          "CAP_SETGID"
+          "CAP_CHOWN"
+        ]; # Adjust based on scriptUser/enableScriptSecurity
         SecureBits = "keep-caps";
       };
     };
@@ -251,39 +441,53 @@ in
           ${optionalString cfg.globalDefs.enableScriptSecurity "enable_script_security"}
           ${optionalString (cfg.globalDefs.scriptUser != null) "script_user ${cfg.globalDefs.scriptUser}"}
           ${optionalString cfg.globalDefs.enableDynamicInterfaces "enable_dynamic_interfaces"}
-          ${optionalString (cfg.globalDefs.vrrpControls != null) "vrrp_controls ${cfg.globalDefs.vrrpControls}"}
+          ${optionalString (
+            cfg.globalDefs.vrrpControls != null
+          ) "vrrp_controls ${cfg.globalDefs.vrrpControls}"}
           # Add other global defs serialization here
         }
 
         # Static routes configuration
-        ${optionalString (cfg.staticRoutes != []) ''
+        ${optionalString (cfg.staticRoutes != [ ]) ''
           static_routes {
             ${concatMapStringsSep "\n" (route: ''
-              ${route.src} ${optionalString (route.dev != null) "dev ${route.dev}"} to ${route.dst} via ${route.gw} ${optionalString (route.metric != null) "metric ${toString route.metric}"}
+              ${route.src} ${
+                optionalString (route.dev != null) "dev ${route.dev}"
+              } to ${route.dst} via ${route.gw} ${
+                optionalString (route.metric != null) "metric ${toString route.metric}"
+              }
             '') cfg.staticRoutes}
           }
         ''}
 
         # Static rules configuration
-        ${optionalString (cfg.staticRules != []) ''
+        ${optionalString (cfg.staticRules != [ ]) ''
           static_rules {
             ${concatMapStringsSep "\n" (rule: ''
-              ${rule.src} ${optionalString (rule.dst != null) "to ${rule.dst}"} ${optionalString (rule.fwmark != null) "fwmark ${toString rule.fwmark}"} table ${rule.table} ${optionalString (rule.priority != null) "priority ${toString rule.priority}"}
+              ${rule.src} ${optionalString (rule.dst != null) "to ${rule.dst}"} ${
+                optionalString (rule.fwmark != null) "fwmark ${toString rule.fwmark}"
+              } table ${rule.table} ${optionalString (rule.priority != null) "priority ${toString rule.priority}"}
             '') cfg.staticRules}
           }
         ''}
 
         # VRRP script definitions
-        ${concatMapStringsSep "\n\n" (name: script:
-          let generated = generateVrrpScript name script;
-          in "vrrp_script ${generated.name} {\n${generated.content}\n}"
+        ${concatMapStringsSep "\n\n" (
+          name: script:
+          let
+            generated = generateVrrpScript name script;
+          in
+          "vrrp_script ${generated.name} {\n${generated.content}\n}"
         ) (mapAttrsToList (n: v: v) cfg.vrrpScripts)}
 
 
         # VRRP instance definitions
-        ${concatMapStringsSep "\n\n" (name: instance:
-          let generated = generateVrrpInstance name instance;
-          in "vrrp_instance ${generated.name} {\n${generated.content}\n}"
+        ${concatMapStringsSep "\n\n" (
+          name: instance:
+          let
+            generated = generateVrrpInstance name instance;
+          in
+          "vrrp_instance ${generated.name} {\n${generated.content}\n}"
         ) (mapAttrsToList (n: v: v) cfg.vrrpInstances)}
 
         # TODO: Add virtual_server configuration generation if needed
@@ -318,14 +522,21 @@ in
     };
 
     # If using sops for secrets like authPassFile
-    sops.secrets = let
-      vrrpSecrets = filterAttrs (n: v: v.authPassFile != null && hasPrefix "/run/secrets" v.authPassFile) cfg.vrrpInstances;
-      extractSecretName = path: baseNameOf (removePrefix "/run/secrets/" path);
-    in mapAttrs' (n: v: nameValuePair (extractSecretName v.authPassFile) {
-      # Assuming the sops secret name matches the base name of the file path
-      # mode = "0400"; # Keepalived needs to read this
-      # user = "keepalived"; # If running keepalived as a specific user
-    }) vrrpSecrets;
+    sops.secrets =
+      let
+        vrrpSecrets = filterAttrs (
+          n: v: v.authPassFile != null && hasPrefix "/run/secrets" v.authPassFile
+        ) cfg.vrrpInstances;
+        extractSecretName = path: baseNameOf (removePrefix "/run/secrets/" path);
+      in
+      mapAttrs' (
+        n: v:
+        nameValuePair (extractSecretName v.authPassFile) {
+          # Assuming the sops secret name matches the base name of the file path
+          # mode = "0400"; # Keepalived needs to read this
+          # user = "keepalived"; # If running keepalived as a specific user
+        }
+      ) vrrpSecrets;
 
   };
 }

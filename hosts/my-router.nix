@@ -32,7 +32,8 @@ in
     enable = true;
     settings.PermitRootLogin = "no";
   };
-  users.users.admin = { # Example admin user
+  users.users.admin = {
+    # Example admin user
     isNormalUser = true;
     extraGroups = [ "wheel" ]; # networkmanager group removed as NM is disabled below
     openssh.authorizedKeys.keys = [
@@ -97,16 +98,19 @@ in
     # Or set externalStaticIp = null; to use DHCP on WAN
 
     # --- DNS ---
-    dnsServers = [ "9.9.9.9" "1.1.1.1" ]; # Override defaults if needed
+    dnsServers = [
+      "9.9.9.9"
+      "1.1.1.1"
+    ]; # Override defaults if needed
     dnsCacheSize = 2000; # Customize DNS cache
 
     # --- DHCP ---
     keaDhcp4.enable = true;
-    keaDhcp4.failover = mkIf config.${namespace}.hosts.base-router.vrrp.enable { # Enable failover only if VRRP is enabled
-       # Parameters are mostly defaults, adjust if needed
-       mclt = 1800; # Example override
+    keaDhcp4.failover = mkIf config.${namespace}.hosts.base-router.vrrp.enable {
+      # Enable failover only if VRRP is enabled
+      # Parameters are mostly defaults, adjust if needed
+      mclt = 1800; # Example override
     };
-
 
     # --- VRRP / Keepalived ---
     vrrp.enable = true; # Enable HA
@@ -119,9 +123,24 @@ in
     # --- Firewall ---
     allowPingFromWan = false;
     portForwarding = [
-      { sourcePort = 80; destination = "192.168.20.10"; protocol = "tcp"; description = "Web Server"; }
-      { sourcePort = 443; destination = "192.168.20.10"; protocol = "tcp"; }
-      { sourcePort = 1194; destination = "192.168.20.11"; destinationPort = 1194; protocol = "udp"; description = "OpenVPN"; }
+      {
+        sourcePort = 80;
+        destination = "192.168.20.10";
+        protocol = "tcp";
+        description = "Web Server";
+      }
+      {
+        sourcePort = 443;
+        destination = "192.168.20.10";
+        protocol = "tcp";
+      }
+      {
+        sourcePort = 1194;
+        destination = "192.168.20.11";
+        destinationPort = 1194;
+        protocol = "udp";
+        description = "OpenVPN";
+      }
     ];
 
     # --- Kernel ---
@@ -134,8 +153,8 @@ in
 
   # --- SOPS Configuration (Example) ---
   sops.secrets."keepalived_vrrp_password" = {
-      # mode = "0400"; # keepalived runs as root, default mode is fine
-      # owner = config.users.users.keepalived.name; # Not needed if root reads it
+    # mode = "0400"; # keepalived runs as root, default mode is fine
+    # owner = config.users.users.keepalived.name; # Not needed if root reads it
   };
   # sops.secrets."root_password" = {};
 

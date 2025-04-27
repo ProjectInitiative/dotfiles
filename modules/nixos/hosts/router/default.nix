@@ -94,16 +94,48 @@ in
       type = types.listOf (
         types.submodule {
           options = {
-            id = mkOption { type = types.int; description = "VLAN ID"; };
-            name = mkOption { type = types.str; description = "VLAN name"; };
-            network = mkOption { type = types.str; description = "VLAN network in CIDR notation"; };
-            virtualIp = mkOption { type = types.str; description = "Virtual IP (VRRP) for this VLAN"; };
-            primaryIp = mkOption { type = types.str; description = "Primary router's IP on this VLAN"; };
-            backupIp = mkOption { type = types.str; description = "Backup router's IP on this VLAN"; };
-            enableDhcp = mkOption { type = types.bool; default = true; description = "Enable DHCP"; };
-            dhcpRangeStart = mkOption { type = types.str; description = "DHCP range start"; };
-            dhcpRangeEnd = mkOption { type = types.str; description = "DHCP range end"; };
-            isolated = mkOption { type = types.bool; default = false; description = "Isolate from other VLANs"; };
+            id = mkOption {
+              type = types.int;
+              description = "VLAN ID";
+            };
+            name = mkOption {
+              type = types.str;
+              description = "VLAN name";
+            };
+            network = mkOption {
+              type = types.str;
+              description = "VLAN network in CIDR notation";
+            };
+            virtualIp = mkOption {
+              type = types.str;
+              description = "Virtual IP (VRRP) for this VLAN";
+            };
+            primaryIp = mkOption {
+              type = types.str;
+              description = "Primary router's IP on this VLAN";
+            };
+            backupIp = mkOption {
+              type = types.str;
+              description = "Backup router's IP on this VLAN";
+            };
+            enableDhcp = mkOption {
+              type = types.bool;
+              default = true;
+              description = "Enable DHCP";
+            };
+            dhcpRangeStart = mkOption {
+              type = types.str;
+              description = "DHCP range start";
+            };
+            dhcpRangeEnd = mkOption {
+              type = types.str;
+              description = "DHCP range end";
+            };
+            isolated = mkOption {
+              type = types.bool;
+              default = false;
+              description = "Isolate from other VLANs";
+            };
           };
         }
       );
@@ -112,7 +144,10 @@ in
     };
 
     routerRole = mkOption {
-      type = types.enum [ "primary" "backup" ];
+      type = types.enum [
+        "primary"
+        "backup"
+      ];
       description = "Role of this router (primary or backup)";
       default = "primary";
     };
@@ -126,7 +161,10 @@ in
     dnsServers = mkOption {
       type = types.listOf types.str;
       description = "DNS servers to use and provide to DHCP clients";
-      default = [ "1.1.1.1" "9.9.9.9" ];
+      default = [
+        "1.1.1.1"
+        "9.9.9.9"
+      ];
     };
   };
 
@@ -166,35 +204,47 @@ in
     };
 
     # Parse networks for convenience (can be used by submodules)
-    _module.args.parsedNetworks = let
-       parseCIDR = cidr: {
-         address = elemAt (builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})/([0-9]{1,2})$" cidr) 0;
-         prefixLength = toInt (elemAt (builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})/([0-9]{1,2})$" cidr) 1);
-       };
-       mgmtParsed = parseCIDR cfg.managementVlan.network;
-       vlansParsed = map (vlan: (parseCIDR vlan.network) // { inherit (vlan) id; }) cfg.vlans;
-    in {
-       management = mgmtParsed // { id = cfg.managementVlan.id; };
-       vlans = vlansParsed;
-    };
+    _module.args.parsedNetworks =
+      let
+        parseCIDR = cidr: {
+          address = elemAt (builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})/([0-9]{1,2})$" cidr) 0;
+          prefixLength = toInt (
+            elemAt (builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})/([0-9]{1,2})$" cidr) 1
+          );
+        };
+        mgmtParsed = parseCIDR cfg.managementVlan.network;
+        vlansParsed = map (vlan: (parseCIDR vlan.network) // { inherit (vlan) id; }) cfg.vlans;
+      in
+      {
+        management = mgmtParsed // {
+          id = cfg.managementVlan.id;
+        };
+        vlans = vlansParsed;
+      };
 
     assertions =
       [
         {
-          assertion = builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})/([0-9]{1,2})$" cfg.managementVlan.network != null;
+          assertion =
+            builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})/([0-9]{1,2})$" cfg.managementVlan.network
+            != null;
           message = "Management network must be in valid CIDR notation (e.g., 172.16.1.0/24)";
         }
         {
-            assertion = cfg.managementVlan.id != 1 -> !(cfg.managementVlan.enableDhcp);
-            message = "DHCP can only be enabled on the management VLAN if its ID is 1 (untagged LAN)";
+          assertion = cfg.managementVlan.id != 1 -> !(cfg.managementVlan.enableDhcp);
+          message = "DHCP can only be enabled on the management VLAN if its ID is 1 (untagged LAN)";
         }
         {
-            assertion = !(cfg.managementVlan.enableDhcp) || (cfg.managementVlan.dhcpRangeStart != null && cfg.managementVlan.dhcpRangeEnd != null);
-            message = "Management VLAN DHCP requires dhcpRangeStart and dhcpRangeEnd to be set.";
+          assertion =
+            !(cfg.managementVlan.enableDhcp)
+            || (cfg.managementVlan.dhcpRangeStart != null && cfg.managementVlan.dhcpRangeEnd != null);
+          message = "Management VLAN DHCP requires dhcpRangeStart and dhcpRangeEnd to be set.";
         }
       ]
       ++ (map (vlan: {
-        assertion = builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})/([0-9]{1,2})$" vlan.network != null;
+        assertion =
+          builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})/([0-9]{1,2})$" vlan.network
+          != null;
         message = "VLAN network ${vlan.name} must be in valid CIDR notation";
       }) cfg.vlans)
       ++ (map (vlan: {
