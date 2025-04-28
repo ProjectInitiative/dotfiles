@@ -10,6 +10,7 @@ keys:
     - &test_vm age1gfamaev28ur53f09qllqhs7fqv74yd0unye4yaduhf436cl8usys640ld5
     - &stormjib age1w9jy86ajwzd7e0rszhe80065fuynwnr647wxfx0yn7st0xzqsfsqzgzvxy
     - &cargohold age1vv7x7cupsczqaducs2pxpn7t3mqj5e5jkyc70489fad05rvyga4s57hwan
+    - &dinghy age1v96s5f9tqz6xgndsgg5lt2zy8xe6j7k9wxz3k52paw9sena4q3gszjy425
   - &capstans:
     - &ssh_capstan1 age1uatt9h5c3q6grd72skc2k7zzlpam9aregvyeyuzmazw9fpzcysqqwlrh8d
     - &ssh_capstan2 age1exv224uk35dyh933g4uv96rtgw9vztwv8xgd9t3r2tf3ltyfdezqxcauhf
@@ -34,6 +35,7 @@ creation_rules:
           - *ssh_capstan3
           - *stormjib
           - *cargohold
+          - *dinghy
 
   - path_regex: nix-signing/[^/]+\.yaml$
     key_groups:
