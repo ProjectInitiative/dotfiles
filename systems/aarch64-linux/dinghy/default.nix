@@ -31,6 +31,12 @@ in
   sdImage.compressImage = false;
 
   hardware.rockpi-quad.enable = true;
+  # Optional: Customize settings (see flake.nix for options)
+  # hardware.rockpi-quad.settings = {
+  #   fan.lv0 = 40;
+  #   oled."f-temp" = true;
+  # };
+
 
   environment.etc = {
     "ssh/ssh_host_ed25519_key" = {
