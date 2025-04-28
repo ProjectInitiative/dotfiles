@@ -28,7 +28,9 @@ in
 
   boot.supportedFilesystems.zfs = lib.mkForce false;
 
-  sdImage.compressImage = true;
+  sdImage.compressImage = false;
+
+  hardware.rockpi-quad.enable = true;
 
   environment.etc = {
     "ssh/ssh_host_ed25519_key" = {

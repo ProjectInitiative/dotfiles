@@ -125,6 +125,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+
+    flake-utils.url = "github:numtide/flake-utils";
+    rockpi-quad-flake = {
+      url = "github:ProjectInitiaitive/quad-hat"; # Or use a git URL if you host it
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixos-hardware.follows = "nixos-hardware";
+      inputs.flake-utils.follows = "flake-utils";
+    };
+
   };
 
   outputs =
