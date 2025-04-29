@@ -929,8 +929,8 @@
         ]
       },
       "locked": {
-        "lastModified": 1745897999,
-        "narHash": "sha256-qoO14j1lqp+Ujyhwt8hsA7SoHU9ckZKJ9d4DxYpXbaU=",
+        "lastModified": 1745945059,
+        "narHash": "sha256-ZRDEtNKCxoNsHnwoeeFpda+THiRBih+4Z/z6wVONaxc=",
         "path": "/home/kylepzak/development/build-software/rockpi-quad",
         "type": "path"
       },
