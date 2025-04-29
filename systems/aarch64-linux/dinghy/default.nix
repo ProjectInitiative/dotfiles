@@ -1,9 +1,4 @@
-# the masthead routers will be named accordingly:
-# Topsail (Primary) & StormJib (Backup)
-#     Topsail: Agile sail for fair-weather speed (primary performance).
-#     StormJib: Rugged sail for heavy weather (backup resilience).
-#
-# nom build .\#nixosConfigurations.stormjib.config.system.build.sdImage
+# nom build .\#nixosConfigurations.dinghy.config.system.build.sdImage
 
 {
   config,
@@ -30,13 +25,14 @@ in
 
   sdImage.compressImage = false;
 
-  hardware.rockpi-quad.enable = true;
-  # Optional: Customize settings (see flake.nix for options)
-  # hardware.rockpi-quad.settings = {
-  #   fan.lv0 = 40;
-  #   oled."f-temp" = true;
-  # };
-
+  hardware.rockpi-quad = {
+    enable = true;
+    # Optional: Customize settings (see flake.nix for options)
+    settings = {
+      # fan.lv0 = 40;
+      # oled."f-temp" = true;
+    };
+  };
 
   environment.etc = {
     "ssh/ssh_host_ed25519_key" = {

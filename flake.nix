@@ -126,12 +126,11 @@
     };
 
 
-    flake-utils.url = "github:numtide/flake-utils";
-    rockpi-quad-flake = {
-      url = "github:ProjectInitiative/rockpi-quad/wip/convert-to-nix";
+    rockpi-quad = {
+      url = "path:/home/kylepzak/development/build-software/rockpi-quad";
+      # url = "github:ProjectInitiative/rockpi-quad/wip/convert-to-nix";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.nixos-hardware.follows = "nixos-hardware";
-      inputs.flake-utils.follows = "flake-utils";
     };
 
   };
@@ -293,6 +292,7 @@
                 sops-nix.nixosModules.sops
                 # agenix.nixosModules.age
                 # (import ./encrypted/sops.nix)
+                rockpi-quad.nixosModules.rockpi-quad
               ]
               ++ common-modules;
 
