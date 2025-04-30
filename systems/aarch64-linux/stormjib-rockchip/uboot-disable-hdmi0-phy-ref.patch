@@ -1,0 +1,12 @@
+--- a/dts/upstream/src/arm64/rockchip/rk3588-evb1-v10.dts
++++ b/dts/upstream/src/arm64/rockchip/rk3588-evb1-v10.dts
+@@ -328,10 +328,6 @@
+        };
+ };
+
+-&hdptxphy_hdmi0 {
+-       status = "okay";
+-};
+-
+ &i2c2 {
+        status = "okay";
