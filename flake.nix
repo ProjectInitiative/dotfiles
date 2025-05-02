@@ -76,7 +76,9 @@
 
     # Binary Cache
     attic = {
-      url = "github:zhaofengli/attic";
+      url = "github:projectinitiative/attic/updated-210";
+      # url = "path:/home/kylepzak/development/build-software/attic";
+      # url = "github:zhaofengli/attic";
 
       # FIXME: A specific version of Rust is needed right now or
       # the build fails. Re-enable this after some time has passed.
@@ -286,11 +288,17 @@
             nixos =
               with inputs;
               [
+                # <<< Add an inline module HERE to disable the nixpkgs one early >>>
+                ({ config, pkgs, ... }: {
+                  # Disable the atticd module provided by the nixpkgs input
+                  disabledModules = [ "services/networking/atticd.nix" ];
+                })
                 disko.nixosModules.disko
                 home-manager.nixosModules.home-manager
                 # nix-ld.nixosModules.nix-ld
                 sops-nix.nixosModules.sops
                 # agenix.nixosModules.age
+                attic.nixosModules.atticd
                 # (import ./encrypted/sops.nix)
                 rockpi-quad.nixosModules.rockpi-quad
               ]

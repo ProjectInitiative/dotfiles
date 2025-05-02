@@ -17,9 +17,9 @@ let
   # --- Define Your Placeholder/Actual Values Here ---
   # You MUST edit these placeholder values to match your actual setup.
   commonSettings = {
-    cacheName = "tidalpool";
-    serverUrl = "http://capstan3:8080";
-    publicKey = "attic-cache:my-server-public-key"; # EDIT THIS (Get from server)
+    cacheName = "shipyard";
+    serverUrl = "http://capstan3:8080/shipyard";
+    publicKey = "shipyard:+gvvIH3ZmgqtUAD54+FOskuHeAaVY1UwV/W5DIbHQ8I=";
     clientApiTokenFile = sops.secrets.attic_client_api_file.path;
     serverEnvironmentFile = sops.secrets.attic_server_env_file.path;
     storageType = "local";

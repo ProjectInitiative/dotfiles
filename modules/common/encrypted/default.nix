@@ -12,7 +12,7 @@ with lib.${namespace};
 let
   user = config.${namespace}.user;
 
-  nix-public-signing-key = "shipyard:r+QK20NgKO/RisjxQ8rtxctsc5kQfY5DFCgGqvbmNYc=";
+  nix-public-signing-key = "tugboat:r+QK20NgKO/RisjxQ8rtxctsc5kQfY5DFCgGqvbmNYc=";
 
   sops = config.sops;
   isLinux = pkgs.stdenv.isLinux;
@@ -126,6 +126,7 @@ in
             };
             health_reporter_bot_api_token = { };
             telegram_chat_id = { };
+            attic_client_api_file = {};            
           };
         };
       }
@@ -138,7 +139,7 @@ in
             "@wheel"
             user.name
           ];
-          trusted-public-keys = [ nix-public-signing-key ];
+          trusted-public-keys = mkMerge [ [ nix-public-signing-key ] ];
           # sandbox = false;
           extra-sandbox-paths = [ sops.secrets.sensitive_not_secret_age_key.path ];
           # allow-symlinked-store = true;

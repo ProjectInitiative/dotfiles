@@ -50,6 +50,12 @@ in
           eternal-terminal = enabled;
         };
 
+        suites = {
+          attic = {
+            enableClient = true;
+          };
+        };
+
       };
     }
     // optionalAttrs (isHomeManager) {

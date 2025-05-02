@@ -132,8 +132,10 @@ in
 
   # --- Configuration Logic ---
   config = mkIf cfg.enable {
-
     # Configure the official services.atticd module
+    # TODO: use flake
+    environment.systemPackages = [ pkgs.attic-client pkgs.attic-server ];
+
     services.atticd = {
       enable = true;
       user = cfg.user;

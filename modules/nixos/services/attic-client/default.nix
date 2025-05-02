@@ -12,6 +12,14 @@ with lib;
 let
   # Use the namespace in the cfg definition
   cfg = config.${namespace}.services.attic.client;
+  loginScript = pkgs.writeShellScript "attic-login" ''
+    #!/usr/bin/env bash
+    # Construct the login command securely
+    ${pkgs.attic-client}/bin/attic login \
+      ${escapeShellArg cfg.cacheName} \
+      ${escapeShellArg cfg.serverUrl} \
+      $(cat ${escapeShellArg cfg.apiTokenFile})
+  '';
 in
 {
   # Use the namespace in the options path
@@ -76,7 +84,8 @@ in
   # Define the actual system configuration based on the options
   config = mkIf cfg.enable {
     # 1. Install Attic client package
-    environment.systemPackages = [ pkgs.attic ];
+    # TODO: use flake
+    environment.systemPackages = [ pkgs.attic-client ];
 
     # 2. Add cache to Nix settings if requested (using mkMerge for safety)
     nix.settings = mkIf cfg.manageNixConfig {
@@ -95,15 +104,7 @@ in
         RemainAfterExit = true; # Consider the service active after success
         User = "root"; # Push activation script runs as root, login needs matching user
         # Group = "root"; # Or dedicated group
-
-        # Construct the login command securely
-        ExecStart = ''
-          ${pkgs.attic}/bin/attic login \
-            ${escapeShellArg cfg.cacheName} \
-            ${escapeShellArg cfg.serverUrl} \
-            --token-file ${escapeShellArg cfg.apiTokenFile}
-        '';
-
+        ExecStart = "${loginScript}";
       };
     };
 
@@ -122,7 +123,7 @@ in
         User = "root";    # Needs permissions to read store and push (uses login token)
         # Construct the command
         ExecStart = ''
-          ${pkgs.attic}/bin/attic watch-store \
+          ${pkgs.attic-client}/bin/attic watch-store \
             --jobs ${toString cfg.watchStore.jobs} \
             ${escapeShellArg cfg.cacheName}
         '';

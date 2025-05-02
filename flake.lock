@@ -36,15 +36,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1738524606,
-        "narHash": "sha256-hPYEJ4juK3ph7kbjbvv7PlU1D9pAkkhl+pwx8fZY53U=",
-        "owner": "zhaofengli",
+        "lastModified": 1746194557,
+        "narHash": "sha256-j2rPy02xn73YBL2hnqMQsFOSrN+Lnznxzy3s5lJ741k=",
+        "owner": "projectinitiative",
         "repo": "attic",
-        "rev": "ff8a897d1f4408ebbf4d45fa9049c06b3e1e3f4e",
+        "rev": "9d7850aff34d4ea3dbe0097f59e37bdf85c787b3",
         "type": "github"
       },
       "original": {
-        "owner": "zhaofengli",
+        "owner": "projectinitiative",
+        "ref": "updated-210",
         "repo": "attic",
         "type": "github"
       }
@@ -79,11 +80,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1745459952,
-        "narHash": "sha256-DqfNL28ny9M13s4Ae0PmdYdcu+CXQ0U9pM+3z/vGRDI=",
+        "lastModified": 1746097297,
+        "narHash": "sha256-5p+V4mfNhVqDBsGdxIEQzigJh34Nwdhb/6pN+tQ8Vio=",
         "owner": "k3d3",
         "repo": "claude-desktop-linux-flake",
-        "rev": "467706b81668e2c59f118d9a469455d193489531",
+        "rev": "83401cf9c8a45458ba102dc9753a51be405162b9",
         "type": "github"
       },
       "original": {
