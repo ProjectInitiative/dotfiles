@@ -20,6 +20,8 @@ creation_rules:
   - path_regex: sensitive/[^/]+\.yaml$
     key_groups:
       - age:
+          - *ssh_kylepzak
+          - *ssh_thinkpad
           - *sensitive_not_secret
 
   - path_regex: secrets/[^/]+\.yaml$
