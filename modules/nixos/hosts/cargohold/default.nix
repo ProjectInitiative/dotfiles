@@ -300,6 +300,7 @@ in
         };
       };
 
+      home-manager.backupFileExtension = "backup";
       # Enable common project modules if needed
       projectinitiative = {
         services = {
@@ -331,8 +332,8 @@ in
 
           bcachefs-kernel = {
             enable = true;
-            rev = "c79cf4111930c22487840d1332ee1d44e1c31707"; # Or specify a specific commit hash
-            hash = "sha256-uVo7X8/1akJxgO0ERu/41+XmK7l1uRAZuKYJV4mNQAo=";
+            rev = "5f929489e6f46a43fb62b44900cd6b31d32d70a6";
+            hash = "sha256-Gs+gzWcMG8sHbpQo+4z3Closh51gnDURu/rnXIiKoVk=";
             debug = true;
           };
           bcachefs-module = {
