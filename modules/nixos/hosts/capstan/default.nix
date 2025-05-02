@@ -131,6 +131,9 @@ in
     projectinitiative = {
 
       suites = {
+        attic = {
+          enableClient = true;
+        };
         bcachefs-utils = enabled;
       };
 

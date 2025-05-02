@@ -319,6 +319,9 @@ in
           };
         };
         suites = {
+          attic = {
+            enableClient = true;
+          };
           bcachefs-utils = enabled;
         };
         system = {
