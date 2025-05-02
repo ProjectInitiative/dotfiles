@@ -12,6 +12,13 @@ with lib.${namespace};
 {
 
   ${namespace} = {
+
+    suites = {
+      attic = {
+        enableServer = true;
+      };
+    };
+
     disko.mdadm-root = {
       enable = true;
       mirroredDrives = [

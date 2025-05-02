@@ -18,13 +18,6 @@ in
   options.${namespace}.services.attic.server = {
     enable = mkEnableOption "Attic daemon (atticd) service";
 
-    package = mkOption {
-      type = types.package;
-      default = pkgs.attic.dev; # Assumes pkgs.attic.dev provides atticd + atticadm
-      defaultText = literalExpression "pkgs.attic.dev";
-      description = "Attic package providing atticd and atticadm.";
-    };
-
     user = mkOption {
       type = types.str;
       default = "atticd";
@@ -84,18 +77,29 @@ in
 
     # --- Storage (mapped to services.atticd.storage) ---
     storage = mkOption {
-      type = types.submodule {
-        options = {
-          path = mkOption {
-            type = types.path;
-            default = "/var/cache/attic";
-            description = "Directory path where local cache data will be stored.";
-          };
-          # Add other storage backend options here based on the official module
-        };
-      };
-      default = {}; # Use atticd defaults unless overridden
-      description = "Storage backend configuration for Attic.";
+     type = types.submodule {
+       options = {
+         type = mkOption {
+           type = types.enum [ "local" "s3" ]; # Enforce valid types
+           default = "local"; # Default to local storage
+           description = "Storage backend type ('local' or 's3').";
+         };
+
+         path = mkOption {
+           type = types.path;
+           default = "/var/cache/attic";
+           # Description could mention this is primarily for 'local' type
+           description = "Directory path where local cache data will be stored (used when type is 'local').";
+         };
+
+         # TODO: Add options for S3 if needed (region, bucket, endpoint, etc.)
+         # You might want to make 'path' apply only when type == "local" using mkIf
+         # and add S3 options that apply only when type == "s3".
+         # For now, this simple structure works for 'local'.
+       };
+     };
+     default = {}; # The submodule's defaults ("local", "/var/cache/attic") will apply
+     description = "Storage backend configuration for Attic.";
     };
 
     # --- Garbage Collection (mapped to services.atticd.garbageCollection) ---
@@ -132,7 +136,6 @@ in
     # Configure the official services.atticd module
     services.atticd = {
       enable = true;
-      package = cfg.package;
       user = cfg.user;
       group = cfg.group;
 
@@ -149,17 +152,34 @@ in
           avg-size = cfg.settings.chunking.avgSize;
           max-size = cfg.settings.chunking.maxSize;
         };
-        # Map other settings here if added
+
+        # Map GC config (assuming official module structure)
+         garbage-collection = {
+           # These are likely always required or have valid TOML defaults (bool/string)
+           enable = cfg.garbageCollection.enable;
+           schedule = cfg.garbageCollection.schedule;
+         }
+         # Conditionally add keep-since if it's not null
+         // lib.mkIf (cfg.garbageCollection.keepSince != null) {
+              # Use the TOML key name expected by atticd (likely kebab-case)
+              keep-since = cfg.garbageCollection.keepSince;
+            }
+         # Conditionally add keep-generations if it's not null
+         // lib.mkIf (cfg.garbageCollection.keepGenerations != null) {
+              # Use the TOML key name expected by atticd (likely kebab-case)
+              keep-generations = cfg.garbageCollection.keepGenerations;
+            };
+
+        # Map storage config (assuming official module structure)
+        storage = {
+         type = cfg.storage.type;
+         path = cfg.storage.path;
+
+         # TODO: Map other storage options if/when added (e.g., region, bucket for S3)
+        };
+
       };
 
-      # Map storage config (assuming official module structure)
-      storage = {
-        path = cfg.storage.path;
-        # Map other storage options if added
-      };
-
-      # Map GC config (assuming official module structure)
-      garbageCollection = cfg.garbageCollection;
     };
 
     # Ensure storage directory exists with correct permissions if requested
@@ -171,7 +191,5 @@ in
     # Conditionally open the firewall port if requested
     # networking.firewall.allowedTCPPorts = mkIf cfg.openFirewall [ cfg.settings.listenPort ];
 
-    # Install the package (includes atticadm) if enabled
-    environment.systemPackages = [ cfg.package ];
   };
 }

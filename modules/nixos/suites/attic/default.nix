@@ -8,6 +8,7 @@
 }:
 
 with lib;
+with lib.${namespace};
 let
   # --- Shorthand for Suite Options ---
   cfg = config.${namespace}.suites.attic;
@@ -19,8 +20,9 @@ let
     cacheName = "tidalpool";
     serverUrl = "http://capstan3:8080";
     publicKey = "attic-cache:my-server-public-key"; # EDIT THIS (Get from server)
-    clientApiTokenFile = sops.secrets.attic_client_api_file;
-    serverEnvironmentFile = sops.secrets.attic_server_env_file;
+    clientApiTokenFile = sops.secrets.attic_client_api_file.path;
+    serverEnvironmentFile = sops.secrets.attic_server_env_file.path;
+    storageType = "local";
     storagePath = "/mnt/pool/attic-storage/cache";
     listenAddress = "[::]";
     listenPort = 8080;
@@ -61,6 +63,14 @@ in
 
     # === Apply Predefined Server Config if enableServer is true ===
     (mkIf cfg.enableServer {
+      # import server secrets
+      sops.secrets = mkMerge [
+        {
+          attic_server_env_file = {
+            sopsFile = ../../services/attic-server/secrets.enc.yaml;
+          };
+        }
+      ];
       # Directly configure the server module's options using the hardcoded values
       ${namespace}.services.attic.server = {
         enable = true; # Enable the underlying server module
@@ -72,6 +82,7 @@ in
            listenPort = commonSettings.listenPort;
            # Chunking settings will use defaults from the server module
         };
+        storage.type = commonSettings.storageType;
         storage.path = commonSettings.storagePath;
 
         # Apply desired default server behaviors
