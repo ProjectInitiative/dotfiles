@@ -1,9 +1,18 @@
+# sudo minicom -w -t xterm -l -R UTF-8 -D /dev/ttyUSB0 -b 1500000
+#
+# rkdeveloptool:
+# ➜  ~ sudo rkdeveloptool db rk3588_spl_loader_v1.15.113.bin
+# sudo rkdeveloptool db rk3588_spl_loader_v1.15.113.bin
+# sudo rkdeveloptool wl 0 ./istoreos-22.03.7-2024110111-e52c-squashfs.img
+# sudo rkdeveloptool rd
+# 
 # rockchip-sd-image.nix
 # Attempts to automate U-Boot binary flashing during image build.
 { config, lib, pkgs, modulesPath, ... }:
 
 let
   # Use a specific Linux kernel package if needed
+  # customKernel = pkgs.linuxPackages_latest;
   customKernel = pkgs.linuxPackages_latest;
   # Or target a specific version like this:
   # customKernel = pkgs.linuxPackages_6_14;
@@ -35,7 +44,7 @@ in
     compressImage = false;
     expandOnBoot = false; # Handled by postBootCommands
 
-    populateFirmwareCommands = ''
+populateFirmwareCommands = ''
       # Create the firmware directory (should already exist, but ensures it)
       # Note: During build, the firmware partition is mounted at ./firmware
       mkdir -p ./firmware/extlinux
@@ -88,11 +97,19 @@ in
       dd if=${ubootIdbloader} of="$img" seek=64 conv=notrunc,fsync status=progress || \
         { echo "ERROR: Failed to write idbloader.img"; exit 1; }
 
-      echo "Writing U-Boot u-boot.itb to image..."
-      dd if=${ubootItb} of="$img" seek=16384 conv=notrunc,fsync status=progress || \
-        { echo "ERROR: Failed to write u-boot.itb"; exit 1; }
+      # ---- CRITICAL CHANGE: REMOVED dd command for u-boot.itb ----
+      # The command below was overwriting Partition 1 which starts at the same offset (16384).
+      # We now rely on the SPL loaded by idbloader.img to find and load the main
+      # U-Boot code from its expected offset (16384 / 8MiB) before the OS tries
+      # to mount the filesystem starting at that same location.
+      #
+      # echo "Writing U-Boot u-boot.itb to image..."
+      # dd if=${ubootItb} of="$img" seek=16384 conv=notrunc,fsync status=progress || \
+      #  { echo "ERROR: Failed to write u-boot.itb"; exit 1; }
+      # ---- END OF CRITICAL CHANGE ----
 
-      echo "U-Boot binaries written."
+      echo "U-Boot idbloader written. Main U-Boot ITB is NOT explicitly written by dd;"
+      echo "relying on SPL to load it from offset 16384."
 
       # Log partition information for debugging (optional)
       sfdisk -d "$img" || echo "Could not display partition table"
@@ -108,24 +125,25 @@ in
     kernelPackages = customKernel;
 
     kernelParams = [
-      # Base console params (also ensure they are in APPEND line in extlinux.conf)
-      "console=ttyFIQ0,1500000n8"
-      "console=tty1"
+          # --- CORRECTED CONSOLE ---
+      # Use ttyS2 for mainline kernel console based on findings
+      "console=ttyS2,1500000n8"
+      # --- KEEP EARLYCON ---
+      # Keep earlycon for very early messages
       "earlycon=uart8250,mmio32,0xff1a0000"
+      # --- Optional: Keep tty1 for virtual console ---
+      "console=tty1"
+      # --- Other Params ---
       "loglevel=7"
-      "debug"
-      # Add these from Debian/common Rockchip practice:
+      # "debug" # Consider removing debug flags once booting
       "coherent_pool=2M"
       "irqchip.gicv3_pseudo_nmi=0"
-      # other debugging options
-      "ignore_loglevel"
-      "initcall_debug" # Shows all init calls
-      "earlyprintk"    # Earlier kernel messages
-      "keep_bootcon"   # Keep boot console
-      # Add rootwait in case storage takes time to appear
+      # "ignore_loglevel" # Maybe remove
+      # "initcall_debug"  # Maybe remove
+      # "earlyprintk"     # Maybe remove
+      # "keep_bootcon"    # Maybe remove
       "rootwait"
-      # Ensure root filesystem type is specified if not autodetected reliably
-      # "rootfstype=ext4"
+      "rootfstype=ext4"
     ];
 
     initrd.availableKernelModules = [

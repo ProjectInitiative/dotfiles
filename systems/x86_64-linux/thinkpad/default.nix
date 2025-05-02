@@ -91,6 +91,7 @@ with lib.${namespace};
     ## temp
     minicom
     rkdeveloptool
+    multipath-tools
     usbutils
   ];
   # Enable fingerprint reader
