@@ -1,10 +1,10 @@
 { channels, inputs, ... }:
 
 let
-  bcachefsVersion = "v1.25.1";
-  bcachefsRev = "c9ee6467183b224b40ca437fd23eeabe0ae6a158";
+  bcachefsVersion = "v1.25.2";
+  bcachefsRev = "dd2c7b9b891ae8ea39997d2053b9951a6ecbbb29";
   # Hash for the bcachefs-tools source code v1.25.1
-  bcachefsSrcHash = "sha256-3hr5l47W4R9O6NDNqnEpIpqcBkOstx/Hoix9WJJ8YxQ=";
+  bcachefsSrcHash = "sha256-4MscYFlUwGrFhjpQs1ifDMh5j+t9x7rokOtR2SmhCro=";
   # HASH WILL BE FILLED IN AFTER FIRST FAILED BUILD
   bcachefsCargoHash = "sha256-juXRmI3tz2BXQsRaRRGyBaGqeLk2QHfJb2sKPmWur8s="; # <--- LEAVE THIS EMPTY or use "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 in

@@ -18,7 +18,7 @@ in
 
   config = mkIf cfg.enable {
 
-    ${namespace}.services.bcachefsScrub.enable = true;
+    ${namespace}.services.bcachefsScrubAuto.enable = false;
     
     environment.systemPackages = with pkgs; [
       bcachefs-tools

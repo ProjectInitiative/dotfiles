@@ -18,8 +18,8 @@ let
     buildLinux (
       args
       // rec {
-        version = "6.15.0-rc3-bcachefs";
-        modDirVersion = "6.15.0-rc3";
+        version = "6.15.0-rc4-bcachefs";
+        modDirVersion = "6.15.0-rc4";
 
         src = fetchFromGitHub {
           owner = "koverstreet";
