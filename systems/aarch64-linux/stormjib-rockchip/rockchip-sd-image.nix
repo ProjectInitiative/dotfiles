@@ -35,7 +35,8 @@ in
 {
   imports = [
     (modulesPath + "/profiles/base.nix")
-    (modulesPath + "/installer/sd-card/sd-image.nix")
+    ./sd-image.nix
+    # (modulesPath + "/installer/sd-card/sd-image.nix")
   ];
 
   sdImage = {

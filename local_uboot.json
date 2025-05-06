@@ -1,0 +1,154 @@
+{
+  "/nix/store/ydxb6nmcl06hv584s172y7g4i956n6y8-u-boot-rk3588-2024.10-rk3588.drv": {
+    "args": [
+      "-e",
+      "/nix/store/v6x3cs394jgqfbi0a42pam708flxaphh-default-builder.sh"
+    ],
+    "builder": "/nix/store/q8p7vrfcnqw2vy60nkvlmf91f5mfm2r9-bash-5.2p37/bin/bash",
+    "env": {
+      "ARCH": "arm",
+      "BL31": "/nix/store/mnhf8p080vgai83n0a5pl2sxb1jzklqq-trusted-firmware-a-rk3588-main/bin/bl31.elf",
+      "NIX_HARDENING_ENABLE": "",
+      "ROCKCHIP_TPL": "/nix/store/qkx8mfv2dsmxcb348cpda6fn89crivbs-rkbin-7c35e21/bin/rk35/rk3588_ddr_lp4_2112MHz_lp5_2400MHz_v1.18.bin",
+      "UBOOT_DEFCONFIG": "evb-rk3588_defconfig",
+      "__structuredAttrs": "",
+      "buildInputs": "/nix/store/l2lj67j12w37xhdl2flhkpzy9jixv0kr-gcc-wrapper-13.3.0",
+      "buildPhase": "runHook preBuild\necho \"Building U-Boot with ROCKCHIP_TPL=/nix/store/qkx8mfv2dsmxcb348cpda6fn89crivbs-rkbin-7c35e21/bin/rk35/rk3588_ddr_lp4_2112MHz_lp5_2400MHz_v1.18.bin BL31=/nix/store/mnhf8p080vgai83n0a5pl2sxb1jzklqq-trusted-firmware-a-rk3588-main/bin/bl31.elf\"\n# The default 'make' target should build everything needed (idbloader.img, u-boot.itb)\nmake -j$(nproc)\nrunHook postBuild\n",
+      "builder": "/nix/store/q8p7vrfcnqw2vy60nkvlmf91f5mfm2r9-bash-5.2p37/bin/bash",
+      "cmakeFlags": "",
+      "configureFlags": "",
+      "configurePhase": "runHook preConfigure\necho \"Using defconfig: evb-rk3588_defconfig\"\nmake evb-rk3588_defconfig\nrunHook postConfigure\n",
+      "depsBuildBuild": "",
+      "depsBuildBuildPropagated": "",
+      "depsBuildTarget": "",
+      "depsBuildTargetPropagated": "",
+      "depsHostHost": "",
+      "depsHostHostPropagated": "",
+      "depsTargetTarget": "",
+      "depsTargetTargetPropagated": "",
+      "doCheck": "",
+      "doInstallCheck": "",
+      "dontStrip": "1",
+      "hardeningDisable": "all",
+      "installPhase": "runHook preInstall\n# Copy the required output binaries\nmkdir -p $out/bin\ncp idbloader.img $out/bin/\ncp u-boot.itb $out/bin/\n# Optionally copy other potentially useful files\n# cp spl/u-boot-spl.bin $out/bin/\n# cp u-boot.bin $out/bin/\n# cp u-boot.dtb $out/bin/\necho \"Copied idbloader.img and u-boot.itb to $out/bin/\"\nrunHook postInstall\n",
+      "mesonFlags": "",
+      "name": "u-boot-rk3588-2024.10-rk3588",
+      "nativeBuildInputs": "/nix/store/l2lj67j12w37xhdl2flhkpzy9jixv0kr-gcc-wrapper-13.3.0 /nix/store/hbsdfggf6l2dcvkzdhf2qspf0p193x0s-gnumake-4.4.1 /nix/store/pfy75yhr83b9m40z822biyasysrihmad-bison-3.8.2 /nix/store/9y19imyf95ss1js9pmb2si8q0w2jjzd6-flex-2.6.4 /nix/store/pr9v2j8vjkmsim8pwcmfraj48hqgp3i0-python3-3.12.8 /nix/store/0klfxc2jy749chhif3li7jnpxwsaxhhq-python3.12-setuptools-75.1.1 /nix/store/1307f3mijjm5spd20v8n18nmjv6bv6cz-python3.12-pyelftools-0.31 /nix/store/y72f7yxlbsy7x57vsd23dnvwgw6zcz6f-swig-4.2.1 /nix/store/8kjk25c47jpivj9m0q6yzdxqc43k1rf0-openssl-3.3.3-dev /nix/store/9sx124wzwmyksl4yfxcnswvkiv4ilzdy-gnutls-3.8.6-dev",
+      "out": "/nix/store/ffrb1xyg9kxim1f5s15nh6vr7816svzb-u-boot-rk3588-2024.10-rk3588",
+      "outputs": "out",
+      "patches": "",
+      "pname": "u-boot-rk3588",
+      "postPatch": "echo \"Running patchShebangs on source tree...\"\npatchShebangs .\necho \"Finished patchShebangs.\"\n",
+      "preBuild": "sed -i '/&hdptxphy_hdmi0 {/,/};/d' dts/upstream/src/arm64/rockchip/rk3588-evb1-v10.dts\n",
+      "propagatedBuildInputs": "",
+      "propagatedNativeBuildInputs": "",
+      "src": "/nix/store/z6qsnfv8f9hvffgjmwfw3gc21r5nk00f-u-boot-cbc9673",
+      "stdenv": "/nix/store/912f9d67xxipwb8xnlbwdq6lpdwwv4dz-stdenv-linux",
+      "strictDeps": "",
+      "system": "aarch64-linux",
+      "version": "2024.10-rk3588"
+    },
+    "inputDrvs": {
+      "/nix/store/2l1ph2c0j27igg0zv8f5231fkl4m9xdv-rkbin-7c35e21.drv": {
+        "dynamicOutputs": {},
+        "outputs": [
+          "out"
+        ]
+      },
+      "/nix/store/3vdrk8bnyhmybl4qv03cwzim1rcwjv4l-gnumake-4.4.1.drv": {
+        "dynamicOutputs": {},
+        "outputs": [
+          "out"
+        ]
+      },
+      "/nix/store/a9mar73vr72bb0536c5srzrdclr2pkrw-openssl-3.3.3.drv": {
+        "dynamicOutputs": {},
+        "outputs": [
+          "dev"
+        ]
+      },
+      "/nix/store/barp0yw61md34fjwwg201fcafwzff453-python3.12-pyelftools-0.31.drv": {
+        "dynamicOutputs": {},
+        "outputs": [
+          "out"
+        ]
+      },
+      "/nix/store/bxivn15axam2v78w4002rx6qv53yl43r-python3-3.12.8.drv": {
+        "dynamicOutputs": {},
+        "outputs": [
+          "out"
+        ]
+      },
+      "/nix/store/gj7ca4x6cf2fh29rfyk83iri98j240f8-python3.12-setuptools-75.1.1.drv": {
+        "dynamicOutputs": {},
+        "outputs": [
+          "out"
+        ]
+      },
+      "/nix/store/hgks2amys5agjcbsx8v6c5w5wlqi6d3k-stdenv-linux.drv": {
+        "dynamicOutputs": {},
+        "outputs": [
+          "out"
+        ]
+      },
+      "/nix/store/kzrqxi0y6gi8ikkkfx1ngxlyfn1wnkyy-u-boot-cbc9673.drv": {
+        "dynamicOutputs": {},
+        "outputs": [
+          "out"
+        ]
+      },
+      "/nix/store/lh2qzqq20pcx43y3cn2f0sk74kkiw4k4-gnutls-3.8.6.drv": {
+        "dynamicOutputs": {},
+        "outputs": [
+          "dev"
+        ]
+      },
+      "/nix/store/p21hf4z6dk708nxgxvq4mvxm2bknck9y-trusted-firmware-a-rk3588-main.drv": {
+        "dynamicOutputs": {},
+        "outputs": [
+          "out"
+        ]
+      },
+      "/nix/store/vgxrxf0jqpmp9yc4vixdbhzkf53vdy1a-gcc-wrapper-13.3.0.drv": {
+        "dynamicOutputs": {},
+        "outputs": [
+          "out"
+        ]
+      },
+      "/nix/store/x8zg5js3plxmappzhpyxbs6sl92j7lzj-flex-2.6.4.drv": {
+        "dynamicOutputs": {},
+        "outputs": [
+          "out"
+        ]
+      },
+      "/nix/store/xcssrss86rlclsq4sa1ivf20qz8x2r24-bash-5.2p37.drv": {
+        "dynamicOutputs": {},
+        "outputs": [
+          "out"
+        ]
+      },
+      "/nix/store/y58cml2l7rh8ixswg79h3mz0nvzg85qz-bison-3.8.2.drv": {
+        "dynamicOutputs": {},
+        "outputs": [
+          "out"
+        ]
+      },
+      "/nix/store/z9b7xm3s2j5pw2d1rygacdnypb0b764r-swig-4.2.1.drv": {
+        "dynamicOutputs": {},
+        "outputs": [
+          "out"
+        ]
+      }
+    },
+    "inputSrcs": [
+      "/nix/store/v6x3cs394jgqfbi0a42pam708flxaphh-default-builder.sh"
+    ],
+    "name": "u-boot-rk3588-2024.10-rk3588",
+    "outputs": {
+      "out": {
+        "path": "/nix/store/ffrb1xyg9kxim1f5s15nh6vr7816svzb-u-boot-rk3588-2024.10-rk3588"
+      }
+    },
+    "system": "aarch64-linux"
+  }
+}
