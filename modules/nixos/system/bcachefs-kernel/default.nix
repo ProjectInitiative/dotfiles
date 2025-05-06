@@ -12,22 +12,64 @@ with lib;
 let
   cfg = config.${namespace}.system.bcachefs-kernel;
 
-  # Define the custom kernel package here
+  kernelSrc = pkgs.fetchFromGitHub {
+    owner = "koverstreet";
+    repo = "bcachefs";
+    rev = cfg.rev;
+    hash = cfg.hash;
+  };
+
+  versionInfo = pkgs.runCommand "bcachefs-kernel-version-info" {
+    nativeBuildInputs = [ pkgs.coreutils pkgs.gnugrep pkgs.gnused ];
+    src = kernelSrc;
+  } ''
+    cd $src
+
+    VER=$(grep -E '^VERSION\s*=' Makefile | sed 's/.*= *//')
+    PL=$(grep -E '^PATCHLEVEL\s*=' Makefile | sed 's/.*= *//')
+    SL=$(grep -E '^SUBLEVEL\s*=' Makefile | sed 's/.*= *//')
+    EXTRA=$(grep -E '^EXTRAVERSION\s*=' Makefile | sed 's/.*= *//') # e.g., -rc4
+
+    # version: This is the full version string, often used for uname -r
+    # Example: 6.15.0-rc4
+    kernelVersion="$VER.$PL.$SL$EXTRA"
+
+    # modDirVersion: This needs to match what the kernel build system uses for the /lib/modules/ directory.
+    # Given the Makefile and the error, it's the same as kernelVersion in this case.
+    # Example: 6.15.0-rc4
+    kernelModDirVersion="$VER.$PL.$SL$EXTRA"
+
+    mkdir -p $out
+    echo -n "$kernelVersion" > $out/version         # Will contain e.g., 6.15.0-rc4
+    echo -n "$kernelModDirVersion" > $out/modDirVersion # Will contain e.g., 6.15.0-rc4
+
+    if [ -z "$VER" ] || [ -z "$PL" ] || [ -z "$SL" ]; then
+      echo "Error: Failed to parse base version components from Makefile."
+      exit 1
+    fi
+    if [ -z "$kernelVersion" ]; then # EXTRA can be empty, so check for base version at least
+        if [ -z "$VER" ] && [ -z "$PL" ] && [ -z "$SL" ]; then
+            echo "Error: Failed to construct kernelVersion because base components are missing."
+            exit 1
+        fi
+    fi
+    if [ -z "$kernelModDirVersion" ]; then # EXTRA can be empty
+        if [ -z "$VER" ] && [ -z "$PL" ] && [ -z "$SL" ]; then
+            echo "Error: Failed to construct kernelModDirVersion because base components are missing."
+            exit 1
+        fi
+    fi
+  '';
+
   linux_bcachefs =
-    { fetchFromGitHub, buildLinux, ... }@args:
+    { buildLinux, ... }@args:
     buildLinux (
       args
-      // rec {
-        version = "6.15.0-rc4-bcachefs";
-        modDirVersion = "6.15.0-rc4";
+      // {
+        version = builtins.readFile (versionInfo + "/version");
+        modDirVersion = builtins.readFile (versionInfo + "/modDirVersion");
 
-        src = fetchFromGitHub {
-          owner = "koverstreet";
-          repo = "bcachefs";
-          rev = cfg.rev;
-          hash = cfg.hash;
-        };
-
+        src = kernelSrc;
         hardeningEnable = [ "fortify" ];
 
         structuredExtraConfig =
@@ -49,10 +91,10 @@ let
       }
     );
 
-  # Build the kernel package directly
-  customKernel = pkgs.callPackage linux_bcachefs { };
-
-  # Create the linuxPackages for our custom kernel
+  customKernel = pkgs.callPackage linux_bcachefs {
+    # If the rustfmt warning persists and you want to try addressing it:
+    # nativeBuildInputs = (args.nativeBuildInputs or []) ++ [ pkgs.rustfmt ];
+  };
   linuxPackages_custom_bcachefs = pkgs.linuxPackagesFor customKernel;
 
 in
@@ -62,14 +104,15 @@ in
 
     rev = mkOption {
       type = types.str;
-      default = "master";
-      description = "Git branch or commit hash of Kent Overstreet's bcachefs repository to use";
+      default = "master"; # Or a specific tag like "bcachefs-v6.X"
+      description = "Git branch, tag, or commit hash of Kent Overstreet's bcachefs repository to use";
     };
 
     hash = mkOption {
       type = types.str;
-      default = "sha256:0000000000000000000000000000000000000000000000000000";
-      description = "SHA256 hash of the source code (replace after first build attempt)";
+      default = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+      description = "SHA256 hash of the source code tarball (use nix-prefetch-github or run build once)";
+      example = "sha256-abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG=";
     };
 
     debug = mkOption {
@@ -80,47 +123,11 @@ in
   };
 
   config = mkIf cfg.enable {
-    # nixpkgs.overlays = [
-    #   (final: prev: {
-    #     linuxPackages_custom_bcachefs =
-    #       let
-    #         linux_bcachefs = { fetchFromGitHub, buildLinux, ... } @ args:
-    #           buildLinux (args // rec {
-    #             version = "6.12-bcachefs";
-    #             modDirVersion = "6.12.0";
-
-    #             src = fetchFromGitHub {
-    #               owner = "koverstreet";
-    #               repo = "bcachefs";
-    #               rev = cfg.branch;
-    #               sha256 = cfg.sourceHash;
-    #             };
-
-    #             structuredExtraConfig = with lib.kernel; {
-    #               BCACHEFS_FS = yes;
-    #               BCACHEFS_QUOTA = yes;
-    #               BCACHEFS_POSIX_ACL = yes;
-    #             } // (if cfg.debug then {
-    #               BCACHEFS_DEBUG = yes;
-    #               BCACHEFS_TESTS = yes;
-    #             } else {});
-    #           });
-    #       in
-    #       final.linuxPackagesFor (final.callPackage linux_bcachefs {});
-    #   })
-    # ];
-
-    # Use the custom kernel
     boot.kernelPackages = mkForce linuxPackages_custom_bcachefs;
-
-    # Ensure bcachefs support is enabled
     boot.supportedFilesystems = [ "bcachefs" ];
-
-    # Install bcachefs tools and our test script
     environment.systemPackages = with pkgs; [
       bcachefs-tools
       linuxPackages_custom_bcachefs.perf
     ];
-
   };
 }
