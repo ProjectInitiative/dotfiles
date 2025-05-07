@@ -58,56 +58,101 @@ with lib.${namespace};
         type = "disk";
         device = "/dev/disk/by-id/nvme-TEAM_TM8FPD002T_TPBF2310170080202273";
         content = {
-          type = "bcachefs_member";
-          pool = "pool";
-          label = "nvme.nvme1";
+          type = "gpt";
+          partitions = {
+            nvme1_1 = { # You can name this partition descriptively
+              size = "100%";
+              content = {
+                type = "bcachefs";
+                filesystem = "pool"; # Refers to the bcachefs_filesystem defined below
+                label = "nvme.nvme1";   # Original label for bcachefs device
+              };
+            };
+          };
         };
       };
+
       ssd1 = {
         type = "disk";
         device = "/dev/disk/by-id/ata-SPCC_Solid_State_Disk_2020080207164";
         content = {
-          type = "bcachefs_member";
-          pool = "pool";
-          label = "ssd.ssd1";
+          type = "gpt";
+          partitions = {
+            ssd1_1 = {
+              size = "100%";
+              content = {
+                type = "bcachefs";
+                filesystem = "pool";
+                label = "ssd.ssd1";
+              };
+            };
+          };
         };
       };
+
       hdd1 = {
         type = "disk";
         device = "/dev/disk/by-id/ata-ST6000DM003-2CY186_ZCT2EKC1";
         content = {
-          type = "bcachefs_member";
-          pool = "pool";
-          label = "hdd.hdd1";
+          type = "gpt";
+          partitions = {
+            hdd1_1 = {
+              size = "100%";
+              content = {
+                type = "bcachefs";
+                filesystem = "pool";
+                label = "hdd.hdd1";
+              };
+            };
+          };
         };
       };
+
       hdd2 = {
         type = "disk";
         device = "/dev/disk/by-id/ata-ST6000DM003-2CY186_ZCT2EKG5";
         content = {
-          type = "bcachefs_member";
-          pool = "pool";
-          label = "hdd.hdd2";
+          type = "gpt";
+          partitions = {
+            hdd2_1 = {
+              size = "100%";
+              content = {
+                type = "bcachefs";
+                filesystem = "pool";
+                label = "hdd.hdd2";
+              };
+            };
+          };
         };
       };
+
       hdd3 = {
         type = "disk";
         device = "/dev/disk/by-id/ata-ST6000NM0115-1YZ110_ZADABZCR";
         content = {
-          type = "bcachefs_member";
-          pool = "pool";
-          label = "hdd.hdd3";
+          type = "gpt";
+          partitions = {
+            hdd3_1 = {
+              size = "100%";
+              content = {
+                type = "bcachefs";
+                filesystem = "pool";
+                label = "hdd.hdd3";
+              };
+            };
+          };
         };
       };
     };
 
-    bcachefs = {
-      pool = {
-        type = "bcachefs";
-        mountpoint = mountpoint;
-        formatOptions = [
+    bcachefs_filesystems = {
+      pool = { # This name ("pool") links the partitions above to this definition
+        type = "bcachefs_filesystem";
+        mountpoint = mountpoint; # Preserving the variable reference from your source
+        # Global format options for the bcachefs filesystem
+        extraFormatArgs = [
           "--compression=lz4"
-          "--foreground_target=nvme"
+          "--foreground_target=nvme" # These targets refer to the labels (e.g., "nvme.nvme1" will match "nvme")
           "--background_target=hdd"
           "--promote_target=ssd"
           "--metadata_replicas=2"
@@ -119,6 +164,13 @@ with lib.${namespace};
           "verbose"
           "degraded"
         ];
+        # Since your original config doesn't specify subvolumes for the pool,
+        # we assume the entire filesystem is mounted at `mountpoint`.
+        # If you need specific subvolumes, you would define them here, similar to the example:
+        # subvolumes = {
+        #   "subvolumes/root" = { mountpoint = "/"; };
+        #   # ... other subvolumes
+        # };
       };
     };
   };

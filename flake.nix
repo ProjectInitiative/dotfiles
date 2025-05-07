@@ -25,7 +25,7 @@
 
     # disko
     # disko.url = "github:nix-community/disko";
-    disko.url = "github:projectinitiative/disko";
+    disko.url = "github:projectinitiative/disko/update-device";
     # disko.url = "git+file:///home/kylepzak/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
 

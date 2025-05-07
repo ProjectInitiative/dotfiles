@@ -187,15 +187,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1741661326,
-        "narHash": "sha256-uXdG0iAcTwmpw6b3RDElzPQquyAQD1mwj0i/TZ3HGz8=",
+        "lastModified": 1746591432,
+        "narHash": "sha256-1EpRZV/8RzT2DmqpmdYwaMO8h13U1jyP54dzGrloOyE=",
         "owner": "projectinitiative",
         "repo": "disko",
-        "rev": "185cd86d2f094ccdc88b94f69a42494f0671495d",
+        "rev": "f6d3a9f97e8be05b1f1f25106a95b3095b84612d",
         "type": "github"
       },
       "original": {
         "owner": "projectinitiative",
+        "ref": "update-device",
         "repo": "disko",
         "type": "github"
       }
