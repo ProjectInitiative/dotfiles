@@ -75,7 +75,9 @@ in
           # ignoreUpstreamCacheFilter = mkOption { type = types.bool; default = false; };
         };
       };
-      default = { enable = false; }; # Default to disabled; user must opt-in
+      default = {
+        enable = false;
+      }; # Default to disabled; user must opt-in
       description = "Configuration for running 'attic watch-store' as a background service.";
     };
 
@@ -114,13 +116,15 @@ in
       wantedBy = [ "multi-user.target" ]; # Start on boot
 
       # Dependencies: Wait for login service (if enabled) and network
-      after = (optional cfg.autoLogin "attic-login-${cfg.cacheName}.service") ++ [ "network-online.target" ];
+      after = (optional cfg.autoLogin "attic-login-${cfg.cacheName}.service") ++ [
+        "network-online.target"
+      ];
       requires = optional cfg.autoLogin "attic-login-${cfg.cacheName}.service";
       wants = [ "network-online.target" ];
 
       serviceConfig = {
         Type = "simple"; # Long-running process
-        User = "root";    # Needs permissions to read store and push (uses login token)
+        User = "root"; # Needs permissions to read store and push (uses login token)
         # Construct the command
         ExecStart = ''
           ${pkgs.attic-client}/bin/attic watch-store \
@@ -128,7 +132,7 @@ in
             ${escapeShellArg cfg.cacheName}
         '';
         Restart = "on-failure"; # Restart if the watcher crashes
-        RestartSec = "10s";     # Wait 10 seconds before restarting
+        RestartSec = "10s"; # Wait 10 seconds before restarting
       };
     };
 

@@ -1,5 +1,11 @@
 # /path/to/your/nixos/modules/bcachefs-mount-service.nix
-{ config, lib, pkgs, namespace ? "mySystem", ... }:
+{
+  config,
+  lib,
+  pkgs,
+  namespace ? "mySystem",
+  ...
+}:
 
 with lib;
 
@@ -14,7 +20,7 @@ in
 
     excludeMountPoints = mkOption {
       type = types.listOf types.str;
-      default = [];
+      default = [ ];
       example = [ "/mnt/bcachefs-manual-mount" ];
       description = ''
         List of exact mount points (as defined in `fileSystems`) to exclude
@@ -45,27 +51,31 @@ in
   config = mkIf cfg.enable (
     let
       # --- Auto-detect bcachefs mounts from config.fileSystems ---
-      bcachefsMounts = lib.attrsets.filterAttrs (name: value:
-        value.fsType == "bcachefs" && !(elem name cfg.excludeMountPoints)
+      bcachefsMounts = lib.attrsets.filterAttrs (
+        name: value: value.fsType == "bcachefs" && !(elem name cfg.excludeMountPoints)
       ) config.fileSystems;
 
       # --- Helper function to format mount options ---
       # Takes the list of options from fileSystems config
-      mountOptsString = optsList:
+      mountOptsString =
+        optsList:
         let
           # Default options if none are provided explicitly (bcachefs might not need 'defaults' like ext4)
           # defaults = if optsList == [] then ["defaults"] else optsList; # Decide if you want implicit defaults
           defaults = optsList; # Currently assumes explicit options are sufficient
         in
         # Return empty string if no options, otherwise "-o comma,separated,list"
-        lib.optionalString (defaults != []) "-o ${lib.escapeShellArg (lib.strings.concatStringsSep "," defaults)}";
+        lib.optionalString (
+          defaults != [ ]
+        ) "-o ${lib.escapeShellArg (lib.strings.concatStringsSep "," defaults)}";
 
       # --- Generate Systemd Services for each detected mount ---
-      generatedServices = lib.attrsets.mapAttrs' (mountPoint: fsConfig:
+      generatedServices = lib.attrsets.mapAttrs' (
+        mountPoint: fsConfig:
         let
           # Ensure required fields exist
           device = fsConfig.device or (throw "Device not specified for bcachefs filesystem at ${mountPoint}");
-          options = fsConfig.options or []; # Default to empty list if options are missing
+          options = fsConfig.options or [ ]; # Default to empty list if options are missing
 
           # Generate names and option string
           serviceName = "mount-bcachefs-${lib.escapeSystemdPath mountPoint}.service";
@@ -74,7 +84,11 @@ in
         lib.nameValuePair serviceName {
           description = "Mount bcachefs filesystem ${mountPoint}";
           # Specify required binaries in PATH
-          path = [ pkgs.bcachefs-tools pkgs.util-linux pkgs.coreutils ];
+          path = [
+            pkgs.bcachefs-tools
+            pkgs.util-linux
+            pkgs.coreutils
+          ];
 
           # --- Dependencies ---
           # Should run after basic file systems are up, potentially after devices are fully available
@@ -111,12 +125,14 @@ in
         }
       ) bcachefsMounts; # End mapAttrs'
 
-    in # --- Return the generated services ---
+    in
+    # --- Return the generated services ---
     {
       systemd.services = generatedServices;
 
       # Add a warning assertion about potential conflicts with fstab mounts
-      assertions = [{
+      assertions = [
+        {
           assertion = true; # This doesn't prevent build, just warns at eval time
           message = ''
             WARNING (${namespace}.systemd.bcachefsMountUnits): This module is enabled.
@@ -125,7 +141,8 @@ in
             ${lib.strings.concatStringsSep "\n" (lib.attrsets.keys bcachefsMounts)}
             You might need to adjust 'config.fileSystems' entries if standard mounting causes issues.
           '';
-      }];
+        }
+      ];
     }
   ); # End mkIf
 }

@@ -64,42 +64,61 @@ in
       chunking = mkOption {
         type = types.submodule {
           options = {
-            narSizeThreshold = mkOption { type = types.int; default = 64 * 1024; description = "Minimum NAR size (bytes) to trigger chunking (0=disabled, 1=all)."; };
-            minSize = mkOption { type = types.int; default = 16 * 1024; description = "Preferred minimum chunk size (bytes)."; };
-            avgSize = mkOption { type = types.int; default = 64 * 1024; description = "Preferred average chunk size (bytes)."; };
-            maxSize = mkOption { type = types.int; default = 256 * 1024; description = "Preferred maximum chunk size (bytes)."; };
+            narSizeThreshold = mkOption {
+              type = types.int;
+              default = 64 * 1024;
+              description = "Minimum NAR size (bytes) to trigger chunking (0=disabled, 1=all).";
+            };
+            minSize = mkOption {
+              type = types.int;
+              default = 16 * 1024;
+              description = "Preferred minimum chunk size (bytes).";
+            };
+            avgSize = mkOption {
+              type = types.int;
+              default = 64 * 1024;
+              description = "Preferred average chunk size (bytes).";
+            };
+            maxSize = mkOption {
+              type = types.int;
+              default = 256 * 1024;
+              description = "Preferred maximum chunk size (bytes).";
+            };
           };
         };
-        default = {}; # Use atticd defaults unless overridden
+        default = { }; # Use atticd defaults unless overridden
         description = "Data chunking parameters. Changing these can impact deduplication.";
       };
     };
 
     # --- Storage (mapped to services.atticd.storage) ---
     storage = mkOption {
-     type = types.submodule {
-       options = {
-         type = mkOption {
-           type = types.enum [ "local" "s3" ]; # Enforce valid types
-           default = "local"; # Default to local storage
-           description = "Storage backend type ('local' or 's3').";
-         };
+      type = types.submodule {
+        options = {
+          type = mkOption {
+            type = types.enum [
+              "local"
+              "s3"
+            ]; # Enforce valid types
+            default = "local"; # Default to local storage
+            description = "Storage backend type ('local' or 's3').";
+          };
 
-         path = mkOption {
-           type = types.path;
-           default = "/var/cache/attic";
-           # Description could mention this is primarily for 'local' type
-           description = "Directory path where local cache data will be stored (used when type is 'local').";
-         };
+          path = mkOption {
+            type = types.path;
+            default = "/var/cache/attic";
+            # Description could mention this is primarily for 'local' type
+            description = "Directory path where local cache data will be stored (used when type is 'local').";
+          };
 
-         # TODO: Add options for S3 if needed (region, bucket, endpoint, etc.)
-         # You might want to make 'path' apply only when type == "local" using mkIf
-         # and add S3 options that apply only when type == "s3".
-         # For now, this simple structure works for 'local'.
-       };
-     };
-     default = {}; # The submodule's defaults ("local", "/var/cache/attic") will apply
-     description = "Storage backend configuration for Attic.";
+          # TODO: Add options for S3 if needed (region, bucket, endpoint, etc.)
+          # You might want to make 'path' apply only when type == "local" using mkIf
+          # and add S3 options that apply only when type == "s3".
+          # For now, this simple structure works for 'local'.
+        };
+      };
+      default = { }; # The submodule's defaults ("local", "/var/cache/attic") will apply
+      description = "Storage backend configuration for Attic.";
     };
 
     # --- Garbage Collection (mapped to services.atticd.garbageCollection) ---
@@ -107,12 +126,29 @@ in
       type = types.submodule {
         options = {
           enable = mkEnableOption "Attic garbage collection";
-          schedule = mkOption { type = types.str; default = "daily"; example = "weekly"; description = "How often to run garbage collection."; };
-          keepSince = mkOption { type = types.nullOr types.str; default = "30d"; example = "90d"; description = "Keep artifacts referenced since this duration."; };
-          keepGenerations = mkOption { type = types.nullOr types.int; default = null; example = 10; description = "Keep the N most recent generations per cache."; };
+          schedule = mkOption {
+            type = types.str;
+            default = "daily";
+            example = "weekly";
+            description = "How often to run garbage collection.";
+          };
+          keepSince = mkOption {
+            type = types.nullOr types.str;
+            default = "30d";
+            example = "90d";
+            description = "Keep artifacts referenced since this duration.";
+          };
+          keepGenerations = mkOption {
+            type = types.nullOr types.int;
+            default = null;
+            example = 10;
+            description = "Keep the N most recent generations per cache.";
+          };
         };
       };
-      default = { enable = true; };
+      default = {
+        enable = true;
+      };
       description = "Garbage collection settings.";
     };
 
@@ -134,7 +170,10 @@ in
   config = mkIf cfg.enable {
     # Configure the official services.atticd module
     # TODO: use flake
-    environment.systemPackages = [ pkgs.attic-client pkgs.attic-server ];
+    environment.systemPackages = [
+      pkgs.attic-client
+      pkgs.attic-server
+    ];
 
     services.atticd = {
       enable = true;
@@ -147,7 +186,7 @@ in
       # Map settings
       settings = {
         listen = "${cfg.settings.listenAddress}:${toString cfg.settings.listenPort}";
-        jwt = {}; # Required empty block as per docs
+        jwt = { }; # Required empty block as per docs
         chunking = {
           nar-size-threshold = cfg.settings.chunking.narSizeThreshold;
           min-size = cfg.settings.chunking.minSize;
@@ -156,28 +195,29 @@ in
         };
 
         # Map GC config (assuming official module structure)
-         garbage-collection = {
-           # These are likely always required or have valid TOML defaults (bool/string)
-           enable = cfg.garbageCollection.enable;
-           schedule = cfg.garbageCollection.schedule;
-         }
-         # Conditionally add keep-since if it's not null
-         // lib.mkIf (cfg.garbageCollection.keepSince != null) {
-              # Use the TOML key name expected by atticd (likely kebab-case)
-              keep-since = cfg.garbageCollection.keepSince;
-            }
-         # Conditionally add keep-generations if it's not null
-         // lib.mkIf (cfg.garbageCollection.keepGenerations != null) {
-              # Use the TOML key name expected by atticd (likely kebab-case)
-              keep-generations = cfg.garbageCollection.keepGenerations;
-            };
+        garbage-collection =
+          {
+            # These are likely always required or have valid TOML defaults (bool/string)
+            enable = cfg.garbageCollection.enable;
+            schedule = cfg.garbageCollection.schedule;
+          }
+          # Conditionally add keep-since if it's not null
+          // lib.mkIf (cfg.garbageCollection.keepSince != null) {
+            # Use the TOML key name expected by atticd (likely kebab-case)
+            keep-since = cfg.garbageCollection.keepSince;
+          }
+          # Conditionally add keep-generations if it's not null
+          // lib.mkIf (cfg.garbageCollection.keepGenerations != null) {
+            # Use the TOML key name expected by atticd (likely kebab-case)
+            keep-generations = cfg.garbageCollection.keepGenerations;
+          };
 
         # Map storage config (assuming official module structure)
         storage = {
-         type = cfg.storage.type;
-         path = cfg.storage.path;
+          type = cfg.storage.type;
+          path = cfg.storage.path;
 
-         # TODO: Map other storage options if/when added (e.g., region, bucket for S3)
+          # TODO: Map other storage options if/when added (e.g., region, bucket for S3)
         };
 
       };

@@ -126,7 +126,7 @@ in
             };
             health_reporter_bot_api_token = { };
             telegram_chat_id = { };
-            attic_client_api_file = {};            
+            attic_client_api_file = { };
           };
         };
       }

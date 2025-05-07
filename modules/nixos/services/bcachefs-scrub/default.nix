@@ -1,5 +1,11 @@
 # /path/to/your/nixos/modules/bcachefs-scrub-auto.nix
-{ config, lib, pkgs, namespace ? "mySystem", ... }:
+{
+  config,
+  lib,
+  pkgs,
+  namespace ? "mySystem",
+  ...
+}:
 
 with lib;
 
@@ -67,12 +73,12 @@ let
 in
 {
   options.${namespace}.services.bcachefsScrubAuto = {
-     # ... Options remain the same ...
+    # ... Options remain the same ...
     enable = mkEnableOption "Periodic bcachefs scrub service (auto-detects mounts) with Telegram notifications";
 
     excludeMountPoints = mkOption {
       type = types.listOf types.str;
-      default = [];
+      default = [ ];
       example = [ "/mnt/bcachefs-no-scrub" ];
       description = ''
         List of exact mount points (as defined in `fileSystems`) to exclude
@@ -123,16 +129,18 @@ in
   };
 
   # CORRECTED CONFIG SECTION: mkIf applies to the result of the let...in block
-  config = mkIf cfg.enable ( # <-- Added opening parenthesis
+  config = mkIf cfg.enable (
+    # <-- Added opening parenthesis
     # --- Auto-detect bcachefs mounts and generate units ---
     let
       # Filter fileSystems to get only bcachefs types, excluding specified mounts
-      bcachefsMounts = lib.attrsets.filterAttrs (name: value:
-        value.fsType == "bcachefs" && !(elem name cfg.excludeMountPoints)
+      bcachefsMounts = lib.attrsets.filterAttrs (
+        name: value: value.fsType == "bcachefs" && !(elem name cfg.excludeMountPoints)
       ) config.fileSystems;
 
       # Generate Systemd Units for each detected mount
-      generatedUnits = lib.attrsets.mapAttrs' (mountPoint: fsConfig:
+      generatedUnits = lib.attrsets.mapAttrs' (
+        mountPoint: fsConfig:
         let
           sName = scrubUnitName mountPoint;
           fName = scrubFailureNotifyUnitName mountPoint;
@@ -141,14 +149,21 @@ in
           successMsg = "✅ Successfully completed bcachefs scrub on host `${hostnameCmd}` for mount point: ${mountPoint}.";
           failMsg = "❌ ERROR: bcachefs scrub failed on host `${hostnameCmd}` for mount point: ${mountPoint}! Check systemd logs: journalctl -u ${sName}.service";
         in
-        lib.nameValuePair "systemd" { # Nest generated units under 'systemd' key
+        lib.nameValuePair "systemd" {
+          # Nest generated units under 'systemd' key
           services = {
             # Scrub Service
             "${sName}" = {
               description = "Run bcachefs scrub on ${mountPoint}";
-              path = [ pkgs.bcachefs-tools pkgs.curl pkgs.hostname ];
+              path = [
+                pkgs.bcachefs-tools
+                pkgs.curl
+                pkgs.hostname
+              ];
               serviceConfig = {
-                Type = "oneshot"; User = "root"; Group = "root";
+                Type = "oneshot";
+                User = "root";
+                Group = "root";
                 ExecStartPre = mkIf cfg.notifyOnStart "+${telegramNotifierScript}/bin/bcachefs-scrub-notify '${cfg.telegramTokenPath}' '${cfg.telegramChatIdPath}' '${startMsg}'";
                 ExecStart = "${pkgs.bcachefs-tools}/bin/bcachefs fs scrub ${mountPoint}";
                 ExecStartPost = mkIf cfg.notifyOnSuccess "+${telegramNotifierScript}/bin/bcachefs-scrub-notify '${cfg.telegramTokenPath}' '${cfg.telegramChatIdPath}' '${successMsg}'";
@@ -158,9 +173,13 @@ in
             # Failure Notification Service
             "${fName}" = mkIf cfg.notifyOnFailure {
               description = "Notify Telegram about bcachefs scrub failure on ${mountPoint}";
-              path = [ pkgs.curl pkgs.hostname ];
+              path = [
+                pkgs.curl
+                pkgs.hostname
+              ];
               serviceConfig = {
-                Type = "oneshot"; User = "root";
+                Type = "oneshot";
+                User = "root";
                 ExecStart = "${telegramNotifierScript}/bin/bcachefs-scrub-notify '${cfg.telegramTokenPath}' '${cfg.telegramChatIdPath}' '${failMsg}'";
               };
             };
@@ -181,7 +200,8 @@ in
         } # End systemd value for this mount point
       ) bcachefsMounts; # End mapAttrs'
 
-    in # <-- 'in' for the let block
+    in
+    # <-- 'in' for the let block
 
     # --- The attribute set returned by the let...in block ---
     {

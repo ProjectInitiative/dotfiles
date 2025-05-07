@@ -42,10 +42,10 @@ creation_rules:
   - path_regex: attic-server/[^/]+\.yaml$
     key_groups:
       - age:
-        - *kylepzak
-        - *ssh_kylepzak
-        - *ssh_thinkpad
-        - *ssh_capstan3
+          - *kylepzak
+          - *ssh_kylepzak
+          - *ssh_thinkpad
+          - *ssh_capstan3
 
   - path_regex: nix-signing/[^/]+\.yaml$
     key_groups:

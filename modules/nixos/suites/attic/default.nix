@@ -78,9 +78,9 @@ in
         # Use values defined in commonSettings above
         environmentFile = commonSettings.serverEnvironmentFile;
         settings = {
-           listenAddress = commonSettings.listenAddress;
-           listenPort = commonSettings.listenPort;
-           # Chunking settings will use defaults from the server module
+          listenAddress = commonSettings.listenAddress;
+          listenPort = commonSettings.listenPort;
+          # Chunking settings will use defaults from the server module
         };
         storage.type = commonSettings.storageType;
         storage.path = commonSettings.storagePath;

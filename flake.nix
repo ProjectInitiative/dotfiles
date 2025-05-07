@@ -127,7 +127,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-
     rockpi-quad = {
       url = "path:/home/kylepzak/development/build-software/rockpi-quad";
       # url = "github:ProjectInitiative/rockpi-quad/wip/convert-to-nix";
@@ -289,10 +288,13 @@
               with inputs;
               [
                 # <<< Add an inline module HERE to disable the nixpkgs one early >>>
-                ({ config, pkgs, ... }: {
-                  # Disable the atticd module provided by the nixpkgs input
-                  disabledModules = [ "services/networking/atticd.nix" ];
-                })
+                (
+                  { config, pkgs, ... }:
+                  {
+                    # Disable the atticd module provided by the nixpkgs input
+                    disabledModules = [ "services/networking/atticd.nix" ];
+                  }
+                )
                 disko.nixosModules.disko
                 home-manager.nixosModules.home-manager
                 # nix-ld.nixosModules.nix-ld

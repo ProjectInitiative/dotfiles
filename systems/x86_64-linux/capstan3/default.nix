@@ -68,12 +68,13 @@ with lib.${namespace};
         content = {
           type = "gpt";
           partitions = {
-            nvme1_1 = { # Partition name (can be customized)
+            nvme1_1 = {
+              # Partition name (can be customized)
               size = "100%";
               content = {
                 type = "bcachefs";
                 filesystem = "pool"; # Links to the definition below
-                label = "nvme.nvme1";   # bcachefs device label
+                label = "nvme.nvme1"; # bcachefs device label
               };
             };
           };
@@ -154,7 +155,8 @@ with lib.${namespace};
     };
 
     bcachefs_filesystems = {
-      pool = { # This name ("pool") is referenced by the partitions above
+      pool = {
+        # This name ("pool") is referenced by the partitions above
         type = "bcachefs_filesystem";
         mountpoint = mountpoint; # Preserving your variable reference
         # These are the global formatting options for the bcachefs filesystem

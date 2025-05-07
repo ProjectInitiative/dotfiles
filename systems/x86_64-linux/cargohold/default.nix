@@ -19,128 +19,163 @@ let
 in
 {
 
-  # Disko configuration for cargohold
   disko.devices = {
     disk = {
-      # Boot Drive Configuration (Classic EXT4)
-      boot = {
+      hdd1 = {
         type = "disk";
-        device = bootDevice;
+        device = "/dev/disk/by-id/ata-ST6000DM003-2CY186_ZCT2EKC1";
         content = {
           type = "gpt";
           partitions = {
-            ESP = {
-              size = "512M";
-              type = "EF00"; # EFI System Partition type GUID
+            hdd1_1 = {
+              size = "100%";
               content = {
-                type = "filesystem";
-                format = "vfat";
-                mountpoint = "/boot";
-              };
-            };
-            root = {
-              size = "100%"; # Use remaining space
-              content = {
-                type = "filesystem";
-                format = "ext4";
-                mountpoint = "/";
-                mountOptions = [
-                  "defaults"
-                  "noatime"
-                ]; # Example mount options
+                type = "bcachefs";
+                filesystem = "pool"; # Links to bcachefs_filesystems.pool
+                label = "hdd.hdd1";
               };
             };
           };
         };
       };
-      # nvme1 = {
-      #   type = "disk";
-      #   device = nvmeDevice;
-      #   content = {
-      #     type = "bcachefs_member";
-      #     pool = "pool";
-      #     label = "cache.nvme1";
-      #   };
-      # };
 
-      # hdd1 = {
-      #   type = "disk";
-      #   device = "/dev/disk/by-id/ata-ST6000NM0115-1YZ110_ZAD7GD93";
-      #   content = {
-      #     type = "bcachefs_member";
-      #     pool = "pool";
-      #     label = "hdd.hdd1";
-      #   };
-      # };
-      # hdd2 = {
-      #   type = "disk";
-      #   device = "/dev/disk/by-id/ata-ST6000NM0115-1YZ110_ZAD7HEWB";
-      #   content = {
-      #     type = "bcachefs_member";
-      #     pool = "pool";
-      #     label = "hdd.hdd2";
-      #   };
-      # };
+      hdd2 = {
+        type = "disk";
+        device = "/dev/disk/by-id/ata-ST6000DM003-2CY186_ZF204VAB";
+        content = {
+          type = "gpt";
+          partitions = {
+            hdd2_1 = {
+              size = "100%";
+              content = {
+                type = "bcachefs";
+                filesystem = "pool";
+                label = "hdd.hdd2";
+              };
+            };
+          };
+        };
+      };
 
+      hdd3 = {
+        type = "disk";
+        device = "/dev/disk/by-id/ata-ST6000DM003-2CY186_ZCT2DTTL";
+        content = {
+          type = "gpt";
+          partitions = {
+            hdd3_1 = {
+              size = "100%";
+              content = {
+                type = "bcachefs";
+                filesystem = "pool";
+                label = "hdd.hdd3";
+              };
+            };
+          };
+        };
+      };
+
+      hdd4 = {
+        type = "disk";
+        device = "/dev/disk/by-id/ata-ST6000DM003-2CY186_ZCT2EKG5";
+        content = {
+          type = "gpt";
+          partitions = {
+            hdd4_1 = {
+              size = "100%";
+              content = {
+                type = "bcachefs";
+                filesystem = "pool";
+                label = "hdd.hdd4";
+              };
+            };
+          };
+        };
+      };
+
+      hdd5 = {
+        type = "disk";
+        device = "/dev/disk/by-id/ata-ST6000DM003-2CY186_ZCT2DSW5";
+        content = {
+          type = "gpt";
+          partitions = {
+            hdd5_1 = {
+              size = "100%";
+              content = {
+                type = "bcachefs";
+                filesystem = "pool";
+                label = "hdd.hdd5";
+              };
+            };
+          };
+        };
+      };
+
+      hdd6 = {
+        type = "disk";
+        device = "/dev/disk/by-id/ata-ST6000DM003-2CY186_ZCT2EMGM";
+        content = {
+          type = "gpt";
+          partitions = {
+            hdd6_1 = {
+              size = "100%";
+              content = {
+                type = "bcachefs";
+                filesystem = "pool";
+                label = "hdd.hdd6";
+              };
+            };
+          };
+        };
+      };
+
+      nvme1 = {
+        type = "disk";
+        device = "/dev/disk/by-id/nvme-nvme.126f-4141303030303030303030303030303034363434-53504343204d2e32205043496520535344-00000001";
+        content = {
+          type = "gpt";
+          partitions = {
+            nvme1_1 = {
+              size = "100%";
+              content = {
+                type = "bcachefs";
+                filesystem = "pool";
+                label = "nvme.nvme1";
+              };
+            };
+          };
+        };
+      };
     };
 
-    # Bcachefs Pool Definition
-    # bcachefs = {
-    #   storage = {
-    #     type = "bcachefs";
-    #     mountpoint = bcachefsMountpoint;
-    #     # Define format options for the pool
-    #     formatOptions = [
-    #       "--compression=none" # Example: Enable LZ4 compression
-    #       "--metadata_replicas=2" # Replicate metadata across 2 devices (e.g., NVMe + one HDD)
-    #       "--data_replicas=2" # Replicate user data across 2 devices (the two HDDs)
-    #       "--data_replicas_required=1" # Allow reading if one data replica is available
-    #       "--foreground_target=cache" # Prefer writing new data to 'fast' label
-    #       "--promote_target=cache" # Promote hot data to 'fast' label
-    #       "--background_target=hdd" # Store bulk data on 'slow' label
-    #     ];
-    #     # Define mount options for the filesystem
-    #     mountOptions = [
-    #       "verbose" # Enable verbose logging during mount
-    #       "degraded" # Allow mounting in degraded state (use with caution)
-    #     ];
-    #   };
-    # };
-  };
-  systemd.services.mount-bcachefs = {
-    description = "Mount bcachefs test filesystem";
-    path = [
-      pkgs.bcachefs-tools
-      pkgs.util-linux
-      pkgs.gawk
-    ];
-
-    # Start after basic system services are up
-    after = [
-      "network.target"
-      "local-fs.target"
-      "multi-user.target"
-    ];
-
-    # Don't consider boot failed if this service fails
-    wantedBy = [ "multi-user.target" ];
-
-    # Service configuration
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStartPre = "+${pkgs.coreutils}/bin/mkdir -p ${bcachefsMountpoint}";
+    bcachefs_filesystems = {
+      pool = {
+        # This name is referenced by the 'filesystem' attribute in partitions
+        type = "bcachefs_filesystem";
+        mountpoint = mountpoint; # Your original mountpoint variable
+        # Updated extraFormatArgs to match the other two configurations
+        extraFormatArgs = [
+          "--compression=lz4"
+          "--foreground_target=nvme" # Targets 'nvme.*' labeled devices
+          "--background_target=hdd" # Targets 'hdd.*' labeled devices
+          "--promote_target=ssd" # Will look for 'ssd.*' labeled devices
+          "--metadata_replicas=2"
+          "--metadata_replicas_required=1"
+          "--data_replicas=2"
+          "--data_replicas_required=1"
+        ];
+        mountOptions = [
+          # Your original mount options
+          "verbose"
+          "degraded"
+        ];
+        # As before, if you need specific subvolumes, define them here.
+        # Otherwise, the entire filesystem is mounted at 'mountpoint'.
+        # subvolumes = {
+        #   "subvolumes/some_path" = { mountpoint = "/mnt/some_path"; };
+        # };
+      };
     };
-
-    # The actual mount script
-    script = ''
-      # Mount the filesystem if not already mounted
-      if ! mountpoint -q ${bcachefsMountpoint}; then
-        UUID=$(bcachefs show-super ${nvmeDevice} | grep Ext | awk '{print $3}')
-        mount -t bcachefs UUID=$UUID ${bcachefsMountpoint}
-      fi
-    '';
-
   };
 
   # Enable the cargohold host configuration
