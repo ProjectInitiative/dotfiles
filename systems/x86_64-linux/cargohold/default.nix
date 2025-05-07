@@ -20,21 +20,33 @@ in
 {
 
   disko.devices = {
-  
     disk = {
-      # Dedicated Boot Drive
-      root = {
+      # Boot Drive Configuration (Classic EXT4)
+      boot = {
         type = "disk";
-        device = bootDevice; # Your specified boot device
+        device = bootDevice;
         content = {
           type = "gpt";
           partitions = {
-            boot_partition = { # Partition for /boot
-              size = "100%";   # Use the entire dedicated drive
+            ESP = {
+              size = "512M";
+              type = "EF00"; # EFI System Partition type GUID
+              content = {
+                type = "filesystem";
+                format = "vfat";
+                mountpoint = "/boot";
+              };
+            };
+            root = {
+              size = "100%"; # Use remaining space
               content = {
                 type = "filesystem";
                 format = "ext4";
                 mountpoint = "/";
+                mountOptions = [
+                  "defaults"
+                  "noatime"
+                ]; # Example mount options
               };
             };
           };
