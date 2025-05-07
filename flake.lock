@@ -187,16 +187,15 @@
         ]
       },
       "locked": {
-        "lastModified": 1746591432,
-        "narHash": "sha256-1EpRZV/8RzT2DmqpmdYwaMO8h13U1jyP54dzGrloOyE=",
-        "owner": "projectinitiative",
+        "lastModified": 1746638861,
+        "narHash": "sha256-fmphHNrbydmLECpXp2q9egb2IsqIjzvPboGkndGOye0=",
+        "owner": "nix-community",
         "repo": "disko",
-        "rev": "f6d3a9f97e8be05b1f1f25106a95b3095b84612d",
+        "rev": "78d6a1365cde90a479edc9ff7ea5dbd8b2e0cfb8",
         "type": "github"
       },
       "original": {
-        "owner": "projectinitiative",
-        "ref": "update-device",
+        "owner": "nix-community",
         "repo": "disko",
         "type": "github"
       }
