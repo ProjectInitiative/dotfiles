@@ -15,7 +15,7 @@ let
   nvmeDevice = "/dev/disk/by-id/nvme-nvme.126f-4141303030303030303030303030303034363434-53504343204d2e32205043496520535344-00000001"; # Example: 1TB NVMe drive
 
   # Define the bcachefs mountpoint (should match the module option)
-  bcachefsMountpoint = "/mnt/pool";
+  mountpoint = "/mnt/pool";
 in
 {
 
@@ -185,7 +185,7 @@ in
     # ipAddress = "10.0.0.5/24";
     # interface = "eno1";
     # gateway = "10.0.0.1";
-    bcachefsMountpoint = bcachefsMountpoint; # Ensure consistency
+    bcachefsMountpoint = mountpoint; # Ensure consistency
   };
 
   # Basic NixOS settings
