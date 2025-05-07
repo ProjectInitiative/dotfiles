@@ -20,7 +20,27 @@ in
 {
 
   disko.devices = {
+  
     disk = {
+      # Dedicated Boot Drive
+      root = {
+        type = "disk";
+        device = bootDevice; # Your specified boot device
+        content = {
+          type = "gpt";
+          partitions = {
+            boot_partition = { # Partition for /boot
+              size = "100%";   # Use the entire dedicated drive
+              content = {
+                type = "filesystem";
+                format = "ext4";
+                mountpoint = "/";
+              };
+            };
+          };
+        };
+      };
+
       hdd1 = {
         type = "disk";
         device = "/dev/disk/by-id/ata-ST6000DM003-2CY186_ZCT2EKC1";
