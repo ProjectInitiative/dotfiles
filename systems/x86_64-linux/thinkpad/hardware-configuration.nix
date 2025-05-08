@@ -75,8 +75,8 @@
       fsType = "vfat";
     };
     "/home/kylepzak" = {
-      device = "/dev/mapper/data-home_kpzak";
-      fsType = "ext4";
+      device = "/dev/mapper/data-home_kylepzak";
+      fsType = "bcachefs";
     };
     "/extpart" = {
       device = "/dev/mapper/data-extpart";
