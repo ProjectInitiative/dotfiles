@@ -46,6 +46,7 @@ with lib.${namespace};
 
     suites = {
       development = enabled;
+      bcachefs-utils = enabled;
     };
     # override
     networking = {

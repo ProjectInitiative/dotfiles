@@ -91,7 +91,7 @@ in
 
     # 2. Add cache to Nix settings if requested (using mkMerge for safety)
     nix.settings = mkIf cfg.manageNixConfig {
-      substituters = mkMerge [ [ cfg.serverUrl ] ];
+      substituters = mkMerge [ [ "${cfg.serverUrl}?priority=30" ] ];
       trusted-public-keys = mkMerge [ [ cfg.publicKey ] ];
     };
 

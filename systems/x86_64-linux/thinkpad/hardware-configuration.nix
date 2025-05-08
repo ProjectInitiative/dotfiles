@@ -39,7 +39,10 @@
       };
     };
 
-    kernelModules = [ "kvm-intel" ];
+    kernelPackages = pkgs.linuxPackages_6_13;
+    supportedFilesystems = [ "bcachefs" ];
+    kernelModules = [ "bcachefs" "kvm-intel" ];
+    # kernelModules = [ "kvm-intel" ];
     extraModulePackages = [ ];
 
     loader = {
@@ -79,10 +82,10 @@
       device = "/dev/mapper/data-extpart";
       fsType = "ext4";
     };
-    "/backups" = {
-      device = "/dev/mapper/data-backups";
-      fsType = "ext4";
-    };
+    # "/backups" = {
+    #   device = "/dev/mapper/data-backups";
+    #   fsType = "ext4";
+    # };
   };
 
   swapDevices = [
