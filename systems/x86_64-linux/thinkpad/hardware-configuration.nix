@@ -41,7 +41,10 @@
 
     kernelPackages = pkgs.linuxPackages_6_13;
     supportedFilesystems = [ "bcachefs" ];
-    kernelModules = [ "bcachefs" "kvm-intel" ];
+    kernelModules = [
+      "bcachefs"
+      "kvm-intel"
+    ];
     # kernelModules = [ "kvm-intel" ];
     extraModulePackages = [ ];
 

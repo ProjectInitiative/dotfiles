@@ -1,5 +1,11 @@
 # /etc/nixos/modules/bcachefs-snap.nix (or your preferred path)
-{ config, lib, pkgs, namespace,  ... }:
+{
+  config,
+  lib,
+  pkgs,
+  namespace,
+  ...
+}:
 
 with lib;
 with lib.types; # Ensure types is available
@@ -29,7 +35,9 @@ let
 in
 {
   options.${namespace}.services.bcachefsSnapshots = {
-    enable = mkEnableOption (mdDoc "bcachefs automatic snapshotting and pruning service for multiple targets");
+    enable = mkEnableOption (
+      mdDoc "bcachefs automatic snapshotting and pruning service for multiple targets"
+    );
 
     # Global timer configurations, these trigger the script which then processes all targets.
     timers = {
@@ -55,44 +63,65 @@ in
 
     # Define multiple snapshot targets
     targets = mkOption {
-      type = attrsOf (submodule ({ name, ... }: { # 'name' here is the attribute name of the target
-        options = {
-          enable = mkEnableOption (mdDoc "this specific snapshot target") // {
-            default = true; # Targets are enabled by default if defined
-          };
-          parentSubvolume = mkOption {
-            type = str;
-            example = "/mnt/mybcachefs/data";
-            description = mdDoc "Absolute path to the bcachefs parent subvolume for this target.";
-          };
-          snapshotsSubdirName = mkOption {
-            type = str;
-            default = defaultSnapshotsSubdirName;
-            description = mdDoc "Subdirectory name for snapshots within this target's parentSubvolume.";
-          };
-          readOnlySnapshots = mkOption {
-            type = bool;
-            default = true;
-            description = mdDoc "Create snapshots as read-only for this target.";
-          };
-          retention = mkOption {
-            type = submodule {
-              options = {
-                hourly = mkOption { type = int; default = 0; };
-                daily = mkOption { type = int; default = 0; };
-                weekly = mkOption { type = int; default = 0; };
-                monthly = mkOption { type = int; default = 0; };
-                yearly = mkOption { type = int; default = 0; };
+      type = attrsOf (
+        submodule (
+          { name, ... }:
+          {
+            # 'name' here is the attribute name of the target
+            options = {
+              enable = mkEnableOption (mdDoc "this specific snapshot target") // {
+                default = true; # Targets are enabled by default if defined
+              };
+              parentSubvolume = mkOption {
+                type = str;
+                example = "/mnt/mybcachefs/data";
+                description = mdDoc "Absolute path to the bcachefs parent subvolume for this target.";
+              };
+              snapshotsSubdirName = mkOption {
+                type = str;
+                default = defaultSnapshotsSubdirName;
+                description = mdDoc "Subdirectory name for snapshots within this target's parentSubvolume.";
+              };
+              readOnlySnapshots = mkOption {
+                type = bool;
+                default = true;
+                description = mdDoc "Create snapshots as read-only for this target.";
+              };
+              retention = mkOption {
+                type = submodule {
+                  options = {
+                    hourly = mkOption {
+                      type = int;
+                      default = 0;
+                    };
+                    daily = mkOption {
+                      type = int;
+                      default = 0;
+                    };
+                    weekly = mkOption {
+                      type = int;
+                      default = 0;
+                    };
+                    monthly = mkOption {
+                      type = int;
+                      default = 0;
+                    };
+                    yearly = mkOption {
+                      type = int;
+                      default = 0;
+                    };
+                  };
+                };
+                default = { }; # Empty by default, so all retentions are 0 unless specified
+                description = mdDoc "Retention policy for this specific target.";
+                example = literalExpression ''
+                  { hourly = 6; daily = 7; weekly = 4; monthly = 3; yearly = 1; }
+                '';
               };
             };
-            default = { }; # Empty by default, so all retentions are 0 unless specified
-            description = mdDoc "Retention policy for this specific target.";
-            example = literalExpression ''
-              { hourly = 6; daily = 7; weekly = 4; monthly = 3; yearly = 1; }
-            '';
-          };
-        };
-      }));
+          }
+        )
+      );
       default = { }; # No targets by default
       description = mdDoc ''
         Configuration for multiple bcachefs snapshot targets.
@@ -117,12 +146,20 @@ in
 
   config = mkIf cfg.enable {
     assertions = [
-      { # Check each enabled target has a parentSubvolume
-        assertion = all (target: !(target.enable && target.parentSubvolume == null)) (attrValues cfg.targets);
+      {
+        # Check each enabled target has a parentSubvolume
+        assertion = all (target: !(target.enable && target.parentSubvolume == null)) (
+          attrValues cfg.targets
+        );
         message = "Each enabled target in ${cfgNamespace}.targets must have 'parentSubvolume' set.";
       }
-      { # Check if at least one target is defined and enabled if the main service is enabled
-        assertion = if cfg.enable then (builtins.length (attrNames cfg.targets) > 0 && any (t: t.enable) (attrValues cfg.targets)) else true;
+      {
+        # Check if at least one target is defined and enabled if the main service is enabled
+        assertion =
+          if cfg.enable then
+            (builtins.length (attrNames cfg.targets) > 0 && any (t: t.enable) (attrValues cfg.targets))
+          else
+            true;
         message = "If ${cfgNamespace}.enable is true, at least one target must be defined and enabled in ${cfgNamespace}.targets.";
       }
     ];
@@ -132,9 +169,7 @@ in
     ];
 
     environment.etc."bcachefs-snap.conf" = {
-      text = concatStringsSep "\n\n" (
-        mapAttrsToList generateTargetIni cfg.targets
-      );
+      text = concatStringsSep "\n\n" (mapAttrsToList generateTargetIni cfg.targets);
     };
 
     systemd.services = {

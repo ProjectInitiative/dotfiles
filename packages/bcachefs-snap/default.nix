@@ -1,8 +1,11 @@
-{ pkgs ? import <nixpkgs> { } }:
+{
+  pkgs ? import <nixpkgs> { },
+}:
 
-pkgs.stdenv.mkDerivation rec { # 'rec' allows referring to 'name' and 'version' within the derivation
+pkgs.stdenv.mkDerivation rec {
+  # 'rec' allows referring to 'name' and 'version' within the derivation
   pname = "bcachefs-snap"; # Package name
-  version = "0.1.0";     # Version of your utility
+  version = "0.1.0"; # Version of your utility
 
   # Source directory: assumes default.nix and bcachefs_snap.py are in the same directory.
   src = ./.;
@@ -10,8 +13,8 @@ pkgs.stdenv.mkDerivation rec { # 'rec' allows referring to 'name' and 'version' 
   # Runtime dependencies needed by the script.
   # These will be available in the environment where the script runs.
   propagatedBuildInputs = [
-    pkgs.python3         # The Python 3 interpreter
-    pkgs.bcachefs-tools  # Provides the 'bcachefs' command-line utility
+    pkgs.python3 # The Python 3 interpreter
+    pkgs.bcachefs-tools # Provides the 'bcachefs' command-line utility
     # If you add Python libraries not in the standard library (e.g., PyYAML),
     # you would add them here like: pkgs.python3Packages.pyyaml
   ];
@@ -52,4 +55,3 @@ pkgs.stdenv.mkDerivation rec { # 'rec' allows referring to 'name' and 'version' 
     platforms = platforms.linux; # bcachefs is Linux-specific
   };
 }
-

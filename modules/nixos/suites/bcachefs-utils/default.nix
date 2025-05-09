@@ -31,39 +31,38 @@ in
         bcachefsSnapshots = {
           enable = true;
 
-            timers = {
-              create = {
-                enable = true;
-                onCalendar = "hourly";
-              };
-              prune = {
-                enable = true;
-                onCalendar = "daily"; # e.g., "*-*-* 03:15:00"
+          timers = {
+            create = {
+              enable = true;
+              onCalendar = "hourly";
+            };
+            prune = {
+              enable = true;
+              onCalendar = "daily"; # e.g., "*-*-* 03:15:00"
+            };
+          };
+
+          targets = {
+            mount = {
+
+              parentSubvolume = cfg.parentSubvolume; # MANDATORY: Set your actual subvolume path
+              readOnlySnapshots = true; # Optional: default is true
+
+              retention = {
+                hourly = 12;
+                daily = 14;
+                weekly = 8;
+                monthly = 12;
+                yearly = 5;
               };
             };
 
-            targets = {
-              mount = {
-            
-                parentSubvolume = cfg.parentSubvolume; # MANDATORY: Set your actual subvolume path
-                readOnlySnapshots = true;                    # Optional: default is true
-
-                retention = {
-                  hourly = 12;
-                  daily = 14;
-                  weekly = 8;
-                  monthly = 12;
-                  yearly = 5;
-                };
-              };
-
           };
         };
-        
-      };
-      
-    };
 
+      };
+
+    };
 
     environment.systemPackages = with pkgs; [
       bcachefs-tools
