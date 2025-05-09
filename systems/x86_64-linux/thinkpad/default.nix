@@ -46,7 +46,10 @@ with lib.${namespace};
 
     suites = {
       development = enabled;
-      bcachefs-utils = enabled;
+      bcachefs-utils = {
+        enable = true;
+        parentSubvolume = "/home/kylepzak";
+      };
     };
     # override
     networking = {

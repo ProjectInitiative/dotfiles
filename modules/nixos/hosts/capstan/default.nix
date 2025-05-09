@@ -134,7 +134,10 @@ in
         attic = {
           enableClient = true;
         };
-        bcachefs-utils = enabled;
+        bcachefs-utils = {
+          enable = true;
+          parentSubvolume = "/mnt/pool";
+        };
       };
 
       services = {
