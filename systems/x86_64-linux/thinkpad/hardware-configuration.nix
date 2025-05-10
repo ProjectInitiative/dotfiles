@@ -39,7 +39,7 @@
       };
     };
 
-    kernelPackages = pkgs.linuxPackages_6_13;
+    kernelPackages = pkgs.linuxPackages_6_14;
     supportedFilesystems = [ "bcachefs" ];
     kernelModules = [
       "bcachefs"

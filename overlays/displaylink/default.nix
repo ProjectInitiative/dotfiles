@@ -17,6 +17,13 @@ final: prev: {
       };
     }
   );
+  linuxPackages_6_14 = prev.linuxPackages_6_14.extend (
+    kself: ksuper: {
+      evdi = channels.unstable.linuxPackages_6_14.evdi.override {
+        kernel = kself.kernel;
+      };
+    }
+  );
   displaylink =
     (prev.displaylink.override {
       requireFile =
