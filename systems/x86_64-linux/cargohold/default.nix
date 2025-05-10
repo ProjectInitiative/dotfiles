@@ -44,44 +44,45 @@ in
                 type = "filesystem";
                 format = "ext4";
                 mountpoint = "/";
-                mountOptions = [ "defaults" "noatime" ]; # Example mount options
+                mountOptions = [
+                  "defaults"
+                  "noatime"
+                ]; # Example mount options
               };
             };
           };
         };
       };
-    nvme1 = {
-      type = "disk";
-      device = nvmeDevice;
-      content = {
-        type = "bcachefs_member";
-        pool = "pool";
-        label = "cache.nvme1";
+      nvme1 = {
+        type = "disk";
+        device = nvmeDevice;
+        content = {
+          type = "bcachefs_member";
+          pool = "pool";
+          label = "cache.nvme1";
+        };
       };
-    };
 
-
-    hdd1 = {
-      type = "disk";
-      device = "/dev/disk/by-id/ata-ST6000NM0115-1YZ110_ZAD7GD93";
-      content = {
-        type = "bcachefs_member";
-        pool = "pool";
-        label = "hdd.hdd1";
+      hdd1 = {
+        type = "disk";
+        device = "/dev/disk/by-id/ata-ST6000NM0115-1YZ110_ZAD7GD93";
+        content = {
+          type = "bcachefs_member";
+          pool = "pool";
+          label = "hdd.hdd1";
+        };
       };
-    };
-    hdd2 = {
-      type = "disk";
-      device = "/dev/disk/by-id/ata-ST6000NM0115-1YZ110_ZAD7HEWB";
-      content = {
-        type = "bcachefs_member";
-        pool = "pool";
-        label = "hdd.hdd2";
+      hdd2 = {
+        type = "disk";
+        device = "/dev/disk/by-id/ata-ST6000NM0115-1YZ110_ZAD7HEWB";
+        content = {
+          type = "bcachefs_member";
+          pool = "pool";
+          label = "hdd.hdd2";
+        };
       };
+
     };
-
-  };
-
 
     # Bcachefs Pool Definition
     bcachefs = {
@@ -155,6 +156,5 @@ in
   # Basic NixOS settings
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-
 
 }

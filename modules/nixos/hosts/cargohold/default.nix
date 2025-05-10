@@ -90,7 +90,7 @@ in
 
     # Enable common project modules if needed
     projectinitiative = {
-      services = {     
+      services = {
 
         eternal-terminal = enabled;
 

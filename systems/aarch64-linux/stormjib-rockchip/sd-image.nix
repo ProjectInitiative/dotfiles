@@ -245,11 +245,6 @@ in
           fi
 
           root_fs=${rootfsImage}
-          ${lib.optionalString config.sdImage.compressImage ''
-            root_fs=./root-fs.img
-            echo "Decompressing rootfs image"
-            zstd -d --no-progress "${rootfsImage}" -o $root_fs
-          ''}
 
           # Gap in front of the first partition, in MiB
           gap=${toString config.sdImage.firmwarePartitionOffset}

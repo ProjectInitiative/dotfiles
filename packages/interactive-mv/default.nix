@@ -3,7 +3,8 @@
   pkgs ? import <nixpkgs> { },
 }:
 
-pkgs.stdenv.mkDerivation rec { # Use 'rec' to easily refer to pname/version
+pkgs.stdenv.mkDerivation rec {
+  # Use 'rec' to easily refer to pname/version
   pname = "interactive-merge";
   version = "1.0"; # Or any version you like
 
@@ -16,8 +17,8 @@ pkgs.stdenv.mkDerivation rec { # Use 'rec' to easily refer to pname/version
   # and ensures the right versions are used.
   propagatedBuildInputs = [
     pkgs.bashInteractive # Ensures the right bash is used for shebang/runtime
-    pkgs.coreutils       # Provides: readlink, dirname, mkdir, rm, mv, test ([)
-    pkgs.findutils       # Provides: find
+    pkgs.coreutils # Provides: readlink, dirname, mkdir, rm, mv, test ([)
+    pkgs.findutils # Provides: find
   ];
 
   # Build phase is not needed for a simple script

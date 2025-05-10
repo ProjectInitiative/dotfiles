@@ -32,14 +32,14 @@ in
     boot = {
       kernelModules = [
         # Base modules needed for routing/firewalling/NAT/VLANs
-        "nf_nat"          # General NAT connection tracking helper
-        "nf_conntrack"    # Connection tracking core
+        "nf_nat" # General NAT connection tracking helper
+        "nf_conntrack" # Connection tracking core
         # "iptable_nat"     # Replaced by nf_nat generally
         # "iptable_filter"  # Loaded by default usually
-        "nf_reject_ipv4"  # For REJECT target
-        "nf_reject_ipv6"  # For REJECT target (if using ip6tables)
-        "ip_tables"       # Core iptables module
-        "8021q"           # VLAN support
+        "nf_reject_ipv4" # For REJECT target
+        "nf_reject_ipv6" # For REJECT target (if using ip6tables)
+        "ip_tables" # Core iptables module
+        "8021q" # VLAN support
       ] ++ moduleCfg.extraModules;
 
       # Kernel sysctl settings beyond basic forwarding (already in default.nix)

@@ -1,6 +1,12 @@
 # eternal-terminal.nix
 
-{ config, lib, pkgs, namespace, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  namespace,
+  ...
+}:
 
 with lib;
 
@@ -26,16 +32,16 @@ in
     };
 
     openFirewall = mkOption {
-       type = types.bool;
-       # Default to true if the service is enabled, false otherwise.
-       # Users often expect a service listening on a port to have its firewall opened.
-       default = cfg.enable;
-       description = "Whether to automatically open the firewall port for etserver.";
+      type = types.bool;
+      # Default to true if the service is enabled, false otherwise.
+      # Users often expect a service listening on a port to have its firewall opened.
+      default = cfg.enable;
+      description = "Whether to automatically open the firewall port for etserver.";
     };
 
     extraArgs = mkOption {
       type = types.listOf types.str;
-      default = [];
+      default = [ ];
       example = [ "--verbose" ];
       description = "Extra command-line arguments to pass to the etserver daemon.";
     };

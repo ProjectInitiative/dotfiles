@@ -37,7 +37,7 @@ pkgs.stdenv.mkDerivation {
   ] ++ lib.optional compressImage zstd;
 
   buildCommand = ''
-      set -e # Exit immediately if a command exits with a non-zero status.
+    set -e # Exit immediately if a command exits with a non-zero status.
     echo "--- Starting make-ext4-fs buildCommand ---"
 
     img_file_name="ext4-rootfs.img" # Define a consistent internal name
@@ -85,14 +85,17 @@ pkgs.stdenv.mkDerivation {
     mebibyte=$(( 1024 * 1024 ))
     if (( bytes % mebibyte )); then bytes=$(( ( bytes / mebibyte + 1) * mebibyte )); fi
     echo "Rounding up initial size to $bytes bytes"
-    truncate -s $bytes $img
-    faketime -f "1970-01-01 00:00:01" fakeroot mkfs.ext4 -L ${volumeLabel} -U ${uuid} -d ./rootImage $img
+    truncate -s $bytes $img # Initial truncate based on estimation
+    faketime -f "1970-01-01 00:00:01" fakeroot mkfs.ext4 -m 0 -L ${volumeLabel} -U ${uuid} -d ./rootImage $img
     export EXT2FS_NO_MTAB_OK=yes
     fsck.ext4 -n -f $img || { echo "--- Fsck failed after mkfs ---"; exit 1; }
     echo "Shrinking filesystem to minimum size..."
     resize2fs -M $img
+    echo "--- Filesystem info after resize2fs -M ---"
+    dumpe2fs -h $img || echo "ERROR: dumpe2fs after resize2fs -M failed"
+    echo "-------------------------------------------"
     echo "Calculating target size with 16MiB buffer..."
-    dumpe2fs_output=$(dumpe2fs -h $img) || { echo "ERROR: dumpe2fs command failed"; exit 1; }
+    dumpe2fs_output=$(dumpe2fs -h $img) || { echo "ERROR: dumpe2fs command for target_blocks failed"; exit 1; }
     target_blocks=$(echo "$dumpe2fs_output" | awk -F: '/Block count/{count=$2} /Block size/{size=$2} END{ if (size > 0) { print int((count*size+16*1024*1024)/size + 0.999999) } else { exit 1 } }')
     if [ -z "$target_blocks" ]; then echo "ERROR: Failed to parse target_blocks"; echo "$dumpe2fs_output"; exit 1; fi
     echo "Resizing filesystem to $target_blocks blocks..."

@@ -17,7 +17,7 @@
   boot = {
     # Container doesn't need initrd and most boot settings
     isContainer = true;
-    
+
     # Keep emulation support for cross-compilation like in your ThinkPad
     binfmt = {
       emulatedSystems = [
@@ -35,14 +35,14 @@
   #     fsType = "tmpfs";
   #     options = [ "size=2G" "mode=755" ];
   #   };
-    
+
   #   # Mount points for persistent storage
   #   "/data" = {
   #     device = "data";
   #     fsType = "none";
   #     options = [ "bind" ];
   #   };
-    
+
   #   "/home" = {
   #     device = "home";
   #     fsType = "none";
@@ -51,7 +51,7 @@
   # };
 
   # Container doesn't need swap
-  swapDevices = [];
+  swapDevices = [ ];
 
   # Network configuration simplified for container
   networking = {

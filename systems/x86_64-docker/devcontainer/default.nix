@@ -53,7 +53,7 @@ with lib.${namespace};
     suites = {
       development = enabled;
     };
-    
+
     # Network configuration adapted for container
     networking = {
       tailscale = {
@@ -79,16 +79,19 @@ with lib.${namespace};
       permitRootLogin = "no";
       passwordAuthentication = false;
     };
-    
+
     # No need for printing, sound, display services in container
   };
 
   # Container users
   users.users.developer = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "docker" "networkmanager" ];
+    extraGroups = [
+      "wheel"
+      "docker"
+      "networkmanager"
+    ];
   };
-
 
   # Keep the stateVersion the same as your ThinkPad for compatibility
   system.stateVersion = "24.05";

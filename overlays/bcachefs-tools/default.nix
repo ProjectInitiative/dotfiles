@@ -9,7 +9,8 @@ let
   bcachefsCargoHash = "sha256-juXRmI3tz2BXQsRaRRGyBaGqeLk2QHfJb2sKPmWur8s="; # <--- LEAVE THIS EMPTY or use "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 in
 final: prev: {
-  bcachefs-tools = prev.bcachefs-tools.overrideAttrs (old:
+  bcachefs-tools = prev.bcachefs-tools.overrideAttrs (
+    old:
     let
       # Define the new source *inside* the overrideAttrs block
       newSrc = final.fetchFromGitHub {
@@ -37,5 +38,6 @@ final: prev: {
       # nativeBuildInputs = old.nativeBuildInputs;
       # buildInputs = old.buildInputs;
       # meta = old.meta // { description = old.meta.description + " (overridden)"; };
-    });
+    }
+  );
 }

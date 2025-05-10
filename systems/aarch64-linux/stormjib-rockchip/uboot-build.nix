@@ -1,7 +1,8 @@
 # uboot-build.nix
 # Nix derivations to fetch/build U-Boot prerequisites for Rockchip RK3588.
 # Based on Collabora instructions: https://gitlab.collabora.com/hardware-enablement/rockchip-3588/u-boot
-{ pkgs
+{
+  pkgs,
 # , crossSystem ? { config = "aarch64-linux"; } # Target system
 }:
 
@@ -60,7 +61,6 @@ let
     # Specify the platform
     PLAT = "rk3588";
 
-
     # # Patch phase: Aggressively modify the problematic rules in build_macros.mk
     # patchPhase = ''
     #   runHook prePatch
@@ -94,7 +94,6 @@ let
       runHook postBuild
     '';
 
-
     # Build phases
     # configurePhase = '' /* No configure step typically needed for TF-A */ '';
     # buildPhase = ''
@@ -103,7 +102,7 @@ let
     #   # Unset problematic flags that might be inherited from the environment
     #   unset ASFLAGS || true
     #   unset CFLAGS || true
-      
+
     #   # Use make with explicit parameters to avoid problematic flags
     #   # make CROSS_COMPILE="${stdenv.cc.targetPrefix}" \
     #   make PLAT=${PLAT} \
@@ -194,7 +193,7 @@ let
     # You might need to find a specific one like 'radxa-e52c-rk3582_defconfig' if it exists.
     UBOOT_DEFCONFIG = "evb-rk3588_defconfig";
 
-        # Fix shebangs after patching and before configuring/building
+    # Fix shebangs after patching and before configuring/building
     postPatch = ''
       echo "Running patchShebangs on source tree..."
       patchShebangs .
@@ -251,4 +250,3 @@ in
   inherit rkbin trusted-firmware-a uboot-rk3588;
   # You can potentially add derivations for rkdeveloptool or boot_merger here too if needed
 }
-

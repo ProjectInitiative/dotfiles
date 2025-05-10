@@ -26,27 +26,27 @@ in
     # (modulesPath + "/installer/sd-card/sd-image-aarch64-new-kernel.nix")
   ];
 
+  home-manager.users.kylepzak.home.stateVersion = "24.11";
+
   boot = {
     supportedFilesystems.zfs = lib.mkForce false;
     loader = {
       grub.enable = false;
-      systemd-boot.enable = false;  # Disable systemd-boot
-      generic-extlinux-compatible.enable = true;  # Enable extlinux bootloader
+      systemd-boot.enable = false; # Disable systemd-boot
+      generic-extlinux-compatible.enable = true; # Enable extlinux bootloader
     };
     kernelParams = [
       "nomodeset"
-      "keep_bootcon"  # Keep bootloader console
+      "keep_bootcon" # Keep bootloader console
     ];
     # kernelPackages = pkgs.linuxPackages_latest;
 
-
   };
 
-  sdImage = {
-    compressImage = false;
-    # extraBootContent = "./kernel/rockchip.dtb";
-  };
- 
+  # sdImage = {
+  #   compressImage = false;
+  #   # extraBootContent = "./kernel/rockchip.dtb";
+  # };
 
   environment.etc = {
     "ssh/ssh_host_ed25519_key" = {
@@ -68,7 +68,7 @@ in
     hosts.masthead.stormjib.enable = false;
     networking = {
       tailscale = {
-        enable = true;
+        enable = false;
         ephemeral = false;
         extraArgs = [
           "--accept-dns=false"
@@ -76,10 +76,9 @@ in
       };
     };
     system = {
-      console-info.ip-display.enable = true;
+      console-info.ip-display.enable = false;
     };
   };
-
 
   services.openssh.enable = true;
   console.enable = true;
@@ -136,8 +135,6 @@ in
   #   };
   # };
 
-
-  
   # Use tmpfs for temporary files
   # fileSystems."/tmp" = {
   #   device = "tmpfs";

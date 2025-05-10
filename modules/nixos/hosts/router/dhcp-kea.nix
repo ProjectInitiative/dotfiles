@@ -16,17 +16,25 @@ let
   moduleCfg = config.${namespace}.router.dhcp;
 
   # Helper to generate subnet config
-  mkSubnetConfig = { networkInfo, vlanCfg }: {
+  mkSubnetConfig =
+    { networkInfo, vlanCfg }:
+    {
       subnet = networkInfo.address + "/" + toString networkInfo.prefixLength;
       pools = [ { pool = "${vlanCfg.dhcpRangeStart} - ${vlanCfg.dhcpRangeEnd}"; } ];
       option-data = [
-        { name = "routers"; data = vlanCfg.virtualIp; }
-        { name = "domain-name-servers"; data = concatStringsSep "," cfg.dnsServers; }
+        {
+          name = "routers";
+          data = vlanCfg.virtualIp;
+        }
+        {
+          name = "domain-name-servers";
+          data = concatStringsSep "," cfg.dnsServers;
+        }
         # Add other DHCP options here if needed
       ];
       # Add reservations here if needed
       # reservations = [ { hw-address = "..."; ip-address = "..."; } ];
-  };
+    };
 
 in
 {
@@ -39,17 +47,28 @@ in
       # interfaces = mkOption { type = types.listOf types.str; default = []; };
 
       failover = mkOption {
-        type = types.nullOr (types.submodule {
-          options = {
-            # partnerAddress automatically derived from peerAddress in vrrp config
-            # port = mkOption { type = types.port; default = 647; }; # Kea default
-            maxUnackedUpdates = mkOption { type = types.int; default = 10; };
-            maxAckDelay = mkOption { type = types.int; default = 1000; }; # ms
-            mclt = mkOption { type = types.int; default = 3600; }; # seconds
-            # hba = mkOption { type = types.int; default = 10; }; # Kea >= 1.6 removed this
-            # load-balancing mode options can be added here if needed
-          };
-        });
+        type = types.nullOr (
+          types.submodule {
+            options = {
+              # partnerAddress automatically derived from peerAddress in vrrp config
+              # port = mkOption { type = types.port; default = 647; }; # Kea default
+              maxUnackedUpdates = mkOption {
+                type = types.int;
+                default = 10;
+              };
+              maxAckDelay = mkOption {
+                type = types.int;
+                default = 1000;
+              }; # ms
+              mclt = mkOption {
+                type = types.int;
+                default = 3600;
+              }; # seconds
+              # hba = mkOption { type = types.int; default = 10; }; # Kea >= 1.6 removed this
+              # load-balancing mode options can be added here if needed
+            };
+          }
+        );
         default = null;
         description = "Failover configuration for Kea DHCPv4.";
       };
@@ -65,7 +84,6 @@ in
   #       mgmtIf = optional (cfg.managementVlan.id == 1 && cfg.managementVlan.enableDhcp) mgmtInterfaceName;
   #       vlanIfs = map (vlan: "${cfg.lanInterface}.${toString vlan.id}") (filter (v: v.enableDhcp) cfg.vlans);
   #   in mgmtIf ++ vlanIfs;
-
 
   #   services.kea-dhcp4 = {
   #     enable = true;

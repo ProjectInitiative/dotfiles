@@ -51,93 +51,63 @@
     "inputDrvs": {
       "/nix/store/2l1ph2c0j27igg0zv8f5231fkl4m9xdv-rkbin-7c35e21.drv": {
         "dynamicOutputs": {},
-        "outputs": [
-          "out"
-        ]
+        "outputs": ["out"]
       },
       "/nix/store/3vdrk8bnyhmybl4qv03cwzim1rcwjv4l-gnumake-4.4.1.drv": {
         "dynamicOutputs": {},
-        "outputs": [
-          "out"
-        ]
+        "outputs": ["out"]
       },
       "/nix/store/a9mar73vr72bb0536c5srzrdclr2pkrw-openssl-3.3.3.drv": {
         "dynamicOutputs": {},
-        "outputs": [
-          "dev"
-        ]
+        "outputs": ["dev"]
       },
       "/nix/store/barp0yw61md34fjwwg201fcafwzff453-python3.12-pyelftools-0.31.drv": {
         "dynamicOutputs": {},
-        "outputs": [
-          "out"
-        ]
+        "outputs": ["out"]
       },
       "/nix/store/bxivn15axam2v78w4002rx6qv53yl43r-python3-3.12.8.drv": {
         "dynamicOutputs": {},
-        "outputs": [
-          "out"
-        ]
+        "outputs": ["out"]
       },
       "/nix/store/gj7ca4x6cf2fh29rfyk83iri98j240f8-python3.12-setuptools-75.1.1.drv": {
         "dynamicOutputs": {},
-        "outputs": [
-          "out"
-        ]
+        "outputs": ["out"]
       },
       "/nix/store/hgks2amys5agjcbsx8v6c5w5wlqi6d3k-stdenv-linux.drv": {
         "dynamicOutputs": {},
-        "outputs": [
-          "out"
-        ]
+        "outputs": ["out"]
       },
       "/nix/store/kzrqxi0y6gi8ikkkfx1ngxlyfn1wnkyy-u-boot-cbc9673.drv": {
         "dynamicOutputs": {},
-        "outputs": [
-          "out"
-        ]
+        "outputs": ["out"]
       },
       "/nix/store/lh2qzqq20pcx43y3cn2f0sk74kkiw4k4-gnutls-3.8.6.drv": {
         "dynamicOutputs": {},
-        "outputs": [
-          "dev"
-        ]
+        "outputs": ["dev"]
       },
       "/nix/store/p21hf4z6dk708nxgxvq4mvxm2bknck9y-trusted-firmware-a-rk3588-main.drv": {
         "dynamicOutputs": {},
-        "outputs": [
-          "out"
-        ]
+        "outputs": ["out"]
       },
       "/nix/store/vgxrxf0jqpmp9yc4vixdbhzkf53vdy1a-gcc-wrapper-13.3.0.drv": {
         "dynamicOutputs": {},
-        "outputs": [
-          "out"
-        ]
+        "outputs": ["out"]
       },
       "/nix/store/x8zg5js3plxmappzhpyxbs6sl92j7lzj-flex-2.6.4.drv": {
         "dynamicOutputs": {},
-        "outputs": [
-          "out"
-        ]
+        "outputs": ["out"]
       },
       "/nix/store/xcssrss86rlclsq4sa1ivf20qz8x2r24-bash-5.2p37.drv": {
         "dynamicOutputs": {},
-        "outputs": [
-          "out"
-        ]
+        "outputs": ["out"]
       },
       "/nix/store/y58cml2l7rh8ixswg79h3mz0nvzg85qz-bison-3.8.2.drv": {
         "dynamicOutputs": {},
-        "outputs": [
-          "out"
-        ]
+        "outputs": ["out"]
       },
       "/nix/store/z9b7xm3s2j5pw2d1rygacdnypb0b764r-swig-4.2.1.drv": {
         "dynamicOutputs": {},
-        "outputs": [
-          "out"
-        ]
+        "outputs": ["out"]
       }
     },
     "inputSrcs": [
