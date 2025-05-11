@@ -204,9 +204,92 @@ let
     configurePhase = ''
       runHook preConfigure
       echo "Using defconfig: ${UBOOT_DEFCONFIG}"
+      # Apply the default configuration
       make ${UBOOT_DEFCONFIG}
+
+      # Verify .config was created (important check)
+      if [ ! -f .config ]; then
+        echo "Error: .config was NOT created by 'make ${UBOOT_DEFCONFIG}'."
+        echo "Listing current directory contents (-la):"
+        ls -la
+        # Check if the defconfig file itself exists
+        if [ ! -f "configs/${UBOOT_DEFCONFIG}" ]; then
+            echo "Error: Defconfig file 'configs/${UBOOT_DEFCONFIG}' also not found!"
+        fi
+        exit 1
+      fi
+      echo ".config file found."
+
+      # --- Modify .config for BOOTDELAY ---
+      echo "Setting CONFIG_BOOTDELAY=2 in .config"
+      sed -i '/^CONFIG_BOOTDELAY=/d' .config
+      echo "CONFIG_BOOTDELAY=2" >> .config
+
+      # --- Modify .config for UMS (USB Mass Storage) ---
+      echo "Attempting to enable UMS command and dependencies in .config..."
+      echo "# --- UMS Configuration Additions ---" >> .config
+
+      # Core CMD support
+      sed -i '/^CONFIG_CMD_USB_MASS_STORAGE=/d' .config
+      echo "CONFIG_CMD_USB_MASS_STORAGE=y" >> .config
+
+      # Core Gadget Support
+      sed -i '/^CONFIG_USB_GADGET=/d' .config
+      echo "CONFIG_USB_GADGET=y" >> .config
+
+      # BLK Support
+      sed -i '/^CONFIG_BLK=/d' .config
+      echo "CONFIG_BLK=y" >> .config
+
+      # USB Device Controller (UDC) for RK3588 (DWC3 is common)
+      # Verify these are correct for your U-Boot version from Kconfig files if issues persist
+      sed -i '/^CONFIG_USB_DWC3=/d' .config # Enables DWC3 core
+      echo "CONFIG_USB_DWC3=y" >> .config
+      sed -i '/^CONFIG_USB_DWC3_GADGET=/d' .config # Enables DWC3 gadget mode
+      echo "CONFIG_USB_DWC3_GADGET=y" >> .config
+      # A Rockchip-specific platform driver for DWC3 might also be needed, e.g., CONFIG_USB_DWC3_ROCKCHIP
+      # sed -i '/^CONFIG_USB_DWC3_ROCKCHIP=/d' .config
+      # echo "CONFIG_USB_DWC3_ROCKCHIP=y" >> .config
+
+
+      # USB Gadget Download Function (parent for Mass Storage as per your Kconfig snippet)
+      sed -i '/^CONFIG_USB_GADGET_DOWNLOAD=/d' .config
+      echo "CONFIG_USB_GADGET_DOWNLOAD=y" >> .config
+
+      # USB Mass Storage Function (under USB_GADGET_DOWNLOAD)
+      sed -i '/^CONFIG_USB_FUNCTION_MASS_STORAGE=/d' .config
+      echo "CONFIG_USB_FUNCTION_MASS_STORAGE=y" >> .config
+
+      # UMS Command Line Interface
+      sed -i '/^CONFIG_CMD_UMS=/d' .config
+      echo "CONFIG_CMD_UMS=y" >> .config
+
+      # --- Pre-empt FASTBOOT_BUF_ADDR prompt from olddefconfig ---
+      # This address is an example. If Fastboot is important, ensure this address is sensible
+      # for your memory map. If Fastboot isn't needed, this just satisfies the Kconfig dependency.
+      # The Kconfig symbol is CONFIG_FASTBOOT_BUF_ADDR based on the prompt.
+      echo "Providing default for CONFIG_FASTBOOT_BUF_ADDR to prevent interactive prompt"
+      sed -i '/^CONFIG_FASTBOOT_BUF_ADDR=/d' .config
+      echo "CONFIG_FASTBOOT_BUF_ADDR=0x0a000000" >> .config # Example: 160MB into RAM (adjust if known better)
+
+      # Optional: If other prompts appear from 'make olddefconfig', identify the Kconfig symbol
+      # (e.g., XYZ_NEW_OPTION from "Define XYZ_NEW_OPTION [] (NEW)")
+      # and add a default for it:
+      # sed -i '/^CONFIG_XYZ_NEW_OPTION=/d' .config
+      # echo "CONFIG_XYZ_NEW_OPTION=some_default_value" >> .config
+
+      echo "# --- End UMS Configuration Additions ---" >> .config
+
+      # Update the U-Boot configuration based on all .config modifications
+      echo "Updating U-Boot configuration with new settings (olddefconfig)..."
+      # Pass ARCH to ensure make olddefconfig works correctly in the U-Boot build system
+      make olddefconfig
+
+      echo "Verifying final UMS and BOOTDELAY settings in .config:"
+      grep -E "^CONFIG_CMD_UMS=|^CONFIG_USB_GADGET=|^CONFIG_USB_FUNCTION_MASS_STORAGE=|^CONFIG_BOOTDELAY=|^CONFIG_FASTBOOT_BUF_ADDR=" .config || echo "Some settings not found post-olddefconfig, check .config manually."
+
       runHook postConfigure
-    '';
+      '';
 
     preBuild = ''
       sed -i '/&hdptxphy_hdmi0 {/,/};/d' dts/upstream/src/arm64/rockchip/rk3588-evb1-v10.dts

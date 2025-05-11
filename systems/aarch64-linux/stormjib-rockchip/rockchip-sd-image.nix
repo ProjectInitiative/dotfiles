@@ -106,6 +106,9 @@ in
       # To be explicit: inherit pkgs lib;
       inherit ubootIdbloaderFile ubootItbFile;
       nixosRootfsImageFile = config.system.build.nixosRootfsPartitionImage; # The rootfs.img we just defined
+      buildFullImage = true;
+      buildUbootImage = true;
+      buildOsImage = true;
     };
 
     # Point the default system build output to your new monolithic image
@@ -172,6 +175,6 @@ in
       settings.PermitRootLogin = "yes"; # For debugging, consider changing for production
     };
     nix.settings.experimental-features = [ "nix-command" "flakes" ];
-    system.stateVersion = "23.11"; # Or your current version
+    system.stateVersion = "24.11"; # Or your current version
   };
 }
