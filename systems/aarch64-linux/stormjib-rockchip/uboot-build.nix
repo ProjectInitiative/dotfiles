@@ -203,31 +203,31 @@ let
     # Build phases
     configurePhase = ''
       runHook preConfigure
-      echo "Using defconfig: ${UBOOT_DEFCONFIG}"
-      # Apply the default configuration
+
+      echo "Applying U-Boot defconfig: ${UBOOT_DEFCONFIG}"
       make ${UBOOT_DEFCONFIG}
 
-      # Verify .config was created (important check)
       if [ ! -f .config ]; then
         echo "Error: .config was NOT created by 'make ${UBOOT_DEFCONFIG}'."
         echo "Listing current directory contents (-la):"
         ls -la
-        # Check if the defconfig file itself exists
         if [ ! -f "configs/${UBOOT_DEFCONFIG}" ]; then
-            echo "Error: Defconfig file 'configs/${UBOOT_DEFCONFIG}' also not found!"
+          echo "Error: Defconfig file 'configs/${UBOOT_DEFCONFIG}' also not found!"
         fi
         exit 1
       fi
-      echo ".config file found."
+      echo ".config file found. Proceeding with modifications."
 
       # --- Modify .config for BOOTDELAY ---
+      echo "# --- BOOTDELAY Configuration ---" >> .config
       echo "Setting CONFIG_BOOTDELAY=2 in .config"
       sed -i '/^CONFIG_BOOTDELAY=/d' .config
       echo "CONFIG_BOOTDELAY=2" >> .config
+      echo "# --- End BOOTDELAY Configuration ---" >> .config
 
       # --- Modify .config for UMS (USB Mass Storage) ---
-      echo "Attempting to enable UMS command and dependencies in .config..."
-      echo "# --- UMS Configuration Additions ---" >> .config
+      echo "# --- UMS (USB Mass Storage) Configuration ---" >> .config
+      echo "Enabling UMS command and dependencies in .config..."
 
       # Core CMD support
       sed -i '/^CONFIG_CMD_USB_MASS_STORAGE=/d' .config
@@ -242,54 +242,111 @@ let
       echo "CONFIG_BLK=y" >> .config
 
       # USB Device Controller (UDC) for RK3588 (DWC3 is common)
-      # Verify these are correct for your U-Boot version from Kconfig files if issues persist
-      sed -i '/^CONFIG_USB_DWC3=/d' .config # Enables DWC3 core
+      sed -i '/^CONFIG_USB_DWC3=/d' .config
       echo "CONFIG_USB_DWC3=y" >> .config
-      sed -i '/^CONFIG_USB_DWC3_GADGET=/d' .config # Enables DWC3 gadget mode
+      sed -i '/^CONFIG_USB_DWC3_GADGET=/d' .config
       echo "CONFIG_USB_DWC3_GADGET=y" >> .config
-      # A Rockchip-specific platform driver for DWC3 might also be needed, e.g., CONFIG_USB_DWC3_ROCKCHIP
+      # Potentially Rockchip-specific DWC3 platform driver:
       # sed -i '/^CONFIG_USB_DWC3_ROCKCHIP=/d' .config
       # echo "CONFIG_USB_DWC3_ROCKCHIP=y" >> .config
 
-
-      # USB Gadget Download Function (parent for Mass Storage as per your Kconfig snippet)
+      # USB Gadget Download Function
       sed -i '/^CONFIG_USB_GADGET_DOWNLOAD=/d' .config
       echo "CONFIG_USB_GADGET_DOWNLOAD=y" >> .config
 
-      # USB Mass Storage Function (under USB_GADGET_DOWNLOAD)
+      # USB Mass Storage Function
       sed -i '/^CONFIG_USB_FUNCTION_MASS_STORAGE=/d' .config
       echo "CONFIG_USB_FUNCTION_MASS_STORAGE=y" >> .config
 
       # UMS Command Line Interface
       sed -i '/^CONFIG_CMD_UMS=/d' .config
       echo "CONFIG_CMD_UMS=y" >> .config
+      echo "# --- End UMS Configuration ---" >> .config
 
-      # --- Pre-empt FASTBOOT_BUF_ADDR prompt from olddefconfig ---
-      # This address is an example. If Fastboot is important, ensure this address is sensible
-      # for your memory map. If Fastboot isn't needed, this just satisfies the Kconfig dependency.
-      # The Kconfig symbol is CONFIG_FASTBOOT_BUF_ADDR based on the prompt.
+      # --- Add/Ensure SD/MMC Kconfig options ---
+      echo "# --- SD/MMC Configuration ---" >> .config
+      echo "Ensuring SD/MMC Kconfig options are enabled in .config..."
+
+      sed -i '/^CONFIG_MMC=/d' .config
+      echo "CONFIG_MMC=y" >> .config
+
+      sed -i '/^CONFIG_DM_MMC=/d' .config
+      echo "CONFIG_DM_MMC=y" >> .config
+
+      sed -i '/^CONFIG_MMC_DW=/d' .config
+      echo "CONFIG_MMC_DW=y" >> .config
+
+      sed -i '/^CONFIG_MMC_DW_ROCKCHIP=/d' .config # Verify this Kconfig for your U-Boot version
+      echo "CONFIG_MMC_DW_ROCKCHIP=y" >> .config
+
+      sed -i '/^CONFIG_CMD_MMC=/d' .config
+      echo "CONFIG_CMD_MMC=y" >> .config
+
+      sed -i '/^CONFIG_MMC_WRITE=/d' .config
+      echo "CONFIG_MMC_WRITE=y" >> .config
+
+      sed -i '/^CONFIG_DOS_PARTITION=/d' .config
+      echo "CONFIG_DOS_PARTITION=y" >> .config
+
+      sed -i '/^CONFIG_FAT_FILESYSTEM=/d' .config
+      echo "CONFIG_FAT_FILESYSTEM=y" >> .config
+
+      # Optional: For booting from SD or SPL access
+      # sed -i '/^CONFIG_SPL_DM_MMC=/d' .config
+      # echo "CONFIG_SPL_DM_MMC=y" >> .config
+      echo "# --- End SD/MMC Configuration ---" >> .config
+
+      # --- Pre-empt FASTBOOT_BUF_ADDR prompt ---
+      echo "# --- FASTBOOT Configuration ---" >> .config
       echo "Providing default for CONFIG_FASTBOOT_BUF_ADDR to prevent interactive prompt"
       sed -i '/^CONFIG_FASTBOOT_BUF_ADDR=/d' .config
-      echo "CONFIG_FASTBOOT_BUF_ADDR=0x0a000000" >> .config # Example: 160MB into RAM (adjust if known better)
+      echo "CONFIG_FASTBOOT_BUF_ADDR=0x0a000000" >> .config # Example address
+      echo "# --- End FASTBOOT Configuration ---" >> .config
 
-      # Optional: If other prompts appear from 'make olddefconfig', identify the Kconfig symbol
-      # (e.g., XYZ_NEW_OPTION from "Define XYZ_NEW_OPTION [] (NEW)")
-      # and add a default for it:
+      # --- Add Kconfigs from Radxa List ---
+      echo "# --- Additional Kconfigs from Radxa List ---" >> .config
+
+      sed -i '/^CONFIG_HUSH_PARSER=/d' .config
+      echo "CONFIG_HUSH_PARSER=y" >> .config
+
+      sed -i '/^CONFIG_CMD_MBR=/d' .config
+      echo "CONFIG_CMD_MBR=y" >> .config
+
+      sed -i '/^CONFIG_CMD_GPT=/d' .config
+      echo "CONFIG_CMD_GPT=y" >> .config
+
+      sed -i '/^CONFIG_OF_LIBFDT_OVERLAY=/d' .config
+      echo "CONFIG_OF_LIBFDT_OVERLAY=y" >> .config
+
+      sed -i '/^CONFIG_MMC_HS200_SUPPORT=/d' .config
+      echo "CONFIG_MMC_HS200_SUPPORT=y" >> .config
+
+      # Add others you deem necessary, like SPI, NVME, specific PMIC or LED support if your hardware matches
+      # For example, if your Radxa E52C uses FAN53555 and you want U-Boot to control it:
+      # sed -i '/^CONFIG_DM_PMIC_FAN53555=/d' .config
+      # echo "CONFIG_DM_PMIC_FAN53555=y" >> .config
+      # sed -i '/^CONFIG_DM_REGULATOR_FAN53555=/d' .config
+      # echo "CONFIG_DM_REGULATOR_FAN53555=y" >> .config
+
+      echo "# --- End Additional Kconfigs from Radxa List ---" >> .config
+
+      # Optional: Add other Kconfig defaults here if 'make olddefconfig' prompts for them
+      # echo "# --- Other Kconfig Defaults ---" >> .config
       # sed -i '/^CONFIG_XYZ_NEW_OPTION=/d' .config
       # echo "CONFIG_XYZ_NEW_OPTION=some_default_value" >> .config
+      # echo "# --- End Other Kconfig Defaults ---" >> .config
 
-      echo "# --- End UMS Configuration Additions ---" >> .config
+      echo "Updating U-Boot configuration with all modifications (olddefconfig)..."
+      # Pass ARCH to ensure make olddefconfig works correctly if it's sensitive to it
+      make ARCH=${ARCH} olddefconfig
 
-      # Update the U-Boot configuration based on all .config modifications
-      echo "Updating U-Boot configuration with new settings (olddefconfig)..."
-      # Pass ARCH to ensure make olddefconfig works correctly in the U-Boot build system
-      make olddefconfig
-
-      echo "Verifying final UMS and BOOTDELAY settings in .config:"
-      grep -E "^CONFIG_CMD_UMS=|^CONFIG_USB_GADGET=|^CONFIG_USB_FUNCTION_MASS_STORAGE=|^CONFIG_BOOTDELAY=|^CONFIG_FASTBOOT_BUF_ADDR=" .config || echo "Some settings not found post-olddefconfig, check .config manually."
+      echo "Verifying final key settings in .config:"
+      grep -E \
+        "^CONFIG_BOOTDELAY=|^CONFIG_CMD_UMS=|^CONFIG_USB_GADGET=|^CONFIG_USB_FUNCTION_MASS_STORAGE=|^CONFIG_FASTBOOT_BUF_ADDR=|^CONFIG_MMC=|^CONFIG_CMD_MMC=|^CONFIG_MMC_DW_ROCKCHIP=" \
+        .config || echo "Warning: Some specified Kconfig settings were not found or not set as expected post-olddefconfig. Check .config manually."
 
       runHook postConfigure
-      '';
+    '';
 
     preBuild = ''
       sed -i '/&hdptxphy_hdmi0 {/,/};/d' dts/upstream/src/arm64/rockchip/rk3588-evb1-v10.dts
