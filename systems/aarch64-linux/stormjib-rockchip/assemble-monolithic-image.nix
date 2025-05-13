@@ -2,42 +2,33 @@
 { pkgs, lib,
   ubootIdbloaderFile,
   ubootItbFile,
-  nixosBootImageFile, # This is the direct path to the fat32 image file
-  nixosRootfsImageFile, # This is the direct path to the ext4 image file
-  # -- Image type build options --
-  buildFullImage ? true,      # Build: U-Boot + Boot Partition + Rootfs Partition
-  buildUbootImage ? false,    # Build: U-Boot only (idbloader + itb)
-  buildOsImage ? false        # Build: Boot Partition + Rootfs Partition (for SD Card)
+  nixosBootImageFile,
+  nixosRootfsImageFile,
+  buildFullImage ? true,
+  buildUbootImage ? false,
+  buildOsImage ? false
 }:
 
 let
-  # --- U-Boot specific offsets (remain the same) ---
   idbloaderOffsetBytes = 64 * 512;   # 32 KiB -> Sector 64
   itbOffsetBytes = 16384 * 512;  # 8 MiB -> Sector 16384
 
-  # --- Partition Layout Configuration ---
-  # Use MiB alignment for partitions for performance/compatibility
   alignmentUnitBytes = 1 * 1024 * 1024; # 1MiB
   bytesToSectors = bytes: bytes / 512;
   alignUp = (val: unit: ((val + unit - 1) / unit) * unit);
 
   # --- Full Monolithic Image (eMMC Style) ---
-  # Start boot partition after U-Boot ITB, aligned.
-  # Ensure sufficient space after ITB before aligning (e.g., add a few MiB buffer)
-  fullImgBootPartitionStartMinBytes = itbOffsetBytes + (4 * 1024 * 1024); # Start at least 4MiB after ITB end offset
-  fullImgBootPartitionStartBytes = alignUp fullImgBootPartitionStartMinBytes alignmentUnitBytes; # Align this start point up
+  # ### MODIFIED: Start boot partition at 16MiB to align with Radxa's parameter_gpt.txt
+  fullImgBootPartitionStartMinBytes = 16 * 1024 * 1024; # Start boot partition at 16MiB
+  fullImgBootPartitionStartBytes = alignUp fullImgBootPartitionStartMinBytes alignmentUnitBytes;
   fullImgBootPartitionStartSectors = bytesToSectors fullImgBootPartitionStartBytes;
-  # Rootfs starts immediately after boot partition
 
   # --- OS Only Image (SD Card Style) ---
-  # Start boot partition early, aligned.
   osImgBootPartitionStartBytes = alignUp (1 * 1024 * 1024) alignmentUnitBytes; # Start at 1 MiB
   osImgBootPartitionStartSectors = bytesToSectors osImgBootPartitionStartBytes;
-  # Rootfs starts immediately after boot partition
 
-  # --- GPT Partition Type GUIDs ---
   linuxFsTypeGuid = "0FC63DAF-8483-4772-8E79-3D69D8477DE4";
-  efiSysTypeGuid = "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"; # EFI System Partition
+  efiSysTypeGuid = "C12A7328-F81F-11D2-BA4B-00A0C93EC93B";
 
 in pkgs.stdenv.mkDerivation {
   name = "nixos-e52c-disk-images";
@@ -50,16 +41,16 @@ in pkgs.stdenv.mkDerivation {
   ];
 
   nativeBuildInputs = [
-    pkgs.coreutils    # For dd, truncate, stat, echo, cat
-    pkgs.util-linux   # For sfdisk, uuidgen
-    pkgs.parted       # For parted (verification)
+    pkgs.coreutils
+    pkgs.util-linux
+    pkgs.parted
   ];
 
   env = {
     IDBLOADER_FILE_PATH_ENV = ubootIdbloaderFile;
     ITB_FILE_PATH_ENV = ubootItbFile;
-    BOOT_IMAGE_FILE_PATH_ENV = nixosBootImageFile; # Direct file path
-    ROOTFS_IMAGE_FILE_PATH_ENV = nixosRootfsImageFile; # Direct file path
+    BOOT_IMAGE_FILE_PATH_ENV = nixosBootImageFile;
+    ROOTFS_IMAGE_FILE_PATH_ENV = nixosRootfsImageFile;
 
     IDBLOADER_OFFSET_SECTORS_ENV = builtins.toString (bytesToSectors idbloaderOffsetBytes);
     ITB_OFFSET_SECTORS_ENV = builtins.toString (bytesToSectors itbOffsetBytes);
@@ -80,12 +71,12 @@ in pkgs.stdenv.mkDerivation {
   phases = [ "buildPhase" "installPhase" ];
 
   buildPhase = ''
-    set -xe # Exit on error, print commands
+    set -xe
 
     local idbloader_file="$IDBLOADER_FILE_PATH_ENV"
     local itb_file="$ITB_FILE_PATH_ENV"
-    local boot_img_file="$BOOT_IMAGE_FILE_PATH_ENV"   # Direct file path
-    local rootfs_img_file="$ROOTFS_IMAGE_FILE_PATH_ENV" # Direct file path
+    local boot_img_file="$BOOT_IMAGE_FILE_PATH_ENV"
+    local rootfs_img_file="$ROOTFS_IMAGE_FILE_PATH_ENV"
 
     local idbloader_offset_sectors="$IDBLOADER_OFFSET_SECTORS_ENV"
     local itb_offset_sectors="$ITB_OFFSET_SECTORS_ENV"
@@ -98,7 +89,6 @@ in pkgs.stdenv.mkDerivation {
     local build_uboot_img="$BUILD_UBOOT_IMAGE_ENV"
     local build_os_img="$BUILD_OS_IMAGE_ENV"
 
-    # Calculate sizes (cleaned)
     local idbloader_size_bytes=0
     [[ -f "$idbloader_file" ]] && idbloader_size_bytes=$(${pkgs.coreutils}/bin/stat -c %s "$idbloader_file" | ${pkgs.coreutils}/bin/tr -d '[:space:]')
     local itb_size_bytes=0
@@ -108,11 +98,10 @@ in pkgs.stdenv.mkDerivation {
     local rootfs_img_size_bytes=0
     [[ -f "$rootfs_img_file" ]] && rootfs_img_size_bytes=$(${pkgs.coreutils}/bin/stat -c %s "$rootfs_img_file" | ${pkgs.coreutils}/bin/tr -d '[:space:]')
 
-    # Calculate sectors (only if size > 0)
     local boot_img_min_sectors=0
-    [[ -n "$boot_img_size_bytes" && "$boot_img_size_bytes" -gt 0 ]] && boot_img_min_sectors=$(($boot_img_size_bytes / 512))
+    [[ -n "$boot_img_size_bytes" && "$boot_img_size_bytes" -gt 0 ]] && boot_img_min_sectors=$(( ($boot_img_size_bytes + 511) / 512 )) # Ensure sectors cover full size
     local rootfs_img_min_sectors=0
-    [[ -n "$rootfs_img_size_bytes" && "$rootfs_img_size_bytes" -gt 0 ]] && rootfs_img_min_sectors=$(($rootfs_img_size_bytes / 512))
+    [[ -n "$rootfs_img_size_bytes" && "$rootfs_img_size_bytes" -gt 0 ]] && rootfs_img_min_sectors=$(( ($rootfs_img_size_bytes + 511) / 512 )) # Ensure sectors cover full size
 
     echo "--- Input Files ---"
     echo "IDBloader: $idbloader_file (Size: $idbloader_size_bytes bytes)"
@@ -120,24 +109,15 @@ in pkgs.stdenv.mkDerivation {
     echo "Boot Image: $boot_img_file (Size: $boot_img_size_bytes bytes, Min Sectors: $boot_img_min_sectors)"
     echo "RootFS Image: $rootfs_img_file (Size: $rootfs_img_size_bytes bytes, Min Sectors: $rootfs_img_min_sectors)"
 
-    # Basic input validation
     if [[ "$build_uboot_img" == "true" || "$build_full_img" == "true" ]]; then
       if (( idbloader_size_bytes <= 0 )); then echo "Error: IDBloader file size is zero or invalid ($idbloader_size_bytes)."; exit 1; fi
       if (( itb_size_bytes <= 0 )); then echo "Error: U-Boot ITB file size is zero or invalid ($itb_size_bytes)."; exit 1; fi
     fi
     if [[ "$build_os_img" == "true" || "$build_full_img" == "true" ]]; then
-      # Debug checks (can be removed once stable)
-      echo "DEBUG: Value of boot_img_min_sectors before check is: '$boot_img_min_sectors'"
-      if [[ "$boot_img_min_sectors" =~ ^[0-9]+$ ]]; then echo "DEBUG: boot_img_min_sectors appears numeric."; else echo "DEBUG: boot_img_min_sectors DOES NOT appear strictly numeric."; fi
-      # Main check
       if (( boot_img_min_sectors <= 0 )); then
           echo "Error: Boot image minimum sectors evaluated as zero or less ('$boot_img_min_sectors'). Size was $boot_img_size_bytes bytes. Check path: $boot_img_file"
           exit 1
       fi
-      # Debug checks (can be removed once stable)
-      echo "DEBUG: Value of rootfs_img_min_sectors before check is: '$rootfs_img_min_sectors'"
-      if [[ "$rootfs_img_min_sectors" =~ ^[0-9]+$ ]]; then echo "DEBUG: rootfs_img_min_sectors appears numeric."; else echo "DEBUG: rootfs_img_min_sectors DOES NOT appear strictly numeric."; fi
-      # Main check
        if (( rootfs_img_min_sectors <= 0 )); then
            echo "Error: RootFS image minimum sectors evaluated as zero or less ('$rootfs_img_min_sectors'). Size was $rootfs_img_size_bytes bytes. Check path: $rootfs_img_file"
            exit 1
@@ -146,13 +126,16 @@ in pkgs.stdenv.mkDerivation {
 
     # --- Build U-Boot Only Image ---
     if [[ "$build_uboot_img" == "true" ]]; then
-        # ... (uboot-only image logic - no changes) ...
         echo ""
         echo "--- Assembling U-Boot Only Image: uboot-only.img ---"
         local uboot_img_name="uboot-only.img"
-        local uboot_img_min_size_bytes=$(($itb_offset_sectors * 512 + $itb_size_bytes))
-        local uboot_img_total_size_bytes=$(( (($uboot_img_min_size_bytes + $alignment_unit_bytes - 1) / $alignment_unit_bytes ) * $alignment_unit_bytes ))
-        echo "U-Boot image min size: $uboot_img_min_size_bytes, Aligned size: $uboot_img_total_size_bytes bytes"
+        # ### MODIFIED: Ensure image is large enough for ITB at its offset + ITB size
+        local uboot_img_min_end_bytes=$(($itb_offset_sectors * 512 + $itb_size_bytes))
+        local uboot_img_total_size_bytes=$(( (($uboot_img_min_end_bytes + $alignment_unit_bytes - 1) / $alignment_unit_bytes ) * $alignment_unit_bytes ))
+        # Ensure minimum 16MB for uboot only image if it's smaller, to be safe with some tools/expectations
+        if (( uboot_img_total_size_bytes < 16 * 1024 * 1024 )); then uboot_img_total_size_bytes=$((16 * 1024 * 1024)); fi
+
+        echo "U-Boot image min end: $uboot_img_min_end_bytes, Aligned total size: $uboot_img_total_size_bytes bytes"
         echo "[INFO] 1. Creating empty sparse image file: $uboot_img_name"
         "${pkgs.coreutils}/bin/truncate" -s "$uboot_img_total_size_bytes" "$uboot_img_name"
         echo "[INFO] 2. Writing idbloader.img to sector $idbloader_offset_sectors..."
@@ -168,38 +151,36 @@ in pkgs.stdenv.mkDerivation {
       echo "--- Assembling OS Only Image (SD Card): os-only.img ---"
       local os_img_name="os-only.img"
       local os_img_boot_uuid=$(${pkgs.util-linux}/bin/uuidgen)
-      local os_img_root_uuid=$(${pkgs.util-linux}/bin/uuidgen) # Generate UUID for rootfs
+      local os_img_root_uuid=$(${pkgs.util-linux}/bin/uuidgen)
 
       local os_img_rootfs_part_start_sectors=$(($os_img_boot_part_start_sectors + $boot_img_min_sectors))
-      local os_img_min_size_bytes=$(($os_img_rootfs_part_start_sectors * 512 + $rootfs_img_size_bytes))
-      local os_img_total_size_bytes=$(( (($os_img_min_size_bytes + $alignment_unit_bytes - 1) / $alignment_unit_bytes ) * $alignment_unit_bytes ))
+      local os_img_min_end_bytes=$(($os_img_rootfs_part_start_sectors * 512 + $rootfs_img_size_bytes))
+      # ### MODIFIED: Add some padding to the OS image size (e.g., 100MB) to avoid issues with exact fits
+      local os_img_total_size_bytes=$(( (($os_img_min_end_bytes + 100 * 1024 * 1024 + $alignment_unit_bytes - 1) / $alignment_unit_bytes ) * $alignment_unit_bytes ))
       local os_img_total_sectors=$(($os_img_total_size_bytes / 512))
 
       echo "OS Image Layout:"
-      # ... (layout echos) ...
+      echo "  Boot Partition Start: Sector $os_img_boot_part_start_sectors (Size: $boot_img_min_sectors sectors)"
+      echo "  RootFS Partition Start: Sector $os_img_rootfs_part_start_sectors (Size: $rootfs_img_min_sectors sectors)"
+      echo "  OS Image Total Size: $os_img_total_size_bytes bytes ($os_img_total_sectors sectors)"
+
 
       echo "[INFO] 1. Creating empty sparse image file: $os_img_name"
       "${pkgs.coreutils}/bin/truncate" -s "$os_img_total_size_bytes" "$os_img_name"
 
       echo "[INFO] 2. Creating GPT partition table on $os_img_name..."
-      # Check that partitions fit before calling sfdisk
       local os_img_rootfs_part_end_sector=$(($os_img_rootfs_part_start_sectors + $rootfs_img_min_sectors - 1))
-      # Use >= total_sectors check for safety
       if (( os_img_rootfs_part_end_sector >= os_img_total_sectors )); then
          echo "Error: OS image: Calculated rootfs partition end ($os_img_rootfs_part_end_sector) exceeds or equals total sectors ($os_img_total_sectors)."
          exit 1
       fi
 
-      # --- sfdisk heredoc (last-lba REMOVED) ---
       "${pkgs.util-linux}/bin/sfdisk" "$os_img_name" << EOF
 label: gpt
 unit: sectors
 first-lba: 34
 
-# Partition 1: Boot (VFAT, using EFI System Partition type)
 name="NIXOS_BOOT", start=$os_img_boot_part_start_sectors, size=$boot_img_min_sectors, type="$efi_sys_guid", uuid="$os_img_boot_uuid"
-
-# Partition 2: Rootfs (EXT4, using Linux Filesystem type)
 name="NIXOS_ROOT", start=$os_img_rootfs_part_start_sectors, size=$rootfs_img_min_sectors, type="$linux_fs_guid", uuid="$os_img_root_uuid"
 EOF
 
@@ -217,7 +198,6 @@ EOF
       echo "--- OS Only image created: $os_img_name ---"
     fi
 
-    # --- Build Full Monolithic Image ---
     if [[ "$build_full_img" == "true" ]]; then
       echo ""
       echo "--- Assembling Full Monolithic Image: nixos-e52c-full.img ---"
@@ -226,12 +206,18 @@ EOF
       local full_img_root_uuid=$(${pkgs.util-linux}/bin/uuidgen)
 
       local full_img_rootfs_part_start_sectors=$(($full_img_boot_part_start_sectors + $boot_img_min_sectors))
-      local full_img_min_size_bytes=$(($full_img_rootfs_part_start_sectors * 512 + $rootfs_img_size_bytes))
-      local full_img_total_size_bytes=$(( (($full_img_min_size_bytes + $alignment_unit_bytes - 1) / $alignment_unit_bytes ) * $alignment_unit_bytes ))
+      local full_img_min_end_bytes=$(($full_img_rootfs_part_start_sectors * 512 + $rootfs_img_size_bytes))
+      # ### MODIFIED: Add some padding to the full image size (e.g., 100MB)
+      local full_img_total_size_bytes=$(( (($full_img_min_end_bytes + 100 * 1024 * 1024 + $alignment_unit_bytes - 1) / $alignment_unit_bytes ) * $alignment_unit_bytes ))
       local full_img_total_sectors=$(($full_img_total_size_bytes / 512))
 
       echo "Full Image Layout:"
-      # ... (layout echos) ...
+      echo "  IDBLoader Offset: Sector $idbloader_offset_sectors"
+      echo "  U-Boot ITB Offset: Sector $itb_offset_sectors"
+      echo "  Boot Partition Start: Sector $full_img_boot_part_start_sectors (Size: $boot_img_min_sectors sectors)"
+      echo "  RootFS Partition Start: Sector $full_img_rootfs_part_start_sectors (Size: $rootfs_img_min_sectors sectors)"
+      echo "  Full Image Total Size: $full_img_total_size_bytes bytes ($full_img_total_sectors sectors)"
+
 
       echo "[INFO] 1. Creating empty sparse image file: $full_img_name"
       "${pkgs.coreutils}/bin/truncate" -s "$full_img_total_size_bytes" "$full_img_name"
@@ -242,24 +228,18 @@ EOF
       "${pkgs.coreutils}/bin/dd" if="$itb_file" of="$full_img_name" seek="$itb_offset_sectors" conv=notrunc,fsync bs=512 status=progress
 
       echo "[INFO] 4. Creating GPT partition table on $full_img_name..."
-      # Check that partitions fit before calling sfdisk
       local full_img_rootfs_part_end_sector=$(($full_img_rootfs_part_start_sectors + $rootfs_img_min_sectors - 1))
-      # Use >= total_sectors check for safety
       if (( full_img_rootfs_part_end_sector >= full_img_total_sectors )); then
          echo "Error: Full image: Calculated rootfs partition end ($full_img_rootfs_part_end_sector) exceeds or equals total sectors ($full_img_total_sectors)."
          exit 1
       fi
 
-      # --- sfdisk heredoc (last-lba REMOVED) ---
       "${pkgs.util-linux}/bin/sfdisk" "$full_img_name" << EOF
 label: gpt
 unit: sectors
 first-lba: 34
 
-# Partition 1: Boot (VFAT, EFI System Partition type)
 name="NIXOS_BOOT", start=$full_img_boot_part_start_sectors, size=$boot_img_min_sectors, type="$efi_sys_guid", uuid="$full_img_boot_uuid"
-
-# Partition 2: Rootfs (EXT4, Linux Filesystem type)
 name="NIXOS_ROOT", start=$full_img_rootfs_part_start_sectors, size=$rootfs_img_min_sectors, type="$linux_fs_guid", uuid="$full_img_root_uuid"
 EOF
 
@@ -276,16 +256,13 @@ EOF
       echo "--- Full monolithic image created: $full_img_name ---"
     fi
 
-    # ... (final warning/completion message) ...
      if [[ "$build_full_img" == "false" && "$build_uboot_img" == "false" && "$build_os_img" == "false" ]]; then
          echo "[WARNING] No image types selected for building. Nothing to do in buildPhase."
      fi
      echo "--- Build phase completed ---"
-
-  ''; # End of buildPhase
+  '';
 
   installPhase = ''
-    # ... (installPhase - no changes needed) ...
      mkdir -p $out
      local any_image_built=false
      if [[ "$BUILD_UBOOT_IMAGE_ENV" == "true" ]] && [[ -f uboot-only.img ]]; then
@@ -300,17 +277,26 @@ EOF
      fi
      if [[ "$BUILD_FULL_IMAGE_ENV" == "true" ]] && [[ -f nixos-e52c-full.img ]]; then
        echo "Installing nixos-e52c-full.img..."
-       mv nixos-e52c-full.img $out/nixos-e52c-full.img
+       mv nixos-e52c-full.img $out/nixos-e52c-full.img # This will be the primary output for flakes
        any_image_built=true
      fi
 
      if [[ "$any_image_built" == "false" ]]; then
         echo "[INFO] No images were built or found to install."
-        touch $out/.no_images_built_placeholder
+        touch $out/.no_images_built_placeholder # Create a placeholder if no images built
+     else
+        # ### ADDED: Ensure there's at least one primary output file if any image was built
+        # If building full image, that's the primary. Otherwise, pick one.
+        if [[ "$BUILD_FULL_IMAGE_ENV" == "true" ]] && [[ -f $out/nixos-e52c-full.img ]]; then
+            echo "Default output will be nixos-e52c-full.img"
+        elif [[ "$BUILD_OS_IMAGE_ENV" == "true" ]] && [[ -f $out/os-only.img ]]; then
+            ln -s $out/os-only.img $out/default.img
+        elif [[ "$BUILD_UBOOT_IMAGE_ENV" == "true" ]] && [[ -f $out/uboot-only.img ]]; then
+            ln -s $out/uboot-only.img $out/default.img
+        fi
      fi
      echo "--- Installation phase completed ---"
-
-  ''; # End of installPhase
+  '';
 
   dontStrip = true;
   dontFixup = true;

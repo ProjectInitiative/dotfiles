@@ -1,10 +1,4 @@
-# the masthead routers will be named accordingly:
-# Topsail (Primary) & StormJib (Backup)
-#     Topsail: Agile sail for fair-weather speed (primary performance).
-#     StormJib: Rugged sail for heavy weather (backup resilience).
-#
-# nom build .\#nixosConfigurations.stormjib.config.system.build.sdImage
-
+# default.nix
 {
   config,
   inputs,
@@ -14,16 +8,29 @@
   ...
 }:
 let
-  # Create files in the nix store
   hostSSHFile = pkgs.writeText "ssh_host_ed25519_key" config.sensitiveNotSecret.stormjib_private_ssh_key;
   hostSSHPubFile = pkgs.writeText "ssh_host_ed25519_key.pub" config.sensitiveNotSecret.stormjib_public_ssh_key;
+
+  # ### ADDED: Example of how to specify a custom TPL file if you generated one
+  # ### Option 1: You generated it outside Nix and have a path
+  # myCustomTpl = /path/to/my/generated_ddr.bin;
+  # ### Option 2: You have a ddrbin_param.txt and want Nix to try generating it (EXPERIMENTAL)
+  # myDdrParamFile = ./my_e52c_ddrbin_param.txt; # You need to create this file!
+
 in
 {
   imports = with inputs.nixos-hardware.nixosModules; [
     (modulesPath + "/installer/scan/not-detected.nix")
-    ./rockchip-sd-image.nix
-    # (modulesPath + "/installer/sd-card/sd-image-aarch64.nix")
-    # (modulesPath + "/installer/sd-card/sd-image-aarch64-new-kernel.nix")
+    # ### MODIFIED: Pass custom TPL options to rockchip-sd-image.nix
+    (import ./rockchip-sd-image.nix {
+      inherit config
+              lib
+              pkgs
+              modulesPath;
+      # customTplFileForUboot = myCustomTpl; # Uncomment if using Option 1
+      # ddrParamFileForUboot = myDdrParamFile; # Uncomment if using Option 2
+      # If both are null, uboot-build.nix will use its default generic TPL.
+    })
   ];
 
   home-manager.users.kylepzak.home.stateVersion = "24.11";
@@ -32,21 +39,15 @@ in
     supportedFilesystems.zfs = lib.mkForce false;
     loader = {
       grub.enable = false;
-      systemd-boot.enable = false; # Disable systemd-boot
-      generic-extlinux-compatible.enable = true; # Enable extlinux bootloader
+      systemd-boot.enable = false;
+      generic-extlinux-compatible.enable = true;
     };
     kernelParams = [
-      "nomodeset"
-      "keep_bootcon" # Keep bootloader console
+      "nomodeset" # Often needed for initial boot on SBCs if display drivers are tricky
+      "keep_bootcon"
     ];
-    # kernelPackages = pkgs.linuxPackages_latest;
-
+    # kernelPackages = pkgs.linuxPackages_latest; # This is now handled in rockchip-sd-image.nix
   };
-
-  # sdImage = {
-  #   compressImage = false;
-  #   # extraBootContent = "./kernel/rockchip.dtb";
-  # };
 
   environment.etc = {
     "ssh/ssh_host_ed25519_key" = {
@@ -55,7 +56,6 @@ in
       user = "root";
       group = "root";
     };
-
     "ssh/ssh_host_ed25519_key.pub" = {
       source = hostSSHPubFile;
       mode = "0644";
@@ -65,7 +65,7 @@ in
   };
 
   projectinitiative = {
-    hosts.masthead.stormjib.enable = false;
+    hosts.masthead.stormjib.enable = false; # Assuming this is your project-specific module
     networking = {
       tailscale = {
         enable = false;
@@ -81,179 +81,64 @@ in
   };
 
   services.openssh.enable = true;
-  console.enable = true;
+  console.enable = true; # For serial console access in NixOS
   environment.systemPackages = with pkgs; [
+    # Add any essential tools you want in the final image
+    vim
+    htop
+    # rkdeveloptool # If you want this on the device itself
   ];
 
-  # # Single networking attribute set
+  # Networking: Your systemd-networkd setup looks reasonable.
+  # Ensure the MAC addresses 0a:80:4e:8f:aa:37 and 0e:80:4e:8f:aa:37 are correct for your E52C's interfaces.
   # networking = {
-  #   networkmanager = {
-  #     enable = false;
-  #     wifi.powersave = false;
-  #   };
+  #   networkmanager.enable = false;
   #   useDHCP = false;
-  #   interfaces = { }; # Clear interfaces - managed by systemd-networkd
+  #   interfaces = { };
   #   useNetworkd = true;
-
-  #   # usePredictableInterfaceNames = false;
   # };
-  # systemd = {
-  #   # Enable networkd
-  #   network = {
-  #     enable = true;
-  #     # wait-online.enable = false; # Disable wait-online to avoid boot delays
+  # systemd.network = {
+  #   enable = true;
+  #   # wait-online.enable = false; # Might be useful during debugging if network is slow to come up
 
-  #     # Interface naming based on MAC addresses
-  #     links = {
-  #       "10-lan" = {
-  #         matchConfig.MACAddress = "0a:80:4e:8f:aa:37";
-  #         linkConfig.Name = "lan0";
-  #       };
-  #       "11-wan" = {
-  #         matchConfig.MACAddress = "0e:80:4e:8f:aa:37";
-  #         linkConfig.Name = "wan0";
+  #   links = {
+  #     "10-lan" = {
+  #       matchConfig.MACAddress = "16:ba:ba:b6:27:7a";
+  #       linkConfig.Name = "lan0";
+  #     };
+  #     "11-wan" = {
+  #       matchConfig.MACAddress = "16:ba:ba:b6:27:7b";
+  #       linkConfig.Name = "wan0";
+  #     };
+  #   };
+  #   networks = {
+  #     "12-lan" = {
+  #       matchConfig.Name = "lan0";
+  #       networkConfig = {
+  #         DHCP = "yes"; # or static IP configuration
+  #         IPv6AcceptRA = false; # Explicitly false if you don't want RA
   #       };
   #     };
-
-  #     networks = {
-  #       "12-lan" = {
-  #         matchConfig.Name = "lan0"; # Match the future name
-  #         networkConfig = {
-  #           DHCP = "yes";
-  #           IPv6AcceptRA = "no";
-  #         };
-  #       };
-  #       "13-wan" = {
-  #         matchConfig.Name = "wan0"; # Match the future name
-  #         networkConfig = {
-  #           DHCP = "yes";
-  #           IPv6AcceptRA = "no";
-  #         };
+  #     "13-wan" = {
+  #       matchConfig.Name = "wan0";
+  #       networkConfig = {
+  #         DHCP = "yes"; # or static IP configuration
+  #         IPv6AcceptRA = false; # Explicitly false if you don't want RA
   #       };
   #     };
-
   #   };
   # };
 
-  # Use tmpfs for temporary files
+  # Keep tmpfs and journald settings for SD card longevity
   # fileSystems."/tmp" = {
   #   device = "tmpfs";
   #   fsType = "tmpfs";
-  #   options = [
-  #     "nosuid"
-  #     "nodev"
-  #     "relatime"
-  #     "size=256M"
-  #   ];
+  #   options = [ "nosuid" "nodev" "relatime" "size=256M" ];
   # };
-
-  # journald settings to reduce writes
   # services.journald.extraConfig = ''
   #   Storage=volatile
   #   RuntimeMaxUse=64M
   #   SystemMaxUse=64M
   # '';
-
-  # disko = {
-  #   devices = {
-
-  #     # Cross-compilation settings
-  #     # imageBuilder = {
-  #     #   enableBinfmt = true;
-  #     #   pkgs = pkgs;
-  #     #   kernelPackages = pkgs.legacyPackages.x86_64-linux.linuxPackages_latest;
-  #     # };
-  #     disk = {
-  #       sd = {
-  #         imageSize = "32G";
-  #         imageName = "stormjib-rpi";
-  #         device = "/dev/mmcblk0";
-  #         type = "disk";
-  #         content = {
-  #           type = "gpt";
-  #           partitions = {
-  #             # Boot partition - fixed 256MB size
-  #             boot = {
-  #               name = "boot";
-  #               size = "256M"; # Fixed size for boot
-  #               type = "EF00"; # EFI System Partition
-  #               content = {
-  #                 type = "filesystem";
-  #                 format = "vfat";
-  #                 mountpoint = "/boot";
-  #                 mountOptions = [
-  #                   "defaults"
-  #                   "noatime"
-  #                 ];
-  #               };
-  #             };
-
-  #             # Root partition - read-only
-  #             root = {
-  #               name = "root";
-  #               size = "20%"; # Percentage of remaining space
-  #               content = {
-  #                 type = "filesystem";
-  #                 format = "ext4";
-  #                 mountpoint = "/";
-  #                 mountOptions = [
-  #                   "defaults"
-  #                   "noatime"
-  #                 ]; # "ro" ]; # Read-only mount
-  #               };
-  #             };
-
-  #             # Nix store partition
-  #             nix = {
-  #               name = "nix";
-  #               size = "35%"; # Percentage of remaining space
-  #               content = {
-  #                 type = "filesystem";
-  #                 format = "ext4";
-  #                 mountpoint = "/nix";
-  #                 mountOptions = [
-  #                   "defaults"
-  #                   "noatime"
-  #                 ];
-  #               };
-  #             };
-
-  #             # Logs partition
-  #             logs = {
-  #               name = "logs";
-  #               size = "10%"; # Percentage of remaining space
-  #               content = {
-  #                 type = "filesystem";
-  #                 format = "ext4";
-  #                 mountpoint = "/var/log";
-  #                 mountOptions = [
-  #                   "defaults"
-  #                   "noatime"
-  #                   "commit=600"
-  #                 ];
-  #               };
-  #             };
-
-  #             # Persistent data partition
-  #             data = {
-  #               name = "data";
-  #               size = "100%"; # Use all remaining space
-  #               content = {
-  #                 type = "filesystem";
-  #                 format = "ext4";
-  #                 mountpoint = "/var/lib";
-  #                 mountOptions = [
-  #                   "defaults"
-  #                   "noatime"
-  #                   "commit=600"
-  #                 ];
-  #               };
-  #             };
-  #           };
-  #         };
-  #       };
-  #     };
-  #   };
-  # };
 
 }
