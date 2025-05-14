@@ -80,10 +80,16 @@
     "/home/kylepzak" = {
       device = "/dev/mapper/data-home_kylepzak";
       fsType = "bcachefs";
+      options = [
+        "fsck"
+      ];
     };
     "/void" = {
       device = "/dev/mapper/data-void";
       fsType = "bcachefs";
+      options = [
+        "fsck"
+      ];
     };
   };
 
