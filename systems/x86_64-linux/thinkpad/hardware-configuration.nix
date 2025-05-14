@@ -81,10 +81,6 @@
       device = "/dev/mapper/data-home_kylepzak";
       fsType = "bcachefs";
     };
-    # "/extpart" = {
-    #   device = "/dev/mapper/data-extpart";
-    #   fsType = "ext4";
-    # };
     "/void" = {
       device = "/dev/mapper/data-void";
       fsType = "bcachefs";
