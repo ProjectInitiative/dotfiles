@@ -42,6 +42,24 @@ with lib.${namespace};
     };
     services = {
       power-profile-manager = enabled;
+            bcachefsSnapshots = {
+        targets = {
+
+          void = { 
+            parentSubvolume = "/void"; # MANDATORY: Set path for this new target
+            readOnlySnapshots = true; # Optional: default is true
+
+            retention = { # Define retention for this new target
+              hourly  = 6;
+              daily   = 7;
+              weekly  = 4;
+              monthly = 6;
+              yearly  = 2;
+            };
+          };
+        };
+      };
+
     };
 
     suites = {
