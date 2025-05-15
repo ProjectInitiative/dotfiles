@@ -54,6 +54,7 @@ in
         rclone
         magic-wormhole
         file
+        zstd
         #TODO: add config for yazi
         yazi
         pkgs.${namespace}.flatten-directory

@@ -39,7 +39,7 @@
       };
     };
 
-    kernelPackages = pkgs.linuxPackages_6_14;
+    # kernelPackages = pkgs.linuxPackages_6_14;
     supportedFilesystems = [ "bcachefs" ];
     kernelModules = [
       "bcachefs"
@@ -78,19 +78,23 @@
       fsType = "vfat";
     };
     "/home/kylepzak" = {
-      device = "/dev/mapper/data-home_kylepzak";
-      fsType = "bcachefs";
-      options = [
-        "fsck"
-      ];
+      device = "/dev/mapper/data-home_kylepzak_ext4";
+      fsType = "ext4";
     };
-    "/void" = {
-      device = "/dev/mapper/data-void";
-      fsType = "bcachefs";
-      options = [
-        "fsck"
-      ];
-    };
+    # "/home/kylepzak" = {
+    #   device = "/dev/mapper/data-home_kylepzak";
+    #   fsType = "bcachefs";
+    #   options = [
+    #     "fsck"
+    #   ];
+    # };
+    # "/void" = {
+    #   device = "/dev/mapper/data-void";
+    #   fsType = "bcachefs";
+    #   options = [
+    #     "fsck"
+    #   ];
+    # };
   };
 
   swapDevices = [
