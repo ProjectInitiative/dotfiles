@@ -200,6 +200,8 @@ in
           # Your original mount options
           "verbose"
           "degraded"
+          "fsck"
+          # "nofail"
         ];
         # As before, if you need specific subvolumes, define them here.
         # Otherwise, the entire filesystem is mounted at 'mountpoint'.
@@ -209,6 +211,10 @@ in
       };
     };
   };
+
+  boot.kernelParams = [
+    "cgroup_disable=memory"
+  ];
 
   # Enable the cargohold host configuration
   projectinitiative.hosts.cargohold = {

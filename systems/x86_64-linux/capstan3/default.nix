@@ -10,7 +10,6 @@ let
 in
 with lib.${namespace};
 {
-
   ${namespace} = {
 
     suites = {
