@@ -335,8 +335,8 @@ in
 
           bcachefs-kernel = {
             enable = true;
-            rev = "a26f34c344d8314acf0c28e20166a4a090dbd298";
-            hash = "sha256-nzc9mXdqPEJFzYbOR8Q7dLqopVXk5l3PdxvFiGi44FA=";
+            rev = "0fb34e7b933ae01cf5789b91812fc75b82ff3a5d";
+            hash = "sha256-jbVpXfZaNVFyn4BlkFLYERLUpCVrB6ybVPg6szdLZCo=";
             debug = true;
           };
           bcachefs-module = {

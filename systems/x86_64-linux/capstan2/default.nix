@@ -22,8 +22,8 @@ with lib.${namespace};
     system = {
       bcachefs-kernel = {
         enable = true;
-        rev = "24cde38efae3bc663830d12a8c7fc3ad0273572c";
-        hash = "sha256-qy7msM/OsWn9gPc3kic+ckrodayUufIR1T6bgiEoinM=";
+        rev = "0fb34e7b933ae01cf5789b91812fc75b82ff3a5d";
+        hash = "sha256-jbVpXfZaNVFyn4BlkFLYERLUpCVrB6ybVPg6szdLZCo=";
         debug = true;
       };
       bcachefs-module = {

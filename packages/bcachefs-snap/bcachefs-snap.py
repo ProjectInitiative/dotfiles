@@ -130,6 +130,7 @@ def create_snapshot_for_target(target_config, dry_run=False):
     try:
         stdout, stderr = run_command(cmd)
         print(f"SUCCESS [{target_name}]: Created snapshot: {snapshot_dest_path}")
+        print(f"RUNNING COMMAND: {cmd}")
         if stdout: print(f"  Stdout: {stdout}")
         if stderr: print(f"  Stderr: {stderr}", file=sys.stderr)
         return snapshot_dest_path
