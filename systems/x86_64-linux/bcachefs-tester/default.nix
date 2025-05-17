@@ -19,8 +19,11 @@ with lib.${namespace};
       tailscale = enabled;
     };
 
+    suites = {
+      development = enabled;
+    };
+
     services = {
-      eternal-terminal = enabled;
       health-reporter = {
         enable = false;
         telegramTokenPath = config.sops.secrets.health_reporter_bot_api_token.path;

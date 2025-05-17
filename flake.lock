@@ -930,14 +930,18 @@
         ]
       },
       "locked": {
-        "lastModified": 1745945283,
-        "narHash": "sha256-Cqdn7up+vjW5x5R2JHizkdhUs/b8qbcFQNfo6VnTx+k=",
-        "path": "/home/kylepzak/development/build-software/rockpi-quad",
-        "type": "path"
+        "lastModified": 1745945281,
+        "narHash": "sha256-1CZqB5b8TAsKkrSPQ4Q/Uuq3zAx7l8M90BasDfEqVss=",
+        "owner": "ProjectInitiative",
+        "repo": "rockpi-quad",
+        "rev": "7968df7da3dbe075627cd816f663ee005f395c7b",
+        "type": "github"
       },
       "original": {
-        "path": "/home/kylepzak/development/build-software/rockpi-quad",
-        "type": "path"
+        "owner": "ProjectInitiative",
+        "ref": "wip/convert-to-nix",
+        "repo": "rockpi-quad",
+        "type": "github"
       }
     },
     "root": {

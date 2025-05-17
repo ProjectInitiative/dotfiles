@@ -30,6 +30,9 @@ in
       device = "/dev/disk/by-label/nixos";
       fsType = "ext4";
     };
+    environment.systemPackages = with pkgs; [
+      cloud-utils
+    ];
     # disko.devices = {
     #   disk = {
     #     one = {
