@@ -128,8 +128,8 @@
     };
 
     rockpi-quad = {
-      url = "path:/home/kylepzak/development/build-software/rockpi-quad";
-      # url = "github:ProjectInitiative/rockpi-quad/wip/convert-to-nix";
+      # url = "path:/home/kylepzak/development/build-software/rockpi-quad";
+      url = "github:ProjectInitiative/rockpi-quad/wip/convert-to-nix";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.nixos-hardware.follows = "nixos-hardware";
     };
