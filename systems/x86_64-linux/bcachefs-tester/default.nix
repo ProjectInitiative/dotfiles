@@ -20,8 +20,9 @@ with lib.${namespace};
     };
 
     services = {
+      eternal-terminal = enabled;
       health-reporter = {
-        enable = true;
+        enable = false;
         telegramTokenPath = config.sops.secrets.health_reporter_bot_api_token.path;
         telegramChatIdPath = config.sops.secrets.telegram_chat_id.path;
         excludeDrives = [
