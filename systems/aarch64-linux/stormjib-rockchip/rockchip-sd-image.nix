@@ -114,7 +114,46 @@ in
     system.build.image = config.system.build.finalDiskImages;
 
     boot.postBootCommands = lib.mkBefore ''
-      # ... (your existing postBootCommands are good) ...
+      # On the first boot do some maintenance tasks
+      if [ -f /nix-path-registration ]; then
+        set -euo pipefail
+        set -x
+        
+        rootPart=$(${pkgs.util-linux}/bin/findmnt -n -o SOURCE /)
+        bootDevice=''$(lsblk -npo PKNAME "$rootPart")
+        # Extract partition number (e.g., from /dev/sda2 -> 2, or /dev/mmcblk0p2 -> 2)
+        partNumFull="''$(echo "$rootPart" | sed -E "s|^''${bootDevice}(p?)||")"
+        partNum="''$(echo "$partNumFull" | sed 's/p//')"
+
+        echo "Root partition: ''${rootPart}, Boot device: ''${bootDevice}, Partition number: ''${partNum}"
+
+        if command -v growpart > /dev/null && [ -x "$(command -v growpart)" ]; then
+          echo "Attempting resize with growpart..."
+          ${pkgs.cloud-utils}/bin/growpart "''${bootDevice}" "''${partNum}" || \
+            { echo "[WARNING] growpart failed, attempting sfdisk as fallback..."; echo ",+," | sfdisk -N"''${partNum}" --no-reread "''${bootDevice}"; }
+        else
+          echo "growpart not found, using sfdisk..."
+          echo ",+," | sfdisk -N"''${partNum}" --no-reread "''${bootDevice}"
+        fi
+
+        echo "Running partprobe on ''${bootDevice}..."
+        ${pkgs.parted}/bin/partprobe "''${bootDevice}" || echo "[WARNING] partprobe on ''${bootDevice} encountered an issue."
+        sleep 3 # Give kernel time to recognize changes
+
+        echo "Resizing filesystem on ''${rootPart}..."
+        ${pkgs.e2fsprogs}/bin/resize2fs "''${rootPart}"
+
+        echo "Registering Nix paths..."
+        ${config.nix.package.out}/bin/nix-store --load-db < /nix-path-registration
+        echo "Setting up system profile..."
+        touch /etc/NIXOS
+        ${config.nix.package.out}/bin/nix-env -p /nix/var/nix/profiles/system --set /run/current-system
+        echo "Cleaning up first-boot flag..."
+        rm -f /nix-path-registration
+        sync
+        echo "First boot setup complete."
+        set +x
+      fi
     '';
 
     hardware.firmware = with pkgs; [ firmwareLinuxNonfree ];

@@ -14,9 +14,18 @@ let
   stdenv = pkgs.stdenv;
 
   rkbin = pkgs.fetchgit {
-    url = "https://gitlab.collabora.com/hardware-enablement/rockchip-3588/rkbin.git";
-    rev = "7c35e21a8529b3758d1f051d1a5dc62aae934b2b";
-    sha256 = "03z9j7w6iaxxba0svgmdlkbk1k29swnfrc89ph5g40bmwvxqw698";
+    # Use the Collabora mirror mentioned in the instructions
+    # url = "https://gitlab.collabora.com/hardware-enablement/rockchip-3588/rkbin.git";
+    # Fetch the default branch (e.g., main or master). Pin to a specific rev for reproducibility if needed.
+    # rev = "7c35e21a8529b3758d1f051d1a5dc62aae934b2b";
+    # sha256 = "03z9j7w6iaxxba0svgmdlkbk1k29swnfrc89ph5g40bmwvxqw698"; # Replace with actual hash after first fetch
+    # Alternatively, use the Radxa repo if preferred (as mentioned later in the instructions for boot_merger)
+    url = "https://github.com/radxa/rkbin.git";
+    rev = "efaf8526fe85521ac86f4e88b0a6a6c6cf2563a1";
+    hash = "sha256-/Q2P5WRHtNeqHgR/7Ckoha0RckBL7OF9jSixri7Uon8=";
+    # url = "https://gitlab.collabora.com/hardware-enablement/rockchip-3588/rkbin.git";
+    # rev = "7c35e21a8529b3758d1f051d1a5dc62aae934b2b";
+    # sha256 = "03z9j7w6iaxxba0svgmdlkbk1k29swnfrc89ph5g40bmwvxqw698";
   };
 
   # ### ADDED: Derivation to generate DDR TPL using ddrbin_tool.py (if ddrParamFile is provided)
@@ -70,7 +79,7 @@ let
   effectiveTplFile =
     if customTplFile != null then customTplFile
     else if ddrbin_tool_derivation != null then "${ddrbin_tool_derivation}/bin/generated_ddr.bin" # Adjust if tool outputs a different name
-    else "${rkbin}/bin/rk35/rk3588_ddr_lp4_2112MHz_lp5_2400MHz_v1.18.bin";
+    else "${rkbin}/bin/rk35/rk3588_ddr_lp4_1866MHz_lp4x_2112MHz_lp5_2400MHz_v1.19.bin";
 
   trusted-firmware-a = stdenv.mkDerivation rec {
     pname = "trusted-firmware-a-rk3588";
@@ -116,14 +125,13 @@ let
 
   uboot-rk3588 = stdenv.mkDerivation rec {
     pname = "u-boot-rk3588";
-    version = "2024.10-rk3588"; # This is a branch name, not a tag. Consider pinning to a commit.
+    version = "2024.10-rk3588"; # This is a branch name, consider pinning to a commit.
 
     src = pkgs.fetchgit {
-      # ### MODIFIED: Strongly consider using Radxa's U-Boot fork for E52C if available.
-      # ### Example: url = "https://github.com/radxa/u-boot.git"; rev = "branch-for-e52c-or-rk3582";
-      url = "https://gitlab.collabora.com/hardware-enablement/rockchip-3588/u-boot.git";
-      rev = "cbc9673f77851953e294845549d418ffe2190ef9"; # Pinned to your specified commit
-      sha256 = "1a5i5w1j8q7vibc6355rpmca7xf9q8jsl568vvvn4b7b24i2qqj2";
+      # radxa directly
+      url = "https://github.com/radxa/u-boot.git";
+      rev = "575d1a114c66ad09e0d9d9f478c993fc243f5aec";
+      hash = "sha256-xvMEWX6Twj5X8AHgM67Ng7HOvF0zTBzF/Ft6TPxkZtI=";
     };
 
     nativeBuildInputs = [
@@ -137,20 +145,15 @@ let
       pkgs.buildPackages.swig
       pkgs.buildPackages.openssl
       pkgs.gnutls
+      pkgs.bc # Added to resolve "bc: command not found"
+      # pkgs.dtc # U-Boot should use its own dtc; add if problem persists with PATH
     ];
     buildInputs = [ pkgs.gcc ];
 
-    # ### MODIFIED: Use the effectiveTplFile which might be custom generated
     ROCKCHIP_TPL = effectiveTplFile;
     BL31 = "${trusted-firmware-a}/bin/bl31.elf";
     ARCH = "arm";
-
-    # ### MODIFIED: Placeholder for E52C defconfig.
-    # ### CRITICAL: You MUST find the correct defconfig for the Radxa E52C for your chosen U-Boot source.
-    # ### Using evb-rk3588_defconfig is a fallback and might miss E52C specific drivers/settings.
-    # ### If Radxa mentioned "rk2410 profiles", check if "rk2410_defconfig" exists.
-    # ### Other common patterns: "radxa_e52c_defconfig", "rock5b_rk3588_defconfig" (if E52C is similar)
-    UBOOT_DEFCONFIG = "evb-rk3588_defconfig"; # Replace this with the E52C specific one!
+    UBOOT_DEFCONFIG = "radxa-e52c-rk3588s_defconfig";
 
     postPatch = ''
       echo "Running patchShebangs on source tree..."
@@ -160,163 +163,113 @@ let
 
     configurePhase = ''
       runHook preConfigure
-      echo "Applying U-Boot defconfig: ${UBOOT_DEFCONFIG}"
+      echo "Using defconfig: ${UBOOT_DEFCONFIG}"
       make ${UBOOT_DEFCONFIG}
-      if [ ! -f .config ]; then
-        echo "Error: .config was NOT created by 'make ${UBOOT_DEFCONFIG}'."
-        exit 1
-      fi
-      echo ".config file found. Proceeding with modifications."
-
-      # --- Modify .config for BOOTDELAY ---
-      echo "Setting CONFIG_BOOTDELAY=2 in .config"
-      sed -i '/^CONFIG_BOOTDELAY=/d' .config
-      echo "CONFIG_BOOTDELAY=2" >> .config
-
-      # --- Modify .config for UMS (USB Mass Storage) ---
-      echo "Enabling UMS command and dependencies in .config..."
-      echo "CONFIG_CMD_USB_MASS_STORAGE=y" >> .config
-      echo "CONFIG_USB_GADGET=y" >> .config
-      echo "CONFIG_BLK=y" >> .config
-      echo "CONFIG_USB_DWC3=y" >> .config
-      echo "CONFIG_USB_DWC3_GADGET=y" >> .config
-      # echo "CONFIG_USB_DWC3_ROCKCHIP=y" >> .config # Usually enabled by rk3588 defconfigs
-      echo "CONFIG_USB_GADGET_DOWNLOAD=y" >> .config
-      echo "CONFIG_USB_FUNCTION_MASS_STORAGE=y" >> .config
-      echo "CONFIG_CMD_UMS=y" >> .config
-
-      # --- Add/Ensure SD/MMC Kconfig options ---
-      echo "Ensuring SD/MMC Kconfig options are enabled in .config..."
-      echo "CONFIG_MMC=y" >> .config
-      echo "CONFIG_DM_MMC=y" >> .config
-      echo "CONFIG_MMC_DW=y" >> .config
-      echo "CONFIG_MMC_DW_ROCKCHIP=y" >> .config
-      echo "CONFIG_CMD_MMC=y" >> .config
-      echo "CONFIG_MMC_WRITE=y" >> .config
-      echo "CONFIG_DOS_PARTITION=y" >> .config
-      # ### MODIFIED: Use CONFIG_FS_FAT instead of CONFIG_FAT_FILESYSTEM (more common in modern U-Boot)
-      echo "CONFIG_FS_FAT=y" >> .config
-      echo "CONFIG_MMC_HS200_SUPPORT=y" >> .config # From your list
-
-      # --- Pre-empt FASTBOOT_BUF_ADDR prompt ---
-      echo "Providing default for CONFIG_FASTBOOT_BUF_ADDR to prevent interactive prompt"
-      sed -i '/^CONFIG_FASTBOOT_BUF_ADDR=/d' .config
-      echo "CONFIG_FASTBOOT_BUF_ADDR=0x0a000000" >> .config
-
-      # --- Add Kconfigs from Radxa List ---
-      echo "Adding additional Kconfigs..."
-      echo "CONFIG_HUSH_PARSER=y" >> .config
-      echo "CONFIG_CMD_MBR=y" >> .config
-      echo "CONFIG_CMD_GPT=y" >> .config
-      echo "CONFIG_OF_LIBFDT_OVERLAY=y" >> .config
-
-      # ### ADDED: Ensure EXT4 support for boot scripts or listing files if needed from ext4
-      echo "CONFIG_FS_EXT4=y" >> .config
-
-      # ### ADDED: Useful for scripting and general U-Boot usage
-      echo "CONFIG_AUTO_COMPLETE=y" >> .config
-      echo "CONFIG_CMD_BOOTD=y" >> .config
-      echo "CONFIG_CMD_EDITENV=y" >> .config
-      echo "CONFIG_CMD_EXT4=y" >> .config
-      echo "CONFIG_CMD_FS_GENERIC=y" >> .config
-      echo "CONFIG_CMD_GPT=y" >> .config
-      echo "CONFIG_CMD_PART=y" >> .config
-      echo "CONFIG_CMD_SCRIPT=y" >> .config
-      echo "CONFIG_CMD_SETEXPR=y" >> .config
-      echo "CONFIG_CMD_MEMTEST=y" >> .config
-      echo "CONFIG_CMD_ECHO=y" >> .config
-      echo "CONFIG_CMD_SOURCE=y" >> .config
-      echo "CONFIG_CMD_NET=y" >> .config
-      echo "CONFIG_CMD_PING=y" >> .config
-      echo "CONFIG_CMD_DHCP=y" >> .config
-      # echo "CONFIG_CMD_TFTPPUT=y" >> .config # If you need to upload files from U-Boot
-      echo "CONFIG_CMD_EXTLINUX=y" >> .config
-      echo "CONFIG_BOOTCOMMAND=\"run distro_bootcmd\"" >> .config
-      echo "CONFIG_DISTRO_DEFAULTS=y" >> .config
-
-      # Ensure these are removed first to avoid duplicates if they were set by sed above
-      # Then append them to be sure they are set
-      sed -i '/^CONFIG_CMD_USB_MASS_STORAGE=/d' .config; echo "CONFIG_CMD_USB_MASS_STORAGE=y" >> .config
-      sed -i '/^CONFIG_USB_GADGET=/d' .config; echo "CONFIG_USB_GADGET=y" >> .config
-      sed -i '/^CONFIG_BLK=/d' .config; echo "CONFIG_BLK=y" >> .config
-      sed -i '/^CONFIG_USB_DWC3=/d' .config; echo "CONFIG_USB_DWC3=y" >> .config
-      sed -i '/^CONFIG_USB_DWC3_GADGET=/d' .config; echo "CONFIG_USB_DWC3_GADGET=y" >> .config
-      sed -i '/^CONFIG_USB_GADGET_DOWNLOAD=/d' .config; echo "CONFIG_USB_GADGET_DOWNLOAD=y" >> .config
-      sed -i '/^CONFIG_USB_FUNCTION_MASS_STORAGE=/d' .config; echo "CONFIG_USB_FUNCTION_MASS_STORAGE=y" >> .config
-      sed -i '/^CONFIG_CMD_UMS=/d' .config; echo "CONFIG_CMD_UMS=y" >> .config
-      sed -i '/^CONFIG_MMC=/d' .config; echo "CONFIG_MMC=y" >> .config
-      sed -i '/^CONFIG_DM_MMC=/d' .config; echo "CONFIG_DM_MMC=y" >> .config
-      sed -i '/^CONFIG_MMC_DW=/d' .config; echo "CONFIG_MMC_DW=y" >> .config
-      sed -i '/^CONFIG_MMC_DW_ROCKCHIP=/d' .config; echo "CONFIG_MMC_DW_ROCKCHIP=y" >> .config
-      sed -i '/^CONFIG_CMD_MMC=/d' .config; echo "CONFIG_CMD_MMC=y" >> .config
-      sed -i '/^CONFIG_MMC_WRITE=/d' .config; echo "CONFIG_MMC_WRITE=y" >> .config
-      sed -i '/^CONFIG_DOS_PARTITION=/d' .config; echo "CONFIG_DOS_PARTITION=y" >> .config
-      sed -i '/^CONFIG_FS_FAT=/d' .config; echo "CONFIG_FS_FAT=y" >> .config
-      sed -i '/^CONFIG_MMC_HS200_SUPPORT=/d' .config; echo "CONFIG_MMC_HS200_SUPPORT=y" >> .config
-      sed -i '/^CONFIG_HUSH_PARSER=/d' .config; echo "CONFIG_HUSH_PARSER=y" >> .config
-      sed -i '/^CONFIG_CMD_MBR=/d' .config; echo "CONFIG_CMD_MBR=y" >> .config
-      # CONFIG_CMD_GPT is already above
-      sed -i '/^CONFIG_OF_LIBFDT_OVERLAY=/d' .config; echo "CONFIG_OF_LIBFDT_OVERLAY=y" >> .config
-      sed -i '/^CONFIG_FS_EXT4=/d' .config; echo "CONFIG_FS_EXT4=y" >> .config
-      sed -i '/^CONFIG_AUTO_COMPLETE=/d' .config; echo "CONFIG_AUTO_COMPLETE=y" >> .config
-      sed -i '/^CONFIG_CMD_BOOTD=/d' .config; echo "CONFIG_CMD_BOOTD=y" >> .config
-      sed -i '/^CONFIG_CMD_EDITENV=/d' .config; echo "CONFIG_CMD_EDITENV=y" >> .config
-      sed -i '/^CONFIG_CMD_EXT4=/d' .config; echo "CONFIG_CMD_EXT4=y" >> .config
-      sed -i '/^CONFIG_CMD_FS_GENERIC=/d' .config; echo "CONFIG_CMD_FS_GENERIC=y" >> .config
-      # CONFIG_CMD_GPT is already above
-      sed -i '/^CONFIG_CMD_PART=/d' .config; echo "CONFIG_CMD_PART=y" >> .config
-      sed -i '/^CONFIG_CMD_SCRIPT=/d' .config; echo "CONFIG_CMD_SCRIPT=y" >> .config
-      sed -i '/^CONFIG_CMD_SETEXPR=/d' .config; echo "CONFIG_CMD_SETEXPR=y" >> .config
-      sed -i '/^CONFIG_CMD_MEMTEST=/d' .config; echo "CONFIG_CMD_MEMTEST=y" >> .config
-      sed -i '/^CONFIG_CMD_ECHO=/d' .config; echo "CONFIG_CMD_ECHO=y" >> .config
-      sed -i '/^CONFIG_CMD_SOURCE=/d' .config; echo "CONFIG_CMD_SOURCE=y" >> .config
-      sed -i '/^CONFIG_CMD_NET=/d' .config; echo "CONFIG_CMD_NET=y" >> .config
-      sed -i '/^CONFIG_CMD_PING=/d' .config; echo "CONFIG_CMD_PING=y" >> .config
-      sed -i '/^CONFIG_CMD_DHCP=/d' .config; echo "CONFIG_CMD_DHCP=y" >> .config
-      sed -i '/^CONFIG_CMD_EXTLINUX=/d' .config; echo "CONFIG_CMD_EXTLINUX=y" >> .config
-      sed -i '/^CONFIG_BOOTCOMMAND=/d' .config; echo "CONFIG_BOOTCOMMAND=\"run distro_bootcmd\"" >> .config # Ensure quoted
-      sed -i '/^CONFIG_DISTRO_DEFAULTS=/d' .config; echo "CONFIG_DISTRO_DEFAULTS=y" >> .config
-
-      echo "Updating U-Boot configuration with all modifications (olddefconfig)..."
-      make ARCH=${ARCH} olddefconfig
-
-      echo "Verifying final key settings in .config:"
-      grep -E \
-        "^CONFIG_BOOTDELAY=|^CONFIG_CMD_UMS=|^CONFIG_FS_FAT=|^CONFIG_CMD_EXTLINUX=|^CONFIG_BOOTCOMMAND=" \
-        .config || echo "Warning: Some specified Kconfig settings were not found or not set as expected post-olddefconfig."
       runHook postConfigure
-    '';
-
-    preBuild = ''
-      # ### MODIFIED: Only apply patch if the evb-rk3588 defconfig is used and the dts file exists
-      if [ "${UBOOT_DEFCONFIG}" == "evb-rk3588_defconfig" ] && [ -f dts/upstream/src/arm64/rockchip/rk3588-evb1-v10.dts ]; then
-        echo "Patching rk3588-evb1-v10.dts to remove &hdptxphy_hdmi0 for ${UBOOT_DEFCONFIG}"
-        sed -i '/&hdptxphy_hdmi0 {/,/};/d' dts/upstream/src/arm64/rockchip/rk3588-evb1-v10.dts
-      else
-        echo "Skipping dts patch for hdptxphy_hdmi0 as UBOOT_DEFCONFIG is not evb-rk3588_defconfig or file not found."
-      fi
     '';
 
     buildPhase = ''
       runHook preBuild
       echo "Building U-Boot with ROCKCHIP_TPL=${ROCKCHIP_TPL} BL31=${BL31}"
-      make -j$(nproc)
+
+      # Add U-Boot's script and tools directories to the PATH
+      # This ensures that scripts called by make can find U-Boot's own dtc and mkimage
+      export PATH=$PWD/scripts/dtc:$PWD/tools:$PATH
+      echo "Updated PATH: $PATH"
+
+      echo "### Step 1: Building U-Boot tools (including dtc, mkimage) and main binaries ###"
+      # Ensure 'tools' target is built, which should build scripts/dtc/dtc and tools/mkimage.
+      # Also build u-boot-nodtb.bin and u-boot.dtb as they are likely inputs for u-boot.itb.
+      make -j$(nproc) tools u-boot-nodtb.bin u-boot.dtb
+      # Verification
+      if [ ! -f ./scripts/dtc/dtc ]; then
+        echo "ERROR: U-Boot's dtc was not found in ./scripts/dtc/"
+        exit 1
+      fi
+      if [ ! -f ./tools/mkimage ]; then
+        echo "ERROR: U-Boot's mkimage was not found in ./tools/"
+        exit 1
+      fi
+      if [ ! -f u-boot-nodtb.bin ] || [ ! -f u-boot.dtb ]; then
+        echo "ERROR: u-boot-nodtb.bin or u-boot.dtb not built."
+        exit 1
+      fi
+      echo "### Step 1 Completed: Tools and main binaries built. ###"
+
+      echo "### Step 2: Building spl/u-boot-spl.bin ###"
+      make -j$(nproc) spl/u-boot-spl.bin
+      if [ ! -f spl/u-boot-spl.bin ]; then
+        echo "ERROR: spl/u-boot-spl.bin was not created."
+        exit 1
+      fi
+      echo "### Step 2 Completed: spl/u-boot-spl.bin built. ###"
+
+      echo "### Step 3: Building u-boot.itb ###"
+      # With the updated PATH, the script generating the ITS for u-boot.itb should find dtc.
+      # BL31 is available as an environment variable.
+      make -j$(nproc) u-boot.itb
+      if [ ! -f u-boot.itb ]; then
+        echo "ERROR: u-boot.itb was not created by make."
+        # Provide more debug info if u-boot.itb fails
+        echo "Listing contents of current directory:"
+        ls -lah .
+        # Fallback or exit, depending on how critical u-boot.itb is vs u-boot.img
+        if [ -f u-boot.img ]; then
+            echo "Note: u-boot.img exists, but u-boot.itb is the target and was not created."
+            echo "Continuing to attempt idbloader.img creation..."
+            # Optionally, decide here if you want to use u-boot.img later in installPhase
+        else
+            # If u-boot.img is also not there, then it's a more fundamental build issue for the main U-Boot.
+            echo "Error: Neither u-boot.itb nor u-boot.img seem to be built. Check make output for errors."
+            exit 1 
+        fi
+      else
+        echo "### Step 3 Completed: u-boot.itb built. ###"
+      fi
+
+      echo "### Step 4: Creating idbloader.img ###"
+      echo "Creating idbloader.img using ROCKCHIP_TPL=${ROCKCHIP_TPL} and spl/u-boot-spl.bin"
+      ./tools/mkimage -n rk3588 -T rksd -d "${ROCKCHIP_TPL}:spl/u-boot-spl.bin" idbloader.img
+
+      if [ ! -f idbloader.img ]; then
+        echo "ERROR: idbloader.img was not created by ./tools/mkimage command."
+        exit 1
+      fi
+      echo "### Step 4 Completed: idbloader.img created. ###"
+
       runHook postBuild
     '';
 
     installPhase = ''
       runHook preInstall
+      echo "--- Debug: Listing files in current directory ($PWD) ---"
+      ls -lah .
+      echo "--- Debug: Listing files in spl/ directory ---"
+      ls -lah spl/
+      echo "--- Debug: Listing files in tools/ directory ---"
+      ls -lah tools/
+      echo "--- End Debug Listing ---"
+
       mkdir -p $out/bin
+
+      if [ ! -f idbloader.img ]; then
+          echo "FATAL: idbloader.img not found in installPhase!"
+          exit 1
+      fi
       cp idbloader.img $out/bin/
+      if [ ! -f u-boot.itb ]; then
+          echo "FATAL: u-boot.itb not found in installPhase!"
+          exit 1
+      fi
       cp u-boot.itb $out/bin/
-      echo "Copied idbloader.img and u-boot.itb to $out/bin/"
+
       runHook postInstall
     '';
 
     hardeningDisable = [ "all" ];
     dontStrip = true;
     meta = with pkgs.lib; {
-      description = "U-Boot bootloader for Rockchip RK3588/RK3582";
+      description = "U-Boot bootloader for Rockchip RK3588/RK3582"; # Updated description slightly
       homepage = "https://www.denx.de/wiki/U-Boot";
       license = licenses.gpl2Plus;
       platforms = platforms.linux;
