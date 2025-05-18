@@ -106,7 +106,7 @@ in
       inherit ubootIdbloaderFile ubootItbFile;
       nixosBootImageFile = config.system.build.nixosBootPartitionImage;
       nixosRootfsImageFile = config.system.build.nixosRootfsPartitionImage;
-      buildFullImage = true;
+      buildFullImage = false;
       buildUbootImage = true;
       buildOsImage = true;
     };
@@ -114,7 +114,48 @@ in
     system.build.image = config.system.build.finalDiskImages;
 
     boot.postBootCommands = lib.mkBefore ''
-      # ... (your existing postBootCommands are good) ...
+          # On the first boot do some maintenance tasks
+      if [ -f /nix-path-registration ]; then
+        set -euo pipefail
+        set -x
+
+        rootPartDev=$(${pkgs.util-linux}/bin/findmnt -n -o SOURCE /)
+        bootDevice=$(${pkgs.util-linux}/bin/lsblk -npo PKNAME "$rootPartDev")
+        # Extract partition number robustly (handles /dev/mmcblkXpY and /dev/sdXY)
+        partNum=$(echo "$rootPartDev" | sed -E 's|^.*[^0-9]([0-9]+)$|\1|')
+
+        echo "Root partition device: ''${rootPartDev}, Boot device: ''${bootDevice}, Root Partition number: ''${partNum}"
+
+        # Attempt to resize the root partition using growpart or fallback to sfdisk
+        # Note: sfdisk resize might be less reliable than growpart
+        if command -v growpart > /dev/null && [ -x "$(command -v growpart)" ]; then
+          echo "Attempting resize with growpart..."
+          ${pkgs.cloud-utils}/bin/growpart "''${bootDevice}" "''${partNum}" || \
+            { echo "[WARNING] growpart failed, attempting sfdisk as fallback..."; echo ",+," | sfdisk -N"''${partNum}" --no-reread "''${bootDevice}"; }
+        else
+          echo "growpart not found, using sfdisk..."
+          # sfdisk resize: ',+,' tells it to extend the partition identified by -N to the end
+          echo ",+," | sfdisk -N"''${partNum}" --no-reread "''${bootDevice}"
+        fi
+
+        echo "Running partprobe on ''${bootDevice}..."
+        ${pkgs.parted}/bin/partprobe "''${bootDevice}" || echo "[WARNING] partprobe on ''${bootDevice} encountered an issue."
+        sleep 3 # Give kernel time to recognize changes
+
+        echo "Resizing filesystem on ''${rootPartDev}..."
+        ${pkgs.e2fsprogs}/bin/resize2fs "''${rootPartDev}"
+
+        echo "Registering Nix paths..."
+        ${config.nix.package.out}/bin/nix-store --load-db < /nix-path-registration
+        # touch /etc/NIXOS # Already handled by NixOS activation
+        echo "Setting up system profile..."
+        ${config.nix.package.out}/bin/nix-env -p /nix/var/nix/profiles/system --set /run/current-system
+        echo "Cleaning up first-boot flag..."
+        rm -f /nix-path-registration
+        sync
+        echo "First boot setup complete."
+        set +x
+      fi
     '';
 
     hardware.firmware = with pkgs; [ firmwareLinuxNonfree ];
