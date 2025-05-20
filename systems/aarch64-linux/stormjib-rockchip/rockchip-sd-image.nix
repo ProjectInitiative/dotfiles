@@ -106,7 +106,7 @@ in
       inherit ubootIdbloaderFile ubootItbFile;
       nixosBootImageFile = config.system.build.nixosBootPartitionImage;
       nixosRootfsImageFile = config.system.build.nixosRootfsPartitionImage;
-      buildFullImage = false;
+      buildFullImage = true;
       buildUbootImage = true;
       buildOsImage = true;
     };
