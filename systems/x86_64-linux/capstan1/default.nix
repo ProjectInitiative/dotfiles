@@ -21,8 +21,8 @@ in
     system = {
       bcachefs-kernel = {
         enable = true;
-        rev = "0fb34e7b933ae01cf5789b91812fc75b82ff3a5d";
-        hash = "sha256-jbVpXfZaNVFyn4BlkFLYERLUpCVrB6ybVPg6szdLZCo=";
+        # rev = "";
+        # hash = "";
         debug = true;
       };
       bcachefs-module = {
