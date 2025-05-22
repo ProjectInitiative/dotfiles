@@ -347,7 +347,6 @@
           "stormjib"
           "thinkpad"
           "test"
-          "cargohold"
           "dinghy"
           "capstan-test"
           "bcachefs-tester"

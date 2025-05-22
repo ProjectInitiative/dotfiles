@@ -2,11 +2,10 @@
 
 let
   bcachefsVersion = "v1.25.2";
-  bcachefsRev = "dd2c7b9b891ae8ea39997d2053b9951a6ecbbb29";
-  # Hash for the bcachefs-tools source code v1.25.1
-  bcachefsSrcHash = "sha256-4MscYFlUwGrFhjpQs1ifDMh5j+t9x7rokOtR2SmhCro=";
-  # HASH WILL BE FILLED IN AFTER FIRST FAILED BUILD
-  bcachefsCargoHash = "sha256-juXRmI3tz2BXQsRaRRGyBaGqeLk2QHfJb2sKPmWur8s="; # <--- LEAVE THIS EMPTY or use "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+  bcachefsRev = "fa0a54c45c44e8ff3885ccc72a43fd2d96e01b14";
+  bcachefsSrcHash = "sha256-mmVlGlSW/c7EY7kGzpIEB5mGedNnr3LU1o3M7dOcT0o=";
+  bcachefsCargoHash = "sha256-juXRmI3tz2BXQsRaRRGyBaGqeLk2QHfJb2sKPmWur8s=";
+
 in
 final: prev: {
   bcachefs-tools = prev.bcachefs-tools.overrideAttrs (
