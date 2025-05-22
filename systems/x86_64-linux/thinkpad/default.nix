@@ -37,8 +37,8 @@ with lib.${namespace};
       nix-config = enabled;
       bcachefs-kernel = {
         enable = true;
-        rev = "a26f34c344d8314acf0c28e20166a4a090dbd298";
-        hash = "sha256-nzc9mXdqPEJFzYbOR8Q7dLqopVXk5l3PdxvFiGi44FA=";
+        # rev = "";
+        # hash = "";
         debug = true;
       };
     };
