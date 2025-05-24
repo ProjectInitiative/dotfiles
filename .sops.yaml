@@ -12,7 +12,7 @@ keys:
     - &cargohold age1vv7x7cupsczqaducs2pxpn7t3mqj5e5jkyc70489fad05rvyga4s57hwan
     - &dinghy age1v96s5f9tqz6xgndsgg5lt2zy8xe6j7k9wxz3k52paw9sena4q3gszjy425
   - &capstans:
-    - &ssh_capstan1 age1ggudm5n025gp9v5uzhej0c23puw8vdvc05mmup9cldsvwjxk4yxsmhky2f
+    - &ssh_capstan1 age1katkdmh05xy9n5pmrkaznw0e5j4p96js88dzxy4l0zt06pfa4qzs0gsua5
     - &ssh_capstan2 age1exv224uk35dyh933g4uv96rtgw9vztwv8xgd9t3r2tf3ltyfdezqxcauhf
     - &ssh_capstan3 age1gh589ckrhz9c940waqnng3zv58l530ettpd7rg2lv2n7zx3h592s99jux6
 

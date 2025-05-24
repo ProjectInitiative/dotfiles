@@ -165,6 +165,7 @@ with lib.${namespace};
         mountOptions = [
           "verbose"
           "degraded"
+          "fsck"
           "nofail"
         ];
         # Since your original config doesn't specify subvolumes for the pool,

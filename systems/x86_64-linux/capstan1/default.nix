@@ -30,13 +30,13 @@ in
     hosts.capstan = {
       enable = true;
       ipAddress = "${config.sensitiveNotSecret.default_subnet}51/24";
-      interface = "enp3s0";
+      interface = "enp4s0";
       enableMlx = true;
       mlxIpAddress = "172.16.4.51";
-      mlxPcie = "0000:05:00.0";
+      mlxPcie = "0000:06:00.0";
       bondMembers = [
-        "enp5s0"
-        "enp5s0d1"
+        "enp6s0"
+        "enp6s0d1"
       ];
       bcachefsInitDevice = "/dev/disk/by-id/nvme-TEAM_TM8FPD002T_TPBF2310170080206935";
       mountpoint = mountpoint;
@@ -178,7 +178,6 @@ in
             lvs = {
               # Logical Volume for the root filesystem
               lvRoot = {
-                type = "lvm_lv";
                 name = "root"; # Name of the LV
                 size = "100%FREE"; # Use all available space in this VG for root.
                                    # Or specify a fixed size like "50G".
@@ -221,6 +220,7 @@ in
        #     mountOptions = [
        #       "verbose"
        #       "degraded"
+       #       "fsck"
        #       "nofail"
        #     ];
        #     # Since your original config doesn't specify subvolumes for the pool,
@@ -241,13 +241,12 @@ in
     enable = true;
     efiSupport = true;          # Enable EFI support
     efiInstallAsRemovable = true; # Installs GRUB to the fallback path, often more compatible
-    device = rootDiskDevicePath;  # Install GRUB on this disk (must match disko's rootSystemDisk.device)
-    enableLvm = true;           # Allows GRUB to read from LVM volumes to find your kernel
-    # useOSProber = false;      # Optional: Set to true if you want GRUB to detect other installed OSes
+    device = "nodev";  # Install GRUB on this disk (must match disko's rootSystemDisk.device)
+    # device = "${rootDiskDevicePath}";  # Install GRUB on this disk (must match disko's rootSystemDisk.device)
   };
 
   # This allows NixOS to manage EFI boot entries.
-  boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.efi.canTouchEfiVariables = false;
 
   # Optional: If your ESP is not at /boot, specify it. Disko sets it to /boot.
   # boot.loader.efi.efiSysMountPoint = "/boot";
