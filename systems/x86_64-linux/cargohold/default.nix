@@ -201,7 +201,7 @@ in
   #         "verbose"
   #         "degraded"
   #         "fsck"
-  #         # "nofail"
+  #         "nofail"
   #       ];
   #       # As before, if you need specific subvolumes, define them here.
   #       # Otherwise, the entire filesystem is mounted at 'mountpoint'.

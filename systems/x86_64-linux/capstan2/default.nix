@@ -165,6 +165,7 @@ with lib.${namespace};
         mountOptions = [
           "verbose"
           "degraded"
+          "nofail"
         ];
         # Since your original config doesn't specify subvolumes for the pool,
         # we assume the entire filesystem is mounted at `mountpoint`.

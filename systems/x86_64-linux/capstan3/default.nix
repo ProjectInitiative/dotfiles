@@ -172,6 +172,7 @@ with lib.${namespace};
         mountOptions = [
           "verbose"
           "degraded"
+          "nofail"
         ];
         # If you don't define subvolumes here, the entire filesystem is typically
         # mounted at the 'mountpoint'. If you need specific subvolumes, add them like:

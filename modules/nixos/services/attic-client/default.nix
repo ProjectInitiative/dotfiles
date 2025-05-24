@@ -90,10 +90,18 @@ in
     environment.systemPackages = [ pkgs.attic-client ];
 
     # 2. Add cache to Nix settings if requested (using mkMerge for safety)
-    nix.settings = mkIf cfg.manageNixConfig {
-      substituters = mkMerge [ [ "${cfg.serverUrl}?priority=30" ] ];
-      trusted-public-keys = mkMerge [ [ cfg.publicKey ] ];
+    nix = {
+      settings = mkIf cfg.manageNixConfig {
+        substituters = mkMerge [ [ "${cfg.serverUrl}" ] ];
+        trusted-public-keys = mkMerge [ [ cfg.publicKey ] ];
+        connect-timeout = 5;
+      };
+      extraOptions = ''
+      # Ensure we can still build when missing-server is not accessible
+      fallback = true
+      '';
     };
+
 
     # 3. Systemd service to log in automatically if requested
     # Service name includes cacheName for potential multi-cache setups
