@@ -201,37 +201,38 @@ in
           };
         }; # End of 'lvm_vg' section
 
-       # bcachefs_filesystems = {
-       #   pool = {
-       #     # This name ("pool") links the partitions above to this definition
-       #     type = "bcachefs_filesystem";
-       #     mountpoint = mountpoint; # Preserving the variable reference from your source
-       #     # Global format options for the bcachefs filesystem
-       #     extraFormatArgs = [
-       #       "--compression=lz4"
-       #       "--foreground_target=nvme" # These targets refer to the labels (e.g., "nvme.nvme1" will match "nvme")
-       #       "--background_target=hdd"
-       #       "--promote_target=ssd"
-       #       "--metadata_replicas=2"
-       #       "--metadata_replicas_required=1"
-       #       "--data_replicas=2"
-       #       "--data_replicas_required=1"
-       #     ];
-       #     mountOptions = [
-       #       "verbose"
-       #       "degraded"
-       #       "fsck"
-       #       "nofail"
-       #     ];
-       #     # Since your original config doesn't specify subvolumes for the pool,
-       #     # we assume the entire filesystem is mounted at `mountpoint`.
-       #     # If you need specific subvolumes, you would define them here, similar to the example:
-       #     # subvolumes = {
-       #     #   "subvolumes/root" = { mountpoint = "/"; };
-       #     #   # ... other subvolumes
-       #     # };
-       #   };
-       # };
+       bcachefs_filesystems = {
+         pool = {
+           # This name ("pool") links the partitions above to this definition
+           type = "bcachefs_filesystem";
+           mountpoint = mountpoint; # Preserving the variable reference from your source
+           uuid = "27cac550-3836-765c-d107-51d27ab4a6e1";
+           # Global format options for the bcachefs filesystem
+           extraFormatArgs = [
+             "--compression=lz4"
+             "--foreground_target=nvme" # These targets refer to the labels (e.g., "nvme.nvme1" will match "nvme")
+             "--background_target=hdd"
+             "--promote_target=ssd"
+             "--metadata_replicas=2"
+             "--metadata_replicas_required=1"
+             "--data_replicas=2"
+             "--data_replicas_required=1"
+           ];
+           mountOptions = [
+             "verbose"
+             "degraded"
+             "fsck"
+             "nofail"
+           ];
+           # Since your original config doesn't specify subvolumes for the pool,
+           # we assume the entire filesystem is mounted at `mountpoint`.
+           # If you need specific subvolumes, you would define them here, similar to the example:
+           # subvolumes = {
+           #   "subvolumes/root" = { mountpoint = "/"; };
+           #   # ... other subvolumes
+           # };
+         };
+       };
      };
    };
 
