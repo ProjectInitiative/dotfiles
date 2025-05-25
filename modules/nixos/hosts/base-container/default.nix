@@ -19,9 +19,6 @@ in
 
   config = mkIf cfg.enable {
 
-    # Basic system configuration
-    system.stateVersion = "23.11";
-
     networking.networkmanager.enable = true;
 
     # Add your other configuration options here

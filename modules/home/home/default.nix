@@ -14,6 +14,7 @@
   system,
   namespace,
   pkgs,
+  osConfig,
   ...
 }:
 with lib;
@@ -31,7 +32,6 @@ in
 {
   options.${namespace}.home = {
     enable = mkBoolOpt false "Whether or not enable home configuration.";
-    stateVersion = mkOpt types.str "" "The state version of the home configuration.";
     home = mkOpt types.str (
       if is-darwin then "/Users/${username}" else "/home/${username}"
     ) "The home directory of the user.";
@@ -44,7 +44,7 @@ in
       inherit username;
 
       homeDirectory = cfg.home;
-      stateVersion = cfg.stateVersion;
+      stateVersion = osConfig.system.stateVersion;
     };
   };
 }

@@ -92,9 +92,6 @@ in
 
     services.qemuGuest.enable = true;
 
-    # Basic system configuration
-    system.stateVersion = "23.11";
-
     # Enable displaying network info on console
     projectinitiative = {
       system = {

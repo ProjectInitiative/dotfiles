@@ -26,7 +26,6 @@ in
 
       home = {
         enable = true;
-        stateVersion = "24.11";
       };
 
       user = {
