@@ -1,29 +1,29 @@
 { channels, inputs, ... }:
 final: prev: {
   # Update the evdi in kernelPackages
-  linuxPackages = prev.linuxPackages.extend (
-    kself: ksuper: {
-      evdi = channels.unstable.linuxPackages.evdi.override {
-        kernel = kself.kernel;
-      };
-    }
-  );
+  # linuxPackages = prev.linuxPackages.extend (
+  #   kself: ksuper: {
+  #     evdi = channels.unstable.linuxPackages.evdi.override {
+  #       kernel = kself.kernel;
+  #     };
+  #   }
+  # );
 
   # Do the same for your specific kernel if you're not using the default
-  linuxPackages_latest = prev.linuxPackages_latest.extend (
-    kself: ksuper: {
-      evdi = channels.unstable.linuxPackages_latest.evdi.override {
-        kernel = kself.kernel;
-      };
-    }
-  );
-  linuxPackages_6_14 = prev.linuxPackages_6_14.extend (
-    kself: ksuper: {
-      evdi = channels.unstable.linuxPackages_6_14.evdi.override {
-        kernel = kself.kernel;
-      };
-    }
-  );
+  # linuxPackages_latest = prev.linuxPackages_latest.extend (
+  #   kself: ksuper: {
+  #     evdi = channels.unstable.linuxPackages_latest.evdi.override {
+  #       kernel = kself.kernel;
+  #     };
+  #   }
+  # );
+  # linuxPackages_6_14 = prev.linuxPackages_6_14.extend (
+  #   kself: ksuper: {
+  #     evdi = channels.unstable.linuxPackages_6_14.evdi.override {
+  #       kernel = kself.kernel;
+  #     };
+  #   }
+  # );
   displaylink =
     (prev.displaylink.override {
       requireFile =

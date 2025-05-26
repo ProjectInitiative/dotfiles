@@ -40,7 +40,7 @@
     };
 
     # kernelPackages = pkgs.linuxPackages_6_14;
-    supportedFilesystems = [ "bcachefs" ];
+    # supportedFilesystems = [ "bcachefs" ];
     kernelModules = [
       "bcachefs"
       "kvm-intel"

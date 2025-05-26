@@ -18,7 +18,7 @@ with lib.${namespace};
 
   # enable displaylink
   services.xserver.videoDrivers = [
-    # "displaylink"
+    "displaylink"
     "modesetting"
   ];
 
@@ -36,7 +36,7 @@ with lib.${namespace};
     system = {
       nix-config = enabled;
       bcachefs-kernel = {
-        enable = true;
+        enable = false;
         # rev = "";
         # hash = "";
         debug = true;

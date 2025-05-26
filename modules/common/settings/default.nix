@@ -22,7 +22,7 @@ in
 {
   options.${namespace}.settings = {
     stateVersion = mkOption {
-      type = types.string;
+      type = types.str;
       default = "24.11";
       description = ''
         The state version for use within ${namespace} modules.
