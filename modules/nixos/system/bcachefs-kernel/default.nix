@@ -12,8 +12,8 @@ with lib;
 let
   cfg = config.${namespace}.system.bcachefs-kernel;
 
-  rev = "4cf57c44a99fd9f62098fbbb8129b2a84c78e7a7";
-  hash = "sha256-BresZiahFbm7sD7nlSnKtFNB1PQxT+/PocI4RP7EyzY=";  
+  defaultRev = "eaa12de7579cd9ff0598b3b02ebfb7a2afead62f";
+  defaultHash = "sha256-gMFzyb6JMbwsf8DS33AOayfBRLNqCEKpq0Rjsh7ExHQ=";  
 
   kernelSrc = pkgs.fetchFromGitHub {
     owner = "koverstreet";
@@ -114,13 +114,13 @@ in
 
     rev = mkOption {
       type = types.str;
-      default = rev; # Or a specific tag like "bcachefs-v6.X"
+      default = defaultRev; # Or a specific tag like "bcachefs-v6.X"
       description = "Git branch, tag, or commit hash of Kent Overstreet's bcachefs repository to use";
     };
 
     hash = mkOption {
       type = types.str;
-      default = hash;
+      default = defaultHash;
       description = "SHA256 hash of the source code tarball (use nix-prefetch-github or run build once)";
       example = "sha256-abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG=";
     };

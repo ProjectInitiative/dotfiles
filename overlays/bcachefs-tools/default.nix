@@ -8,14 +8,14 @@ final: prev: {
   bcachefs-tools =
     let
       # Define the source details for bcachefs-tools
-      bcachefsRev = "fa0a54c45c44e8ff3885ccc72a43fd2d96e01b14"; # As in your original overlay
-      bcachefsSrcHash = "sha256-mmVlGlSW/c7EY7kGzpIEB5mGedNnr3LU1o3M7dOcT0o="; # As in your original overlay
+      defaultRev = "6cb4160e0c1de2562b40f30206f80f96303c1ee8"; # As in your original overlay
+      defaultHash = "sha256-kGicDnV0l1D2TtBbLBwoiZq7xTlON2nq10GAhnGL3mY="; # As in your original overlay
 
       bcachefsSrc = final.fetchFromGitHub {
         owner = "koverstreet";
         repo = "bcachefs-tools";
-        rev = bcachefsRev;
-        hash = bcachefsSrcHash; # 'hash' is used for SRI hashes like the one provided
+        rev = defaultRev;
+        hash = defaultHash; # 'hash' is used for SRI hashes like the one provided
       };
 
       # Use flake-compat to load the flake from the fetched source.
