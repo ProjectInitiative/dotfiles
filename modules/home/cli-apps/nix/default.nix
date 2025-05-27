@@ -37,7 +37,7 @@ in
       ];
 
       sessionVariables = {
-        FLAKE = "${config.${namespace}.user.home}/dotfiles";
+        NH_FLAKE = "${config.${namespace}.user.home}/dotfiles";
       };
 
       shellAliases = {

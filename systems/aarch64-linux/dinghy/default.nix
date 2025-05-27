@@ -25,6 +25,10 @@ in
 
   sdImage.compressImage = false;
 
+  hardware.deviceTree.overlays = [
+      { name = "gpio"; dtboFile = ./gpio.dtbo; }
+    ];
+
   hardware.rockpi-quad = {
     enable = true;
     # Optional: Customize settings (see flake.nix for options)

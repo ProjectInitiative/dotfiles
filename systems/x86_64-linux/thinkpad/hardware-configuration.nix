@@ -39,14 +39,14 @@
       };
     };
 
-    # kernelPackages = pkgs.linuxPackages_6_14;
+    kernelPackages = pkgs.linuxPackages_latest;
     # supportedFilesystems = [ "bcachefs" ];
     kernelModules = [
       "bcachefs"
       "kvm-intel"
     ];
     # kernelModules = [ "kvm-intel" ];
-    extraModulePackages = [ ];
+    # extraModulePackages = [ ];
 
     loader = {
       systemd-boot = {

@@ -18,7 +18,7 @@ with lib.${namespace};
 
   # enable displaylink
   services.xserver.videoDrivers = [
-    "displaylink"
+    # "displaylink"
     "modesetting"
   ];
 
@@ -34,9 +34,11 @@ with lib.${namespace};
     encrypted.nix-signing = enabled;
 
     system = {
+      displaylink = enabled; 
       nix-config = enabled;
+
       bcachefs-kernel = {
-        enable = false;
+        enable = true;
         # rev = "";
         # hash = "";
         debug = true;
@@ -109,13 +111,14 @@ with lib.${namespace};
     multipath-tools
     usbutils
   ];
+
   # Enable fingerprint reader
   services.fprintd = {
     enable = true;
     tod = {
       enable = true;
-      driver = pkgs.libfprint-2-tod1-vfs0090; # (If the vfs0090 Driver does not work, use the following driver)
-      # driver = pkgs.libfprint-2-tod1-goodix; #(On my device it only worked with this driver)
+      # driver = pkgs.libfprint-2-tod1-vfs0090; # (If the vfs0090 Driver does not work, use the following driver)
+      driver = pkgs.libfprint-2-tod1-goodix; #(On my device it only worked with this driver)
     };
   };
 
@@ -126,7 +129,7 @@ with lib.${namespace};
   services.printing.enable = true;
 
   # Enable sound with pipewire.
-  hardware.pulseaudio.enable = false;
+  services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
     enable = true;

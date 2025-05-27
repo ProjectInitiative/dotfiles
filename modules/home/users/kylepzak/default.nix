@@ -89,7 +89,7 @@ in
     #   };
     # };
 
-    programs.zsh.initExtra = ''
+    programs.zsh.initContent = ''
       if [ ! -f "$HOME/.config/sops/age/keys.txt" ]; then
         mkdir -p "$HOME/.config/sops/age"
         ${pkgs.ssh-to-age}/bin/ssh-to-age -private-key "$HOME/.ssh/id_ed25519" > "$HOME/.config/sops/age/keys.txt"

@@ -87,7 +87,7 @@ in
             podman-compose
             python3
             python3Packages.pip
-            ventoy-full
+            # ventoy-full - removed until https://github.com/ventoy/Ventoy/issues/3224 is resolved.
             rustup
           ]
           ++ lib.optionals isGraphical [ inputs.claude-desktop.packages.${system}.claude-desktop-with-fhs ];
