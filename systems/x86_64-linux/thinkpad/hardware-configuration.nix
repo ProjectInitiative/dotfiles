@@ -81,20 +81,22 @@
       device = "/dev/mapper/data-home_kylepzak_ext4";
       fsType = "ext4";
     };
-    # "/home/kylepzak" = {
-    #   device = "/dev/mapper/data-home_kylepzak";
-    #   fsType = "bcachefs";
-    #   options = [
-    #     "fsck"
-    #   ];
-    # };
-    # "/void" = {
-    #   device = "/dev/mapper/data-void";
-    #   fsType = "bcachefs";
-    #   options = [
-    #     "fsck"
-    #   ];
-    # };
+    "/home/kylepzak-bachefs" = {
+      device = "/dev/mapper/data-home_kylepzak";
+      fsType = "bcachefs";
+      options = [
+        "nofail"
+        # "fsck"
+      ];
+    };
+    "/void" = {
+      device = "/dev/mapper/data-void";
+      fsType = "bcachefs";
+      options = [
+        "nofail"
+        # "fsck"
+      ];
+    };
   };
 
   swapDevices = [
