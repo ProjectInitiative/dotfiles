@@ -110,6 +110,8 @@ with lib.${namespace};
     rkdeveloptool
     multipath-tools
     usbutils
+
+    ani-cli
   ];
 
   # Enable fingerprint reader
