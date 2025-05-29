@@ -151,7 +151,7 @@ in
         assertion = all (target: !(target.enable && target.parentSubvolume == null)) (
           attrValues cfg.targets
         );
-        message = "Each enabled target in ${cfgNamespace}.targets must have 'parentSubvolume' set.";
+        message = "Each enabled target in targets must have 'parentSubvolume' set.";
       }
       {
         # Check if at least one target is defined and enabled if the main service is enabled
@@ -160,7 +160,7 @@ in
             (builtins.length (attrNames cfg.targets) > 0 && any (t: t.enable) (attrValues cfg.targets))
           else
             true;
-        message = "If ${cfgNamespace}.enable is true, at least one target must be defined and enabled in ${cfgNamespace}.targets.";
+        message = "If enable is true, at least one target must be defined and enabled in targets.";
       }
     ];
 

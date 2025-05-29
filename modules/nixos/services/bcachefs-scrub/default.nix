@@ -3,55 +3,55 @@
   config,
   lib,
   pkgs,
-  namespace ? "mySystem",
+  namespace, # Make sure this is passed in correctly when importing
   ...
 }:
 
 with lib;
+with lib.types;
 
 let
-  # Define configuration options under a specific namespace
+  # cfg needs to access the final evaluated options from the config object.
+  # This line is where the recursion happens if the module's own 'config'
+  # block isn't structured carefully.
   cfg = config.${namespace}.services.bcachefsScrubAuto;
 
-  # Helper script to send Telegram messages using curl (Unchanged)
+  # Helper script to send Telegram messages (no changes needed here)
   telegramNotifierScript = pkgs.writeShellScriptBin "bcachefs-scrub-notify" ''
-    #!/usr/bin/env bash
-    set -euo pipefail # Exit on error, undefined variable, or pipe failure
+    #!${pkgs.stdenv.shell}
+    set -euo pipefail
 
     TOKEN_PATH="$1"
     CHAT_ID_PATH="$2"
-    MESSAGE="$3"
+    MESSAGE_TEMPLATE="$3"
 
-    # --- Basic Input Validation ---
     if [[ ! -f "$TOKEN_PATH" ]]; then
-      echo "Error: Telegram token file not found at ''${TOKEN_PATH}" >&2
+      echo "Error: Telegram token file not found at $TOKEN_PATH" >&2
       exit 1
     fi
     if [[ ! -f "$CHAT_ID_PATH" ]]; then
-      echo "Error: Telegram chat ID file not found at ''${CHAT_ID_PATH}" >&2
+      echo "Error: Telegram chat ID file not found at $CHAT_ID_PATH" >&2
       exit 1
     fi
 
-    # --- Read Credentials ---
-    TELEGRAM_TOKEN=$(cat "''${TOKEN_PATH}")
-    TELEGRAM_CHAT_ID=$(cat "''${CHAT_ID_PATH}")
+    TELEGRAM_TOKEN=$(cat "$TOKEN_PATH")
+    TELEGRAM_CHAT_ID=$(cat "$CHAT_ID_PATH")
 
     if [[ -z "$TELEGRAM_TOKEN" || -z "$TELEGRAM_CHAT_ID" ]]; then
-       echo "Error: Telegram token or chat ID is empty." >&2
-       exit 1
+        echo "Error: Telegram token or chat ID is empty." >&2
+        exit 1
     fi
 
-    # --- Escape message for MarkdownV2 ---
-    ESCAPED_MESSAGE=$(echo "$MESSAGE" | sed -e 's/\([_*\[\]()~`>#+-=|{}.!\\]\)/\\\1/g')
+    ACTUAL_HOSTNAME=$(${pkgs.hostname}/bin/hostname)
+    MESSAGE_WITH_HOSTNAME=$(echo "$MESSAGE_TEMPLATE" | ${pkgs.gnused}/bin/sed "s%__HOSTNAME__%$ACTUAL_HOSTNAME%g")
+    ESCAPED_MESSAGE=$(${pkgs.gnused}/bin/sed -e 's/\([_*\[\]()~`>#+-=|{}.!\\]\)/\\\1/g' <<< "$MESSAGE_WITH_HOSTNAME")
 
-    # --- Send Message via Curl ---
-    echo "Sending Telegram notification..." >&2 # Log action
+    echo "Sending Telegram notification for host $ACTUAL_HOSTNAME..." >&2
     ${pkgs.curl}/bin/curl --silent --show-error --fail-with-body \
-      -X POST "https://api.telegram.org/bot''${TELEGRAM_TOKEN}/sendMessage" \
-      --data-urlencode "chat_id=''${TELEGRAM_CHAT_ID}" \
-      --data-urlencode "text=''${ESCAPED_MESSAGE}" \
+      -X POST "https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage" \
+      --data-urlencode "chat_id=$TELEGRAM_CHAT_ID" \
+      --data-urlencode "text=$ESCAPED_MESSAGE" \
       --data-urlencode "parse_mode=MarkdownV2"
-
     CURL_EXIT_CODE=$?
     if [[ $CURL_EXIT_CODE -ne 0 ]]; then
         echo "Error: Failed to send Telegram message (curl exit code: $CURL_EXIT_CODE)." >&2
@@ -61,28 +61,28 @@ let
     exit $CURL_EXIT_CODE
   '';
 
-  # Generate a systemd-safe name from the mount point
-  escapeName = name: escapeSystemdPath name;
-  scrubUnitName = name: "bcachefs-scrub-${escapeName name}";
-  scrubFailureNotifyUnitName = name: "bcachefs-scrub-failure-notify-${escapeName name}";
-  scrubTimerUnitName = name: "bcachefs-scrub-${escapeName name}";
+  escapeName = path:
+    if path == "/"
+    then "-" # Results in unit names like bcachefs-scrub--.service, which is valid.
+    else lib.replaceStrings ["/"] ["-"] (lib.removePrefix "/" path);
 
-  # Get hostname string safely for messages
-  hostnameCmd = "${pkgs.hostname}/bin/hostname";
+  scrubServiceName = mountPoint: "bcachefs-scrub-${escapeName mountPoint}";
+  scrubFailureNotifyServiceName = mountPoint: "bcachefs-scrub-failure-notify-${escapeName mountPoint}";
+  scrubTimerName = mountPoint: "bcachefs-scrub-${escapeName mountPoint}";
 
 in
 {
   options.${namespace}.services.bcachefsScrubAuto = {
-    # ... Options remain the same ...
-    enable = mkEnableOption "Periodic bcachefs scrub service (auto-detects mounts) with Telegram notifications";
+    enable = mkEnableOption (mdDoc "Periodic bcachefs scrub service with Telegram notifications");
 
-    excludeMountPoints = mkOption {
+    targetMountPoints = mkOption {
       type = types.listOf types.str;
-      default = [ ];
-      example = [ "/mnt/bcachefs-no-scrub" ];
-      description = ''
-        List of exact mount points (as defined in `fileSystems`) to exclude
-        from automatic scrubbing.
+      default = [];
+      example = [ "/mnt/bcachefs-main" "/srv/bcachefs-archive" ];
+      description = mdDoc ''
+        List of bcachefs mount points to target for scrubbing.
+        The module will perform a sanity check to ensure these mount points
+        are defined in `fileSystems` and are of type `bcachefs`.
       '';
     };
 
@@ -90,8 +90,8 @@ in
       type = types.str;
       default = "weekly";
       example = "*-*-1,15 03:00:00";
-      description = ''
-        When to run the scrubs automatically. Applies to all detected mounts.
+      description = mdDoc ''
+        When to run the scrubs automatically. Applies to all targeted mounts.
         Uses systemd.time OnCalendar= format. Timers include randomized delay.
         See `man systemd.time` for detailed syntax.
       '';
@@ -99,117 +99,123 @@ in
 
     telegramTokenPath = mkOption {
       type = types.path;
-      default = "/run/secrets/telegram-token";
-      description = "Absolute path to the file containing the Telegram bot token.";
+      default = "/run/secrets/health_reporter_bot_api_token";
+      description = mdDoc "Absolute path to the file containing the Telegram bot token.";
     };
 
     telegramChatIdPath = mkOption {
       type = types.path;
-      default = "/run/secrets/telegram-chatid";
-      description = "Absolute path to the file containing the Telegram chat ID.";
+      default = "/run/secrets/telegram_chat_id";
+      description = mdDoc "Absolute path to the file containing the Telegram chat ID.";
     };
 
     notifyOnStart = mkOption {
       type = types.bool;
       default = true;
-      description = "Send a Telegram notification when a scrub starts.";
+      description = mdDoc "Send a Telegram notification when a scrub starts.";
     };
 
     notifyOnSuccess = mkOption {
       type = types.bool;
       default = true;
-      description = "Send a Telegram notification when a scrub completes successfully.";
+      description = mdDoc "Send a Telegram notification when a scrub completes successfully.";
     };
 
     notifyOnFailure = mkOption {
       type = types.bool;
       default = true;
-      description = "Send a Telegram notification if a scrub command fails.";
+      description = mdDoc "Send a Telegram notification if a scrub command fails.";
     };
   };
 
-  # CORRECTED CONFIG SECTION: mkIf applies to the result of the let...in block
-  config = mkIf cfg.enable (
-    # <-- Added opening parenthesis
-    # --- Auto-detect bcachefs mounts and generate units ---
-    let
-      # Filter fileSystems to get only bcachefs types, excluding specified mounts
-      bcachefsMounts = lib.attrsets.filterAttrs (
-        name: value: value.fsType == "bcachefs" && !(elem name cfg.excludeMountPoints)
-      ) config.fileSystems;
+  # The config block defines the actual system configuration based on the options.
+  # It's wrapped in mkIf cfg.enable so it only applies if the service is enabled.
+  config = mkIf cfg.enable {
+    # Assertions are evaluated to ensure valid configuration.
+    assertions =
+      [
+        {
+          assertion = cfg.enable -> (builtins.length cfg.targetMountPoints > 0);
+          message = "${namespace}.services.bcachefsScrubAuto is enabled but no targetMountPoints are specified.";
+        }
+      ] ++ map (mountPoint: {
+        assertion = builtins.any (fs: fs.fsType == "bcachefs" && fs.mountPoint == mountPoint) (lib.attrValues config.fileSystems);
+        message = "${namespace}.services.bcachefsScrubAuto: Target mount point \"${mountPoint}\" is not a configured bcachefs filesystem in `fileSystems`.";
+      }) cfg.targetMountPoints;
 
-      # Generate Systemd Units for each detected mount
-      generatedUnits = lib.attrsets.mapAttrs' (
-        mountPoint: fsConfig:
-        let
-          sName = scrubUnitName mountPoint;
-          fName = scrubFailureNotifyUnitName mountPoint;
-          tName = scrubTimerUnitName mountPoint;
-          startMsg = "🚀 Starting bcachefs scrub on host `${hostnameCmd}` for mount point: ${mountPoint}...";
-          successMsg = "✅ Successfully completed bcachefs scrub on host `${hostnameCmd}` for mount point: ${mountPoint}.";
-          failMsg = "❌ ERROR: bcachefs scrub failed on host `${hostnameCmd}` for mount point: ${mountPoint}! Check systemd logs: journalctl -u ${sName}.service";
-        in
-        lib.nameValuePair "systemd" {
-          # Nest generated units under 'systemd' key
-          services = {
-            # Scrub Service
-            "${sName}" = {
+    # Define all systemd services as a single attribute set.
+    systemd.services =
+      let
+        # Generate main scrub service definitions for each target.
+        mainScrubServices = lib.listToAttrs (map (mountPoint:
+          let
+            sName = scrubServiceName mountPoint;
+            fName = scrubFailureNotifyServiceName mountPoint; # For OnFailure
+            startMsgTemplate = "🚀 Starting bcachefs scrub on host __HOSTNAME__ for mount point: ${mountPoint}";
+            successMsgTemplate = "✅ Successfully completed bcachefs scrub on host __HOSTNAME__ for mount point: ${mountPoint}.";
+          in
+          {
+            name = sName; # This becomes the attribute name in the final set
+            value = {    # This is the service definition
               description = "Run bcachefs scrub on ${mountPoint}";
-              path = [
-                pkgs.bcachefs-tools
-                pkgs.curl
-                pkgs.hostname
-              ];
+              path = [ pkgs.bcachefs-tools ]; # Ensures bcachefs-tools is in PATH
               serviceConfig = {
                 Type = "oneshot";
                 User = "root";
                 Group = "root";
-                ExecStartPre = mkIf cfg.notifyOnStart "+${telegramNotifierScript}/bin/bcachefs-scrub-notify '${cfg.telegramTokenPath}' '${cfg.telegramChatIdPath}' '${startMsg}'";
-                ExecStart = "${pkgs.bcachefs-tools}/bin/bcachefs fs scrub ${mountPoint}";
-                ExecStartPost = mkIf cfg.notifyOnSuccess "+${telegramNotifierScript}/bin/bcachefs-scrub-notify '${cfg.telegramTokenPath}' '${cfg.telegramChatIdPath}' '${successMsg}'";
-                OnFailure = mkIf cfg.notifyOnFailure "${fName}.service";
+                ExecStartPre = mkIf cfg.notifyOnStart "+${telegramNotifierScript}/bin/bcachefs-scrub-notify ${escapeShellArg cfg.telegramTokenPath} ${escapeShellArg cfg.telegramChatIdPath} ${escapeShellArg startMsgTemplate}";
+                ExecStart = "${pkgs.bcachefs-tools}/bin/bcachefs data scrub ${escapeShellArg mountPoint}";
+                ExecStartPost = mkIf cfg.notifyOnSuccess "+${telegramNotifierScript}/bin/bcachefs-scrub-notify ${escapeShellArg cfg.telegramTokenPath} ${escapeShellArg cfg.telegramChatIdPath} ${escapeShellArg successMsgTemplate}";
+                OnFailure = mkIf cfg.notifyOnFailure ["${fName}.service"];
               };
             };
-            # Failure Notification Service
-            "${fName}" = mkIf cfg.notifyOnFailure {
+          }
+        ) cfg.targetMountPoints);
+
+        # Generate failure notification service definitions for each target.
+        failureNotifyServices = lib.listToAttrs (map (mountPoint:
+          let
+            mainServiceName = scrubServiceName mountPoint; # For the log message
+            failureServiceName = scrubFailureNotifyServiceName mountPoint;
+            failMsgTemplate = "❌ ERROR: bcachefs scrub failed on host __HOSTNAME__ for mount point: ${mountPoint}! Check systemd logs: journalctl -u ${mainServiceName}.service";
+          in
+          {
+            name = failureServiceName;
+            value = mkIf cfg.notifyOnFailure { # The entire service is conditional
               description = "Notify Telegram about bcachefs scrub failure on ${mountPoint}";
-              path = [
-                pkgs.curl
-                pkgs.hostname
-              ];
               serviceConfig = {
                 Type = "oneshot";
                 User = "root";
-                ExecStart = "${telegramNotifierScript}/bin/bcachefs-scrub-notify '${cfg.telegramTokenPath}' '${cfg.telegramChatIdPath}' '${failMsg}'";
+                ExecStart = "+${telegramNotifierScript}/bin/bcachefs-scrub-notify ${escapeShellArg cfg.telegramTokenPath} ${escapeShellArg cfg.telegramChatIdPath} ${escapeShellArg failMsgTemplate}";
               };
             };
-          }; # End services
-          timers = {
-            # Timer
-            "${tName}" = {
-              description = "Timer for Bcachefs Scrub on ${mountPoint}";
-              wantedBy = [ "timers.target" ];
-              timerConfig = {
-                OnCalendar = cfg.schedule;
-                Unit = "${sName}.service";
-                Persistent = true;
-                RandomizedDelaySec = "1h";
-              };
+          }
+        ) cfg.targetMountPoints);
+      in
+      # Merge the main scrub services and the failure notification services.
+      # If a value from failureNotifyServices is `false` (due to mkIf), it won't create an actual service.
+      mainScrubServices // failureNotifyServices;
+
+    # Define all systemd timers as a single attribute set.
+    systemd.timers =
+      lib.listToAttrs (map (mountPoint:
+        let
+          sName = scrubServiceName mountPoint; # Service to activate
+          tName = scrubTimerName mountPoint;   # Timer's own name
+        in
+        {
+          name = tName; # Attribute name for the timer
+          value = {   # Timer definition
+            description = "Timer for Bcachefs Scrub on ${mountPoint}";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = cfg.schedule;
+              Unit = "${sName}.service"; # Explicitly state the service unit to activate
+              Persistent = true;
+              RandomizedDelaySec = "1h";
             };
-          }; # End timers
-        } # End systemd value for this mount point
-      ) bcachefsMounts; # End mapAttrs'
-
-    in
-    # <-- 'in' for the let block
-
-    # --- The attribute set returned by the let...in block ---
-    {
-      # Merge the generated systemd units into the main config
-      systemd = lib.mkMerge (lib.attrsets.attrValues generatedUnits);
-
-      # Secret management comments/assertions can also go here if needed,
-      # although defining sops secrets usually happens elsewhere in the config.
-    }
-  ); # <-- Added closing parenthesis
+          };
+        }
+      ) cfg.targetMountPoints);
+  };
 }

@@ -25,8 +25,15 @@ in
   config = mkIf cfg.enable {
 
     ${namespace} = {
+
       services = {
-        bcachefsScrubAuto.enable = false;
+        bcachefsScrubAuto = {
+          enable = true;
+          targetMountPoints = [
+            cfg.parentSubvolume # MANDATORY: Set your actual subvolume path
+          ];
+          schedule = "weekly";
+        };
 
         bcachefsSnapshots = {
           enable = true;
