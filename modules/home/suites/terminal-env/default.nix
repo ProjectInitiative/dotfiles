@@ -46,6 +46,10 @@ in
         appimage-run
         htop
         btop
+        dogdns
+        duff
+        du-dust
+        fd
         jq
         ncdu
         tree
