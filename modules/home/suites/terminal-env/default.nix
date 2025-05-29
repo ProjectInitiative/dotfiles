@@ -47,10 +47,10 @@ in
         htop
         btop
         dogdns
-        duff
-        du-dust
+        dust
         fd
         jq
+        mtr
         ncdu
         tree
         icdiff
@@ -59,6 +59,7 @@ in
         magic-wormhole
         file
         zstd
+        xh
         #TODO: add config for yazi
         yazi
         pkgs.${namespace}.flatten-directory

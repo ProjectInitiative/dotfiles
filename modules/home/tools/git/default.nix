@@ -36,6 +36,8 @@ in
         git
         git-filter-repo
         gitleaks
+        gitui
+        delta
         lazygit
         trufflehog
       ];
