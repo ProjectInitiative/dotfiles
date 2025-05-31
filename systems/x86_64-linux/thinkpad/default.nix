@@ -50,6 +50,7 @@ with lib.${namespace};
     };
     services = {
       power-profile-manager = enabled;
+      bcachefsScrubAuto.enable = mkForce false;
       bcachefsSnapshots = {
         targets = {
 

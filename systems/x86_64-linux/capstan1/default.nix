@@ -221,7 +221,7 @@ in
            mountOptions = [
              "verbose"
              "degraded"
-             "fsck"
+             # "fsck"
              "nofail"
            ];
            # Since your original config doesn't specify subvolumes for the pool,

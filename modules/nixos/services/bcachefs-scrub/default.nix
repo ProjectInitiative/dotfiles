@@ -152,7 +152,7 @@ in
             sName = scrubServiceName mountPoint;
             fName = scrubFailureNotifyServiceName mountPoint; # For OnFailure
             startMsgTemplate = "🚀 Starting bcachefs scrub on host __HOSTNAME__ for mount point: ${mountPoint}";
-            successMsgTemplate = "✅ Successfully completed bcachefs scrub on host __HOSTNAME__ for mount point: ${mountPoint}.";
+            successMsgTemplate = "✅ Successfully completed bcachefs scrub on host __HOSTNAME__ for mount point: ${mountPoint}";
           in
           {
             name = sName; # This becomes the attribute name in the final set
@@ -177,7 +177,7 @@ in
           let
             mainServiceName = scrubServiceName mountPoint; # For the log message
             failureServiceName = scrubFailureNotifyServiceName mountPoint;
-            failMsgTemplate = "❌ ERROR: bcachefs scrub failed on host __HOSTNAME__ for mount point: ${mountPoint}! Check systemd logs: journalctl -u ${mainServiceName}.service";
+            failMsgTemplate = "❌ ERROR: bcachefs scrub failed on host __HOSTNAME__ for mount point: ${mountPoint}! Check systemd logs: journalctl -u ${mainServiceName}\\.service";
           in
           {
             name = failureServiceName;

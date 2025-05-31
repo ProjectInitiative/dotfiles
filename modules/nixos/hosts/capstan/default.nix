@@ -187,7 +187,7 @@ in
           isFirstNode = cfg.isFirstK8sNode;
           nodeIp = cfg.k8sNodeAddr;
           serverAddr = cfg.k8sServerAddr;
-          networkType = "cilium";
+          networkType = "standard";
           role = "server";
           extraArgs = [
             # TLS configuration
@@ -218,8 +218,8 @@ in
               device = "Mellanox Connect X-3";
               pciAddress = cfg.mlxPcie;
               nics = [
-                "enp5s0"
-                "enp5s0d1"
+                # "enp5s0"
+                # "enp5s0d1"
                 # "vmbr4"
               ] ++ cfg.bondMembers;
               mlnxPorts = [

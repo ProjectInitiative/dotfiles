@@ -172,7 +172,7 @@ with lib.${namespace};
         mountOptions = [
           "verbose"
           "degraded"
-          "fsck"
+          # "fsck"
           "nofail"
         ];
         # If you don't define subvolumes here, the entire filesystem is typically

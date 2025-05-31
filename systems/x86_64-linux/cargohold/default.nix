@@ -200,7 +200,7 @@ in
           # Your original mount options
           "verbose"
           "degraded"
-          "fsck"
+          # "fsck"
           "nofail"
         ];
         # As before, if you need specific subvolumes, define them here.
