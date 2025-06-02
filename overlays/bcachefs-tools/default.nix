@@ -8,8 +8,8 @@ final: prev: {
   bcachefs-tools =
     let
       # Define the source details for bcachefs-tools
-      defaultRev = "6cb4160e0c1de2562b40f30206f80f96303c1ee8"; # As in your original overlay
-      defaultHash = "sha256-kGicDnV0l1D2TtBbLBwoiZq7xTlON2nq10GAhnGL3mY="; # As in your original overlay
+      defaultRev = "6cb4160e0c1de2562b40f30206f80f96303c1ee8";
+      defaultHash = "sha256-kGicDnV0l1D2TtBbLBwoiZq7xTlON2nq10GAhnGL3mY=";
 
       bcachefsSrc = final.fetchFromGitHub {
         owner = "koverstreet";
