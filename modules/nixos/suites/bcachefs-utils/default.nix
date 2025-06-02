@@ -76,6 +76,7 @@ in
       pkgs.${namespace}.bcachefs-doctor
       pkgs.${namespace}.bcachefs-fua-test
       pkgs.${namespace}.bcachefs-io-metrics
+      pkgs.${namespace}.bcachefs-update-refs
     ];
 
   };
