@@ -59,7 +59,7 @@ update_nix_variable() {
     exit 1
   fi
 
-  if ! grep -qP "^\s*${var_name}\s*=\s*\"${new_value}\";" "$file_path"; then # Adjusted grep to expect semicolon
+  if ! grep -qF "  ${var_name} = \"${new_value}\";" "$file_path"; then
     echo "Error: Failed to update $var_name in $file_path to \"$new_value\"."
     echo "  Expected line (grep -P): ^\s*${var_name}\s*=\s*\"${new_value}\";"
     echo "  Please check the file format, sed pattern, and grep check."
