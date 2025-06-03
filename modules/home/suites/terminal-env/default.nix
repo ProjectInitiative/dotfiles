@@ -50,6 +50,7 @@ in
         dust
         fd
         jq
+        glow
         mtr
         ncdu
         tree

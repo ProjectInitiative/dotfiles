@@ -34,6 +34,7 @@ in
         nh
         nix-output-monitor
         nvd
+        sqlite
       ];
 
       sessionVariables = {
