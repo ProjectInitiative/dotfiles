@@ -30,7 +30,7 @@ in
     hosts.capstan = {
       enable = true;
       ipAddress = "${config.sensitiveNotSecret.default_subnet}51/24";
-      interface = "enp4s0";
+      interfaceMac = "3c:7c:3f:20:45:e6";
       enableMlx = true;
       mlxIpAddress = "172.16.4.51";
       mlxPcie = "0000:06:00.0";

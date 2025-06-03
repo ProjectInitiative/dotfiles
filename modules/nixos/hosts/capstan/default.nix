@@ -19,7 +19,7 @@ in
     enableMlx = mkBoolOpt false "Temp var to disable mellanox config";
     mlxIpAddress = mkOpt types.str "" "Mellanox Static IP address";
     mlxPcie = mkOpt types.str "" "PCIe address of mellanox card";
-    interface = mkOpt types.str "" "Static IP Interface";
+    interfaceMac = mkOpt types.str "" "Static IP Interface mac address";
     gateway = mkOpt types.str "" "Default gateway";
     bcachefsInitDevice = mkOpt types.str "" "Device path for one of the bcachefs pool drives";
     mountpoint = mkOpt types.str "/mnt/pool" "Path to mount bcachefs pool";
@@ -199,7 +199,7 @@ in
           kubeVip = {
             enable = cfg.isFirstK8sNode;
             vip = "172.16.1.50";
-            interface = cfg.interface;
+            interface = "mgmnt";
           };
         };
       };
@@ -288,13 +288,18 @@ in
         };
       };
 
+      links."10-mgmnt" = {
+        matchConfig.PermanentMACAddress = cfg.interfaceMac;
+        linkConfig.Name = "mgmnt";
+      };
+
       # Network configurations - combining main interface and conditional bond setup
       networks = lib.mkMerge [
         # Main interface configuration (always included)
         {
-          "10-${cfg.interface}" = {
+          "11-mgmnt" = {
             matchConfig = {
-              Name = "${cfg.interface}";
+              Name = "mgmnt";
             };
             networkConfig = {
               DHCP = "no";

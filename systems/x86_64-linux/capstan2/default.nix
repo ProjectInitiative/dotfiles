@@ -37,7 +37,7 @@ with lib.${namespace};
     hosts.capstan = {
       enable = true;
       ipAddress = "${config.sensitiveNotSecret.default_subnet}52/24";
-      interface = "enp3s0";
+      interfaceMac = "24:4b:fe:e0:6a:69";
       enableMlx = true;
       mlxIpAddress = "172.16.4.52";
       mlxPcie = "0000:05:00.0";
