@@ -17,7 +17,7 @@ in
     # hostname = mkOpt types.str "" "Hostname for the server";
     ipAddress = mkOpt types.str "" "Main Static management IP address with CIDR";
     bonding = {
-      mode = mkOpt (enum [ "none" "standard" "mellanox" ]) "none"
+      mode = mkOpt (types.enum [ "none" "standard" "mellanox" ]) "none"
         "Type of bonding to configure. 'none' disables bonding.";
 
       members = mkOpt (types.listOf types.str) [ ] {
@@ -230,7 +230,7 @@ in
 
       networking = {
         mellanox = {
-          enable = mkIf (cfg.bonding.mode == "mellanox");
+          enable = mkIf (cfg.bonding.mode == "mellanox") true;
           interfaces = [
             {
               device = "Mellanox Connect X-3";
@@ -298,7 +298,7 @@ in
             Kind = "bond";
           };
           bondConfig = {
-            Mode = "broadcast";
+            Mode = "802.3ad";
             MIIMonitorSec = "100ms";
             TransmitHashPolicy = "layer3+4";
             LACPTransmitRate = "fast";
