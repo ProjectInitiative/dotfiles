@@ -35,6 +35,13 @@ in
           schedule = "weekly";
         };
 
+        bcachefsRereplicateAuto = {
+          enable = true;
+          targetMountPoints = [
+            cfg.parentSubvolume # MANDATORY: Set your actual subvolume path
+          ];
+        };
+
         bcachefsSnapshots = {
           enable = true;
 
