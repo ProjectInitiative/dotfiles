@@ -45,13 +45,14 @@ with lib.${namespace};
       enable = true;
       ipAddress = "${config.sensitiveNotSecret.default_subnet}53/24";
       interfaceMac = "7c:10:c9:3c:80:a9";
-      enableMlx = true;
-      mlxIpAddress = "172.16.4.53";
-      mlxPcie = "0000:05:00.0";
-      bondMembers = [
-        "enp5s0"
-        "enp5s0d1"
-      ];
+      bonding = {
+        mode = "standard";
+        members = [
+          "5c:b9:01:e2:6f:d0"
+          "5c:b9:01:e2:6f:d4"
+        ];
+        ipAddress = "172.16.4.53";
+      };
       bcachefsInitDevice = "/dev/disk/by-id/nvme-TEAM_TM8FPD002T_TPBF2310170080200016";
       mountpoint = mountpoint;
       k8sServerAddr = "https://172.16.1.52:6443";

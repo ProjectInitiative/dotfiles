@@ -16,9 +16,20 @@ in
     enable = mkBoolOpt false "Whether to enable base capstan server configuration";
     # hostname = mkOpt types.str "" "Hostname for the server";
     ipAddress = mkOpt types.str "" "Main Static management IP address with CIDR";
-    enableMlx = mkBoolOpt false "Temp var to disable mellanox config";
-    mlxIpAddress = mkOpt types.str "" "Mellanox Static IP address";
-    mlxPcie = mkOpt types.str "" "PCIe address of mellanox card";
+    bonding = {
+      mode = mkOpt (enum [ "none" "standard" "mellanox" ]) "none"
+        "Type of bonding to configure. 'none' disables bonding.";
+
+      members = mkOpt (types.listOf types.str) [ ] {
+        description = "List of permanent MAC addresses of the interfaces to include in the bond.";
+        example = ''[ "00:1A:2B:3C:4D:5E" "00:1A:2B:3C:4D:5F" ]'';
+      };
+      ipAddress = mkOpt types.str ""
+        "Static IP address with CIDR for the bond interface (e.g., \"10.0.0.5/24\").";
+    
+      mellanoxPcieAddress = mkOpt types.str ""
+        "PCIe address of the Mellanox card. Required only if mode is 'mellanox'.";
+    };
     interfaceMac = mkOpt types.str "" "Static IP Interface mac address";
     gateway = mkOpt types.str "" "Default gateway";
     bcachefsInitDevice = mkOpt types.str "" "Device path for one of the bcachefs pool drives";
@@ -35,6 +46,13 @@ in
   };
 
   config = mkIf cfg.enable {
+    # Assertion to ensure Mellanox PCIe address is set when needed
+    assertions = [
+      {
+        assertion = cfg.bonding.mode != "mellanox" || cfg.bonding.mellanoxPcieAddress != "";
+        message = "When bonding mode is 'mellanox', `bonding.mellanoxPcieAddress` must be set.";
+      }
+    ];
     # enable custom secrets
     sops.secrets = mkMerge [
       {
@@ -212,16 +230,16 @@ in
 
       networking = {
         mellanox = {
-          enable = cfg.enableMlx;
+          enable = mkIf (cfg.bonding.mode == "mellanox");
           interfaces = [
             {
               device = "Mellanox Connect X-3";
-              pciAddress = cfg.mlxPcie;
+              pciAddress = cfg.bonding.mellanoxPcieAddress;
               nics = [
                 # "enp5s0"
                 # "enp5s0d1"
                 # "vmbr4"
-              ] ++ cfg.bondMembers;
+              ] ++ cfg.bonding.members;
               mlnxPorts = [
                 "1"
                 "2"
@@ -273,7 +291,7 @@ in
       enable = true;
 
       # Bond configuration (conditionally included)
-      netdevs = lib.mkIf cfg.enableMlx {
+      netdevs = lib.mkIf (cfg.bonding.mode != "none") {
         "20-bond0" = {
           netdevConfig = {
             Name = "bond0";
@@ -321,25 +339,32 @@ in
         }
 
         # Bond-related interfaces (conditionally included)
-        (lib.mkIf cfg.enableMlx (
+        (lib.mkIf (cfg.bonding.mode != "none") (
           # Merge separate bond member configurations for each interface
-          lib.mkMerge ([
+          lib.mkMerge [
             # Dynamic bond member configurations from bondMembers list
-            (lib.mkMerge (
-              map (member: {
-                "30-bond-member-${member}" = {
-                  matchConfig = {
-                    Name = "${member}";
+            (lib.listToAttrs (
+              map (mac:
+                let
+                  # Sanitize MAC address for the systemd unit name
+                  sanitizedMac = lib.replaceStrings [ ":" ] [ "-" ] mac;
+                in
+                {
+                  # e.g., name = "30-bond-member-00-1A-2B-3C-4D-5E"
+                  name = "30-bond-member-${sanitizedMac}";
+                  value = {
+                    matchConfig = {
+                      # Match the interface by its permanent hardware address
+                      PermanentMACAddress = mac;
+                    };
+                    networkConfig = {
+                      Bond = "bond0";
+                    };
+                    linkConfig = {
+                      MTUBytes = "9000";
+                    };
                   };
-                  networkConfig = {
-                    Bond = "bond0";
-                  };
-                  # MTU needs to be in linkConfig, not networkConfig
-                  linkConfig = {
-                    MTUBytes = "9000";
-                  };
-                };
-              }) cfg.bondMembers
+                }) cfg.bonding.members
             ))
 
             # Bond interface configuration
@@ -357,12 +382,12 @@ in
                   MTUBytes = "9000";
                 };
                 address = [
-                  "${cfg.mlxIpAddress}/24"
+                  "${cfg.bonding.ipAddress}/24"
                 ];
               };
             }
           ])
-        ))
+        )
       ];
     };
 

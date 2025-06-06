@@ -31,13 +31,14 @@ in
       enable = true;
       ipAddress = "${config.sensitiveNotSecret.default_subnet}51/24";
       interfaceMac = "3c:7c:3f:20:45:e6";
-      enableMlx = true;
-      mlxIpAddress = "172.16.4.51";
-      mlxPcie = "0000:06:00.0";
-      bondMembers = [
-        "enp6s0"
-        "enp6s0d1"
-      ];
+      bonding = {
+        mode = "standard";
+        members = [
+          "d0:67:26:b3:ab:98"
+          "d0:67:26:b3:ab:9c"
+        ];
+        ipAddress = "172.16.4.51";
+      };
       bcachefsInitDevice = "/dev/disk/by-id/nvme-TEAM_TM8FPD002T_TPBF2310170080206935";
       mountpoint = mountpoint;
       k8sServerAddr = "https://172.16.1.52:6443";
