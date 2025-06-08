@@ -64,7 +64,7 @@ in
           git = {
             enable = true;
             userEmail = "6314611+ProjectInitiative@users.noreply.github.com";
-            signingKeyFormat = "openpgp";
+            signingKeyFormat = "ssh";
             # TODO: Make this not hardcoded
             signingKey = osConfig.sops.secrets.kylepzak_ssh_key.path;
           };

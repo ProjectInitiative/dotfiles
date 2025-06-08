@@ -31,6 +31,10 @@ with lib.${namespace};
 
   projectinitiative = {
 
+    settings = {
+      stateVersion = "25.05";
+    };
+
     encrypted.nix-signing = enabled;
 
     system = {
@@ -50,6 +54,7 @@ with lib.${namespace};
     };
     services = {
       power-profile-manager = enabled;
+      bcachefsRereplicateAuto.enable = mkForce false;
       bcachefsScrubAuto.enable = mkForce false;
       bcachefsSnapshots = {
         targets = {
