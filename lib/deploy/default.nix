@@ -50,6 +50,8 @@ rec {
                 // lib.optionalAttrs (user != null) {
                   user = "root";
                   sshUser = user;
+                  autoRollback = false;
+                  rollbackSucceeded = false;
                 }
                 // lib.optionalAttrs (host.config.${namespace}.security.doas.enable or false) { sudo = "doas -u"; };
             };
