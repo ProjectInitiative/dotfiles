@@ -114,3 +114,22 @@ vlan 10
 exit
 write memory
 ```
+
+
+# On the switch
+enable
+configure terminal
+
+# Enable jumbo frames globally
+jumbo
+
+# You will see a message like:
+# "Jumbo mode setting requires a reload to take effect!"
+
+# Save the configuration
+write memory
+
+# Reload the switch to apply the jumbo setting
+reload
+
+# Confirm with 'y'
