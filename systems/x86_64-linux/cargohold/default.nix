@@ -219,9 +219,9 @@ in
     size = 8 * 1024; # 8GB
   }];
 
-  boot.kernelParams = [
-    "cgroup_disable=memory"
-  ];
+  # boot.kernelParams = [
+  #   "cgroup_disable=memory"
+  # ];
 
   # Enable the cargohold host configuration
   projectinitiative.hosts.cargohold = {
