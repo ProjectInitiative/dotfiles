@@ -241,6 +241,7 @@ with lib.${namespace};
       };
     };
   };
+  };
 
   # == GRUB Bootloader Configuration ==
   # These settings configure GRUB for an EFI system with an LVM root.
