@@ -14,7 +14,7 @@ keys:
   - &capstans:
     - &ssh_capstan1 age1katkdmh05xy9n5pmrkaznw0e5j4p96js88dzxy4l0zt06pfa4qzs0gsua5
     - &ssh_capstan2 age1exv224uk35dyh933g4uv96rtgw9vztwv8xgd9t3r2tf3ltyfdezqxcauhf
-    - &ssh_capstan3 age1gh589ckrhz9c940waqnng3zv58l530ettpd7rg2lv2n7zx3h592s99jux6
+    - &ssh_capstan3 age1wwtevxuhkfh6nyl23axkx0s3pnywrw95tj85qrg03fhh6jkmf5nsfknx09
 
 creation_rules:
   - path_regex: sensitive/[^/]+\.yaml$
