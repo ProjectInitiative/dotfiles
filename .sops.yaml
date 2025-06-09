@@ -13,7 +13,7 @@ keys:
     - &dinghy age1v96s5f9tqz6xgndsgg5lt2zy8xe6j7k9wxz3k52paw9sena4q3gszjy425
   - &capstans:
     - &ssh_capstan1 age1katkdmh05xy9n5pmrkaznw0e5j4p96js88dzxy4l0zt06pfa4qzs0gsua5
-    - &ssh_capstan2 age1exv224uk35dyh933g4uv96rtgw9vztwv8xgd9t3r2tf3ltyfdezqxcauhf
+    - &ssh_capstan2 age1daxggyz58h525ww5clnwwuwxu7tf5mlz8as8n7cy8dhv74u4qcqq0jagrp
     - &ssh_capstan3 age1wwtevxuhkfh6nyl23axkx0s3pnywrw95tj85qrg03fhh6jkmf5nsfknx09
 
 creation_rules:
