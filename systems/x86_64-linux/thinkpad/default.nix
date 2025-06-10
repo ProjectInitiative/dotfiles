@@ -27,7 +27,15 @@ with lib.${namespace};
     ${lib.getBin pkgs.xorg.xrandr}/bin/xrandr --setprovideroutputsource 2 0
   '';
 
-  home-manager.backupFileExtension = "backup";
+  home-manager = {
+    backupFileExtension = "backup";
+    users.kylepzak.${namespace} = {
+      suites = {
+        development.enable = true;
+      };
+    };
+    
+  };
 
   projectinitiative = {
 
