@@ -89,6 +89,35 @@ in
     #   };
     # };
 
+    systemd.user.services.generate-ssh-public-key = {
+      Unit = {
+        Description = "Generate SSH public key from sops private key";
+      };
+
+      Service = {
+        Type = "oneshot";
+        # Use a shell to add conditional logic. %h is a systemd specifier for the user's home directory.
+        ExecStart = ''
+          ${pkgs.bash}/bin/bash -c '
+            PRIVATE_KEY="%h/.ssh/id_ed25519"
+            PUBLIC_KEY="%h/.ssh/id_ed25519.pub"
+            # Only run if the private key exists and the public key does not
+            if [ -f "$PRIVATE_KEY" ] && [ ! -f "$PUBLIC_KEY" ]; then
+              echo "Generating SSH public key..."
+              ${pkgs.openssh}/bin/ssh-keygen -y -f "$PRIVATE_KEY" > "$PUBLIC_KEY"
+              chmod 644 "$PUBLIC_KEY"
+            fi
+          '
+        '';
+      };
+
+      Install = {
+        # This ensures the service is started when the user logs in.
+        WantedBy = [ "default.target" ];
+      };
+    };
+
+
     programs.zsh.initContent = ''
       if [ ! -f "$HOME/.config/sops/age/keys.txt" ]; then
         mkdir -p "$HOME/.config/sops/age"
