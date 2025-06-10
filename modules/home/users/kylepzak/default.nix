@@ -89,33 +89,40 @@ in
     #   };
     # };
 
-    systemd.user.services.generate-ssh-public-key = {
-      Unit = {
-        Description = "Generate SSH public key from sops private key";
-      };
+    systemd.user.services.generate-ssh-public-key =
+      let
+        # Write the logic to a separate script file. This avoids all quoting issues.
+        script = pkgs.writeShellScript "generate-ssh-pub-key" ''
+          #!${pkgs.bash}/bin/bash
+          set -euo pipefail
+      
+          PRIVATE_KEY="$HOME/.ssh/id_ed25519"
+          PUBLIC_KEY="$HOME/.ssh/id_ed25519.pub"
 
-      Service = {
-        Type = "oneshot";
-        # Use a shell to add conditional logic. %h is a systemd specifier for the user's home directory.
-        ExecStart = ''
-          ${pkgs.bash}/bin/bash -c '
-            PRIVATE_KEY="%h/.ssh/id_ed25519"
-            PUBLIC_KEY="%h/.ssh/id_ed25519.pub"
-            # Only run if the private key exists and the public key does not
-            if [ -f "$PRIVATE_KEY" ] && [ ! -f "$PUBLIC_KEY" ]; then
-              echo "Generating SSH public key..."
-              ${pkgs.openssh}/bin/ssh-keygen -y -f "$PRIVATE_KEY" > "$PUBLIC_KEY"
-              chmod 644 "$PUBLIC_KEY"
-            fi
-          '
+          if [ -f "$PRIVATE_KEY" ] && [ ! -s "$PUBLIC_KEY" ]; then
+            # Use the full path to the 'echo' command from the coreutils package
+            ${pkgs.coreutils}/bin/echo "Generating SSH public key: $PUBLIC_KEY"
+        
+            # Use the full path to each command from its respective package
+            ${pkgs.openssh}/bin/ssh-keygen -y -f "$PRIVATE_KEY" > "$PUBLIC_KEY.tmp"
+            ${pkgs.coreutils}/bin/mv "$PUBLIC_KEY.tmp" "$PUBLIC_KEY"
+            ${pkgs.coreutils}/bin/chmod 644 "$PUBLIC_KEY"
+          fi
         '';
+      in
+      {
+        Unit = {
+          Description = "Generate SSH public key from sops private key";
+        };
+        Service = {
+          Type = "oneshot";
+          # Execute the generated script file directly.
+          ExecStart = "${script}";
+        };
+        Install = {
+          WantedBy = [ "default.target" ];
+        };
       };
-
-      Install = {
-        # This ensures the service is started when the user logs in.
-        WantedBy = [ "default.target" ];
-      };
-    };
 
 
     programs.zsh.initContent = ''

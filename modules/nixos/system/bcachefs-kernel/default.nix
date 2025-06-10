@@ -12,8 +12,8 @@ with lib;
 let
   cfg = config.${namespace}.system.bcachefs-kernel;
 
-  defaultRev = "b2913b8417fbd77537f06dd522906be6741b228c";
-  defaultHash = "sha256-/JuKSqeKIkGs+eIok+t1pvfKdpx/w7KBO3V5EoWXDUk=";  
+  defaultRev = "9e1e0b67b7b9849d83a3ca03a98043db850abc38";
+  defaultHash = "sha256-KeAHflPchLjDw+qlOYwMshB26Pt7mCFr/GgiUtu+g6Y=";  
 
   kernelSrc = pkgs.fetchFromGitHub {
     owner = "koverstreet";
