@@ -39,6 +39,13 @@ in
 
       tools = {
         alacritty = enabled;
+        git = {
+          enable = true;
+          userEmail = "6314611+ProjectInitiative@users.noreply.github.com";
+          signingKeyFormat = "ssh";
+          # TODO: Make this not hardcoded
+          signingKey = "/home/kylepzak/.ssh/id_ed25519.pub";
+        };
       };
     };
     home = {

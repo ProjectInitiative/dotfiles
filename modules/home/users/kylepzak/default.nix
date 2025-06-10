@@ -43,7 +43,8 @@ in
 
       suites = {
         terminal-env = enabled;
-        development = enabled;
+        # TODO: non-host specific items should eventually be removed
+        development.enable = false;
         backup = enabled;
         messengers = enabled;
         digital-creation = enabled;
