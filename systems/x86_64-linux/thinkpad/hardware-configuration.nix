@@ -86,7 +86,6 @@
       fsType = "bcachefs";
       options = [
         "nofail"
-        "ro"
         # "fsck"
       ];
     };
@@ -95,7 +94,6 @@
       fsType = "bcachefs";
       options = [
         "nofail"
-        "ro"
         # "fsck"
       ];
     };
