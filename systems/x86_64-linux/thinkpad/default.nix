@@ -117,6 +117,7 @@ with lib.${namespace};
     virtualbox
     vlc
     wireshark
+    mqttx
     wireshark-qt
     networkmanagerapplet
     ## temp
