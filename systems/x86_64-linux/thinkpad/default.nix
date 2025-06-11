@@ -118,6 +118,7 @@ with lib.${namespace};
     vlc
     wireshark
     mqttx
+    mqttui
     wireshark-qt
     networkmanagerapplet
     ## temp
