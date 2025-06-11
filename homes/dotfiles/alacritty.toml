@@ -9,7 +9,7 @@ XCURSOR_THEME="Adwaita"
 normal = { family = "FuraMono Nerd Font Mono", style = "Regular" }
 # bold = { family = "FuraMono Nerd Font Mono", style = "Bold" }
 # italic = { family = "FuraMono Nerd Font Mono", style = "Italic" }
-size = 10 # Adjust size as needed
+size = 12 # Adjust size as needed
 
 [terminal.shell]
 args = ["-c", "zellij attach || zellij"]
