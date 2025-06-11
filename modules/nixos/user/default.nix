@@ -42,6 +42,7 @@ in
 
     # TODO: make this user specific?
     security.sudo.wheelNeedsPassword = false;
+    security.sudo-rs.wheelNeedsPassword = false;
 
     users.users.${cfg.name} = {
       isNormalUser = true;

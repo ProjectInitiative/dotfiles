@@ -31,7 +31,7 @@ in
     };
 
     # Option to control whether this module attempts to set system/home stateVersion
-    manageExternalStateVersions = mkOption {
+    manageGlobalSettings = mkOption {
       type = types.bool;
       default = true; # <<<<< IMPORTANT: Default to false for safety
       description = ''
@@ -47,7 +47,7 @@ in
     };
   };
 
-  config = lib.mkIf cfg.manageExternalStateVersions (
+  config = lib.mkIf cfg.manageGlobalSettings (
     {
       
     }
@@ -58,6 +58,7 @@ in
     #    from Home Manager evaluations running as a NixOS module (where `osConfig` would be present).
     #    In the latter case, Home Manager shouldn't try to set the main system's stateVersion.
     // optionalAttrs (!isHomeManager) {
+      security.sudo-rs.enable = true;
       system.stateVersion = lib.mkDefault cfg.stateVersion;
     }
 

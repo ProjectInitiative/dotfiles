@@ -96,7 +96,7 @@ with lib.${namespace};
     networking = {
       tailscale = {
 
-        enable = true;
+        enable = false;
         extraArgs = [ "--accept-routes" ];
       };
     };
