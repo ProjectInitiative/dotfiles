@@ -1,11 +1,15 @@
 # /etc/nixos/hosts/lighthouse-east.nix
-{ config, pkgs, namespace, ... }:
+{ config, pkgs, namespace, modulesPath, ... }:
 
 let
   # Use /dev/sda as the root disk for Hetzner cloud instances
   rootDiskDevicePath = "/dev/sda";
 in
 {
+  imports = [
+    (modulesPath + "/profiles/qemu-guest.nix")
+  ];
+
 
   # Set hostname
   networking.hostName = "lighthouse-east";
@@ -14,6 +18,7 @@ in
   ${namespace}.hosts.lighthouse = {
     enable = true;
     role = "server"; # This is the master node
+    k8sServerAddr = "https://100.94.107.39:6443";
   };
 
   # Disko configuration for a single disk with LVM
@@ -24,6 +29,10 @@ in
       content = {
         type = "gpt";
         partitions = {
+          boot = {
+            size = "1M";
+            type = "EF02"; # BIOS boot partition
+          };
           # EFI System Partition (ESP) for booting
           ESP = {
             name = "ESP";
@@ -69,5 +78,5 @@ in
     efiSupport = true;
     device = "nodev"; # Required for disko
   };
-  boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.efi.canTouchEfiVariables = false;
 }

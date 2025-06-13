@@ -11,6 +11,7 @@ in
     enable = mkBoolOpt false "Whether to enable base Hetzner k8s node configuration.";
     role = mkOpt (types.enum [ "server" "agent" ]) "agent" "The role of the k8s node.";
     k8sServerAddr = mkOpt types.str "" "Address of the server node to connect to (for agents).";
+    isFirstK8sNode = mkBoolOpt false "Whether node is the first in the cluster";
   };
 
   config = mkIf cfg.enable {
@@ -51,7 +52,7 @@ in
     projectinitiative.services.k8s = {
       enable = true;
       tokenFile = config.sops.secrets.k8s_token.path;
-      isFirstNode = (cfg.role == "server");
+      isFirstNode = cfg.isFirstK8sNode;
       serverAddr = if cfg.role == "agent" then cfg.k8sServerAddr else "";
       role = cfg.role;
       networkType = "standard";
