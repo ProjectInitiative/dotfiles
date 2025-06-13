@@ -15,6 +15,8 @@ keys:
     - &ssh_capstan1 age1katkdmh05xy9n5pmrkaznw0e5j4p96js88dzxy4l0zt06pfa4qzs0gsua5
     - &ssh_capstan2 age1daxggyz58h525ww5clnwwuwxu7tf5mlz8as8n7cy8dhv74u4qcqq0jagrp
     - &ssh_capstan3 age1wwtevxuhkfh6nyl23axkx0s3pnywrw95tj85qrg03fhh6jkmf5nsfknx09
+  - &lighthouses:
+    - &ssh_lighthouse_east age1k393g9cgc0xa88ej05tsppcktrrgsp6efp70hffu3zmzhmkwr4jsgs3lg3
 
 creation_rules:
   - path_regex: sensitive/[^/]+\.yaml$
@@ -35,6 +37,7 @@ creation_rules:
           - *ssh_capstan1
           - *ssh_capstan2
           - *ssh_capstan3
+          - *ssh_lighthouse_east
           - *stormjib
           - *cargohold
           - *dinghy
@@ -64,3 +67,11 @@ creation_rules:
           - *ssh_capstan2
           - *ssh_capstan3
           - *test_vm
+
+  - path_regex: lighthouse/[^/]+\.yaml$
+    # - path: lighthouse/secrets.enc.yaml
+    key_groups:
+      - age:
+          - *ssh_kylepzak
+          - *ssh_thinkpad
+          - *ssh_lighthouse_east

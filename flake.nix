@@ -350,6 +350,7 @@
           "dinghy"
           "capstan-test"
           "bcachefs-tester"
+          "cargohold"
         ];
       };
 

@@ -213,6 +213,7 @@ in
 
             # Security
             "--secrets-encryption"
+            "--disable=traefik"
           ];
           kubeVip = {
             enable = cfg.isFirstK8sNode;
