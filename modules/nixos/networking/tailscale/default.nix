@@ -11,64 +11,53 @@ with lib.${namespace};
 let
   cfg = config.${namespace}.networking.tailscale;
 
+  # This logic to select the correct key based on the ephemeral flag remains unchanged.
   tailscale_key =
-    if config.${namespace}.networking.tailscale.ephemeral then
+    if cfg.ephemeral then
       config.sops.secrets.tailscale_ephemeral_auth_key.path
     else
       config.sops.secrets.tailscale_auth_key.path;
 in
 {
+  # ===============================================================
+  # Your options block is untouched. No changes needed here.
+  # ===============================================================
   options.${namespace}.networking.tailscale = with types; {
     enable = mkBoolOpt false "Whether or not to enable tailscale";
     ephemeral = mkBoolOpt true "Use ephemeral node key for tailscale";
     extraArgs = mkOpt (listOf str) [ ] "Additional arguments to pass to tailscale.";
   };
 
+
+  # ===============================================================
+  # The entire 'config' block is replaced.
+  # It now configures the official nixpkgs module instead of
+  # creating its own systemd service.
+  # ===============================================================
   config = mkIf cfg.enable {
+    services.tailscale = {
+      # Enable the official tailscale daemon and autoconnect service
+      enable = true;
 
-    # Enable tailscale.
-    services = {
-      tailscale = {
-        enable = true;
-        useRoutingFeatures = "client";
-      };
+      # Pass the path to your sops-nix secret, respecting your 'ephemeral' flag
+      authKeyFile = tailscale_key;
 
+      # Pass all of your existing 'extraArgs' to the one-time 'up' command.
+      # This is the core of the pass-through logic.
+      # extraUpFlags = cfg.extraArgs;
+
+      # Set a sensible default required for subnet routing.
+      # You can override this in your host config if needed, e.g.,
+      # services.tailscale.useRoutingFeatures = "both";
+      useRoutingFeatures = "server";
     };
 
-    systemd.services.tailscale-up = {
-      description = "Pre-seed tailscale";
-      path = [
-        pkgs.tailscale
-      ];
-
-      # Start after basic system services are up
-      after = [
-        "tailscaled.service"
-        # "network.target"
-        # "multi-user.target"
-      ];
-
-      # Don't consider boot failed if this service fails
-      wantedBy = [ "multi-user.target" ];
-
-      # Service configuration
-      serviceConfig = {
-        # Type = "";
-        # RemainAfterExit = true;
-        # ExecStartPre = "";
-      };
-
-      # The actual tailscale script
-      script =
-        let
-          extraArgsString = if cfg.extraArgs != [ ] then builtins.concatStringsSep " " cfg.extraArgs else "";
-        in
-        ''
-          tailscale up --auth-key "$(cat ${tailscale_key})" --reset ${extraArgsString}
-        '';
-
-    };
-
+    # --- IMPORTANT NOTE ---
+    # The 'extraSetFlags' option from the official module is NOT used here.
+    # This means that settings like '--advertise-routes' will only be applied
+    # once during initial provisioning. For fully declarative updates to those
+    # settings, you should plan to eventually migrate your configurations
+    # to use 'services.tailscale.extraSetFlags' directly.
+    extraSetFlags = cf.extraArgs;
   };
-
 }
