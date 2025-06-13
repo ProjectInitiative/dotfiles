@@ -10,7 +10,7 @@ in
   options.${namespace}.hosts.lighthouse = {
     enable = mkBoolOpt false "Whether to enable base Hetzner k8s node configuration.";
     role = mkOpt (types.enum [ "server" "agent" ]) "agent" "The role of the k8s node.";
-    k8sServerAddr = mkOpt types.str "" "Address of the server node to connect to (for agents).";
+    k8sServerAddr = mkOpt types.str "" "Address of the server node to connect to.";
     isFirstK8sNode = mkBoolOpt false "Whether node is the first in the cluster";
   };
 
@@ -30,9 +30,8 @@ in
     ];
 
     # Networking -- Hetzner provides IP via DHCP
-    networking.useDHCP = true;
+    networking.useNetworkd = true;
     networking.networkmanager.enable = false;
-    systemd.network.enable = true; # Use systemd-networkd
 
     # # Firewall rules for k3s
     # networking.firewall.allowedTCPPorts = [
@@ -49,21 +48,34 @@ in
     # ];
 
     # Kubernetes (k3s) configuration
-    projectinitiative.services.k8s = {
-      enable = true;
-      tokenFile = config.sops.secrets.k8s_token.path;
-      isFirstNode = cfg.isFirstK8sNode;
-      serverAddr = if cfg.role == "agent" then cfg.k8sServerAddr else "";
-      role = cfg.role;
-      networkType = "standard";
-      extraArgs = [
-          # TLS configuration
-          "--tls-san=k8s.projectinitiative.io"
+    projectinitiative = {
+      networking = {
+        tailscale = {
+            enable = true;
+            ephemeral = false;
+            extraArgs = [
+              "--accept-dns=false"
+            ];
+          };
+        };
+      services = {
+        k8s = {
+          enable = true;
+          tokenFile = sops.secrets.k8s_token.path;
+          isFirstNode = cfg.isFirstK8sNode;
+          serverAddr = cfg.k8sServerAddr;
+          role = cfg.role;
+          networkType = "tailscale";
+          extraArgs = [
+              # TLS configuration
+              "--tls-san=k8s.projectinitiative.io"
 
-          # Security
-          "--secrets-encryption"
-          "--disable=traefik"
-      ];
+              # Security
+              "--secrets-encryption"
+              "--disable=traefik"
+          ];
+        };
+      };
     };
 
     # Enable and configure SSH, restricting access to public keys only

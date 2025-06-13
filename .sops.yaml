@@ -17,9 +17,17 @@ keys:
     - &ssh_capstan3 age1wwtevxuhkfh6nyl23axkx0s3pnywrw95tj85qrg03fhh6jkmf5nsfknx09
   - &lighthouses:
     - &ssh_lighthouse_east age1k393g9cgc0xa88ej05tsppcktrrgsp6efp70hffu3zmzhmkwr4jsgs3lg3
+    - &ssh_lighthouse_west age1ex6z7fus35kvm42annhs9spzcmlccn2p7l3ugqdrt6wjee4evdqs9evvm6
 
 creation_rules:
   - path_regex: sensitive/[^/]+\.yaml$
+    key_groups:
+      - age:
+          - *ssh_kylepzak
+          - *ssh_thinkpad
+          - *sensitive_not_secret
+
+  - path_regex: homes/dotfiles/config$
     key_groups:
       - age:
           - *ssh_kylepzak
@@ -38,6 +46,7 @@ creation_rules:
           - *ssh_capstan2
           - *ssh_capstan3
           - *ssh_lighthouse_east
+          - *ssh_lighthouse_west
           - *stormjib
           - *cargohold
           - *dinghy
@@ -75,3 +84,4 @@ creation_rules:
           - *ssh_kylepzak
           - *ssh_thinkpad
           - *ssh_lighthouse_east
+          - *ssh_lighthouse_west
