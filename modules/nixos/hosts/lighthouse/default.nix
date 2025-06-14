@@ -59,6 +59,9 @@ in
           };
         };
       services = {
+
+        eternal-terminal = enabled;
+
         k8s = {
           enable = true;
           tokenFile = sops.secrets.k8s_token.path;

@@ -50,7 +50,6 @@ in
       # You can override this in your host config if needed, e.g.,
       # services.tailscale.useRoutingFeatures = "both";
       useRoutingFeatures = "server";
-    };
 
     # --- IMPORTANT NOTE ---
     # The 'extraSetFlags' option from the official module is NOT used here.
@@ -58,6 +57,9 @@ in
     # once during initial provisioning. For fully declarative updates to those
     # settings, you should plan to eventually migrate your configurations
     # to use 'services.tailscale.extraSetFlags' directly.
-    extraSetFlags = cf.extraArgs;
+    extraSetFlags = cfg.extraArgs;
+
+    };
+
   };
 }

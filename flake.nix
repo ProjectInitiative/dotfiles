@@ -351,6 +351,7 @@
           "capstan-test"
           "bcachefs-tester"
           "cargohold"
+          "lightship-aus"
         ];
       };
 
