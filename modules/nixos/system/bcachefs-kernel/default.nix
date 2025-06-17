@@ -12,8 +12,8 @@ with lib;
 let
   cfg = config.${namespace}.system.bcachefs-kernel;
 
-  defaultRev = "5824e70e1fdd65509b54523f62b42816f8d2ed54";
-  defaultHash = "sha256-745Fjf87Beg0XlpgtxW278KVi+kfhExAplqulSzJO/8=";  
+  defaultRev = "3adea027e313a2470e92c298e915e3666b8e9083";
+  defaultHash = "sha256-/49gVNYvqDFMB2VMWW59uGQOuSElzIrZ6oXCzzahR6g=";  
 
   kernelSrc = pkgs.fetchFromGitHub {
     owner = "koverstreet";
@@ -88,6 +88,15 @@ let
             BCACHEFS_FS = yes;
             BCACHEFS_QUOTA = yes;
             BCACHEFS_POSIX_ACL = yes;
+
+            # disabled for now
+            IP_DCCP_CCID3 = no;
+            # Also disable the options that caused warnings:
+            REISERFS_FS_POSIX_ACL = no;
+            REISERFS_FS_SECURITY = no;
+            REISERFS_FS_XATTR = no;
+            CRC32_SELFTEST = no;
+            CRYPTO_TEST = no;
           }
           // (
             if cfg.debug then
