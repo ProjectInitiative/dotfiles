@@ -94,11 +94,11 @@ with lib.${namespace};
     };
     # override
     networking = {
-      tailscale = {
+      # tailscale = {
 
-        enable = false;
-        extraArgs = [ "--accept-routes" ];
-      };
+      #   enable = false;
+      #   extraArgs = [ "--accept-routes" ];
+      # };
     };
 
   };
@@ -128,6 +128,7 @@ with lib.${namespace};
     usbutils
 
     ani-cli
+    obs-studio
   ];
 
   # Enable fingerprint reader

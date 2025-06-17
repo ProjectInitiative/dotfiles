@@ -99,7 +99,6 @@ in
   config = mkIf cfg.enable {
     systemd.services.server-health-monitor = {
       description = "Server Health Monitor";
-      wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
         ExecStart = ''

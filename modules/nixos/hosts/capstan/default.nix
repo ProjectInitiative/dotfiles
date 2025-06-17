@@ -255,6 +255,13 @@ in
           ephemeral = false;
           extraArgs = [
             "--accept-dns=false"
+            # "--accept-routes=true"
+            # "--advertise-routes=10.0.0.0/24"
+            # "--snat-subnet-routes=false"
+            "--accept-dns=false"
+            "--accept-routes=false"
+            "--advertise-routes="
+            "--snat-subnet-routes=true"
           ];
         };
       };
