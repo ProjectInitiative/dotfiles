@@ -88,15 +88,6 @@ let
             BCACHEFS_FS = yes;
             BCACHEFS_QUOTA = yes;
             BCACHEFS_POSIX_ACL = yes;
-
-            # disabled for now
-            IP_DCCP_CCID3 = no;
-            # Also disable the options that caused warnings:
-            REISERFS_FS_POSIX_ACL = no;
-            REISERFS_FS_SECURITY = no;
-            REISERFS_FS_XATTR = no;
-            CRC32_SELFTEST = no;
-            CRYPTO_TEST = no;
           }
           // (
             if cfg.debug then
