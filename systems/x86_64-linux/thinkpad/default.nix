@@ -129,6 +129,8 @@ with lib.${namespace};
 
     ani-cli
     obs-studio
+
+    pkgs.${namespace}.mcp-superassistant-proxy-runner
   ];
 
   # Enable fingerprint reader
