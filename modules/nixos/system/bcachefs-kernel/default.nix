@@ -12,8 +12,8 @@ with lib;
 let
   cfg = config.${namespace}.system.bcachefs-kernel;
 
-  defaultRev = "9e1e0b67b7b9849d83a3ca03a98043db850abc38";
-  defaultHash = "sha256-KeAHflPchLjDw+qlOYwMshB26Pt7mCFr/GgiUtu+g6Y=";  
+  defaultRev = "0bc99dfd9335d1a9b7252098690f626b34493561";
+  defaultHash = "sha256-eqCMRZEPI0cxSEYhO8RGFLT3Jz1tkrHM52xM3fG3ur4=";  
 
   kernelSrc = pkgs.fetchFromGitHub {
     owner = "koverstreet";
@@ -109,6 +109,19 @@ let
 
 in
 {
+
+
+###############TODO################
+# REMOVE AFTER MAINLINE MERGED
+  imports = [
+    ./bcachefs.nix
+  ];
+
+  # Disable the original, conflicting bcachefs module from nixpkgs
+  disabledModules = [ "tasks/filesystems/bcachefs.nix" ];
+
+###############TODO################
+  
   options.${namespace}.system.bcachefs-kernel = {
     enable = mkEnableOption "custom bcachefs kernel with read_fua_test support";
 
@@ -139,5 +152,19 @@ in
       bcachefs-tools
       linuxPackages_custom_bcachefs.perf
     ];
+
+###############TODO################
+# REMOVE AFTER MAINLINE MERGED
+
+    # This part is still useful to ensure the base modules are declared,
+    # though the underlying nixpkgs module also adds them.
+    boot.initrd.availableKernelModules = [ "bcachefs" "sha256" ];
+
+    boot.initrd.systemd.extraBin = {
+      "bcachefs" = "${pkgs.bcachefs-tools}/bin/bcachefs";
+    };
+
+###################################
+    
   };
 }
