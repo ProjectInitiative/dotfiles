@@ -109,19 +109,6 @@ let
 
 in
 {
-
-
-###############TODO################
-# REMOVE AFTER MAINLINE MERGED
-  imports = [
-    ./bcachefs.nix
-  ];
-
-  # Disable the original, conflicting bcachefs module from nixpkgs
-  disabledModules = [ "tasks/filesystems/bcachefs.nix" ];
-
-###############TODO################
-  
   options.${namespace}.system.bcachefs-kernel = {
     enable = mkEnableOption "custom bcachefs kernel with read_fua_test support";
 
@@ -153,18 +140,5 @@ in
       linuxPackages_custom_bcachefs.perf
     ];
 
-###############TODO################
-# REMOVE AFTER MAINLINE MERGED
-
-    # This part is still useful to ensure the base modules are declared,
-    # though the underlying nixpkgs module also adds them.
-    boot.initrd.availableKernelModules = [ "bcachefs" "sha256" ];
-
-    boot.initrd.systemd.extraBin = {
-      "bcachefs" = "${pkgs.bcachefs-tools}/bin/bcachefs";
-    };
-
-###################################
-    
   };
 }
