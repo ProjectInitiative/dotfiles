@@ -1,47 +1,50 @@
-{ lib, buildNpmPackage, fetchFromGitHub, nodejs, esbuild, typescript, git }:
+{
+  lib,
+  buildNpmPackage,
+  fetchFromGitHub,
+  nix-update-script,
+}:
 
-buildNpmPackage {
-  pname = "@google/gemini-cli";
+let
+  pname = "gemini-cli";
   version = "0.1.1";
+in
+buildNpmPackage {
+  inherit pname version;
 
   src = fetchFromGitHub {
     owner = "google-gemini";
     repo = "gemini-cli";
-    rev = "af4dfd9327950d99cc2740b3cdd91e3186258a7a";
-    hash = "sha256-iUTdkaPVhC8DWFdzlhu7mGFRZnLLgL4eNrvmnveWzms=";
+    # Currently there's no release tag, use the `package-lock.json` to see
+    # what's the latest version
+    rev = "21cfe9f6801f286dda6d51d2886e27bd67bd5fa4";
+    hash = "sha256-Dlh1B1+rGVwA+JjLLjNppa/4Ms7FXMHQW3SY9JIRlcs=";
   };
 
   npmDepsHash = "sha256-2zyMrVykKtN+1ePQko9MVhm79p7Xbo9q0+r/P22buQA=";
 
-  nativeBuildInputs = [
-    nodejs
-    esbuild
-    typescript
-    git
-  ];
+  fixupPhase = ''
+    runHook preFixup
 
-  prepack = ''
-    mkdir -p packages/core/src
-    echo "export const GIT_COMMIT_INFO = { hash: 'unknown', date: 'unknown' };" > packages/core/src/git-commit-info.js
+    # Remove broken symlinks
+    find $out -type l -exec test ! -e {} \; -delete 2>/dev/null || true
+
+    mkdir -p "$out/bin"
+    ln -sf "$out/lib/node_modules/@google/gemini-cli/bundle/gemini.js" "$out/bin/gemini"
+
+    patchShebangs "$out/bin" "$out/lib/node_modules/@google/gemini-cli/bundle/"
+
+    runHook postFixup
   '';
 
-  postInstall = ''
-    # The path to the node_modules where the main package is installed
-    target_node_modules=$out/lib/node_modules/@google/gemini-cli/node_modules
+  passthru.updateScript = nix-update-script { };
 
-    # Remove the broken symlinks created by npm workspaces
-    rm -f $target_node_modules/@google/gemini-cli
-    rm -f $target_node_modules/@google/gemini-cli-core
-
-    # Copy the actual built workspace packages into node_modules
-    cp -r ./packages/cli $target_node_modules/@google/gemini-cli
-    cp -r ./packages/core $target_node_modules/@google/gemini-cli-core
-  '';
-
-  meta = with lib; {
-    description = "An open-source AI agent that brings the power of Gemini directly into your terminal.";
+  meta = {
+    description = "AI agent that brings the power of Gemini directly into your terminal";
     homepage = "https://github.com/google-gemini/gemini-cli";
-    license = licenses.asl20;
-    maintainers = with maintainers; [ projectinitiative ];
+    license = lib.licenses.asl20;
+    maintainers = with lib.maintainers; [ donteatoreo ];
+    platforms = lib.platforms.all;
+    mainProgram = "gemini";
   };
 }
