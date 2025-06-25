@@ -1,6 +1,6 @@
 { lib, buildNpmPackage, fetchFromGitHub, nodejs, esbuild, typescript, git }:
 
-buildNpmPackage rec {
+buildNpmPackage {
   pname = "@google/gemini-cli";
   version = "0.1.1";
 
@@ -11,10 +11,8 @@ buildNpmPackage rec {
     hash = "sha256-iUTdkaPVhC8DWFdzlhu7mGFRZnLLgL4eNrvmnveWzms=";
   };
 
-  npmDepsHash = "sha256-2zyMrVykKtN+1ePQko9MVhm79p7Xbo9q0+r/P22buQA="; # placeholder
+  npmDepsHash = "sha256-2zyMrVykKtN+1ePQko9MVhm79p7Xbo9q0+r/P22buQA=";
 
-  # The build process for this package uses esbuild and other tools.
-  # We list them here as nativeBuildInputs.
   nativeBuildInputs = [
     nodejs
     esbuild
@@ -22,14 +20,6 @@ buildNpmPackage rec {
     git
   ];
 
-  # The `prepare` script in package.json runs `npm run bundle`,
-  # which in turn runs esbuild. We will need to make sure the build
-  # process has access to the required executables.
-  # The `buildNpmPackage` function handles this for us.
-
-  # The `generate` script creates a git-commit-info.js file. We can
-  # either replicate that logic in Nix or create a dummy file.
-  # For simplicity, we create a dummy file.
   prepack = ''
     mkdir -p packages/core/src
     echo "export const GIT_COMMIT_INFO = { hash: 'unknown', date: 'unknown' };" > packages/core/src/git-commit-info.js
@@ -51,7 +41,7 @@ buildNpmPackage rec {
   meta = with lib; {
     description = "An open-source AI agent that brings the power of Gemini directly into your terminal.";
     homepage = "https://github.com/google-gemini/gemini-cli";
-    license = licenses.asl20; # Apache 2.0 License
-    maintainers = with maintainers; [ ];
+    license = licenses.asl20;
+    maintainers = with maintainers; [ projectinitiative ];
   };
 }
