@@ -46,7 +46,7 @@ with lib.${namespace};
     encrypted.nix-signing = enabled;
 
     system = {
-      displaylink = enabled; 
+      displaylink.enable = false; 
       nix-config = enabled;
 
       bcachefs-kernel = {
