@@ -7,7 +7,7 @@
 
 let
   pname = "gemini-cli";
-  version = "0.1.1";
+  version = "0.1.5";
 in
 buildNpmPackage {
   inherit pname version;
@@ -17,11 +17,11 @@ buildNpmPackage {
     repo = "gemini-cli";
     # Currently there's no release tag, use the `package-lock.json` to see
     # what's the latest version
-    rev = "21cfe9f6801f286dda6d51d2886e27bd67bd5fa4";
-    hash = "sha256-Dlh1B1+rGVwA+JjLLjNppa/4Ms7FXMHQW3SY9JIRlcs=";
+    rev = "121bba346411cce23e350b833dc5857ea2239f2f";
+    hash = "sha256-2w28N6Fhm6k3wdTYtKH4uLPBIOdELd/aRFDs8UMWMmU=";
   };
 
-  npmDepsHash = "sha256-2zyMrVykKtN+1ePQko9MVhm79p7Xbo9q0+r/P22buQA=";
+  npmDepsHash = "sha256-yoUAOo8OwUWG0gyI5AdwfRFzSZvSCd3HYzzpJRvdbiM=";
 
   fixupPhase = ''
     runHook preFixup

@@ -129,6 +129,10 @@ with lib.${namespace};
     multipath-tools
     usbutils
 
+    wine64
+    winetricks
+    wineWowPackages.waylandFull
+
     ani-cli
     obs-studio
 
