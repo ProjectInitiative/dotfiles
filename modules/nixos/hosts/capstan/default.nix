@@ -214,6 +214,7 @@ in
             # Security
             "--secrets-encryption"
             "--disable=traefik"
+            "--disable local-storage"
           ];
           kubeVip = {
             enable = cfg.isFirstK8sNode;

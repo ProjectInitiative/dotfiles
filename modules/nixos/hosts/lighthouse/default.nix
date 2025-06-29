@@ -20,6 +20,12 @@ in
       sopsFile = ./secrets.enc.yaml; # Ensure this path is correct
     };
 
+    programs = {
+      atop = {
+        enable = true;
+      };
+    };
+    
     # Basic system packages
     environment.systemPackages = with pkgs; [
       vim
@@ -83,6 +89,7 @@ in
               # Security
               "--secrets-encryption"
               "--disable=traefik"
+              "--disable local-storage"
           ];
         };
       };

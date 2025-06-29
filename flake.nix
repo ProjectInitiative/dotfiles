@@ -350,7 +350,7 @@
           "dinghy"
           "capstan-test"
           "bcachefs-tester"
-          # "cargohold"
+          "cargohold"
           "lightship-aus"
         ];
       };

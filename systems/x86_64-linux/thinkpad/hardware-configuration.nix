@@ -77,11 +77,11 @@
       device = "/dev/disk/by-partuuid/05399427-3ed0-4da7-bd08-740ddb6ce486";
       fsType = "vfat";
     };
-    "/home/kylepzak" = {
+    "/home/kylepzak-ext4" = {
       device = "/dev/mapper/data-home_kylepzak_ext4";
       fsType = "ext4";
     };
-    "/home/kylepzak-bcachefs" = {
+    "/home/kylepzak" = {
       device = "/dev/mapper/data-home_kylepzak";
       fsType = "bcachefs";
       options = [

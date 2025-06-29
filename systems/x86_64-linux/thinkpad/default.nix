@@ -51,8 +51,8 @@ with lib.${namespace};
 
       bcachefs-kernel = {
         enable = true;
-        # rev = "9e1e0b67b7b9849d83a3ca03a98043db850abc38";
-        # hash = "sha256-KeAHflPchLjDw+qlOYwMshB26Pt7mCFr/GgiUtu+g6Y=";  
+        rev = "a65b4b6558eeddbc1dff3a5f24f46342528396ce";
+        hash = "sha256-23mgtJuMr49fzxu5/b/QipQ/Q9mW9OyukdKtwi7dDNY=";
         # rev = "";
         # hash = "";
         debug = true;
