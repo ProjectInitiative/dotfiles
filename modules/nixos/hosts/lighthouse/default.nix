@@ -5,6 +5,15 @@ with lib.${namespace};
 let
   cfg = config.${namespace}.hosts.lighthouse;
   sops = config.sops;
+
+  # This reads your local file and writes it to a new, independent
+  # file in the Nix store. The `k3sEnvFile` variable will hold the
+  # resulting store path (e.g., /nix/store/<hash>-k3s-lighthouse-env).
+  k3sEnvFile = pkgs.writeTextFile {
+    name = "k3s-lighthouse-env";
+    text = builtins.readFile ./k3s-lighthouse-env;
+  };
+
 in
 {
   options.${namespace}.hosts.lighthouse = {
@@ -82,7 +91,7 @@ in
           serverAddr = cfg.k8sServerAddr;
           role = cfg.role;
           networkType = "tailscale";
-          environmentFile = ./k3s-lighthouse-env;
+          environmentFile = k3sEnvFile;
           extraArgs = [
               # TLS configuration
               "--tls-san=k8s.projectinitiative.io"
