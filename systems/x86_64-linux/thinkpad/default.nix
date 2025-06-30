@@ -137,6 +137,7 @@ with lib.${namespace};
     obs-studio
 
     pkgs.${namespace}.mcp-proxy-runner
+    # gst_all_1.gst-plugins-rs 
   ];
 
   # Enable fingerprint reader

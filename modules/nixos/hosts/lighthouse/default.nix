@@ -82,6 +82,7 @@ in
           serverAddr = cfg.k8sServerAddr;
           role = cfg.role;
           networkType = "tailscale";
+          environmentFile = ./k3s-lighthouse-env;
           extraArgs = [
               # TLS configuration
               "--tls-san=k8s.projectinitiative.io"
