@@ -113,12 +113,12 @@ in
 
 ###############TODO################
 # REMOVE AFTER MAINLINE MERGED
-  imports = [
-    ./bcachefs.nix
-  ];
+  # imports = [
+  #   ./bcachefs.nix
+  # ];
 
   # Disable the original, conflicting bcachefs module from nixpkgs
-  disabledModules = [ "tasks/filesystems/bcachefs.nix" ];
+  # disabledModules = [ "tasks/filesystems/bcachefs.nix" ];
 
 ###############TODO################
   
@@ -158,11 +158,11 @@ in
 
     # This part is still useful to ensure the base modules are declared,
     # though the underlying nixpkgs module also adds them.
-    boot.initrd.availableKernelModules = [ "bcachefs" "sha256" ];
+    # boot.initrd.availableKernelModules = [ "bcachefs" "sha256" ];
 
-    boot.initrd.systemd.extraBin = {
-      "bcachefs" = "${pkgs.bcachefs-tools}/bin/bcachefs";
-    };
+    # boot.initrd.systemd.extraBin = {
+    #   "bcachefs" = "${pkgs.bcachefs-tools}/bin/bcachefs";
+    # };
 
 ###################################
     
