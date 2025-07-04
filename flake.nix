@@ -139,9 +139,14 @@
   outputs =
     inputs:
     let
+      sourcePath = builtins.path {
+        path = ./.;
+        name = "projectinitiative-source";
+      };
+
       lib = inputs.snowfall-lib.mkLib {
         inherit inputs;
-        src = ./.;
+        src = sourcePath;
 
         snowfall = {
           namespace = "projectinitiative";
@@ -153,7 +158,7 @@
         };
       };
 
-      mySrc = ./.;
+      mySrc = sourcePath;
 
     in
     lib.mkFlake {
