@@ -34,10 +34,11 @@ in
         nh
         nix-output-monitor
         nvd
+        sqlite
       ];
 
       sessionVariables = {
-        FLAKE = "${config.${namespace}.user.home}/dotfiles";
+        NH_FLAKE = "${config.${namespace}.user.home}/dotfiles";
       };
 
       shellAliases = {

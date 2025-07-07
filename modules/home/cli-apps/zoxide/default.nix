@@ -22,6 +22,7 @@ in
       packages = with pkgs; [
         zoxide
         fzf
+        zi
       ];
 
       shellAliases = {
@@ -30,7 +31,7 @@ in
     };
 
     # Add shell-specific initialization
-    programs.zsh.initExtra = mkIf config.programs.zsh.enable ''
+    programs.zsh.initContent = mkIf config.programs.zsh.enable ''
       eval "$(zoxide init zsh)"
     '';
 

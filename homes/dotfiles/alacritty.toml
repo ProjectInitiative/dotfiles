@@ -1,0 +1,24 @@
+[general]
+live_config_reload = true
+
+[env]
+TERM = "xterm-256color"
+XCURSOR_THEME="Adwaita"
+
+[font]
+normal = { family = "FuraMono Nerd Font Mono", style = "Regular" }
+# bold = { family = "FuraMono Nerd Font Mono", style = "Bold" }
+# italic = { family = "FuraMono Nerd Font Mono", style = "Italic" }
+size = 12 # Adjust size as needed
+
+[terminal.shell]
+args = ["-c", "zellij attach || zellij"]
+program = "zsh"
+
+[window]
+dynamic_padding = false
+opacity = 0.85
+
+[window.padding]
+x = 10
+y = 10

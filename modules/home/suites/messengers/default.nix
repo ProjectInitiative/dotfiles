@@ -25,7 +25,7 @@ in
         with pkgs;
         mkIf isGraphical [
           element-desktop
-          signal-desktop
+          # signal-desktop
           telegram-desktop
           thunderbird
         ];

@@ -1,0 +1,541 @@
+layout {
+    cwd "/"
+    tab name="dotfiles" focus=true hide_floating_panes=true {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        pane split_direction="vertical" {
+            pane command="hx" cwd="/home/kylepzak/dotfiles" size="45%" {
+                start_suspended true
+            }
+            pane size="55%" {
+                pane command="zellij" cwd="home/kylepzak/dotfiles" focus=true size="75%" {
+                    args "action" "dump-layout"
+                    start_suspended true
+                }
+                pane command="ssh" cwd="/home/kylepzak/dotfiles" size="25%" {
+                    args "pikvm"
+                    start_suspended true
+                }
+            }
+        }
+        pane size=1 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+        floating_panes {
+            pane command="btop" cwd="/home/kylepzak/dotfiles" {
+                start_suspended true
+                height 24
+                width 105
+                x 28
+                y 5
+            }
+        }
+    }
+    tab name="homelab" hide_floating_panes=true {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        pane command="/home/kylepzak/.nix-profile/bin/hx" cwd="/home/kylepzak/home/kylepzak/homelab" {
+            start_suspended true
+        }
+        pane size=1 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+    }
+    tab name="console" hide_floating_panes=true {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        pane split_direction="vertical" {
+            pane command="sudo" cwd="/run/media/kylepzak" size="50%" {
+                args "minicom" "-w" "-t" "xterm" "-l" "-R" "UTF-8" "-D" "/dev/ttyUSB0" "-b" "1500000"
+                start_suspended true
+            }
+            pane size="50%" {
+                pane command="/nix/store/58z6jiblxaisvz9l2158my330pgf7299-yazi-0.3.3/bin/yazi" cwd="/home/kylepzak/home/kylepzak/Downloads/E52C" size="50%" {
+                    args "/run/media/kylepzak/FIRMWARE"
+                    start_suspended true
+                }
+                pane command="/home/kylepzak/.nix-profile/bin/hx" cwd="/home/kylepzak" size="50%" {
+                    args "cmd.txt"
+                    start_suspended true
+                }
+            }
+        }
+        pane size=1 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+    }
+    tab name="radxa" hide_floating_panes=true {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        pane split_direction="vertical" {
+            pane command="hx" cwd="/home/kylepzak/dotfiles" size="55%" {
+                start_suspended true
+            }
+            pane size="45%" stacked=true {
+                pane command="bash" cwd="/home/kylepzak" {
+                    args "--rcfile" "/tmp/nix-shell-19316-0/rc"
+                    start_suspended true
+                }
+                pane cwd="/home/kylepzak/tmp/u-boot/tools"
+                pane command="bash" cwd="/home/kylepzak/dotfiles" {
+                    args "--rcfile" "/tmp/nix-shell-234242-0/rc"
+                    start_suspended true
+                }
+                pane cwd="/home/kylepzak/dotfiles" expanded=true
+            }
+        }
+        pane size=1 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+        floating_panes {
+            pane cwd="/" {
+                height 24
+                width 105
+                x 28
+                y 1
+            }
+        }
+    }
+    tab name="ai-middleware" hide_floating_panes=true {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        pane split_direction="vertical" {
+            pane command="/home/kylepzak/.nix-profile/bin/hx" cwd="/home/kylepzak/home/kylepzak/development/ai-middleware" size="50%" {
+                start_suspended true
+            }
+            pane size="50%" {
+                pane cwd="/home/kylepzak/home/kylepzak/development/ai-middleware" size="50%"
+                pane cwd="/home/kylepzak/home/kylepzak/development/ai-middleware" size="50%"
+            }
+        }
+        pane size=1 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+        floating_panes {
+            pane cwd="/home/kylepzak" {
+                height 24
+                width 105
+                x 23
+                y 1
+            }
+        }
+    }
+    tab name="cargohold" hide_floating_panes=true {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        pane split_direction="vertical" {
+            pane command="et" cwd="/home/kylepzak" size="50%" {
+                args "cargohold"
+                start_suspended true
+            }
+            pane cwd="/home/kylepzak" size="50%"
+        }
+        pane size=1 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+    }
+    tab name="capstan2" hide_floating_panes=true {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        pane command="et" cwd="/home/kylepzak/home/kylepzak/dotfiles" {
+            args "capstan2"
+            start_suspended true
+        }
+        pane size=1 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+    }
+    tab name="capstan3" hide_floating_panes=true {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        pane command="et" cwd="/home/kylepzak/home/kylepzak/dotfiles" {
+            args "capstan3"
+            start_suspended true
+        }
+        pane size=1 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+    }
+    tab name="Tab #13" hide_floating_panes=true {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        pane split_direction="vertical" {
+            pane cwd="/home/kylepzak/home/kylepzak/dotfiles" size="50%"
+            pane cwd="/home/kylepzak" size="50%"
+        }
+        pane size=1 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+    }
+    tab name="Tab #15" hide_floating_panes=true {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        pane split_direction="vertical" {
+            pane command="bash" cwd="/home/kylepzak/tmp/flattened-rockchip" size="50%" {
+                args "--rcfile" "/tmp/nix-shell-4019332-0/rc"
+                start_suspended true
+            }
+            pane size="50%" {
+                pane command="/home/kylepzak/.nix-profile/bin/hx" cwd="/home/kylepzak/tmp/flattened-rockchip" size="50%" {
+                    start_suspended true
+                }
+                pane cwd="/home/kylepzak/tmp/flattened-rockchip" size="50%"
+            }
+        }
+        pane size=1 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+        floating_panes {
+            pane cwd="/home/kylepzak" {
+                height 30
+                width 119
+                x 60
+                y 16
+            }
+        }
+    }
+    tab name="Tab #17" hide_floating_panes=true {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        pane split_direction="vertical" {
+            pane command="/home/kylepzak/.nix-profile/bin/hx" cwd="/home/kylepzak/home/kylepzak/development/build-software/rockpi-quad" size="50%" {
+                start_suspended true
+            }
+            pane command="/nix/store/9azvhc19izxbymrq6n2c5bdg4y9zg71s-zellij-0.42.1/bin/zellij" cwd="/home/kylepzak/home/kylepzak/development/build-software/rockpi-quad" size="50%" {
+                args "action" "dump-layout"
+                start_suspended true
+            }
+        }
+        pane size=1 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+        floating_panes {
+            pane cwd="/home/kylepzak" {
+                height 24
+                width 105
+                x 23
+                y 3
+            }
+        }
+    }
+    tab name="Tab #14" hide_floating_panes=true {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        pane split_direction="vertical" {
+            pane command="hx" cwd="/home/kylepzak/development/build-software/disko" size="50%" {
+                start_suspended true
+            }
+            pane cwd="/home/kylepzak/development/build-software/custom-nix/nixpkgs" size="50%"
+        }
+        pane size=1 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+        floating_panes {
+            pane cwd="/" {
+                height 24
+                width 105
+                x 53
+                y 13
+            }
+        }
+    }
+    new_tab_template {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        pane cwd="/"
+        pane size=1 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+    }
+    swap_tiled_layout name="vertical" {
+        tab max_panes=5 {
+            pane size=1 borderless=true {
+                plugin location="tab-bar"
+            }
+            pane {
+                pane split_direction="vertical" {
+                    pane
+                    pane {
+                        children
+                    }
+                }
+            }
+            pane size=1 borderless=true {
+                plugin location="status-bar"
+            }
+        }
+        tab max_panes=8 {
+            pane size=1 borderless=true {
+                plugin location="tab-bar"
+            }
+            pane {
+                pane split_direction="vertical" {
+                    pane {
+                        children
+                    }
+                    pane {
+                        pane
+                        pane
+                        pane
+                        pane
+                    }
+                }
+            }
+            pane size=1 borderless=true {
+                plugin location="status-bar"
+            }
+        }
+        tab max_panes=12 {
+            pane size=1 borderless=true {
+                plugin location="tab-bar"
+            }
+            pane {
+                pane split_direction="vertical" {
+                    pane {
+                        children
+                    }
+                    pane {
+                        pane
+                        pane
+                        pane
+                        pane
+                    }
+                    pane {
+                        pane
+                        pane
+                        pane
+                        pane
+                    }
+                }
+            }
+            pane size=1 borderless=true {
+                plugin location="status-bar"
+            }
+        }
+    }
+    swap_tiled_layout name="horizontal" {
+        tab max_panes=4 {
+            pane size=1 borderless=true {
+                plugin location="tab-bar"
+            }
+            pane {
+                pane
+                pane
+            }
+            pane size=1 borderless=true {
+                plugin location="status-bar"
+            }
+        }
+        tab max_panes=8 {
+            pane size=1 borderless=true {
+                plugin location="tab-bar"
+            }
+            pane {
+                pane {
+                    pane split_direction="vertical" {
+                        children
+                    }
+                    pane split_direction="vertical" {
+                        pane
+                        pane
+                        pane
+                        pane
+                    }
+                }
+            }
+            pane size=1 borderless=true {
+                plugin location="status-bar"
+            }
+        }
+        tab max_panes=12 {
+            pane size=1 borderless=true {
+                plugin location="tab-bar"
+            }
+            pane {
+                pane {
+                    pane split_direction="vertical" {
+                        children
+                    }
+                    pane split_direction="vertical" {
+                        pane
+                        pane
+                        pane
+                        pane
+                    }
+                    pane split_direction="vertical" {
+                        pane
+                        pane
+                        pane
+                        pane
+                    }
+                }
+            }
+            pane size=1 borderless=true {
+                plugin location="status-bar"
+            }
+        }
+    }
+    swap_tiled_layout name="stacked" {
+        tab min_panes=5 {
+            pane size=1 borderless=true {
+                plugin location="tab-bar"
+            }
+            pane {
+                pane split_direction="vertical" {
+                    pane
+                    pane stacked=true {
+                        children
+                    }
+                }
+            }
+            pane size=1 borderless=true {
+                plugin location="status-bar"
+            }
+        }
+    }
+    swap_floating_layout name="staggered" {
+        floating_panes {
+        }
+    }
+    swap_floating_layout name="enlarged" {
+        floating_panes max_panes=10 {
+            pane cwd="/" {
+                height "90%"
+                width "90%"
+                x "5%"
+                y 1
+            }
+            pane cwd="/" {
+                height "90%"
+                width "90%"
+                x "5%"
+                y 2
+            }
+            pane cwd="/" {
+                height "90%"
+                width "90%"
+                x "5%"
+                y 3
+            }
+            pane cwd="/" {
+                height "90%"
+                width "90%"
+                x "5%"
+                y 4
+            }
+            pane cwd="/" {
+                height "90%"
+                width "90%"
+                x "5%"
+                y 5
+            }
+            pane cwd="/" {
+                height "90%"
+                width "90%"
+                x "5%"
+                y 6
+            }
+            pane cwd="/" {
+                height "90%"
+                width "90%"
+                x "5%"
+                y 7
+            }
+            pane cwd="/" {
+                height "90%"
+                width "90%"
+                x "5%"
+                y 8
+            }
+            pane cwd="/" {
+                height "90%"
+                width "90%"
+                x "5%"
+                y 9
+            }
+            pane cwd="/" {
+                height "90%"
+                width "90%"
+                x 10
+                y 10
+            }
+        }
+    }
+    swap_floating_layout name="spread" {
+        floating_panes max_panes=1 {
+            pane cwd="/" {
+                x "50%"
+                y "50%"
+            }
+        }
+        floating_panes max_panes=2 {
+            pane cwd="/" {
+                width "45%"
+                x "1%"
+                y "25%"
+            }
+            pane cwd="/" {
+                width "45%"
+                x "50%"
+                y "25%"
+            }
+        }
+        floating_panes max_panes=3 {
+            pane cwd="/" {
+                height "45%"
+                width "45%"
+                y "55%"
+            }
+            pane cwd="/" {
+                width "45%"
+                x "1%"
+                y "1%"
+            }
+            pane cwd="/" {
+                width "45%"
+                x "50%"
+                y "1%"
+            }
+        }
+        floating_panes max_panes=4 {
+            pane cwd="/" {
+                height "45%"
+                width "45%"
+                x "1%"
+                y "55%"
+            }
+            pane cwd="/" {
+                height "45%"
+                width "45%"
+                x "50%"
+                y "55%"
+            }
+            pane cwd="/" {
+                height "45%"
+                width "45%"
+                x "1%"
+                y "1%"
+            }
+            pane cwd="/" {
+                height "45%"
+                width "45%"
+                x "50%"
+                y "1%"
+            }
+        }
+    }
+}
+

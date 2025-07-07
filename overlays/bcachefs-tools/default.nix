@@ -1,43 +1,33 @@
 { channels, inputs, ... }:
+# This top-level 'inputs' argument must provide 'flake-compat'.
+# It would typically be passed when this overlay file is imported, e.g.,
+# (import ./your-overlay.nix { inherit inputs; })
+# where 'inputs' comes from your main system flake's inputs.
 
-let
-  bcachefsVersion = "v1.25.1";
-  bcachefsRev = "c9ee6467183b224b40ca437fd23eeabe0ae6a158";
-  # Hash for the bcachefs-tools source code v1.25.1
-  bcachefsSrcHash = "sha256-3hr5l47W4R9O6NDNqnEpIpqcBkOstx/Hoix9WJJ8YxQ=";
-  # HASH WILL BE FILLED IN AFTER FIRST FAILED BUILD
-  bcachefsCargoHash = "sha256-juXRmI3tz2BXQsRaRRGyBaGqeLk2QHfJb2sKPmWur8s="; # <--- LEAVE THIS EMPTY or use "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
-in
 final: prev: {
-  bcachefs-tools = prev.bcachefs-tools.overrideAttrs (
-    old:
+  bcachefs-tools =
     let
-      # Define the new source *inside* the overrideAttrs block
-      newSrc = final.fetchFromGitHub {
+      # Define the source details for bcachefs-tools
+      defaultRev = "ec23efce867a316f2f82df37fc5efd84bbdc7020";
+      defaultHash = "sha256-S0+5eHZNePT7lilYl4nBh63gNNfTv0+ydyFNGEp6svk=";
+
+      bcachefsSrc = final.fetchFromGitHub {
         owner = "koverstreet";
         repo = "bcachefs-tools";
-        rev = "${bcachefsRev}";
-        hash = bcachefsSrcHash;
+        rev = defaultRev;
+        hash = defaultHash; # 'hash' is used for SRI hashes like the one provided
       };
+
+      # Use flake-compat to load the flake from the fetched source.
+      # 'inputs.flake-compat' must be available from the overlay's arguments.
+      bcachefsFlakeOutputs = (import inputs.flake-compat {
+        src = bcachefsSrc;
+      }).defaultNix; # .defaultNix provides an attrset of the flake's outputs
+
     in
-    {
-      version = bcachefsVersion;
-      src = newSrc; # Use the source defined above
-
-      cargoDeps = final.rustPlatform.fetchCargoVendor {
-        # Pass the *newSrc* to fetchCargoVendor
-        src = newSrc;
-        # Use the placeholder hash for now
-        hash = bcachefsCargoHash;
-        # If your rustPlatform expects cargoSha256 instead of hash:
-        # cargoSha256 = bcachefsCargoHash;
-      };
-
-      # You might need to explicitly bring in other attributes if needed,
-      # though often Nixpkgs handles this well. Example:
-      # nativeBuildInputs = old.nativeBuildInputs;
-      # buildInputs = old.buildInputs;
-      # meta = old.meta // { description = old.meta.description + " (overridden)"; };
-    }
-  );
+    # Access the desired package. The bcachefs-tools flake you provided
+    # exposes 'default' and 'bcachefs-tools' packages per system.
+    bcachefsFlakeOutputs.packages.${final.system}.bcachefs-tools;
+    # Alternatively, you could use:
+    # bcachefsFlakeOutputs.packages.${final.system}.default;
 }

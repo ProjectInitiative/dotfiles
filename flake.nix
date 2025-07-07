@@ -3,12 +3,12 @@
 
   inputs = {
     # NixPkgs
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
     # NixPkgs Unstable
     unstable.url = "github:nixos/nixpkgs/nixos-unstable";
 
     # Home Manager
-    home-manager.url = "github:nix-community/home-manager/release-24.11";
+    home-manager.url = "github:nix-community/home-manager/release-25.05";
     # home-manager.url = "github:nix-community/home-manager/release-24.11";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -24,8 +24,8 @@
     nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
 
     # disko
-    # disko.url = "github:nix-community/disko";
-    disko.url = "github:projectinitiative/disko";
+    disko.url = "github:nix-community/disko";
+    # disko.url = "github:projectinitiative/disko/update-device";
     # disko.url = "git+file:///home/kylepzak/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -76,7 +76,9 @@
 
     # Binary Cache
     attic = {
-      url = "github:zhaofengli/attic";
+      url = "github:projectinitiative/attic/updated-210";
+      # url = "path:/home/kylepzak/development/build-software/attic";
+      # url = "github:zhaofengli/attic";
 
       # FIXME: A specific version of Rust is needed right now or
       # the build fails. Re-enable this after some time has passed.
@@ -125,14 +127,26 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    rockpi-quad = {
+      # url = "path:/home/kylepzak/development/build-software/rockpi-quad";
+      url = "github:ProjectInitiative/rockpi-quad/wip/convert-to-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixos-hardware.follows = "nixos-hardware";
+    };
+
   };
 
   outputs =
     inputs:
     let
+      sourcePath = builtins.path {
+        path = ./.;
+        name = "projectinitiative-source";
+      };
+
       lib = inputs.snowfall-lib.mkLib {
         inherit inputs;
-        src = ./.;
+        src = sourcePath;
 
         snowfall = {
           namespace = "projectinitiative";
@@ -144,7 +158,7 @@
         };
       };
 
-      mySrc = ./.;
+      mySrc = sourcePath;
 
     in
     lib.mkFlake {
@@ -278,12 +292,22 @@
             nixos =
               with inputs;
               [
+                # <<< Add an inline module HERE to disable the nixpkgs one early >>>
+                (
+                  { config, pkgs, ... }:
+                  {
+                    # Disable the atticd module provided by the nixpkgs input
+                    disabledModules = [ "services/networking/atticd.nix" ];
+                  }
+                )
                 disko.nixosModules.disko
                 home-manager.nixosModules.home-manager
                 # nix-ld.nixosModules.nix-ld
                 sops-nix.nixosModules.sops
                 # agenix.nixosModules.age
+                attic.nixosModules.atticd
                 # (import ./encrypted/sops.nix)
+                rockpi-quad.nixosModules.rockpi-quad
               ]
               ++ common-modules;
 
@@ -328,7 +352,11 @@
           "stormjib"
           "thinkpad"
           "test"
-          "capstan1"
+          "dinghy"
+          "capstan-test"
+          "bcachefs-tester"
+          "cargohold"
+          "lightship-aus"
         ];
       };
 

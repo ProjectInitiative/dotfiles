@@ -39,6 +39,13 @@ in
 
       tools = {
         alacritty = enabled;
+        git = {
+          enable = true;
+          userEmail = "6314611+ProjectInitiative@users.noreply.github.com";
+          signingKeyFormat = "ssh";
+          # TODO: Make this not hardcoded
+          signingKey = "/home/kylepzak/.ssh/id_ed25519.pub";
+        };
       };
     };
     home = {
@@ -46,7 +53,12 @@ in
         appimage-run
         htop
         btop
+        dogdns
+        dust
+        fd
         jq
+        glow
+        mtr
         ncdu
         tree
         icdiff
@@ -54,9 +66,12 @@ in
         rclone
         magic-wormhole
         file
+        zstd
+        xh
         #TODO: add config for yazi
         yazi
         pkgs.${namespace}.flatten-directory
+        pkgs.${namespace}.standardize-files
         pkgs.${namespace}.remote-drive-info
         pkgs.${namespace}.health-report
         pkgs.${namespace}.interactive-mv

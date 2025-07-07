@@ -50,18 +50,17 @@ in
           eternal-terminal = enabled;
         };
 
+        suites = {
+          attic = {
+            enableClient = true;
+          };
+        };
+
       };
     }
     // optionalAttrs (isHomeManager) {
       ${namespace} = {
         tools = {
-          git = {
-            enable = true;
-            userEmail = "6314611+ProjectInitiative@users.noreply.github.com";
-            signingKeyFormat = "openpgp";
-            # TODO: Make this not hardcoded
-            signingKey = osConfig.sops.secrets.kylepzak_ssh_key.path;
-          };
           direnv = enabled;
           k8s = enabled;
           ansible = enabled;
@@ -81,8 +80,9 @@ in
             podman-compose
             python3
             python3Packages.pip
-            ventoy-full
+            # ventoy-full - removed until https://github.com/ventoy/Ventoy/issues/3224 is resolved.
             rustup
+            pkgs.${namespace}.gemini-cli
           ]
           ++ lib.optionals isGraphical [ inputs.claude-desktop.packages.${system}.claude-desktop-with-fhs ];
       };

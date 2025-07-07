@@ -115,11 +115,11 @@ in
     services.gpg-agent = {
       enable = true;
       # pinentryPackage = pkgs.pinentry;
-      pinentryPackage = pkgs.pinentry-curses;
+      pinentry.package = pkgs.pinentry-curses;
     };
 
     # Add shell-specific initialization
-    programs.zsh.initExtra = mkIf config.programs.zsh.enable ''
+    programs.zsh.initContent = mkIf config.programs.zsh.enable ''
       export GPG_TTY=$(tty)
       gpg-connect-agent updatestartuptty /bye >/dev/null
     '';

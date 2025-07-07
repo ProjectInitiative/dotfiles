@@ -19,9 +19,13 @@ with lib.${namespace};
       tailscale = enabled;
     };
 
+    suites = {
+      development = enabled;
+    };
+
     services = {
       health-reporter = {
-        enable = true;
+        enable = false;
         telegramTokenPath = config.sops.secrets.health_reporter_bot_api_token.path;
         telegramChatIdPath = config.sops.secrets.telegram_chat_id.path;
         excludeDrives = [
@@ -34,7 +38,11 @@ with lib.${namespace};
     };
   };
   boot.binfmt = {
-    emulatedSystems = [ "aarch64-linux" ];
+    emulatedSystems = [
+        "aarch64-linux"
+        "armv7l-linux"
+        "armv6l-linux"
+    ];
   };
   # Basic bcachefs support
   boot.supportedFilesystems = [ "bcachefs" ];

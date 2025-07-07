@@ -83,8 +83,7 @@ let
 
     # Specify Python dependencies
     propagatedBuildInputs = with pkgs; [
-      bash
-      iproute2
+      python3
     ];
 
     # Simple installation
@@ -109,7 +108,6 @@ in
             "enp5s0"
             "enp5s0d1"
             "bond0"
-            "vmbr4"
           ];
           mlnxPorts = [
             "1"
@@ -130,17 +128,30 @@ in
     systemd.services.setup-mellanox = {
       description = "Configure Mellanox network cards";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network-pre.target" ];
-      before = [ "network.target" ];
+      # This service prepares physical interfaces.
+      # It should run after devices are available but before network configuration services
+      # that might use these interfaces (like systemd-networkd for bonds).
+      after = [ "network-pre.target" "local-fs.target" ];
+      before = [ "network.target" "systemd-networkd.service" "NetworkManager.service" ];
+      # Upholds specifies that if this service is stopped or fails, systemd-networkd should also be stopped.
+      # This is useful if systemd-networkd critically depends on this setup.
+      # upholds = [ "systemd-networkd.service" ]; # Optional, consider if bond0 *must* use these
       path = with pkgs; [
         iproute2
+        coreutils
         bash
+        mellanoxSetupScript
       ];
 
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${mellanoxSetupScript}/bin/setup-mellanox --config ${interfacesJsonFile}";
         RemainAfterExit = true;
+        # Retry logic
+        Restart = "on-failure";
+        RestartSec = "5s"; # Wait 5 seconds before restarting
+        # StandardOutput = "journal"; # Already default
+        # StandardError = "journal"; # Already default
       };
     };
   };

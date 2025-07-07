@@ -30,6 +30,9 @@ in
       device = "/dev/disk/by-label/nixos";
       fsType = "ext4";
     };
+    environment.systemPackages = with pkgs; [
+      cloud-utils
+    ];
     # disko.devices = {
     #   disk = {
     #     one = {
@@ -88,9 +91,6 @@ in
     # };
 
     services.qemuGuest.enable = true;
-
-    # Basic system configuration
-    system.stateVersion = "23.11";
 
     # Enable displaying network info on console
     projectinitiative = {

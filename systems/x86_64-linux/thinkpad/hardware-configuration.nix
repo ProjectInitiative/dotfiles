@@ -39,8 +39,14 @@
       };
     };
 
-    kernelModules = [ "kvm-intel" ];
-    extraModulePackages = [ ];
+    kernelPackages = pkgs.linuxPackages_latest;
+    # supportedFilesystems = [ "bcachefs" ];
+    kernelModules = [
+      "bcachefs"
+      "kvm-intel"
+    ];
+    # kernelModules = [ "kvm-intel" ];
+    # extraModulePackages = [ ];
 
     loader = {
       systemd-boot = {
@@ -71,17 +77,25 @@
       device = "/dev/disk/by-partuuid/05399427-3ed0-4da7-bd08-740ddb6ce486";
       fsType = "vfat";
     };
+    "/home/kylepzak-ext4" = {
+      device = "/dev/mapper/data-home_kylepzak_ext4";
+      fsType = "ext4";
+    };
     "/home/kylepzak" = {
-      device = "/dev/mapper/data-home_kpzak";
-      fsType = "ext4";
+      device = "/dev/mapper/data-home_kylepzak";
+      fsType = "bcachefs";
+      options = [
+        "nofail"
+        # "fsck"
+      ];
     };
-    "/extpart" = {
-      device = "/dev/mapper/data-extpart";
-      fsType = "ext4";
-    };
-    "/backups" = {
-      device = "/dev/mapper/data-backups";
-      fsType = "ext4";
+    "/void" = {
+      device = "/dev/mapper/data-void";
+      fsType = "bcachefs";
+      options = [
+        "nofail"
+        # "fsck"
+      ];
     };
   };
 

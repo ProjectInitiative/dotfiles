@@ -10,15 +10,28 @@ keys:
     - &test_vm age1gfamaev28ur53f09qllqhs7fqv74yd0unye4yaduhf436cl8usys640ld5
     - &stormjib age1w9jy86ajwzd7e0rszhe80065fuynwnr647wxfx0yn7st0xzqsfsqzgzvxy
     - &cargohold age1vv7x7cupsczqaducs2pxpn7t3mqj5e5jkyc70489fad05rvyga4s57hwan
+    - &dinghy age1v96s5f9tqz6xgndsgg5lt2zy8xe6j7k9wxz3k52paw9sena4q3gszjy425
   - &capstans:
-    - &ssh_capstan1 age1uatt9h5c3q6grd72skc2k7zzlpam9aregvyeyuzmazw9fpzcysqqwlrh8d
-    - &ssh_capstan2 age1exv224uk35dyh933g4uv96rtgw9vztwv8xgd9t3r2tf3ltyfdezqxcauhf
-    - &ssh_capstan3 age1gh589ckrhz9c940waqnng3zv58l530ettpd7rg2lv2n7zx3h592s99jux6
+    - &ssh_capstan1 age1katkdmh05xy9n5pmrkaznw0e5j4p96js88dzxy4l0zt06pfa4qzs0gsua5
+    - &ssh_capstan2 age1daxggyz58h525ww5clnwwuwxu7tf5mlz8as8n7cy8dhv74u4qcqq0jagrp
+    - &ssh_capstan3 age1wwtevxuhkfh6nyl23axkx0s3pnywrw95tj85qrg03fhh6jkmf5nsfknx09
+  - &lighthouses:
+    - &ssh_lighthouse_east age1k393g9cgc0xa88ej05tsppcktrrgsp6efp70hffu3zmzhmkwr4jsgs3lg3
+    - &ssh_lighthouse_west age1ex6z7fus35kvm42annhs9spzcmlccn2p7l3ugqdrt6wjee4evdqs9evvm6
 
 creation_rules:
   - path_regex: sensitive/[^/]+\.yaml$
     key_groups:
       - age:
+          - *ssh_kylepzak
+          - *ssh_thinkpad
+          - *sensitive_not_secret
+
+  - path_regex: homes/dotfiles/config$
+    key_groups:
+      - age:
+          - *ssh_kylepzak
+          - *ssh_thinkpad
           - *sensitive_not_secret
 
   - path_regex: secrets/[^/]+\.yaml$
@@ -32,8 +45,19 @@ creation_rules:
           - *ssh_capstan1
           - *ssh_capstan2
           - *ssh_capstan3
+          - *ssh_lighthouse_east
+          - *ssh_lighthouse_west
           - *stormjib
           - *cargohold
+          - *dinghy
+
+  - path_regex: attic-server/[^/]+\.yaml$
+    key_groups:
+      - age:
+          - *kylepzak
+          - *ssh_kylepzak
+          - *ssh_thinkpad
+          - *ssh_capstan3
 
   - path_regex: nix-signing/[^/]+\.yaml$
     key_groups:
@@ -52,3 +76,12 @@ creation_rules:
           - *ssh_capstan2
           - *ssh_capstan3
           - *test_vm
+
+  - path_regex: lighthouse/[^/]+\.yaml$
+    # - path: lighthouse/secrets.enc.yaml
+    key_groups:
+      - age:
+          - *ssh_kylepzak
+          - *ssh_thinkpad
+          - *ssh_lighthouse_east
+          - *ssh_lighthouse_west

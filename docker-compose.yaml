@@ -1,0 +1,30 @@
+services:
+  mcp-filesystem:
+    # The Docker image to use for the container
+    image: mcp/filesystem
+
+    # Keeps STDIN open, equivalent to the `-i` flag in `docker run`
+    stdin_open: true
+    # Keeps the terminal attached, often used with stdin_open
+    tty: true
+
+    # This section maps host paths to container paths, equivalent to `--mount`
+    volumes:
+      # Mounts your desktop with read-write access
+      - type: bind
+        source: /home/kylepzak/dotfiles
+        target: /projects/dotfiles
+      
+      # # Mounts another directory as read-only
+      # - type: bind
+      #   source: /path/to/other/allowed/dir
+      #   target: /projects/other/allowed/dir
+      #   read_only: true
+      
+      # # Mounts a single file with read-write access
+      # - type: bind
+      #   source: /path/to/file.txt
+      #   target: /projects/path/to/file.txt
+
+    # The command to execute when the container starts, equivalent to the last argument
+    command: /projects

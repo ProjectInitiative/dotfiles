@@ -18,7 +18,7 @@ with lib.${namespace};
 
   # enable displaylink
   services.xserver.videoDrivers = [
-    "displaylink"
+    # "displaylink"
     "modesetting"
   ];
 
@@ -27,47 +27,80 @@ with lib.${namespace};
     ${lib.getBin pkgs.xorg.xrandr}/bin/xrandr --setprovideroutputsource 2 0
   '';
 
-  # TODO: move this to module
-  nix = {
-    # package = pkgs.nixVersions.nix_2_25;
-    gc = {
-      automatic = true;
-      dates = "weekly";
-      persistent = true;
-      options = "--delete-older-than 30d";
+  home-manager = {
+    backupFileExtension = "backup";
+    users.kylepzak.${namespace} = {
+      suites = {
+        development.enable = true;
+      };
     };
-    settings = {
-      auto-optimise-store = true;
-    };
-    extraOptions = ''
-      min-free = ${toString (100 * 1024 * 1024)}
-      max-free = ${toString (1024 * 1024 * 1024)}
-    '';
+    
   };
-
-  home-manager.backupFileExtension = "backup";
 
   projectinitiative = {
 
+    settings = {
+      stateVersion = "25.05";
+    };
+
     encrypted.nix-signing = enabled;
+
+    system = {
+      displaylink.enable = false; 
+      nix-config = enabled;
+
+      bcachefs-kernel = {
+        enable = true;
+        rev = "a65b4b6558eeddbc1dff3a5f24f46342528396ce";
+        hash = "sha256-23mgtJuMr49fzxu5/b/QipQ/Q9mW9OyukdKtwi7dDNY=";
+        # rev = "";
+        # hash = "";
+        debug = true;
+      };
+    };
 
     gui = {
       gnome = enabled;
     };
     services = {
       power-profile-manager = enabled;
+      bcachefsRereplicateAuto.enable = mkForce false;
+      bcachefsScrubAuto.enable = mkForce false;
+      bcachefsSnapshots = {
+        targets = {
+
+          void = {
+            parentSubvolume = "/void"; # MANDATORY: Set path for this new target
+            readOnlySnapshots = true; # Optional: default is true
+
+            retention = {
+              # Define retention for this new target
+              hourly = 6;
+              daily = 7;
+              weekly = 4;
+              monthly = 6;
+              yearly = 2;
+            };
+          };
+        };
+      };
+
     };
 
     suites = {
       development = enabled;
+      bcachefs-utils = {
+        enable = true;
+        parentSubvolume = "/home/kylepzak";
+      };
     };
     # override
     networking = {
-      tailscale = {
+      # tailscale = {
 
-        enable = true;
-        extraArgs = [ "--accept-routes" ];
-      };
+      #   enable = false;
+      #   extraArgs = [ "--accept-routes" ];
+      # };
     };
 
   };
@@ -86,6 +119,8 @@ with lib.${namespace};
     virtualbox
     vlc
     wireshark
+    mqttx
+    mqttui
     wireshark-qt
     networkmanagerapplet
     ## temp
@@ -93,14 +128,25 @@ with lib.${namespace};
     rkdeveloptool
     multipath-tools
     usbutils
+
+    wine64
+    winetricks
+    wineWowPackages.waylandFull
+
+    ani-cli
+    obs-studio
+
+    pkgs.${namespace}.mcp-proxy-runner
+    # gst_all_1.gst-plugins-rs 
   ];
+
   # Enable fingerprint reader
   services.fprintd = {
     enable = true;
     tod = {
       enable = true;
-      driver = pkgs.libfprint-2-tod1-vfs0090; # (If the vfs0090 Driver does not work, use the following driver)
-      # driver = pkgs.libfprint-2-tod1-goodix; #(On my device it only worked with this driver)
+      # driver = pkgs.libfprint-2-tod1-vfs0090; # (If the vfs0090 Driver does not work, use the following driver)
+      driver = pkgs.libfprint-2-tod1-goodix; #(On my device it only worked with this driver)
     };
   };
 
@@ -111,7 +157,7 @@ with lib.${namespace};
   services.printing.enable = true;
 
   # Enable sound with pipewire.
-  hardware.pulseaudio.enable = false;
+  services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
@@ -125,5 +171,5 @@ with lib.${namespace};
   # this value at the release version of the first install of this system.
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "24.05"; # Did you read the comment?
+  # system.stateVersion = "24.11"; # Did you read the comment?
 }

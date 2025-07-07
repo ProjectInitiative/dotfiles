@@ -20,13 +20,9 @@ let
   commonFonts =
     with pkgs;
     [
-      fira-code
-      fira-code-symbols
-      noto-fonts
-      noto-fonts-cjk-sans
-      noto-fonts-cjk-serif
-      noto-fonts-emoji
-      (nerdfonts.override { fonts = [ "Hack" ]; })
+      nerd-fonts.fira-code
+      nerd-fonts.noto
+      nerd-fonts.hack
     ]
     ++ cfg.fonts;
 in

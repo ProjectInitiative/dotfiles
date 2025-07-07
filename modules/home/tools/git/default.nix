@@ -36,6 +36,8 @@ in
         git
         git-filter-repo
         gitleaks
+        gitui
+        delta
         lazygit
         trufflehog
       ];
@@ -47,26 +49,25 @@ in
       lfs = enabled;
       signing = {
         key = cfg.signingKey;
-        # TODO: enable when supported
-        # format = cfg.signingKeyFormat;
+        format =cfg.signingKeyFormat;
         signByDefault = mkIf gpg.enable true;
       };
       extraConfig = {
         # TODO: remove when above option supported
         user.signingKey = cfg.signingKey;
-        gpg = {
-          format = cfg.signingKeyFormat;
-          # Automatically set the appropriate signer program based on format
-          ${cfg.signingKeyFormat}.program =
-            if cfg.signingKeyFormat == "openpgp" then
-              "${pkgs.gnupg}/bin/gpg"
-            else if cfg.signingKeyFormat == "ssh" then
-              "${pkgs.openssh}/bin/ssh-keygen"
-            else if cfg.signingKeyFormat == "x509" then
-              "${pkgs.gnupg}/bin/gpgsm"
-            else
-              null;
-        };
+        # gpg = {
+        #   format = cfg.signingKeyFormat;
+        #   # Automatically set the appropriate signer program based on format
+        #   ${cfg.signingKeyFormat}.program =
+        #     if cfg.signingKeyFormat == "openpgp" then
+        #       "${pkgs.gnupg}/bin/gpg"
+        #     else if cfg.signingKeyFormat == "ssh" then
+        #       "${pkgs.openssh}/bin/ssh-keygen"
+        #     else if cfg.signingKeyFormat == "x509" then
+        #       "${pkgs.gnupg}/bin/gpgsm"
+        #     else
+        #       null;
+        # };
         init = {
           defaultBranch = "main";
         };
