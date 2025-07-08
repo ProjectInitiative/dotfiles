@@ -29,8 +29,8 @@ let
   # ### but this is a common area for board-specific changes.
   customKernel = pkgs.linuxPackages_latest; # Was pkgs.linuxPackages_6_14
   # ### MODIFIED: Make sure this DTB name is correct for your board AND the kernel version.
-  # dtbName = "rk3582-radxa-e52c.dtb"; # Example, verify this exists for your kernel
-  dtbName = "rk3588s-evb1-v10.dtb"; # Example, verify this exists for your kernel
+  dtbName = "rk3582-radxa-e52c.dtb"; # Example, verify this exists for your kernel
+  # dtbName = "rk3588s-evb1-v10.dtb"; # Example, verify this exists for your kernel
   dtbPath = "rockchip/${dtbName}";
 
   bootVolumeLabel = "NIXOS_BOOT";
