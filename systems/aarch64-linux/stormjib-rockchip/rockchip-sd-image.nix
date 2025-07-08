@@ -29,7 +29,8 @@ let
   # ### but this is a common area for board-specific changes.
   customKernel = pkgs.linuxPackages_latest; # Was pkgs.linuxPackages_6_14
   # ### MODIFIED: Make sure this DTB name is correct for your board AND the kernel version.
-  dtbName = "rk3582-radxa-e52c.dtb"; # Example, verify this exists for your kernel
+  # dtbName = "rk3582-radxa-e52c.dtb"; # Example, verify this exists for your kernel
+  dtbName = "rk3588s-evb1-v10.dtb"; # Example, verify this exists for your kernel
   dtbPath = "rockchip/${dtbName}";
 
   bootVolumeLabel = "NIXOS_BOOT";
@@ -55,6 +56,7 @@ in
       name = dtbPath;
     };
     boot.kernelParams = [
+      "console=tty1"
       "console=ttyS2,115200n8" # Primary debug console for RK358x U-Boot & Kernel
       "earlycon=uart8250,mmio32,0xfeb50000" # Matches ttyS2 on rk358x
       # "console=ttyFIQ0,115200n8" # Often for SPL/TPL, can be noisy or conflict if ttyS2 is main

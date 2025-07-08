@@ -177,7 +177,7 @@ bootcmd=run distro_bootcmd
 # --- Memory Addresses ---
 fdt_addr_r=0x0a000000
 kernel_addr_r=0x0a200000
-ramdisk_addr_r=0x10000000
+ramdisk_addr_r=0x14000000
 pxefile_addr_r=0x0d000000
 scriptaddr=0x0d100000
 

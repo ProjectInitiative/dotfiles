@@ -4626,4 +4626,1036 @@ Couldn't find partition mmc 0:1
 => 
 => 
 => 
+=> DDR 9fa84341ce typ 24/09/06-09:51:11,fwver: v1.18
+ch0 ttot10
+ch0 ttot10
+ch1 ttot10
+ch2 ttot10
+ch3 ttot10
+ch0 ttot18
+LPDDR4, 2112MHz
+channel[0] BW=16 Col=10 Bk=8 CS0 Row=16 CS1 Row=16 CS=2 Die BW=16 Size=2048MB
+ch1 ttot18
+channel[1] BW=16 Col=10 Bk=8 CS0 Row=16 CS1 Row=16 CS=2 Die BW=16 Size=2048MB
+ch2 ttot16
+channel[2] BW=16 Col=10 Bk=8 CS0 Row=16 CS1 Row=16 CS=2 Die BW=16 Size=2048MB
+ch3 ttot18
+channel[3] BW=16 Col=10 Bk=8 CS0 Row=16 CS1 Row=16 CS=2 Die BW=16 Size=2048MB
+Manufacturer ID:0xff
+DQS rds:l0,l0, 
+CH0 RX Vref:34.4%, TX Vref:13.2%,13.2%
+DQ rds:l0 l0 h1 h1 l0 l0 h3 h2 , h1 h2 h1 l0 h1 h2 h1 h2 
+
+DQS rds:h1,l0, 
+CH1 RX Vref:35.2%, TX Vref:13.2%,13.2%
+DQ rds:l0 h2 h2 h3 h3 h1 h1 h1 , h4 h2 h1 h2 h4 h1 h1 h1 
+
+DQS rds:h1,h1, 
+CH2 RX Vref:36.5%, TX Vref:13.2%,13.2%
+DQ rds:h4 h4 h2 h1 h4 h3 h1 h2 , h2 l0 h3 h1 h1 h2 h1 h2 
+
+DQS rds:l0,l0, 
+CH3 RX Vref:35.2%, TX Vref:13.2%,13.2%
+DQ rds:h5 h2 h2 l0 h1 h3 h4 h2 , h2 h2 h1 h1 h1 h2 l0 h1 
+
+stride=0x2, ddr_config=0x4
+hash ch_mask0-1 0x20 0x40, bank_mask0-3 0xa00 0x1400 0x2800 0x0, rank_mask0 0x401000
+change to F1: 528MHz
+ch0 ttot10
+ch1 ttot10
+ch2 ttot10
+ch3 ttot10
+change to F2: 1068MHz
+ch0 ttot14
+ch1 ttot14
+ch2 ttot12
+ch3 ttot14
+change to F3: 1560MHz
+ch0 ttot16
+ch1 ttot16
+ch2 ttot14
+ch3 ttot16
+change to F0: 2112MHz
+ch0 ttot18
+ch1 ttot18
+ch2 ttot18
+ch3 ttot18
+out
+
+U-Boot SPL 2025.04 (Jan 01 1980 - 00:00:00 +0000)
+Trying to boot from MMC1
+## Checking hash(es) for config config-1 ... OK
+## Checking hash(es) for Image atf-1 ... sha256+ OK
+## Checking hash(es) for Image u-boot ... sha256+ OK
+## Checking hash(es) for Image fdt-1 ... sha256+ OK
+## Checking hash(es) for Image atf-2 ... sha256+ OK
+## Checking hash(es) for Image atf-3 ... sha256+ OK
+NOTICE:  BL31: v2.12.0(release):
+NOTICE:  BL31: Built : 00:00:00, Jan  1 1980
+
+
+U-Boot 2025.04 (Jan 01 1980 - 00:00:00 +0000)
+
+Model: Rockchip RK3588S EVB1 V10 Board
+SoC:   RK3582
+DRAM:  8 GiB
+Core:  345 devices, 29 uclasses, devicetree: separate
+MMC:   mmc@fe2c0000: 1, mmc@fe2e0000: 0
+Loading Environment from nowhere... OK
+In:    serial@feb50000
+Out:   serial@feb50000
+Err:   serial@feb50000
+Model: Rockchip RK3588S EVB1 V10 Board
+SoC:   RK3582
+Net:   No ethernet found.
+Hit any key to stop autoboot:  2  1  0 
+Card did not respond to voltage select! : -110
+switch to partitions #0, OK
+mmc0(part 0) is current device
+Scanning mmc 0:1...
+** No partition table - mmc 0 **
+Couldn't find partition mmc 0:1
+** No partition table - mmc 0 **
+Couldn't find partition mmc 0:1
 => 
+
+U-Boot 2025.04 (Jan 01 1980 - 00:00:00 +0000)
+
+Model: Rockchip RK3588S EVB1 V10 Board
+SoC:   RK3582
+DRAM:  8 GiB
+Core:  345 devices, 29 uclasses, devicetree: separate
+MMC:   mmc@fe2c0000: 1, mmc@fe2e0000: 0
+Loading Environment from nowhere... OK
+In:    serial@feb50000
+Out:   serial@feb50000
+Err:   serial@feb50000
+Model: Rockchip RK3588S EVB1 V10 Board
+SoC:   RK3582
+Net:   No ethernet found.
+Hit any key to stop autoboot:  2  1  0 
+Card did not respond to voltage select! : -110
+switch to partitions #0, OK
+mmc0(part 0) is current device
+Scanning mmc 0:1...
+** No partition table - mmc 0 **
+Couldn't find partition mmc 0:1
+** No partition table - mmc 0 **
+Couldn't find partition mmc 0:1
+=> DDR 9fa84341ce typ 24/09/06-09:51:11,fwver: v1.18
+ch0 ttot10
+ch0 ttot10
+ch1 ttot10
+ch2 ttot10
+ch3 ttot10
+ch0 ttot18
+LPDDR4, 2112MHz
+channel[0] BW=16 Col=10 Bk=8 CS0 Row=16 CS1 Row=16 CS=2 Die BW=16 Size=2048MB
+ch1 ttot18
+channel[1] BW=16 Col=10 Bk=8 CS0 Row=16 CS1 Row=16 CS=2 Die BW=16 Size=2048MB
+ch2 ttot16
+channel[2] BW=16 Col=10 Bk=8 CS0 Row=16 CS1 Row=16 CS=2 Die BW=16 Size=2048MB
+ch3 ttot18
+channel[3] BW=16 Col=10 Bk=8 CS0 Row=16 CS1 Row=16 CS=2 Die BW=16 Size=2048MB
+Manufacturer ID:0xff
+DQS rds:l0,l0, 
+CH0 RX Vref:33.9%, TX Vref:13.2%,13.2%
+DQ rds:l0 l0 l0 h1 l0 l0 h2 h1 , h1 h2 h1 l0 h1 h2 h1 h1 
+
+DQS rds:l0,l0, 
+CH1 RX Vref:35.2%, TX Vref:13.2%,13.2%
+DQ rds:h1 h2 h1 h3 h3 h2 h1 h1 , h4 h2 h1 h2 h4 h1 h1 h1 
+
+DQS rds:h1,h1, 
+CH2 RX Vref:36.5%, TX Vref:13.2%,13.2%
+DQ rds:h4 h5 h2 h1 h3 h3 h1 h1 , h2 l0 h3 h1 h1 h2 h1 h2 
+
+DQS rds:l0,l0, 
+CH3 RX Vref:35.2%, TX Vref:13.2%,13.2%
+DQ rds:h5 h2 h2 l0 h1 h3 h4 h1 , h2 h2 h1 h1 h1 h2 h1 h2 
+
+stride=0x2, ddr_config=0x4
+hash ch_mask0-1 0x20 0x40, bank_mask0-3 0xa00 0x1400 0x2800 0x0, rank_mask0 0x401000
+change to F1: 528MHz
+ch0 ttot10
+ch1 ttot10
+ch2 ttot10
+ch3 ttot10
+change to F2: 1068MHz
+ch0 ttot14
+ch1 ttot14
+ch2 ttot12
+ch3 ttot12
+change to F3: 1560MHz
+ch0 ttot16
+ch1 ttot16
+ch2 ttot14
+ch3 ttot16
+change to F0: 2112MHz
+ch0 ttot18
+ch1 ttot18
+ch2 ttot18
+ch3 ttot18
+out
+
+U-Boot SPL 2025.04 (Jan 01 1980 - 00:00:00 +0000)
+Trying to boot from MMC1
+## Checking hash(es) for config config-1 ... OK
+## Checking hash(es) for Image atf-1 ... sha256+ OK
+## Checking hash(es) for Image u-boot ... sha256+ OK
+## Checking hash(es) for Image fdt-1 ... sha256+ OK
+## Checking hash(es) for Image atf-2 ... sha256+ OK
+## Checking hash(es) for Image atf-3 ... sha256+ OK
+NOTICE:  BL31: v2.12.0(release):
+NOTICE:  BL31: Built : 00:00:00, Jan  1 1980
+
+
+U-Boot 2025.04 (Jan 01 1980 - 00:00:00 +0000)
+
+Model: Rockchip RK3588S EVB1 V10 Board
+SoC:   RK3582
+DRAM:  8 GiB
+Core:  345 devices, 29 uclasses, devicetree: separate
+MMC:   mmc@fe2c0000: 1, mmc@fe2e0000: 0
+Loading Environment from nowhere... OK
+In:    serial@feb50000
+Out:   serial@feb50000
+Err:   serial@feb50000
+Model: Rockchip RK3588S EVB1 V10 Board
+SoC:   RK3582
+Net:   No ethernet found.
+Hit any key to stop autoboot:  2  1  0 
+switch to partitions #0, OK
+mmc1 is current device
+Retrieving file: /boot/extlinux/extlinux.conf
+Error reading config file
+Scanning mmc 1:1...
+Found /extlinux/extlinux.conf
+Retrieving file: /extlinux/extlinux.conf
+------------------------------------------------------------
+1:	NixOS - Default
+Enter choice: 1:	NixOS - Default
+Retrieving file: /extlinux/../nixos/iaziacmiwcyvzfqxwnvdylqyw05c00wy-linux-6.15.4-Image
+Retrieving file: /extlinux/../nixos/6bsnly49mhx656bwpm1sajvk6rvpa5wj-initrd-linux-6.15.4-initrd
+append: init=/nix/store/rila4rw2rn50cyq0lgl1487iy392j9dk-nixos-system-stormjib-rockchip-25.05.20250629.b43c397/init console=ttyS2,115200n8 earlycon=uart8250,mmio32,0xfeb50000 rootwait root=/dev/disk/by-label/NIXOS_ROOT rw ignore_loglevel nomodeset keep_bootcon loglevel=4 lsm=landlock,yama,bpf
+Retrieving file: /extlinux/../nixos/iaziacmiwcyvzfqxwnvdylqyw05c00wy-linux-6.15.4-dtbs/rockchip/rk3588s-evb1-v10.dts
+Skipping nixos-default for failure retrieving FDT
+SCRIPT FAILED: continuing...
+switch to partitions #0, OK
+mmc0(part 0) is current device
+Scanning mmc 0:1...
+** No partition table - mmc 0 **
+Couldn't find partition mmc 0:1
+** No partition table - mmc 0 **
+Couldn't find partition mmc 0:1
+=> DDR 9fa84341ce typ 24/09/06-09:51:11,fwver: v1.18
+ch0 ttot10
+ch0 ttot10
+ch1 ttot10
+ch2 ttot10
+ch3 ttot10
+ch0 ttot18
+LPDDR4, 2112MHz
+channel[0] BW=16 Col=10 Bk=8 CS0 Row=16 CS1 Row=16 CS=2 Die BW=16 Size=2048MB
+ch1 ttot18
+channel[1] BW=16 Col=10 Bk=8 CS0 Row=16 CS1 Row=16 CS=2 Die BW=16 Size=2048MB
+ch2 ttot16
+channel[2] BW=16 Col=10 Bk=8 CS0 Row=16 CS1 Row=16 CS=2 Die BW=16 Size=2048MB
+ch3 ttot18
+channel[3] BW=16 Col=10 Bk=8 CS0 Row=16 CS1 Row=16 CS=2 Die BW=16 Size=2048MB
+Manufacturer ID:0xff
+DQS rds:l0,l0, 
+CH0 RX Vref:34.8%, TX Vref:13.2%,13.2%
+DQ rds:l0 l0 h1 h2 l0 l0 h3 h2 , h1 h2 h2 l0 h1 h2 h1 h2 
+
+DQS rds:h1,l0, 
+CH1 RX Vref:35.7%, TX Vref:13.2%,13.2%
+DQ rds:l0 h2 h2 h3 h3 h1 h1 h1 , h3 h2 h1 h2 h4 h1 h1 h1 
+
+DQS rds:h1,h1, 
+CH2 RX Vref:36.5%, TX Vref:13.2%,13.2%
+DQ rds:h3 h4 h2 h1 h4 h3 h1 h1 , h2 l0 h3 h1 h1 h2 h1 h2 
+
+DQS rds:l0,l0, 
+CH3 RX Vref:35.2%, TX Vref:13.2%,13.2%
+DQ rds:h5 h2 h2 l0 h1 h3 h4 h2 , h2 h2 h1 h1 h1 h3 l0 h1 
+
+stride=0x2, ddr_config=0x4
+hash ch_mask0-1 0x20 0x40, bank_mask0-3 0xa00 0x1400 0x2800 0x0, rank_mask0 0x401000
+change to F1: 528MHz
+ch0 ttot10
+ch1 ttot10
+ch2 ttot10
+ch3 ttot10
+change to F2: 1068MHz
+ch0 ttot14
+ch1 ttot14
+ch2 ttot12
+ch3 ttot12
+change to F3: 1560MHz
+ch0 ttot16
+ch1 ttot16
+ch2 ttot14
+ch3 ttot14
+change to F0: 2112MHz
+ch0 ttot18
+ch1 ttot18
+ch2 ttot18
+ch3 ttot18
+out
+
+U-Boot SPL 2025.04 (Jan 01 1980 - 00:00:00 +0000)
+Trying to boot from MMC1
+## Checking hash(es) for config config-1 ... OK
+## Checking hash(es) for Image atf-1 ... sha256+ OK
+## Checking hash(es) for Image u-boot ... sha256+ OK
+## Checking hash(es) for Image fdt-1 ... sha256+ OK
+## Checking hash(es) for Image atf-2 ... sha256+ OK
+## Checking hash(es) for Image atf-3 ... sha256+ OK
+NOTICE:  BL31: v2.12.0(release):
+NOTICE:  BL31: Built : 00:00:00, Jan  1 1980
+
+
+U-Boot 2025.04 (Jan 01 1980 - 00:00:00 +0000)
+
+Model: Rockchip RK3588S EVB1 V10 Board
+SoC:   RK3582
+DRAM:  8 GiB
+Core:  345 devices, 29 uclasses, devicetree: separate
+MMC:   mmc@fe2c0000: 1, mmc@fe2e0000: 0
+Loading Environment from nowhere... OK
+In:    serial@feb50000
+Out:   serial@feb50000
+Err:   serial@feb50000
+Model: Rockchip RK3588S EVB1 V10 Board
+SoC:   RK3582
+Net:   No ethernet found.
+Hit any key to stop autoboot:  2  1  0 
+switch to partitions #0, OK
+mmc1 is current device
+Retrieving file: /boot/extlinux/extlinux.conf
+Error reading config file
+Scanning mmc 1:1...
+Found /extlinux/extlinux.conf
+Retrieving file: /extlinux/extlinux.conf
+------------------------------------------------------------
+1:	NixOS - Default
+Enter choice: 1:	NixOS - Default
+Retrieving file: /extlinux/../nixos/iaziacmiwcyvzfqxwnvdylqyw05c00wy-linux-6.15.4-Image
+Retrieving file: /extlinux/../nixos/6bsnly49mhx656bwpm1sajvk6rvpa5wj-initrd-linux-6.15.4-initrd
+append: init=/nix/store/dlhyf91dqiz05kj1rri0xzhcslrrz102-nixos-system-stormjib-rockchip-25.05.20250629.b43c397/init console=ttyS2,115200n8 earlycon=uart8250,mmio32,0xfeb50000 rootwait root=/dev/disk/by-label/NIXOS_ROOT rw ignore_loglevel nomodeset keep_bootcon loglevel=4 lsm=landlock,yama,bpf
+Retrieving file: /extlinux/../nixos/iaziacmiwcyvzfqxwnvdylqyw05c00wy-linux-6.15.4-dtbs/rockchip/rk3588s-evb1-v10.dtb
+ERROR: RD image overlaps OS image (OS=a200000..e1b0000)
+SCRIPT FAILED: continuing...
+switch to partitions #0, OK
+mmc0(part 0) is current device
+Scanning mmc 0:1...
+** No partition table - mmc 0 **
+Couldn't find partition mmc 0:1
+** No partition table - mmc 0 **
+Couldn't find partition mmc 0:1
+=> DDR d5483af87d cym 23/11/23-16:15:24,fwver: v1.15
+LPDDR4, 2112MHz
+channel[0] BW=16 Col=10 Bk=8 CS0 Row=16 CS1 Row=16 CS=2 Die BW=16 Size=2048MB
+channel[1] BW=16 Col=10 Bk=8 CS0 Row=16 CS1 Row=16 CS=2 Die BW=16 Size=2048MB
+channel[2] BW=16 Col=10 Bk=8 CS0 Row=16 CS1 Row=16 CS=2 Die BW=16 Size=2048MB
+channel[3] BW=16 Col=10 Bk=8 CS0 Row=16 CS1 Row=16 CS=2 Die BW=16 Size=2048MB
+Manufacturer ID:0xff
+CH0 RX Vref:33.9%, TX Vref:13.2%,13.2%
+CH1 RX Vref:35.7%, TX Vref:13.2%,13.2%
+CH2 RX Vref:36.5%, TX Vref:13.2%,13.2%
+CH3 RX Vref:35.2%, TX Vref:13.2%,13.2%
+change to F1: 528MHz
+change to F2: 1068MHz
+change to F3: 1560MHz
+change to F0: 2112MHz
+out
+Boot1 Release Time: Oct 17 2023 17:09:54, version: 1.11
+Emmc IO init.
+Emmc IO init.
+mmc_set_bus_width: 1
+SetEmmcClk: 375000, 2, 64
+mmc_switch index:183, value:0x2
+mmc_switch index:185, value:0x2
+SetEmmcClk: 375000, 2, 64
+mmc_set_bus_width: 8
+SetEmmcClk: 200000000, 0, 3
+Enable PHY CLK: 200000000, timing: 9
+SdmmcInit=2 0
+BootCapSize=100000
+UserCapSize=59640MB
+FwPartOffset=2000 , 100000
+UsbBoot ...121789
+powerOn 124050
+ 1  0 
+switch to partitions #0, OK
+mmc1 is current device
+Retrieving file: /boot/extlinux/extlinux.conf
+Error reading config file
+Scanning mmc 1:1...
+Found /extlinux/extlinux.conf
+Retrieving file: /extlinux/extlinux.conf
+------------------------------------------------------------
+1:	NixOS - Default
+Enter choice: 1:	NixOS - Default
+Retrieving file: /extlinux/../nixos/iaziacmiwcyvzfqxwnvdylqyw05c00wy-linux-6.15.4-Image
+Retrieving file: /extlinux/../nixos/6bsnly49mhx656bwpm1sajvk6rvpa5wj-initrd-linux-6.15.4-initrd
+append: init=/nix/store/g599gxsxz9nb175rlrqvmaw6igyb1ni3-nixos-system-stormjib-rockchip-25.05.20250629.b43c397/init console=ttyS2,115200n8 earlycon=uart8250,mmio32,0xfeb50000 rootwait root=/dev/disk/by-label/NIXOS_ROOT rw ignore_loglevel nomodeset keep_bootcon loglevel=4 lsm=landlock,yama,bpf
+Retrieving file: /extlinux/../nixos/iaziacmiwcyvzfqxwnvdylqyw05c00wy-linux-6.15.4-dtbs/rockchip/rk3588s-evb1-v10.dtb
+## Flattened Device Tree blob at 0a000000
+   Booting using the fdt blob at 0xa000000
+Working FDT set to a000000
+   Loading Ramdisk to ec529000, end ececcd03 ... OK
+   Loading Device Tree to 00000000ec4fe000, end 00000000ec5287f1 ... OK
+Working FDT set to ec4fe000
+
+Starting kernel ...
+
+[    0.000000] Booting Linux on physical CPU 0x0000000000 [0x412fd050]
+[    0.000000] Linux version 6.15.4 (nixbld@localhost) (gcc (GCC) 14.2.1 20250322, GNU ld (GNU Binutils) 2.44) #1-NixOS SMP Fri Jun 27 10:13:43 UTC 2025
+[    0.000000] KASLR enabled
+[    0.000000] Machine model: Rockchip RK3588S EVB1 V10 Board
+[    0.000000] earlycon: uart8250 at MMIO32 0x00000000feb50000 (options '')
+[    0.000000] printk: legacy bootconsole [uart8250] enabled
+[    0.000000] printk: debug: ignoring loglevel setting.
+[    0.000000] printk: debug: skip boot console de-registration.
+[    0.000000] efi: UEFI not found.
+[    0.000000] OF: reserved mem: 0x000000000010f000..0x000000000010f0ff (0 KiB) nomap non-reusable shmem@10f000
+[    0.000000] NUMA: Faking a node at [mem 0x0000000000200000-0x00000002ffffffff]
+[    0.000000] NODE_DATA(0) allocated [mem 0x2fed163c0-0x2fed19b3f]
+[    0.000000] Zone ranges:
+[    0.000000]   DMA      [mem 0x0000000000200000-0x00000000ffffffff]
+[    0.000000]   DMA32    empty
+[    0.000000]   Normal   [mem 0x0000000100000000-0x00000002ffffffff]
+[    0.000000]   Device   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000000200000-0x00000000efffffff]
+[    0.000000]   node   0: [mem 0x0000000100000000-0x00000001ffffffff]
+[    0.000000]   node   0: [mem 0x00000002f0000000-0x00000002ffffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000000200000-0x00000002ffffffff]
+[    0.000000] On node 0, zone DMA: 512 pages in unavailable ranges
+[    0.000000] cma: Reserved 32 MiB at 0x00000000ee000000
+[    0.000000] psci: probing for conduit method from DT.
+[    0.000000] psci: PSCIv1.1 detected in firmware.
+[    0.000000] psci: Using standard PSCI v0.2 function IDs
+[    0.000000] psci: MIGRATE_INFO_TYPE not supported.
+[    0.000000] psci: SMC Calling Convention v1.5
+[    0.000000] percpu: Embedded 75 pages/cpu s181848 r8192 d117160 u307200
+[    0.000000] pcpu-alloc: s181848 r8192 d117160 u307200 alloc=75*4096
+[    0.000000] pcpu-alloc: [0] 0 [0] 1 [0] 2 [0] 3 [0] 4 [0] 5 [0] 6 [0] 7 
+[    0.000000] Detected VIPT I-cache on CPU0
+[    0.000000] CPU features: detected: GIC system register CPU interface
+[    0.000000] CPU features: detected: Virtualization Host Extensions
+[    0.000000] CPU features: kernel page table isolation forced ON by KASLR
+[    0.000000] CPU features: detected: Kernel page table isolation (KPTI)
+[    0.000000] CPU features: detected: ARM errata 1165522, 1319367, or 1530923
+[    0.000000] alternatives: applying boot alternatives
+[    0.000000] Kernel command line: init=/nix/store/g599gxsxz9nb175rlrqvmaw6igyb1ni3-nixos-system-stormjib-rockchip-25.05.20250629.b43c397/init console=ttyS2,115200n8 earlycon=uart8250,mmio32,0xfeb50000 rootwait root=/dev/disk/by-label/NIXOS_ROOT rw ignore_loglevel nomodeset keep_bootcon loglevel=4 lsm=landlock,yama,bpf
+[    0.000000] Booted with the nomodeset parameter. Only the system framebuffer will be available
+[    0.000000] printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes
+[    0.000000] Dentry cache hash table entries: 1048576 (order: 11, 8388608 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 524288 (order: 10, 4194304 bytes, linear)
+[    0.000000] software IO TLB: area num 8.
+[    0.000000] software IO TLB: mapped [mem 0x00000000e84fe000-0x00000000ec4fe000] (64MB)
+[    0.000000] Fallback order for Node 0: 0 
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 2096640
+[    0.000000] Policy zone: Normal
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:on, heap free:off
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=8, Nodes=1
+[    0.000000] allocated 16777216 bytes of page_ext
+[    0.000000] ftrace: allocating 73128 entries in 288 pages
+[    0.000000] ftrace: allocated 288 pages with 2 groups
+[    0.000000] rcu: Hierarchical RCU implementation.
+[    0.000000] rcu: 	RCU event tracing is enabled.
+[    0.000000] rcu: 	RCU restricting CPUs from NR_CPUS=384 to nr_cpu_ids=8.
+[    0.000000] 	Rude variant of Tasks RCU enabled.
+[    0.000000] 	Tracing variant of Tasks RCU enabled.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=8
+[    0.000000] RCU Tasks Rude: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+[    0.000000] RCU Tasks Trace: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] GIC: enabling workaround for GICv3: non-coherent attribute
+[    0.000000] GICv3: GIC: Using split EOI/Deactivate mode
+[    0.000000] GICv3: 480 SPIs implemented
+[    0.000000] GICv3: 0 Extended SPIs implemented
+[    0.000000] GICv3: MBI range [424:479]
+[    0.000000] GICv3: Using MBI frame 0x00000000fe610000
+[    0.000000] Root IRQ handler: gic_handle_irq
+[    0.000000] GICv3: GICv3 features: 16 PPIs
+[    0.000000] GICv3: GICD_CTRL.DS=0, SCR_EL3.FIQ=0
+[    0.000000] GICv3: CPU0: found redistributor 0 region 0:0x00000000fe680000
+[    0.000000] ITS [mem 0xfe640000-0xfe65ffff]
+[    0.000000] GIC: enabling workaround for ITS: Rockchip erratum RK3588001
+[    0.000000] GIC: enabling workaround for ITS: non-coherent attribute
+[    0.000000] ITS@0x00000000fe640000: allocated 8192 Devices @101330000 (indirect, esz 8, psz 64K, shr 0)
+[    0.000000] ITS@0x00000000fe640000: allocated 32768 Interrupt Collections @101340000 (flat, esz 2, psz 64K, shr 0)
+[    0.000000] ITS: using cache flushing for cmd queue
+[    0.000000] ITS [mem 0xfe660000-0xfe67ffff]
+[    0.000000] GIC: enabling workaround for ITS: Rockchip erratum RK3588001
+[    0.000000] GIC: enabling workaround for ITS: non-coherent attribute
+[    0.000000] ITS@0x00000000fe660000: allocated 8192 Devices @101360000 (indirect, esz 8, psz 64K, shr 0)
+[    0.000000] ITS@0x00000000fe660000: allocated 32768 Interrupt Collections @101370000 (flat, esz 2, psz 64K, shr 0)
+[    0.000000] ITS: using cache flushing for cmd queue
+[    0.000000] GICv3: using LPI property table @0x0000000101380000
+[    0.000000] GIC: using cache flushing for LPI property table
+[    0.000000] GICv3: CPU0: using allocated LPI pending table @0x0000000101390000
+[    0.000000] GICv3: GIC: PPI partition interrupt-partition-0[0] { /cpus/cpu@0[0] /cpus/cpu@100[1] /cpus/cpu@200[2] /cpus/cpu@300[3] }
+[    0.000000] GICv3: GIC: PPI partition interrupt-partition-1[1] { /cpus/cpu@400[4] /cpus/cpu@500[5] /cpus/cpu@600[6] /cpus/cpu@700[7] }
+[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] arch_timer: cp15 timer(s) running at 24.00MHz (phys).
+[    0.000000] clocksource: arch_sys_counter: mask: 0xffffffffffffff max_cycles: 0x588fe9dc0, max_idle_ns: 440795202592 ns
+[    0.000000] sched_clock: 56 bits at 24MHz, resolution 41ns, wraps every 4398046511097ns
+[    0.007671] kfence: initialized - using 2097152 bytes for 255 objects at 0x(____ptrval____)-0x(____ptrval____)
+[    0.009395] Console: colour dummy device 80x25
+[    0.012029] Calibrating delay loop (skipped), value calculated using timer frequency.. 48.00 BogoMIPS (lpj=96000)
+[    0.013006] pid_max: default: 32768 minimum: 301
+[    0.016695] LSM: initializing lsm=capability,landlock,yama,bpf
+[    0.019992] landlock: Up and running.
+[    0.020346] Yama: becoming mindful.
+[    0.021307] LSM support for eBPF active
+[    0.023230] Mount-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    0.023980] Mountpoint-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    0.034260] rcu: Hierarchical SRCU implementation.
+[    0.034722] rcu: 	Max phase no-delay instances is 1000.
+[    0.035733] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+[    0.038845] fsl-mc MSI: msi-controller@fe640000 domain created
+[    0.039423] fsl-mc MSI: msi-controller@fe660000 domain created
+[    0.050875] EFI services will not be available.
+[    0.052120] smp: Bringing up secondary CPUs ...
+[    0.053654] Detected VIPT I-cache on CPU1
+[    0.053743] GICv3: CPU1: found redistributor 100 region 0:0x00000000fe6a0000
+[    0.053762] GICv3: CPU1: using allocated LPI pending table @0x00000001013a0000
+[    0.053822] CPU1: Booted secondary processor 0x0000000100 [0x412fd050]
+[    0.055158] Detected VIPT I-cache on CPU2
+[    0.055239] GICv3: CPU2: found redistributor 200 region 0:0x00000000fe6c0000
+[    0.055256] GICv3: CPU2: using allocated LPI pending table @0x00000001013b0000
+[    0.055305] CPU2: Booted secondary processor 0x0000000200 [0x412fd050]
+[    0.056546] Detected VIPT I-cache on CPU3
+[    0.056624] GICv3: CPU3: found redistributor 300 region 0:0x00000000fe6e0000
+[    0.056641] GICv3: CPU3: using allocated LPI pending table @0x00000001013c0000
+[    0.056688] CPU3: Booted secondary processor 0x0000000300 [0x412fd050]
+[    0.057952] CPU features: detected: Spectre-v4
+[    0.057959] CPU features: detected: Spectre-BHB
+[    0.057964] CPU features: detected: SSBS not fully self-synchronizing
+[    0.057967] Detected PIPT I-cache on CPU4
+[    0.058011] GICv3: CPU4: found redistributor 400 region 0:0x00000000fe700000
+[    0.058020] GICv3: CPU4: using allocated LPI pending table @0x00000001013d0000
+[    0.058050] CPU4: Booted secondary processor 0x0000000400 [0x414fd0b0]
+[    0.059146] Detected PIPT I-cache on CPU5
+[    0.059201] GICv3: CPU5: found redistributor 500 region 0:0x00000000fe720000
+[    0.059211] GICv3: CPU5: using allocated LPI pending table @0x00000001013e0000
+[    0.059243] CPU5: Booted secondary processor 0x0000000500 [0x414fd0b0]
+[    0.060664] Detected PIPT I-cache on CPU6
+[    0.060716] GICv3: CPU6: found redistributor 600 region 0:0x00000000fe740000
+[    0.060726] GICv3: CPU6: using allocated LPI pending table @0x00000001013f0000
+[    0.060757] CPU6: Booted secondary processor 0x0000000600 [0x414fd0b0]
+[    0.061885] Detected PIPT I-cache on CPU7
+[    0.061938] GICv3: CPU7: found redistributor 700 region 0:0x00000000fe760000
+[    0.061948] GICv3: CPU7: using allocated LPI pending table @0x0000000101800000
+[    0.061978] CPU7: Booted secondary processor 0x0000000700 [0x414fd0b0]
+[    0.062153] smp: Brought up 1 node, 8 CPUs
+[    0.080230] SMP: Total of 8 processors activated.
+[    0.080676] CPU: All CPU(s) started at EL2
+[    0.081076] CPU features: detected: 32-bit EL0 Support
+[    0.081563] CPU features: detected: Data cache clean to the PoU not required for I/D coherence
+[    0.082373] CPU features: detected: Common not Private translations
+[    0.082963] CPU features: detected: CRC32 instructions
+[    0.083454] CPU features: detected: RCpc load-acquire (LDAPR)
+[    0.083996] CPU features: detected: LSE atomic instructions
+[    0.084522] CPU features: detected: Privileged Access Never
+[    0.085047] CPU features: detected: PMUv3
+[    0.085437] CPU features: detected: RAS Extension Support
+[    0.085952] CPU features: detected: Speculative Store Bypassing Safe (SSBS)
+[    0.086708] alternatives: applying system-wide alternatives
+[    0.093608] CPU features: detected: Hardware dirty bit management on CPU4-7
+[    0.095137] Memory: 8015536K/8386560K available (26432K kernel code, 6860K rwdata, 25852K rodata, 4800K init, 1042K bss, 307072K reserved, 32768K cma-reserved)
+[    0.100078] devtmpfs: initialized
+[    0.118444] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.119374] posixtimers hash table entries: 4096 (order: 4, 65536 bytes, linear)
+[    0.120092] futex hash table entries: 2048 (order: 5, 131072 bytes, linear)
+[    0.121071] 2G module region forced by RANDOMIZE_MODULE_REGION_FULL
+[    0.121673] 0 pages in range for non-PLT usage
+[    0.121676] 507984 pages in range for PLT usage
+[    0.123759] pinctrl core: initialized pinctrl subsystem
+[    0.127945] DMI not present or invalid.
+[    0.131333] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.133141] DMA: preallocated 1024 KiB GFP_KERNEL pool for atomic allocations
+[    0.134086] DMA: preallocated 1024 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+[    0.135336] DMA: preallocated 1024 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+[    0.136127] audit: initializing netlink subsys (disabled)
+[    0.136881] audit: type=2000 audit(0.120:1): state=initialized audit_enabled=0 res=1
+[    0.137871] thermal_sys: Registered thermal governor 'step_wise'
+[    0.137877] thermal_sys: Registered thermal governor 'power_allocator'
+[    0.138498] cpuidle: using governor ladder
+[    0.139518] cpuidle: using governor menu
+[    0.140155] hw-breakpoint: found 6 breakpoint and 4 watchpoint registers.
+[    0.140974] ASID allocator initialised with 32768 entries
+[    0.144160] Serial: AMBA PL011 UART driver
+[    0.186108] /pcie@fe180000: Fixed dependency cycle(s) with /pcie@fe180000/legacy-interrupt-controller
+[    0.187455] /pcie@fe190000: Fixed dependency cycle(s) with /pcie@fe190000/legacy-interrupt-controller
+[    0.193749] /i2c@feca0000/usb-typec@22/connector: Fixed dependency cycle(s) with /usb@fc000000
+[    0.195329] /i2c@feca0000/usb-typec@22/connector: Fixed dependency cycle(s) with /phy@fed80000
+[    0.196168] /usb@fc000000: Fixed dependency cycle(s) with /phy@fed80000
+[    0.196823] /phy@fed80000: Fixed dependency cycle(s) with /i2c@feca0000/usb-typec@22/connector
+[    0.205893] gpio gpiochip0: Static allocation of GPIO base is deprecated, use dynamic allocation.
+[    0.207541] rockchip-gpio fd8a0000.gpio: probed /pinctrl/gpio@fd8a0000
+[    0.208725] gpio gpiochip1: Static allocation of GPIO base is deprecated, use dynamic allocation.
+[    0.209815] rockchip-gpio fec20000.gpio: probed /pinctrl/gpio@fec20000
+[    0.210682] gpio gpiochip2: Static allocation of GPIO base is deprecated, use dynamic allocation.
+[    0.211666] rockchip-gpio fec30000.gpio: probed /pinctrl/gpio@fec30000
+[    0.212516] gpio gpiochip3: Static allocation of GPIO base is deprecated, use dynamic allocation.
+[    0.213494] rockchip-gpio fec40000.gpio: probed /pinctrl/gpio@fec40000
+[    0.214426] gpio gpiochip4: Static allocation of GPIO base is deprecated, use dynamic allocation.
+[    0.215407] rockchip-gpio fec50000.gpio: probed /pinctrl/gpio@fec50000
+[    0.227692] HugeTLB: allocation took 0ms with hugepage_allocation_threads=2
+[    0.228348] HugeTLB: allocation took 0ms with hugepage_allocation_threads=2
+[    0.229002] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[    0.229636] HugeTLB: 0 KiB vmemmap can be freed for a 1.00 GiB page
+[    0.230231] HugeTLB: registered 32.0 MiB page size, pre-allocated 0 pages
+[    0.230864] HugeTLB: 0 KiB vmemmap can be freed for a 32.0 MiB page
+[    0.231450] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.232083] HugeTLB: 0 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.232668] HugeTLB: registered 64.0 KiB page size, pre-allocated 0 pages
+[    0.233301] HugeTLB: 0 KiB vmemmap can be freed for a 64.0 KiB page
+[    0.242985] ACPI: Interpreter disabled.
+[    0.246534] iommu: Default domain type: Translated
+[    0.246985] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.250602] SCSI subsystem initialized
+[    0.251064] libata version 3.00 loaded.
+[    0.251607] usbcore: registered new interface driver usbfs
+[    0.252163] usbcore: registered new interface driver hub
+[    0.252675] usbcore: registered new device driver usb
+[    0.254317] pps_core: LinuxPPS API ver. 1 registered
+[    0.254783] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    0.255641] PTP clock support registered
+[    0.256102] EDAC MC: Ver: 3.0.0
+[    0.256951] scmi_core: SCMI protocol bus registered
+[    0.258423] FPGA manager framework
+[    0.258886] Advanced Linux Sound Architecture Driver Initialized.
+[    0.260403] vgaarb: loaded
+[    0.261085] clocksource: Switched to clocksource arch_sys_counter
+[    0.263432] VFS: Disk quotas dquot_6.6.0
+[    0.263958] VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+[    0.264984] netfs: FS-Cache loaded
+[    0.265602] pnp: PnP ACPI: disabled
+[    0.276271] NET: Registered PF_INET protocol family
+[    0.276958] IP idents hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+[    0.335389] tcp_listen_portaddr_hash hash table entries: 4096 (order: 4, 65536 bytes, linear)
+[    0.336287] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.337135] TCP established hash table entries: 65536 (order: 7, 524288 bytes, linear)
+[    0.338619] TCP bind hash table entries: 65536 (order: 9, 2097152 bytes, linear)
+[    0.341199] TCP: Hash tables configured (established 65536 bind 65536)
+[    0.342169] MPTCP token hash table entries: 8192 (order: 5, 196608 bytes, linear)
+[    0.343043] UDP hash table entries: 4096 (order: 6, 262144 bytes, linear)
+[    0.344019] UDP-Lite hash table entries: 4096 (order: 6, 262144 bytes, linear)
+[    0.345256] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.345839] NET: Registered PF_XDP protocol family
+[    0.346295] PCI: CLS 0 bytes, default 64
+[    0.346976] Trying to unpack rootfs image as initramfs...
+[    0.356138] kvm [1]: nv: 566 coarse grained trap handlers
+[    0.356891] kvm [1]: IPA Size Limit: 40 bits
+[    0.357340] kvm [1]: GICv3: no GICV resource entry
+[    0.357789] kvm [1]: disabling GICv2 emulation
+[    0.358231] kvm [1]: GIC system register CPU interface enabled
+[    0.358797] kvm [1]: vgic interrupt IRQ18
+[    0.359218] kvm [1]: VHE mode initialized successfully
+[    0.469285] Initialise system trusted keyrings
+[    0.469991] workingset: timestamp_bits=42 max_order=21 bucket_order=0
+[    0.475912] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    0.477237] 9p: Installing v9fs 9p2000 file system support
+[    0.516628] Key type asymmetric registered
+[    0.517018] Asymmetric key parser 'x509' registered
+[    0.517661] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 244)
+[    0.518638] io scheduler mq-deadline registered
+[    0.519064] io scheduler kyber registered
+[    0.539027] ledtrig-cpu: registered to indicate activity on CPUs
+[    0.562075] dma-pl330 fea10000.dma-controller: Loaded driver for PL330 DMAC-241330
+[    0.562793] dma-pl330 fea10000.dma-controller: 	DBUFF-128x8bytes Num_Chans-8 Num_Peri-32 Num_Events-16
+[    0.564852] dma-pl330 fea30000.dma-controller: Loaded driver for PL330 DMAC-241330
+[    0.565578] dma-pl330 fea30000.dma-controller: 	DBUFF-128x8bytes Num_Chans-8 Num_Peri-32 Num_Events-16
+[    0.567653] dma-pl330 fed10000.dma-controller: Loaded driver for PL330 DMAC-241330
+[    0.568367] dma-pl330 fed10000.dma-controller: 	DBUFF-128x8bytes Num_Chans-8 Num_Peri-32 Num_Events-16
+[    0.584012] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[    0.584480] Freeing initrd memory: 9868K
+[    0.587039] printk: legacy console [ttyS2] disabled
+[    0.587691] feb50000.serial: ttyS2 at MMIO 0xfeb50000 (irq = 40, base_baud = 1500000) is a 16550A
+DDR 9fa84341ce typ 24/09/06-09:51:11,fwver: v1.18
+ch0 ttot10
+ch0 ttot10
+ch1 ttot10
+ch2 ttot10
+ch3 ttot10
+ch0 ttot18
+LPDDR4, 2112MHz
+channel[0] BW=16 Col=10 Bk=8 CS0 Row=16 CS1 Row=16 CS=2 Die BW=16 Size=2048MB
+ch1 ttot18
+channel[1] BW=16 Col=10 Bk=8 CS0 Row=16 CS1 Row=16 CS=2 Die BW=16 Size=2048MB
+ch2 ttot16
+channel[2] BW=16 Col=10 Bk=8 CS0 Row=16 CS1 Row=16 CS=2 Die BW=16 Size=2048MB
+ch3 ttot18
+channel[3] BW=16 Col=10 Bk=8 CS0 Row=16 CS1 Row=16 CS=2 Die BW=16 Size=2048MB
+Manufacturer ID:0xff
+DQS rds:l0,l0, 
+CH0 RX Vref:34.8%, TX Vref:13.2%,13.2%
+DQ rds:h1 l0 h1 h2 l0 l0 h3 h2 , h1 h2 h2 l0 h1 h2 h1 h2 
+
+DQS rds:l0,l0, 
+CH1 RX Vref:35.2%, TX Vref:13.2%,13.2%
+DQ rds:h1 h3 h1 h3 h3 h1 h1 h1 , h3 h4 h1 h2 h4 h1 h1 h1 
+
+DQS rds:h1,h1, 
+CH2 RX Vref:36.5%, TX Vref:13.2%,13.2%
+DQ rds:h3 h4 h2 h1 h4 h3 h1 h1 , h2 l0 h3 h1 h1 h1 h1 h3 
+
+DQS rds:l0,l0, 
+CH3 RX Vref:35.2%, TX Vref:13.2%,13.2%
+DQ rds:h5 h1 h2 l0 h1 h2 h4 h2 , h2 h2 h1 h1 h1 h3 h1 h2 
+
+stride=0x2, ddr_config=0x4
+hash ch_mask0-1 0x20 0x40, bank_mask0-3 0xa00 0x1400 0x2800 0x0, rank_mask0 0x401000
+change to F1: 528MHz
+ch0 ttot10
+ch1 ttot10
+ch2 ttot10
+ch3 ttot10
+change to F2: 1068MHz
+ch0 ttot14
+ch1 ttot14
+ch2 ttot12
+ch3 ttot12
+change to F3: 1560MHz
+ch0 ttot16
+ch1 ttot16
+ch2 ttot14
+ch3 ttot14
+change to F0: 2112MHz
+ch0 ttot18
+ch1 ttot18
+ch2 ttot18
+ch3 ttot18
+out
+
+U-Boot SPL 2025.04 (Jan 01 1980 - 00:00:00 +0000)
+Trying to boot from MMC1
+## Checking hash(es) for config config-1 ... OK
+## Checking hash(es) for Image atf-1 ... sha256+ OK
+## Checking hash(es) for Image u-boot ... sha256+ OK
+## Checking hash(es) for Image fdt-1 ... sha256+ OK
+## Checking hash(es) for Image atf-2 ... sha256+ OK
+## Checking hash(es) for Image atf-3 ... sha256+ OK
+NOTICE:  BL31: v2.12.0(release):
+NOTICE:  BL31: Built : 00:00:00, Jan  1 1980
+
+
+U-Boot 2025.04 (Jan 01 1980 - 00:00:00 +0000)
+
+Model: Rockchip RK3588S EVB1 V10 Board
+SoC:   RK3582
+DRAM:  8 GiB
+Core:  345 devices, 29 uclasses, devicetree: separate
+MMC:   mmc@fe2c0000: 1, mmc@fe2e0000: 0
+Loading Environment from nowhere... OK
+In:    serial@feb50000
+Out:   serial@feb50000
+Err:   serial@feb50000
+Model: Rockchip RK3588S EVB1 V10 Board
+SoC:   RK3582
+Net:   No ethernet found.
+Hit any key to stop autoboot:  2  1  0 
+switch to partitions #0, OK
+mmc1 is current device
+Retrieving file: /boot/extlinux/extlinux.conf
+Error reading config file
+Scanning mmc 1:1...
+Found /extlinux/extlinux.conf
+Retrieving file: /extlinux/extlinux.conf
+------------------------------------------------------------
+1:	NixOS - Default
+Enter choice: 1:	NixOS - Default
+Retrieving file: /extlinux/../nixos/iaziacmiwcyvzfqxwnvdylqyw05c00wy-linux-6.15.4-Image
+Retrieving file: /extlinux/../nixos/6bsnly49mhx656bwpm1sajvk6rvpa5wj-initrd-linux-6.15.4-initrd
+append: init=/nix/store/jklcpcp0bj5nj8nk5jmb6yrpwbd4vj07-nixos-system-stormjib-rockchip-25.05.20250629.b43c397/init console=tty1 console=ttyS2,115200n8 earlycon=uart8250,mmio32,0xfeb50000 rootwait root=/dev/disk/by-label/NIXOS_ROOT rw ignore_loglevel nomodeset keep_bootcon loglevel=4 lsm=landlock,yama,bpf
+Retrieving file: /extlinux/../nixos/iaziacmiwcyvzfqxwnvdylqyw05c00wy-linux-6.15.4-dtbs/rockchip/rk3588s-evb1-v10.dtb
+## Flattened Device Tree blob at 0a000000
+   Booting using the fdt blob at 0xa000000
+Working FDT set to a000000
+   Loading Ramdisk to ec529000, end ececcd03 ... OK
+   Loading Device Tree to 00000000ec4fe000, end 00000000ec5287f1 ... OK
+Working FDT set to ec4fe000
+
+Starting kernel ...
+
+[    0.000000] Booting Linux on physical CPU 0x0000000000 [0x412fd050]
+[    0.000000] Linux version 6.15.4 (nixbld@localhost) (gcc (GCC) 14.2.1 20250322, GNU ld (GNU Binutils) 2.44) #1-NixOS SMP Fri Jun 27 10:13:43 UTC 2025
+[    0.000000] KASLR enabled
+[    0.000000] Machine model: Rockchip RK3588S EVB1 V10 Board
+[    0.000000] earlycon: uart8250 at MMIO32 0x00000000feb50000 (options '')
+[    0.000000] printk: legacy bootconsole [uart8250] enabled
+[    0.000000] printk: debug: ignoring loglevel setting.
+[    0.000000] printk: debug: skip boot console de-registration.
+[    0.000000] efi: UEFI not found.
+[    0.000000] OF: reserved mem: 0x000000000010f000..0x000000000010f0ff (0 KiB) nomap non-reusable shmem@10f000
+[    0.000000] NUMA: Faking a node at [mem 0x0000000000200000-0x00000002ffffffff]
+[    0.000000] NODE_DATA(0) allocated [mem 0x2fed163c0-0x2fed19b3f]
+[    0.000000] Zone ranges:
+[    0.000000]   DMA      [mem 0x0000000000200000-0x00000000ffffffff]
+[    0.000000]   DMA32    empty
+[    0.000000]   Normal   [mem 0x0000000100000000-0x00000002ffffffff]
+[    0.000000]   Device   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000000200000-0x00000000efffffff]
+[    0.000000]   node   0: [mem 0x0000000100000000-0x00000001ffffffff]
+[    0.000000]   node   0: [mem 0x00000002f0000000-0x00000002ffffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000000200000-0x00000002ffffffff]
+[    0.000000] On node 0, zone DMA: 512 pages in unavailable ranges
+[    0.000000] cma: Reserved 32 MiB at 0x00000000ee000000
+[    0.000000] psci: probing for conduit method from DT.
+[    0.000000] psci: PSCIv1.1 detected in firmware.
+[    0.000000] psci: Using standard PSCI v0.2 function IDs
+[    0.000000] psci: MIGRATE_INFO_TYPE not supported.
+[    0.000000] psci: SMC Calling Convention v1.5
+[    0.000000] percpu: Embedded 75 pages/cpu s181848 r8192 d117160 u307200
+[    0.000000] pcpu-alloc: s181848 r8192 d117160 u307200 alloc=75*4096
+[    0.000000] pcpu-alloc: [0] 0 [0] 1 [0] 2 [0] 3 [0] 4 [0] 5 [0] 6 [0] 7 
+[    0.000000] Detected VIPT I-cache on CPU0
+[    0.000000] CPU features: detected: GIC system register CPU interface
+[    0.000000] CPU features: detected: Virtualization Host Extensions
+[    0.000000] CPU features: kernel page table isolation forced ON by KASLR
+[    0.000000] CPU features: detected: Kernel page table isolation (KPTI)
+[    0.000000] CPU features: detected: ARM errata 1165522, 1319367, or 1530923
+[    0.000000] alternatives: applying boot alternatives
+[    0.000000] Kernel command line: init=/nix/store/jklcpcp0bj5nj8nk5jmb6yrpwbd4vj07-nixos-system-stormjib-rockchip-25.05.20250629.b43c397/init console=tty1 console=ttyS2,115200n8 earlycon=uart8250,mmio32,0xfeb50000 rootwait root=/dev/disk/by-label/NIXOS_ROOT rw ignore_loglevel nomodeset keep_bootcon loglevel=4 lsm=landlock,yama,bpf
+[    0.000000] Booted with the nomodeset parameter. Only the system framebuffer will be available
+[    0.000000] printk: log buffer data + meta data: 131072 + 458752 = 589824 bytes
+[    0.000000] Dentry cache hash table entries: 1048576 (order: 11, 8388608 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 524288 (order: 10, 4194304 bytes, linear)
+[    0.000000] software IO TLB: area num 8.
+[    0.000000] software IO TLB: mapped [mem 0x00000000e84fe000-0x00000000ec4fe000] (64MB)
+[    0.000000] Fallback order for Node 0: 0 
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 2096640
+[    0.000000] Policy zone: Normal
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:on, heap free:off
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=8, Nodes=1
+[    0.000000] allocated 16777216 bytes of page_ext
+[    0.000000] ftrace: allocating 73128 entries in 288 pages
+[    0.000000] ftrace: allocated 288 pages with 2 groups
+[    0.000000] rcu: Hierarchical RCU implementation.
+[    0.000000] rcu: 	RCU event tracing is enabled.
+[    0.000000] rcu: 	RCU restricting CPUs from NR_CPUS=384 to nr_cpu_ids=8.
+[    0.000000] 	Rude variant of Tasks RCU enabled.
+[    0.000000] 	Tracing variant of Tasks RCU enabled.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=8
+[    0.000000] RCU Tasks Rude: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+[    0.000000] RCU Tasks Trace: Setting shift to 3 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=8.
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] GIC: enabling workaround for GICv3: non-coherent attribute
+[    0.000000] GICv3: GIC: Using split EOI/Deactivate mode
+[    0.000000] GICv3: 480 SPIs implemented
+[    0.000000] GICv3: 0 Extended SPIs implemented
+[    0.000000] GICv3: MBI range [424:479]
+[    0.000000] GICv3: Using MBI frame 0x00000000fe610000
+[    0.000000] Root IRQ handler: gic_handle_irq
+[    0.000000] GICv3: GICv3 features: 16 PPIs
+[    0.000000] GICv3: GICD_CTRL.DS=0, SCR_EL3.FIQ=0
+[    0.000000] GICv3: CPU0: found redistributor 0 region 0:0x00000000fe680000
+[    0.000000] ITS [mem 0xfe640000-0xfe65ffff]
+[    0.000000] GIC: enabling workaround for ITS: Rockchip erratum RK3588001
+[    0.000000] GIC: enabling workaround for ITS: non-coherent attribute
+[    0.000000] ITS@0x00000000fe640000: allocated 8192 Devices @101330000 (indirect, esz 8, psz 64K, shr 0)
+[    0.000000] ITS@0x00000000fe640000: allocated 32768 Interrupt Collections @101340000 (flat, esz 2, psz 64K, shr 0)
+[    0.000000] ITS: using cache flushing for cmd queue
+[    0.000000] ITS [mem 0xfe660000-0xfe67ffff]
+[    0.000000] GIC: enabling workaround for ITS: Rockchip erratum RK3588001
+[    0.000000] GIC: enabling workaround for ITS: non-coherent attribute
+[    0.000000] ITS@0x00000000fe660000: allocated 8192 Devices @101360000 (indirect, esz 8, psz 64K, shr 0)
+[    0.000000] ITS@0x00000000fe660000: allocated 32768 Interrupt Collections @101370000 (flat, esz 2, psz 64K, shr 0)
+[    0.000000] ITS: using cache flushing for cmd queue
+[    0.000000] GICv3: using LPI property table @0x0000000101380000
+[    0.000000] GIC: using cache flushing for LPI property table
+[    0.000000] GICv3: CPU0: using allocated LPI pending table @0x0000000101390000
+[    0.000000] GICv3: GIC: PPI partition interrupt-partition-0[0] { /cpus/cpu@0[0] /cpus/cpu@100[1] /cpus/cpu@200[2] /cpus/cpu@300[3] }
+[    0.000000] GICv3: GIC: PPI partition interrupt-partition-1[1] { /cpus/cpu@400[4] /cpus/cpu@500[5] /cpus/cpu@600[6] /cpus/cpu@700[7] }
+[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] arch_timer: cp15 timer(s) running at 24.00MHz (phys).
+[    0.000000] clocksource: arch_sys_counter: mask: 0xffffffffffffff max_cycles: 0x588fe9dc0, max_idle_ns: 440795202592 ns
+[    0.000001] sched_clock: 56 bits at 24MHz, resolution 41ns, wraps every 4398046511097ns
+[    0.007459] kfence: initialized - using 2097152 bytes for 255 objects at 0x(____ptrval____)-0x(____ptrval____)
+[    0.009162] Console: colour dummy device 80x25
+[    0.009597] printk: legacy console [tty1] enabled
+[    0.013278] Calibrating delay loop (skipped), value calculated using timer frequency.. 48.00 BogoMIPS (lpj=96000)
+[    0.014275] pid_max: default: 32768 minimum: 301
+[    0.017951] LSM: initializing lsm=capability,landlock,yama,bpf
+[    0.021195] landlock: Up and running.
+[    0.021558] Yama: becoming mindful.
+[    0.022532] LSM support for eBPF active
+[    0.024416] Mount-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    0.025202] Mountpoint-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    0.035399] rcu: Hierarchical SRCU implementation.
+[    0.035872] rcu: 	Max phase no-delay instances is 1000.
+[    0.036863] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+[    0.040028] fsl-mc MSI: msi-controller@fe640000 domain created
+[    0.040618] fsl-mc MSI: msi-controller@fe660000 domain created
+[    0.051762] EFI services will not be available.
+[    0.053004] smp: Bringing up secondary CPUs ...
+[    0.054555] Detected VIPT I-cache on CPU1
+[    0.054645] GICv3: CPU1: found redistributor 100 region 0:0x00000000fe6a0000
+[    0.054662] GICv3: CPU1: using allocated LPI pending table @0x00000001013a0000
+[    0.054718] CPU1: Booted secondary processor 0x0000000100 [0x412fd050]
+[    0.056082] Detected VIPT I-cache on CPU2
+[    0.056166] GICv3: CPU2: found redistributor 200 region 0:0x00000000fe6c0000
+[    0.056183] GICv3: CPU2: using allocated LPI pending table @0x00000001013b0000
+[    0.056234] CPU2: Booted secondary processor 0x0000000200 [0x412fd050]
+[    0.057482] Detected VIPT I-cache on CPU3
+[    0.057564] GICv3: CPU3: found redistributor 300 region 0:0x00000000fe6e0000
+[    0.057581] GICv3: CPU3: using allocated LPI pending table @0x00000001013c0000
+[    0.057629] CPU3: Booted secondary processor 0x0000000300 [0x412fd050]
+[    0.058913] CPU features: detected: Spectre-v4
+[    0.058921] CPU features: detected: Spectre-BHB
+[    0.058926] CPU features: detected: SSBS not fully self-synchronizing
+[    0.058929] Detected PIPT I-cache on CPU4
+[    0.058976] GICv3: CPU4: found redistributor 400 region 0:0x00000000fe700000
+[    0.058986] GICv3: CPU4: using allocated LPI pending table @0x00000001013d0000
+[    0.059015] CPU4: Booted secondary processor 0x0000000400 [0x414fd0b0]
+[    0.060108] Detected PIPT I-cache on CPU5
+[    0.060165] GICv3: CPU5: found redistributor 500 region 0:0x00000000fe720000
+[    0.060176] GICv3: CPU5: using allocated LPI pending table @0x00000001013e0000
+[    0.060207] CPU5: Booted secondary processor 0x0000000500 [0x414fd0b0]
+[    0.061583] Detected PIPT I-cache on CPU6
+[    0.061636] GICv3: CPU6: found redistributor 600 region 0:0x00000000fe740000
+[    0.061646] GICv3: CPU6: using allocated LPI pending table @0x00000001013f0000
+[    0.061676] CPU6: Booted secondary processor 0x0000000600 [0x414fd0b0]
+[    0.062828] Detected PIPT I-cache on CPU7
+[    0.062882] GICv3: CPU7: found redistributor 700 region 0:0x00000000fe760000
+[    0.062892] GICv3: CPU7: using allocated LPI pending table @0x0000000101800000
+[    0.062922] CPU7: Booted secondary processor 0x0000000700 [0x414fd0b0]
+[    0.063103] smp: Brought up 1 node, 8 CPUs
+[    0.081495] SMP: Total of 8 processors activated.
+[    0.081950] CPU: All CPU(s) started at EL2
+[    0.082348] CPU features: detected: 32-bit EL0 Support
+[    0.082843] CPU features: detected: Data cache clean to the PoU not required for I/D coherence
+[    0.083667] CPU features: detected: Common not Private translations
+[    0.084279] CPU features: detected: CRC32 instructions
+[    0.084781] CPU features: detected: RCpc load-acquire (LDAPR)
+[    0.085333] CPU features: detected: LSE atomic instructions
+[    0.085869] CPU features: detected: Privileged Access Never
+[    0.086404] CPU features: detected: PMUv3
+[    0.086792] CPU features: detected: RAS Extension Support
+[    0.087315] CPU features: detected: Speculative Store Bypassing Safe (SSBS)
+[    0.088076] alternatives: applying system-wide alternatives
+[    0.095074] CPU features: detected: Hardware dirty bit management on CPU4-7
+[    0.096667] Memory: 8015552K/8386560K available (26432K kernel code, 6860K rwdata, 25852K rodata, 4800K init, 1042K bss, 307068K reserved, 32768K cma-reserved)
+[    0.101598] devtmpfs: initialized
+[    0.120171] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.121109] posixtimers hash table entries: 4096 (order: 4, 65536 bytes, linear)
+[    0.121831] futex hash table entries: 2048 (order: 5, 131072 bytes, linear)
+[    0.122791] 2G module region forced by RANDOMIZE_MODULE_REGION_FULL
+[    0.123397] 0 pages in range for non-PLT usage
+[    0.123400] 507984 pages in range for PLT usage
+[    0.125479] pinctrl core: initialized pinctrl subsystem
+[    0.129623] DMI not present or invalid.
+[    0.133040] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.134911] DMA: preallocated 1024 KiB GFP_KERNEL pool for atomic allocations
+[    0.135863] DMA: preallocated 1024 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+[    0.137121] DMA: preallocated 1024 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+[    0.137917] audit: initializing netlink subsys (disabled)
+[    0.138653] audit: type=2000 audit(0.124:1): state=initialized audit_enabled=0 res=1
+[    0.139657] thermal_sys: Registered thermal governor 'step_wise'
+[    0.139663] thermal_sys: Registered thermal governor 'power_allocator'
+[    0.140293] cpuidle: using governor ladder
+[    0.141322] cpuidle: using governor menu
+[    0.142007] hw-breakpoint: found 6 breakpoint and 4 watchpoint registers.
+[    0.142835] ASID allocator initialised with 32768 entries
+[    0.146048] Serial: AMBA PL011 UART driver
+[    0.187546] /pcie@fe180000: Fixed dependency cycle(s) with /pcie@fe180000/legacy-interrupt-controller
+[    0.188900] /pcie@fe190000: Fixed dependency cycle(s) with /pcie@fe190000/legacy-interrupt-controller
+[    0.195162] /i2c@feca0000/usb-typec@22/connector: Fixed dependency cycle(s) with /usb@fc000000
+[    0.196740] /i2c@feca0000/usb-typec@22/connector: Fixed dependency cycle(s) with /phy@fed80000
+[    0.197587] /usb@fc000000: Fixed dependency cycle(s) with /phy@fed80000
+[    0.198248] /phy@fed80000: Fixed dependency cycle(s) with /i2c@feca0000/usb-typec@22/connector
+[    0.207398] gpio gpiochip0: Static allocation of GPIO base is deprecated, use dynamic allocation.
+[    0.209046] rockchip-gpio fd8a0000.gpio: probed /pinctrl/gpio@fd8a0000
+[    0.210241] gpio gpiochip1: Static allocation of GPIO base is deprecated, use dynamic allocation.
+[    0.211329] rockchip-gpio fec20000.gpio: probed /pinctrl/gpio@fec20000
+[    0.212205] gpio gpiochip2: Static allocation of GPIO base is deprecated, use dynamic allocation.
+[    0.213196] rockchip-gpio fec30000.gpio: probed /pinctrl/gpio@fec30000
+[    0.214054] gpio gpiochip3: Static allocation of GPIO base is deprecated, use dynamic allocation.
+[    0.215039] rockchip-gpio fec40000.gpio: probed /pinctrl/gpio@fec40000
+[    0.215999] gpio gpiochip4: Static allocation of GPIO base is deprecated, use dynamic allocation.
+[    0.216990] rockchip-gpio fec50000.gpio: probed /pinctrl/gpio@fec50000
+[    0.229245] HugeTLB: allocation took 0ms with hugepage_allocation_threads=2
+[    0.229907] HugeTLB: allocation took 0ms with hugepage_allocation_threads=2
+[    0.230564] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[    0.231201] HugeTLB: 0 KiB vmemmap can be freed for a 1.00 GiB page
+[    0.231797] HugeTLB: registered 32.0 MiB page size, pre-allocated 0 pages
+[    0.232435] HugeTLB: 0 KiB vmemmap can be freed for a 32.0 MiB page
+[    0.233024] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.233661] HugeTLB: 0 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.234250] HugeTLB: registered 64.0 KiB page size, pre-allocated 0 pages
+[    0.234887] HugeTLB: 0 KiB vmemmap can be freed for a 64.0 KiB page
+[    0.244207] fbcon: Taking over console
+[    0.244577] ACPI: Interpreter disabled.
+[    0.247923] iommu: Default domain type: Translated
+[    0.248384] iommu: DMA domain TLB invalidation policy: strict mode
+[    0.252211] SCSI subsystem initialized
+[    0.252803] libata version 3.00 loaded.
+[    0.253400] usbcore: registered new interface driver usbfs
+[    0.253978] usbcore: registered new interface driver hub
+[    0.254495] usbcore: registered new device driver usb
+[    0.256089] pps_core: LinuxPPS API ver. 1 registered
+[    0.256558] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    0.257421] PTP clock support registered
+[    0.257902] EDAC MC: Ver: 3.0.0
+[    0.258874] scmi_core: SCMI protocol bus registered
+[    0.260420] FPGA manager framework
+[    0.260936] Advanced Linux Sound Architecture Driver Initialized.
+[    0.262554] vgaarb: loaded
+[    0.263363] clocksource: Switched to clocksource arch_sys_counter
+[    0.323625] VFS: Disk quotas dquot_6.6.0
+[    0.324156] VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+[    0.325240] netfs: FS-Cache loaded
+[    0.325771] pnp: PnP ACPI: disabled
+[    0.335730] NET: Registered PF_INET protocol family
+[    0.336421] IP idents hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+[    0.394704] tcp_listen_portaddr_hash hash table entries: 4096 (order: 4, 65536 bytes, linear)
+[    0.395625] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.396466] TCP established hash table entries: 65536 (order: 7, 524288 bytes, linear)
+[    0.397956] TCP bind hash table entries: 65536 (order: 9, 2097152 bytes, linear)
+[    0.400550] TCP: Hash tables configured (established 65536 bind 65536)
+[    0.401518] MPTCP token hash table entries: 8192 (order: 5, 196608 bytes, linear)
+[    0.402396] UDP hash table entries: 4096 (order: 6, 262144 bytes, linear)
+[    0.403378] UDP-Lite hash table entries: 4096 (order: 6, 262144 bytes, linear)
+[    0.404598] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.405155] NET: Registered PF_XDP protocol family
+[    0.405614] PCI: CLS 0 bytes, default 64
+[    0.406345] Trying to unpack rootfs image as initramfs...
+[    0.414311] kvm [1]: nv: 566 coarse grained trap handlers
+[    0.415070] kvm [1]: IPA Size Limit: 40 bits
+[    0.415504] kvm [1]: GICv3: no GICV resource entry
+[    0.415956] kvm [1]: disabling GICv2 emulation
+[    0.416401] kvm [1]: GIC system register CPU interface enabled
+[    0.416964] kvm [1]: vgic interrupt IRQ18
+[    0.417383] kvm [1]: VHE mode initialized successfully
+[    0.527129] Initialise system trusted keyrings
+[    0.527881] workingset: timestamp_bits=42 max_order=21 bucket_order=0
+[    0.533792] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    0.535014] 9p: Installing v9fs 9p2000 file system support
+[    0.574477] Key type asymmetric registered
+[    0.574872] Asymmetric key parser 'x509' registered
+[    0.575506] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 244)
+[    0.576483] io scheduler mq-deadline registered
+[    0.576918] io scheduler kyber registered
+[    0.598796] ledtrig-cpu: registered to indicate activity on CPUs
+[    0.621190] dma-pl330 fea10000.dma-controller: Loaded driver for PL330 DMAC-241330
+[    0.621915] dma-pl330 fea10000.dma-controller: 	DBUFF-128x8bytes Num_Chans-8 Num_Peri-32 Num_Events-16
+[    0.624029] dma-pl330 fea30000.dma-controller: Loaded driver for PL330 DMAC-241330
+[    0.624749] dma-pl330 fea30000.dma-controller: 	DBUFF-128x8bytes Num_Chans-8 Num_Peri-32 Num_Events-16
+[    0.626884] dma-pl330 fed10000.dma-controller: Loaded driver for PL330 DMAC-241330
+[    0.627615] dma-pl330 fed10000.dma-controller: 	DBUFF-128x8bytes Num_Chans-8 Num_Peri-32 Num_Events-16
+[    0.632637] Freeing initrd memory: 9868K
+[    0.642824] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[    0.645690] printk: legacy console [ttyS2] disabled
+[    0.646359] feb50000.serial: ttyS2 at MMIO 0xfeb50000 (irq = 40, base_baud = 1500000) is a 16550A
