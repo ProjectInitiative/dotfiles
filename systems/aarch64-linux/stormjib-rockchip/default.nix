@@ -33,7 +33,7 @@ in
     })
   ];
 
-  home-manager.users.kylepzak.home.stateVersion = "24.11";
+  home-manager.users.kylepzak.home.stateVersion = "25.05";
 
   boot = {
     supportedFilesystems.zfs = lib.mkForce false;

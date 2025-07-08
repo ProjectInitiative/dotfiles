@@ -1,0 +1,16 @@
+reset
+env default -f -a
+setenv bootargs "console=ttyS2,115200n8 root=/dev/disk/by-label/NIXOS_SD rootwait"
+fatload mmc 1:1 0x07000000 /nixos/6bsnly49mhx656bwpm1sajvk6rvpa5wj-initrd-linux-6.15.4-initrd
+setenv initrd_size ${filesize}
+fatload mmc 1:1 0x02000000 /nixos/iaziacmiwcyvzfqxwnvdylqyw05c00wy-linux-6.15.4-Image
+fatload mmc 1:1 0x01000000 /nixos/iaziacmiwcyvzfqxwnvdylqyw05c00wy-linux-6.15.4-dtbs/rockchip/rk3582-radxa-e52c.dtb
+printenv bootargs
+booti 0x02000000 0x07000000:${initrd_size} 0x01000000 ${bootargs}
+
+
+
+
+setenv devnum 1
+setenv devtype mmc
+sysboot ${devtype} ${devnum}:1 any ${loadaddr} /extlinux/extlinux.conf

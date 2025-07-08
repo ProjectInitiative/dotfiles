@@ -114,6 +114,8 @@ let
       pkgs.buildPackages.swig
       pkgs.buildPackages.openssl
       pkgs.gnutls # Restored from your original uboot-build.nix
+      pkgs.ubootTools
+      pkgs.buildPackages.xxd
     ];
     buildInputs = [ pkgs.gcc ]; # Restored from your original uboot-build.nix
 
@@ -162,6 +164,41 @@ let
       enable_kconfig() {
         set_kconfig "$1" "y"
       }
+
+            # --- Step 1: Create the default environment file ---
+      # This is the modern, robust way to set the environment.
+      # It avoids all shell quoting and build system overwrite issues.
+      # The 'EOF' is quoted to prevent the shell from expanding variables.
+      cat > uboot-environment.txt <<'EOF'
+bootdelay=2
+boot_targets=mmc1 mmc0
+bootcmd=run distro_bootcmd
+
+# --- Memory Addresses ---
+fdt_addr_r=0x0a000000
+kernel_addr_r=0x0a200000
+ramdisk_addr_r=0x10000000
+pxefile_addr_r=0x0d000000
+scriptaddr=0x0d100000
+
+# --- Distro Boot Script ---
+boot_extlinux=sysboot ''${devtype} ''${devnum}:''${dev_part} any ''${scriptaddr} ''${prefix}extlinux/extlinux.conf
+
+scan_dev_for_boot=echo Scanning ''${devtype} ''${devnum}:''${dev_part}...; for prefix in / /boot/; do if test -e ''${devtype} ''${devnum}:''${dev_part} ''${prefix}extlinux/extlinux.conf; then echo Found ''${prefix}extlinux/extlinux.conf; run boot_extlinux; echo SCRIPT FAILED: continuing...; fi; done
+
+scan_dev_for_boot_part=part list ''${devtype} ''${devnum} -bootable devplist; for dev_part in ''${devplist}; do if test ''${dev_part} = 1; then setenv dev_part 1; if sysboot ''${devtype} ''${devnum}:''${dev_part} any ''${scriptaddr} /boot/extlinux/extlinux.conf; then echo SCRIPT EXECUTED; fi; fi; done; setenv dev_part 1; run scan_dev_for_boot
+
+mmc_boot=if mmc dev ''${devnum}; then setenv devtype mmc; run scan_dev_for_boot_part; fi
+bootcmd_mmc0=setenv devnum 0; run mmc_boot
+bootcmd_mmc1=setenv devnum 1; run mmc_boot
+
+distro_bootcmd=for target in ''${boot_targets}; do run bootcmd_''${target}; done
+EOF
+
+      # --- Step 2: Set Kconfig options to use the environment file ---
+      echo "Configuring U-Boot to use the default environment file..."
+      enable_kconfig "CONFIG_USE_DEFAULT_ENV_FILE"
+      set_kconfig "CONFIG_DEFAULT_ENV_FILE" "\"uboot-environment.txt\""
       
       # The target DTB name, relative to dts/upstream/src/arm64/ or arch/arm/dts/
       # The path for this specific U-Boot version's structure is:
@@ -179,6 +216,25 @@ let
       # This tells SPL which DTB to use (if it loads one from this list)
       echo "Setting CONFIG_SPL_OF_LIST to \"''${target_dt_name}\""
       set_kconfig "CONFIG_SPL_OF_LIST" "\"''${target_dt_name}\""
+
+      # --- Generic Distro Configuration ---
+      echo "Applying Generic Distro Configuration..."
+
+      # 1. Enable the main distro boot feature
+      enable_kconfig "CONFIG_DISTRO_DEFAULTS"
+
+      # 2. Define the devices to scan for booting.
+      #    This translates the BOOT_TARGET_DEVICES macro to Kconfig.
+      #    We tell it to scan mmc 1 (SD card) then mmc 0 (eMMC).
+      set_kconfig "CONFIG_BOOT_TARGET_DEVICES" "\"mmc1 mmc0\""
+
+      # Ensure commands used by the distro boot process are enabled.
+      enable_kconfig "CONFIG_CMD_FAT"
+      enable_kconfig "CONFIG_CMD_EXT4"
+      enable_kconfig "CONFIG_CMD_FS_GENERIC"
+      enable_kconfig "CONFIG_CMD_PART"
+      enable_kconfig "CONFIG_CMD_GPT"
+      enable_kconfig "CONFIG_CMD_EXTLINUX"
 
       # --- Original Kconfig modifications from your first post (slightly refactored for clarity) ---
       echo "Setting common Kconfig options..."
@@ -255,7 +311,7 @@ let
 
       echo "Verifying final key settings in .config:"
       grep -E \
-        "^CONFIG_BOOTDELAY=|^CONFIG_CMD_UMS=|^CONFIG_FS_FAT=|^CONFIG_CMD_EXTLINUX=|^CONFIG_BOOTCOMMAND=|^CONFIG_MMC_SDHCI=" \
+        "^CONFIG_BOOTDELAY=|^CONFIG_CMD_UMS=|^CONFIG_FS_FAT=|^CONFIG_CMD_EXTLINUX=|^CONFIG_BOOTCOMMAND=|^CONFIG_MMC_SDHCI=|^CONFIG_USE_DEFAULT_ENV_FILE=y|^CONFIG_DEFAULT_ENV_FILE=" \
         .config || echo "Warning: Some specified Kconfig settings were not found or not set as expected post-olddefconfig."
       runHook postConfigure
     '';
