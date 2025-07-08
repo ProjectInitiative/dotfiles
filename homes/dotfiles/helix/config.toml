@@ -7,9 +7,6 @@ completion-replace = true
 end-of-line-diagnostics = "hint"
 
 [editor.file-picker]
-ignore = false
-git-ignore = false
-git-global = false
 hidden = false
 
 [editor.indent-guides]
