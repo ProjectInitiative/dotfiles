@@ -77,7 +77,10 @@ in
     # };
     # advanced bcachefs support
     boot.supportedFilesystems = [ "bcachefs" ];
-    boot.kernelModules = [ "bcachefs" ];
+    boot.kernelModules = [
+      "bcachefs"
+      "drbd"
+     ];
     # use latest kernel - required by bcachefs
     boot.kernelPackages = pkgs.linuxPackages_latest;
 
@@ -120,6 +123,7 @@ in
 
     environment.systemPackages = with pkgs; [
       bcachefs-tools
+      drbd
       util-linux
       smartmontools
       lsof

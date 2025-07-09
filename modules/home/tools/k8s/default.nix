@@ -29,6 +29,7 @@ in
         kubernetes-helm
         kustomize
         kustomize-sops
+        argocd
         cmctl
         istioctl
         cilium-cli
