@@ -134,6 +134,11 @@
       inputs.nixos-hardware.follows = "nixos-hardware";
     };
 
+    nixos-rk3588 = {
+      url = "github:gnull/nixos-rk3588";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   outputs =
@@ -278,6 +283,9 @@
         ];
         hosts = {
           stormjib = {
+            system = "aarch64-linux";
+          };
+          lightship-aus = {
             system = "aarch64-linux";
           };
         };
