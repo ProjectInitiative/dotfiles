@@ -123,12 +123,16 @@ in
 
     environment.systemPackages = with pkgs; [
       bcachefs-tools
-      drbd
       util-linux
       smartmontools
       lsof
       pciutils
       iperf3
+      # k8s specific
+      tpm2-tools
+      tpm2-pkcs11
+      opensc
+      drbd
     ];
 
     fileSystems."/jfs-cache" = {
