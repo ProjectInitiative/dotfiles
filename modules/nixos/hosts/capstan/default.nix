@@ -144,7 +144,7 @@ in
     };
 
     fileSystems."/mnt/local-provisioner" = {
-      device = "/mnt/pool";
+      device = "/mnt/pool/k8s";
       options = [ "bind" ];
     };
 
