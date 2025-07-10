@@ -11,7 +11,7 @@ with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.browsers.chrome;
-  isGraphical = osConfig.${namespace}.isGraphical;
+  isGraphical = lib.attrByPath [ namespace "isGraphical" ] false osConfig;
 in
 {
   options.${namespace}.browsers.chrome = with types; {

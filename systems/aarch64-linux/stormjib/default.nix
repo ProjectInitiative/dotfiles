@@ -47,7 +47,7 @@ in
   };
 
   projectinitiative = {
-    hosts.masthead.stormjib.enable = true;
+    hosts.masthead.stormjib.enable = false;
     networking = {
       tailscale = {
         enable = true;
@@ -58,7 +58,7 @@ in
       };
     };
     system = {
-      console-info.ip-display.enable = true;
+      console-info.ip-display.enable = false;
     };
   };
 
