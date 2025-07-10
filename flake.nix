@@ -4,6 +4,7 @@
   inputs = {
     # NixPkgs
     nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
+    nixpkgs-master.url = "github:nixos/nixpkgs/master";
     # NixPkgs Unstable
     unstable.url = "github:nixos/nixpkgs/nixos-unstable";
 
@@ -138,6 +139,11 @@
       url = "github:gnull/nixos-rk3588";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # uboot-flake = {
+    #   url = "path:/home/kylepzak/development/build-software/custom-nix/uboot-radxa-build";
+    #   inputs.nixpkgs.follows = "nixpkgs-master";
+    # };
 
   };
 

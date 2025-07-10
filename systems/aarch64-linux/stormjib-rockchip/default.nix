@@ -26,14 +26,15 @@ in
       inherit config
               lib
               pkgs
-              modulesPath;
+              modulesPath
+              inputs;
       # customTplFileForUboot = myCustomTpl; # Uncomment if using Option 1
       # ddrParamFileForUboot = myDdrParamFile; # Uncomment if using Option 2
       # If both are null, uboot-build.nix will use its default generic TPL.
     })
   ];
 
-  home-manager.users.kylepzak.home.stateVersion = "25.05";
+  # home-manager.users.kylepzak.home.stateVersion = "25.05";
 
   boot = {
     supportedFilesystems.zfs = lib.mkForce false;

@@ -6,9 +6,10 @@
   modulesPath,
   # ### ADDED: Optional path to a custom TPL file you generate for U-Boot
   # ### If you generate one, pass its path here from default.nix
-  customTplFileForUboot ? null,
-  # ### ADDED: Optional path to your ddrbin_param.txt for U-Boot TPL generation
-  ddrParamFileForUboot ? null,
+  # customTplFileForUboot ? null,
+  # # ### ADDED: Optional path to your ddrbin_param.txt for U-Boot TPL generation
+  # ddrParamFileForUboot ? null,
+  inputs,
   ...
 }:
 
@@ -16,13 +17,16 @@ with lib;
 
 let
   # ### MODIFIED: Pass customTplFile and ddrParamFile to uboot-build
-  ubootBuilds = import ./uboot-build.nix {
-    inherit pkgs;
-    customTplFile = customTplFileForUboot;
-    ddrParamFile = ddrParamFileForUboot;
-  };
-  ubootIdbloaderFile = "${ubootBuilds.uboot-rk3588}/bin/idbloader.img";
-  ubootItbFile = "${ubootBuilds.uboot-rk3588}/bin/u-boot.itb";
+  # ubootBuilds = import ./uboot-build.nix {
+  #   inherit pkgs;
+  #   customTplFile = customTplFileForUboot;
+  #   ddrParamFile = ddrParamFileForUboot;
+  # };
+
+  # ubootIdbloaderFile = "${ubootBuilds.uboot-rk3588}/bin/idbloader.img";
+  # ubootItbFile = "${ubootBuilds.uboot-rk3588}/bin/u-boot.itb";
+  ubootIdbloaderFile = "${pkgs.uboot-rk3582-generic}/idbloader.img";
+  ubootItbFile = "${pkgs.uboot-rk3582-generic}/u-boot.itb";
 
   # ### MODIFIED: Consider using a more specific kernel or Radxa's kernel
   # ### For now, let's stick to pkgs.linuxPackages_latest for simplicity
@@ -56,8 +60,8 @@ in
       name = dtbPath;
     };
     boot.kernelParams = [
-      "console=tty1"
-      "console=ttyS2,115200n8" # Primary debug console for RK358x U-Boot & Kernel
+      # "console=tty1"
+      # "console=ttys2,115200n8" # primary debug console for rk358x u-boot & kernel
       "earlycon=uart8250,mmio32,0xfeb50000" # Matches ttyS2 on rk358x
       # "console=ttyFIQ0,115200n8" # Often for SPL/TPL, can be noisy or conflict if ttyS2 is main
       "rootwait"
@@ -116,46 +120,68 @@ in
     system.build.image = config.system.build.finalDiskImages;
 
     boot.postBootCommands = lib.mkBefore ''
-          # On the first boot do some maintenance tasks
+      # On the first boot, do some maintenance tasks.
+      # This script runs in a minimal environment, so we provide full paths to all commands.
       if [ -f /nix-path-registration ]; then
+        # Set bash options for safety: exit on error, exit on unset variable, pipefail.
         set -euo pipefail
+        # Enable command echoing for debugging.
         set -x
 
-        rootPartDev=$(${pkgs.util-linux}/bin/findmnt -n -o SOURCE /)
-        bootDevice=$(${pkgs.util-linux}/bin/lsblk -npo PKNAME "$rootPartDev")
-        # Extract partition number robustly (handles /dev/mmcblkXpY and /dev/sdXY)
-        partNum=$(echo "$rootPartDev" | sed -E 's|^.*[^0-9]([0-9]+)$|\1|')
+        # --- Define full paths to all our tools upfront for clarity ---
+        local FINDMNT="${pkgs.util-linux}/bin/findmnt"
+        local LSBLK="${pkgs.util-linux}/bin/lsblk"
+        local ECHO="${pkgs.coreutils}/bin/echo"
+        local SED="${pkgs.gnused}/bin/sed"
+        local SFDISK="${pkgs.util-linux}/bin/sfdisk"
+        local GROWPART="${pkgs.cloud-utils}/bin/growpart"
+        local PARTPROBE="${pkgs.parted}/bin/partprobe"
+        local RESIZE2FS="${pkgs.e2fsprogs}/bin/resize2fs"
+        local SLEEP="${pkgs.coreutils}/bin/sleep"
+        local RM="${pkgs.coreutils}/bin/rm"
+        local SYNC="${pkgs.coreutils}/bin/sync"
+        local NIX_STORE="${config.nix.package.out}/bin/nix-store"
+        local NIX_ENV="${config.nix.package.out}/bin/nix-env"
 
-        echo "Root partition device: ''${rootPartDev}, Boot device: ''${bootDevice}, Root Partition number: ''${partNum}"
 
-        # Attempt to resize the root partition using growpart or fallback to sfdisk
-        # Note: sfdisk resize might be less reliable than growpart
-        if command -v growpart > /dev/null && [ -x "$(command -v growpart)" ]; then
-          echo "Attempting resize with growpart..."
-          ${pkgs.cloud-utils}/bin/growpart "''${bootDevice}" "''${partNum}" || \
-            { echo "[WARNING] growpart failed, attempting sfdisk as fallback..."; echo ",+," | sfdisk -N"''${partNum}" --no-reread "''${bootDevice}"; }
+        # --- Script Logic ---
+        local rootPartDev=$($FINDMNT -n -o SOURCE /)
+        local bootDevice=$($LSBLK -npo PKNAME "$rootPartDev")
+        # Extract partition number robustly.
+        local partNum=$($ECHO "$rootPartDev" | $SED -E 's|^.*[^0-9]([0-9]+)$|\1|')
+
+        $ECHO "Root partition device: ''${rootPartDev}, Boot device: ''${bootDevice}, Root Partition number: ''${partNum}"
+
+        # Attempt to resize the root partition.
+        $ECHO "Attempting resize with growpart..."
+        # Note: The 'command -v' check is tricky in this environment. We'll just try growpart directly.
+        # If cloud-utils is in systemPackages (which it is), growpart should be in the PATH set up for this script.
+        # But for max safety, we call it by its full path.
+        if $GROWPART "''${bootDevice}" "''${partNum}"; then
+            $ECHO "growpart succeeded."
         else
-          echo "growpart not found, using sfdisk..."
-          # sfdisk resize: ',+,' tells it to extend the partition identified by -N to the end
-          echo ",+," | sfdisk -N"''${partNum}" --no-reread "''${bootDevice}"
+            $ECHO "[WARNING] growpart failed, attempting sfdisk as fallback..."
+            $ECHO ",+," | $SFDISK -N"''${partNum}" --no-reread "''${bootDevice}"
         fi
 
-        echo "Running partprobe on ''${bootDevice}..."
-        ${pkgs.parted}/bin/partprobe "''${bootDevice}" || echo "[WARNING] partprobe on ''${bootDevice} encountered an issue."
-        sleep 3 # Give kernel time to recognize changes
+        $ECHO "Running partprobe on ''${bootDevice}..."
+        $PARTPROBE "''${bootDevice}" || $ECHO "[WARNING] partprobe on ''${bootDevice} encountered an issue."
+        $SLEEP 3 # Give kernel time to recognize changes.
 
-        echo "Resizing filesystem on ''${rootPartDev}..."
-        ${pkgs.e2fsprogs}/bin/resize2fs "''${rootPartDev}"
+        $ECHO "Resizing filesystem on ''${rootPartDev}..."
+        $RESIZE2FS "''${rootPartDev}"
 
-        echo "Registering Nix paths..."
-        ${config.nix.package.out}/bin/nix-store --load-db < /nix-path-registration
-        # touch /etc/NIXOS # Already handled by NixOS activation
-        echo "Setting up system profile..."
-        ${config.nix.package.out}/bin/nix-env -p /nix/var/nix/profiles/system --set /run/current-system
-        echo "Cleaning up first-boot flag..."
-        rm -f /nix-path-registration
-        sync
-        echo "First boot setup complete."
+        $ECHO "Registering Nix paths..."
+        $NIX_STORE --load-db < /nix-path-registration
+
+        $ECHO "Setting up system profile..."
+        $NIX_ENV -p /nix/var/nix/profiles/system --set /run/current-system
+
+        $ECHO "Cleaning up first-boot flag..."
+        $RM -f /nix-path-registration
+        $SYNC
+
+        $ECHO "First boot setup complete."
         set +x
       fi
     '';

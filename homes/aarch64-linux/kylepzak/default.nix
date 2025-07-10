@@ -1,6 +1,6 @@
 { ... }:
 {
   projectinitiative = {
-    users.kylepzak.enable = false;
+    users.kylepzak.enable = true;
   };
 }
