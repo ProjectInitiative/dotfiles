@@ -53,6 +53,8 @@ in
         appimage-run
         htop
         btop
+        busybox
+        dool
         dogdns
         dust
         fd
