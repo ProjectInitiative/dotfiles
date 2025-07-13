@@ -44,6 +44,8 @@ with lib.${namespace};
       bcachefsInitDevice = "/dev/disk/by-id/nvme-TEAM_TM8FPD002T_TPBF2310170080202273";
       mountpoint = mountpoint;
       k8sServerAddr = "https://172.16.1.50:6443";
+      k8sNodeIp= "172.16.4.52";
+      k8sNodeIface = "bond0";
     };
 
   };

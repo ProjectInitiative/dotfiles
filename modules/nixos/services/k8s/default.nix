@@ -24,6 +24,7 @@ in
       mkOpt str ""
         "Address of the server node to connect to (not needed for the first node).";
     nodeIp = mkOpt str "" "Use different node IP rather than default interface.";
+    nodeIface = mkOpt str "" "Use different node iface rather than default interface.";
     role = mkOpt (enum [
       "server"
       "agent"
@@ -340,7 +341,14 @@ in
                 if cfg.nodeIp != "" then
                   [
                     "--node-ip=${cfg.nodeIp}"
-                    "--node-external-ip=${cfg.nodeIp}"
+                    # "--node-external-ip=${cfg.nodeIp}"
+                  ]
+                else
+                  [ ];
+              node-iface =
+                if cfg.nodeIface != "" then
+                  [
+                    "--flannel-iface=${cfg.nodeIface}"
                   ]
                 else
                   [ ];
@@ -358,7 +366,7 @@ in
                   [
                     "--flannel-backend=wireguard-native"
                   ]
-                  ++ node-ip
+                  ++ node-ip ++ node-iface
                 else if cfg.networkType == "cilium" then
                   [
                     "--flannel-backend=none"
@@ -372,7 +380,7 @@ in
                   ]
                   ++ node-ip
                 else
-                  [ ] ++ node-ip; # Standard networking doesn't need special flags
+                  [ ] ++ node-ip ++ node-iface; # Standard networking doesn't need special flags
             in
             networkFlags ++ gpuFlags ++ cfg.extraArgs;
         };

@@ -36,7 +36,8 @@ in
     mountpoint = mkOpt types.str "/mnt/pool" "Path to mount bcachefs pool";
     nvidiaSupport = mkBoolOpt false "Whether to enable nvidia GPU support";
     isFirstK8sNode = mkBoolOpt false "Whether node is the first in the cluster";
-    k8sNodeAddr = mkOpt types.str "" "IP address for custom k8s node IP";
+    k8sNodeIp = mkOpt types.str "" "IP address for custom k8s node IP";
+    k8sNodeIface = mkOpt types.str "" "Iface for k8s";
     k8sServerAddr =
       mkOpt types.str ""
         "Address of the server node to connect to (not needed for the first node).";
@@ -217,7 +218,8 @@ in
           enable = true;
           tokenFile = sops.secrets.k8s_token.path;
           isFirstNode = cfg.isFirstK8sNode;
-          nodeIp = cfg.k8sNodeAddr;
+          nodeIp = cfg.k8sNodeIp;
+          nodeIface = cfg.k8sNodeIface;
           serverAddr = cfg.k8sServerAddr;
           networkType = "standard";
           role = "server";
@@ -232,6 +234,7 @@ in
           ];
           kubeVip = {
             enable = cfg.isFirstK8sNode;
+            version = "v0.8.9";
             vip = "172.16.1.50";
             interface = "mgmnt";
           };
