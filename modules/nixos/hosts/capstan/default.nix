@@ -171,6 +171,26 @@ in
           enable = true;
           parentSubvolume = "/mnt/pool";
         };
+        bcachefsFileOptions = {
+          enable = true;
+          jobs = {
+            # This is a custom, descriptive name for your job.
+            k8s-nvme-cache = {
+        
+              # The directory to apply options to.
+              path = "/mnt/pool/k8s/nvme-cache";
+
+              # Set the schedule using a systemd OnCalendar expression.
+              onCalendar = "daily"; # Runs at 00:00 every day.
+
+              # The bcachefs file options to set.
+              fileOptions = {
+                background_target = "cache";
+                foreground_target = "cache";
+                promote_target    = "cache";
+              };
+            };
+        };
       };
 
       services = {
