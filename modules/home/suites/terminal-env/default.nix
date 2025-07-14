@@ -53,7 +53,7 @@ in
         appimage-run
         htop
         btop
-        busybox
+        # busybox
         dool
         dogdns
         dust
