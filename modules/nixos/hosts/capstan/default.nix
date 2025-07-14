@@ -171,12 +171,19 @@ in
           enable = true;
           parentSubvolume = "/mnt/pool";
         };
+      };
+
+
+      services = {
+
+        eternal-terminal = enabled;
+
         bcachefsFileOptions = {
           enable = true;
           jobs = {
             # This is a custom, descriptive name for your job.
             k8s-nvme-cache = {
-        
+      
               # The directory to apply options to.
               path = "/mnt/pool/k8s/nvme-cache";
 
@@ -192,11 +199,6 @@ in
             };
           };
         };
-      };
-
-      services = {
-
-        eternal-terminal = enabled;
 
         health-reporter = {
           enable = true;
