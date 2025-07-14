@@ -190,6 +190,7 @@ in
                 promote_target    = "cache";
               };
             };
+          };
         };
       };
 
