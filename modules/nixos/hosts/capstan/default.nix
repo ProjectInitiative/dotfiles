@@ -121,6 +121,14 @@ in
     #   '';
 
     # };
+    # for openbao unsealing
+    security = {
+      tpm2 = {
+        enable = true;
+        pkcs11.enable = true;
+        tctiEnvironment.enable = true;
+      };
+    };
 
     environment.systemPackages = with pkgs; [
       bcachefs-tools
@@ -130,8 +138,8 @@ in
       pciutils
       iperf3
       # k8s specific
-      tpm2-tools
-      tpm2-pkcs11
+      # tpm2-tools
+      # tpm2-pkcs11
       opensc
       drbd
     ];
