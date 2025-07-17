@@ -61,13 +61,16 @@ let
     exit $CURL_EXIT_CODE
   '';
 
-  escapeName = path:
-    if path == "/"
-    then "-" # Results in unit names like bcachefs-scrub--.service, which is valid.
-    else lib.replaceStrings ["/"] ["-"] (lib.removePrefix "/" path);
+  escapeName =
+    path:
+    if path == "/" then
+      "-" # Results in unit names like bcachefs-scrub--.service, which is valid.
+    else
+      lib.replaceStrings [ "/" ] [ "-" ] (lib.removePrefix "/" path);
 
   scrubServiceName = mountPoint: "bcachefs-scrub-${escapeName mountPoint}";
-  scrubFailureNotifyServiceName = mountPoint: "bcachefs-scrub-failure-notify-${escapeName mountPoint}";
+  scrubFailureNotifyServiceName =
+    mountPoint: "bcachefs-scrub-failure-notify-${escapeName mountPoint}";
   scrubTimerName = mountPoint: "bcachefs-scrub-${escapeName mountPoint}";
 
 in
@@ -77,8 +80,11 @@ in
 
     targetMountPoints = mkOption {
       type = types.listOf types.str;
-      default = [];
-      example = [ "/mnt/bcachefs-main" "/srv/bcachefs-archive" ];
+      default = [ ];
+      example = [
+        "/mnt/bcachefs-main"
+        "/srv/bcachefs-archive"
+      ];
       description = mdDoc ''
         List of bcachefs mount points to target for scrubbing.
         The module will perform a sanity check to ensure these mount points
@@ -138,8 +144,11 @@ in
           assertion = cfg.enable -> (builtins.length cfg.targetMountPoints > 0);
           message = "${namespace}.services.bcachefsScrubAuto is enabled but no targetMountPoints are specified.";
         }
-      ] ++ map (mountPoint: {
-        assertion = builtins.any (fs: fs.fsType == "bcachefs" && fs.mountPoint == mountPoint) (lib.attrValues config.fileSystems);
+      ]
+      ++ map (mountPoint: {
+        assertion = builtins.any (fs: fs.fsType == "bcachefs" && fs.mountPoint == mountPoint) (
+          lib.attrValues config.fileSystems
+        );
         message = "${namespace}.services.bcachefsScrubAuto: Target mount point \"${mountPoint}\" is not a configured bcachefs filesystem in `fileSystems`.";
       }) cfg.targetMountPoints;
 
@@ -147,65 +156,75 @@ in
     systemd.services =
       let
         # Generate main scrub service definitions for each target.
-        mainScrubServices = lib.listToAttrs (map (mountPoint:
-          let
-            sName = scrubServiceName mountPoint;
-            fName = scrubFailureNotifyServiceName mountPoint; # For OnFailure
-            startMsgTemplate = "🚀 Starting bcachefs scrub on host __HOSTNAME__ for mount point: ${mountPoint}";
-            successMsgTemplate = "✅ Successfully completed bcachefs scrub on host __HOSTNAME__ for mount point: ${mountPoint}";
-          in
-          {
-            name = sName; # This becomes the attribute name in the final set
-            value = {    # This is the service definition
-              description = "Run bcachefs scrub on ${mountPoint}";
-              path = [ pkgs.bcachefs-tools ]; # Ensures bcachefs-tools is in PATH
-              serviceConfig = {
-                Type = "oneshot";
-                User = "root";
-                Group = "root";
-                ExecStartPre = mkIf cfg.notifyOnStart "+${telegramNotifierScript}/bin/bcachefs-scrub-notify ${escapeShellArg cfg.telegramTokenPath} ${escapeShellArg cfg.telegramChatIdPath} ${escapeShellArg startMsgTemplate}";
-                ExecStart = "${pkgs.bcachefs-tools}/bin/bcachefs data scrub ${escapeShellArg mountPoint}";
-                ExecStartPost = mkIf cfg.notifyOnSuccess "+${telegramNotifierScript}/bin/bcachefs-scrub-notify ${escapeShellArg cfg.telegramTokenPath} ${escapeShellArg cfg.telegramChatIdPath} ${escapeShellArg successMsgTemplate}";
-                OnFailure = mkIf cfg.notifyOnFailure ["${fName}.service"];
+        mainScrubServices = lib.listToAttrs (
+          map (
+            mountPoint:
+            let
+              sName = scrubServiceName mountPoint;
+              fName = scrubFailureNotifyServiceName mountPoint; # For OnFailure
+              startMsgTemplate = "🚀 Starting bcachefs scrub on host __HOSTNAME__ for mount point: ${mountPoint}";
+              successMsgTemplate = "✅ Successfully completed bcachefs scrub on host __HOSTNAME__ for mount point: ${mountPoint}";
+            in
+            {
+              name = sName; # This becomes the attribute name in the final set
+              value = {
+                # This is the service definition
+                description = "Run bcachefs scrub on ${mountPoint}";
+                path = [ pkgs.bcachefs-tools ]; # Ensures bcachefs-tools is in PATH
+                serviceConfig = {
+                  Type = "oneshot";
+                  User = "root";
+                  Group = "root";
+                  ExecStartPre = mkIf cfg.notifyOnStart "+${telegramNotifierScript}/bin/bcachefs-scrub-notify ${escapeShellArg cfg.telegramTokenPath} ${escapeShellArg cfg.telegramChatIdPath} ${escapeShellArg startMsgTemplate}";
+                  ExecStart = "${pkgs.bcachefs-tools}/bin/bcachefs data scrub ${escapeShellArg mountPoint}";
+                  ExecStartPost = mkIf cfg.notifyOnSuccess "+${telegramNotifierScript}/bin/bcachefs-scrub-notify ${escapeShellArg cfg.telegramTokenPath} ${escapeShellArg cfg.telegramChatIdPath} ${escapeShellArg successMsgTemplate}";
+                  OnFailure = mkIf cfg.notifyOnFailure [ "${fName}.service" ];
+                };
               };
-            };
-          }
-        ) cfg.targetMountPoints);
+            }
+          ) cfg.targetMountPoints
+        );
 
         # Generate failure notification service definitions for each target.
-        failureNotifyServices = lib.listToAttrs (map (mountPoint:
-          let
-            mainServiceName = scrubServiceName mountPoint; # For the log message
-            failureServiceName = scrubFailureNotifyServiceName mountPoint;
-            failMsgTemplate = "❌ ERROR: bcachefs scrub failed on host __HOSTNAME__ for mount point: ${mountPoint}! Check systemd logs: journalctl -u ${mainServiceName}\\.service";
-          in
-          {
-            name = failureServiceName;
-            value = mkIf cfg.notifyOnFailure { # The entire service is conditional
-              description = "Notify Telegram about bcachefs scrub failure on ${mountPoint}";
-              serviceConfig = {
-                Type = "oneshot";
-                User = "root";
-                ExecStart = "+${telegramNotifierScript}/bin/bcachefs-scrub-notify ${escapeShellArg cfg.telegramTokenPath} ${escapeShellArg cfg.telegramChatIdPath} ${escapeShellArg failMsgTemplate}";
+        failureNotifyServices = lib.listToAttrs (
+          map (
+            mountPoint:
+            let
+              mainServiceName = scrubServiceName mountPoint; # For the log message
+              failureServiceName = scrubFailureNotifyServiceName mountPoint;
+              failMsgTemplate = "❌ ERROR: bcachefs scrub failed on host __HOSTNAME__ for mount point: ${mountPoint}! Check systemd logs: journalctl -u ${mainServiceName}\\.service";
+            in
+            {
+              name = failureServiceName;
+              value = mkIf cfg.notifyOnFailure {
+                # The entire service is conditional
+                description = "Notify Telegram about bcachefs scrub failure on ${mountPoint}";
+                serviceConfig = {
+                  Type = "oneshot";
+                  User = "root";
+                  ExecStart = "+${telegramNotifierScript}/bin/bcachefs-scrub-notify ${escapeShellArg cfg.telegramTokenPath} ${escapeShellArg cfg.telegramChatIdPath} ${escapeShellArg failMsgTemplate}";
+                };
               };
-            };
-          }
-        ) cfg.targetMountPoints);
+            }
+          ) cfg.targetMountPoints
+        );
       in
       # Merge the main scrub services and the failure notification services.
       # If a value from failureNotifyServices is `false` (due to mkIf), it won't create an actual service.
       mainScrubServices // failureNotifyServices;
 
     # Define all systemd timers as a single attribute set.
-    systemd.timers =
-      lib.listToAttrs (map (mountPoint:
+    systemd.timers = lib.listToAttrs (
+      map (
+        mountPoint:
         let
           sName = scrubServiceName mountPoint; # Service to activate
-          tName = scrubTimerName mountPoint;   # Timer's own name
+          tName = scrubTimerName mountPoint; # Timer's own name
         in
         {
           name = tName; # Attribute name for the timer
-          value = {   # Timer definition
+          value = {
+            # Timer definition
             description = "Timer for Bcachefs Scrub on ${mountPoint}";
             wantedBy = [ "timers.target" ];
             timerConfig = {
@@ -216,6 +235,7 @@ in
             };
           };
         }
-      ) cfg.targetMountPoints);
+      ) cfg.targetMountPoints
+    );
   };
 }

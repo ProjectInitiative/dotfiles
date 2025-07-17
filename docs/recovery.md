@@ -9,9 +9,10 @@ Boot your machine from a NixOS installation medium (USB stick or DVD) or any oth
 ## 2. Identify and Mount Partitions
 
 You need to identify and mount your NixOS system's partitions.
-* **Root partition (`/`)**: Where your NixOS installation resides.
-* **EFI System Partition (ESP)** (if applicable, for UEFI systems): Usually mounted at `/boot` or `/efi` within your NixOS system.
-* **Other partitions** (if any): Such as `/home`, `/nix`, etc., if they are on separate partitions.
+
+- **Root partition (`/`)**: Where your NixOS installation resides.
+- **EFI System Partition (ESP)** (if applicable, for UEFI systems): Usually mounted at `/boot` or `/efi` within your NixOS system.
+- **Other partitions** (if any): Such as `/home`, `/nix`, etc., if they are on separate partitions.
 
 Use tools like `lsblk`, `fdisk -l`, or `gparted` to identify your partitions.
 
@@ -128,7 +129,7 @@ source /etc/profile # Load environment variables
 cd /path/to/your/configs
 
 # Rebuild the system
-nixos-rebuild switch --config ./nixos/configuration.nix 
+nixos-rebuild switch --config ./nixos/configuration.nix
 # Or for flakes:
 # nixos-rebuild switch --flake .#yourHostName
 ```
@@ -150,7 +151,7 @@ Unmount all partitions in reverse order of mounting:
 ```bash
 sudo umount -R /mnt/nixos
 # If you used cryptsetup:
-# sudo cryptsetup luksClose nixos_root 
+# sudo cryptsetup luksClose nixos_root
 ```
 
 Reboot your system:
@@ -163,9 +164,9 @@ Remove the live USB/medium and your system should boot into the recovered NixOS 
 
 ## Troubleshooting Tips:
 
-* **Bootloader Issues**: If the system doesn't boot, you might need to manually reinstall the bootloader.
-    * For GRUB: `grub-install --target=x88_64-efi --efi-directory=/boot --bootloader-id=NixOS` (adjust paths as needed).
-    * For systemd-boot: `bootctl --path=/boot install`.
-    * These commands are typically run from within the chroot environment or by `nixos-install`.
-* **Network Access**: Ensure you have network access in the recovery environment if you need to clone repositories or download Nix packages.
-* **`hardware-configuration.nix`**: A mismatched or missing `hardware-configuration.nix` is a common source of problems. Regenerating it on the target hardware (`nixos-generate-config --root /mnt/nixos`) is often a good idea if you suspect issues.
+- **Bootloader Issues**: If the system doesn't boot, you might need to manually reinstall the bootloader.
+  - For GRUB: `grub-install --target=x88_64-efi --efi-directory=/boot --bootloader-id=NixOS` (adjust paths as needed).
+  - For systemd-boot: `bootctl --path=/boot install`.
+  - These commands are typically run from within the chroot environment or by `nixos-install`.
+- **Network Access**: Ensure you have network access in the recovery environment if you need to clone repositories or download Nix packages.
+- **`hardware-configuration.nix`**: A mismatched or missing `hardware-configuration.nix` is a common source of problems. Regenerating it on the target hardware (`nixos-generate-config --root /mnt/nixos`) is often a good idea if you suspect issues.

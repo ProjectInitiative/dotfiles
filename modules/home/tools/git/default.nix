@@ -49,7 +49,7 @@ in
       lfs = enabled;
       signing = {
         key = cfg.signingKey;
-        format =cfg.signingKeyFormat;
+        format = cfg.signingKeyFormat;
         signByDefault = mkIf gpg.enable true;
       };
       extraConfig = {

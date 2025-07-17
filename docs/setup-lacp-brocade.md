@@ -38,7 +38,7 @@ In your `capstan` module file, find the `systemd.network.netdevs` section and ma
           bondConfig = {
             # Change this from "broadcast" to "802.3ad"
             Mode = "802.3ad";
-            
+
             # These are highly recommended for LACP performance and compatibility
             LACPTransmitRate = "fast";
             TransmitHashPolicy = "layer3+4";
@@ -81,10 +81,11 @@ cat /proc/net/bonding/bond0
 ```
 
 Look for these key lines:
-* **`Bonding Mode: IEEE 802.3ad Dynamic link aggregation`** (Confirms the mode is correct)
-* **`LACP Activity: active`**
-* Under each "Slave Interface", you want to see **`MII Status: up`**.
-* You should see both of your member NICs listed as slave interfaces.
+
+- **`Bonding Mode: IEEE 802.3ad Dynamic link aggregation`** (Confirms the mode is correct)
+- **`LACP Activity: active`**
+- Under each "Slave Interface", you want to see **`MII Status: up`**.
+- You should see both of your member NICs listed as slave interfaces.
 
 #### 3. Test Connectivity
 
@@ -101,6 +102,7 @@ You should now get successful replies without duplicates or errors.
 If the bond comes up but you still can't pass traffic, the next most likely issue is a VLAN mismatch. You need to ensure the **LAG interface itself** on the switch is configured for the correct VLAN.
 
 For example, if your servers are in VLAN 10, you would run these commands on the Brocade switch:
+
 ```bash
 # On the switch
 configure terminal
@@ -115,21 +117,25 @@ exit
 write memory
 ```
 
-
 # On the switch
+
 enable
 configure terminal
 
 # Enable jumbo frames globally
+
 jumbo
 
 # You will see a message like:
+
 # "Jumbo mode setting requires a reload to take effect!"
 
 # Save the configuration
+
 write memory
 
 # Reload the switch to apply the jumbo setting
+
 reload
 
 # Confirm with 'y'

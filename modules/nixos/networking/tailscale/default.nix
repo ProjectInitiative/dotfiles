@@ -28,7 +28,6 @@ in
     extraArgs = mkOpt (listOf str) [ ] "Additional arguments to pass to tailscale.";
   };
 
-
   # ===============================================================
   # The entire 'config' block is replaced.
   # It now configures the official nixpkgs module instead of
@@ -51,13 +50,13 @@ in
       # services.tailscale.useRoutingFeatures = "both";
       useRoutingFeatures = "server";
 
-    # --- IMPORTANT NOTE ---
-    # The 'extraSetFlags' option from the official module is NOT used here.
-    # This means that settings like '--advertise-routes' will only be applied
-    # once during initial provisioning. For fully declarative updates to those
-    # settings, you should plan to eventually migrate your configurations
-    # to use 'services.tailscale.extraSetFlags' directly.
-    extraSetFlags = cfg.extraArgs;
+      # --- IMPORTANT NOTE ---
+      # The 'extraSetFlags' option from the official module is NOT used here.
+      # This means that settings like '--advertise-routes' will only be applied
+      # once during initial provisioning. For fully declarative updates to those
+      # settings, you should plan to eventually migrate your configurations
+      # to use 'services.tailscale.extraSetFlags' directly.
+      extraSetFlags = cfg.extraArgs;
 
     };
 

@@ -1,13 +1,12 @@
-
 {
   pkgs ? import <nixpkgs> { },
 }:
 let
-  gemini-cli = pkgs.callPackage ./default.nix {};
+  gemini-cli = pkgs.callPackage ./default.nix { };
 
-  in
-  pkgs.mkShell {
-    packages = [
-      gemini-cli
-    ];
-  }
+in
+pkgs.mkShell {
+  packages = [
+    gemini-cli
+  ];
+}

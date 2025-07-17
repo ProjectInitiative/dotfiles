@@ -1,6 +1,6 @@
 {
   options, # All declared options in the system
-  config,  # Final evaluated configuration values
+  config, # Final evaluated configuration values
   pkgs,
   lib,
   namespace, # Your custom namespace, e.g., "mylib"
@@ -49,7 +49,7 @@ in
 
   config = lib.mkIf cfg.manageGlobalSettings (
     {
-      
+
     }
     # Attempt to set system.stateVersion for NixOS or nix-darwin contexts
     # This condition applies if:

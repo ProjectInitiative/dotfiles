@@ -1,5 +1,11 @@
 # /etc/nixos/hosts/lighthouse-east.nix
-{ config, pkgs, namespace, modulesPath, ... }:
+{
+  config,
+  pkgs,
+  namespace,
+  modulesPath,
+  ...
+}:
 
 let
   # Use /dev/sda as the root disk for Hetzner cloud instances
@@ -9,7 +15,6 @@ in
   imports = [
     (modulesPath + "/profiles/qemu-guest.nix")
   ];
-
 
   # Enable and configure the common hetzner module for this host
   ${namespace}.hosts.lighthouse = {

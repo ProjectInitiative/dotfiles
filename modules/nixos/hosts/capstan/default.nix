@@ -17,18 +17,23 @@ in
     # hostname = mkOpt types.str "" "Hostname for the server";
     ipAddress = mkOpt types.str "" "Main Static management IP address with CIDR";
     bonding = {
-      mode = mkOpt (types.enum [ "none" "standard" "mellanox" ]) "none"
-        "Type of bonding to configure. 'none' disables bonding.";
+      mode = mkOpt (types.enum [
+        "none"
+        "standard"
+        "mellanox"
+      ]) "none" "Type of bonding to configure. 'none' disables bonding.";
 
       members = mkOpt (types.listOf types.str) [ ] {
         description = "List of permanent MAC addresses of the interfaces to include in the bond.";
         example = ''[ "00:1A:2B:3C:4D:5E" "00:1A:2B:3C:4D:5F" ]'';
       };
-      ipAddress = mkOpt types.str ""
-        "Static IP address with CIDR for the bond interface (e.g., \"10.0.0.5/24\").";
-    
-      mellanoxPcieAddress = mkOpt types.str ""
-        "PCIe address of the Mellanox card. Required only if mode is 'mellanox'.";
+      ipAddress =
+        mkOpt types.str ""
+          "Static IP address with CIDR for the bond interface (e.g., \"10.0.0.5/24\").";
+
+      mellanoxPcieAddress =
+        mkOpt types.str ""
+          "PCIe address of the Mellanox card. Required only if mode is 'mellanox'.";
     };
     interfaceMac = mkOpt types.str "" "Static IP Interface mac address";
     gateway = mkOpt types.str "" "Default gateway";
@@ -81,7 +86,7 @@ in
     boot.kernelModules = [
       "bcachefs"
       "drbd"
-     ];
+    ];
     # use latest kernel - required by bcachefs
     boot.kernelPackages = pkgs.linuxPackages_latest;
 
@@ -165,7 +170,6 @@ in
       options = [ "bind" ];
     };
 
-
     # fileSystems."/mnt/pool" =
     #   { device = "UUID=27cac550-3836-765c-d107-51d27ab4a6e1";
     #     fsType = "bcachefs";
@@ -185,7 +189,6 @@ in
         };
       };
 
-
       services = {
 
         eternal-terminal = enabled;
@@ -195,7 +198,7 @@ in
           jobs = {
             # This is a custom, descriptive name for your job.
             k8s-nvme-cache = {
-      
+
               # The directory to apply options to.
               path = "/mnt/pool/k8s/nvme-cache";
 
@@ -206,7 +209,7 @@ in
               fileOptions = {
                 background_target = "cache";
                 foreground_target = "cache";
-                promote_target    = "cache";
+                promote_target = "cache";
               };
             };
           };
@@ -405,7 +408,8 @@ in
           lib.mkMerge [
             # Dynamic bond member configurations from bondMembers list
             (lib.listToAttrs (
-              map (mac:
+              map (
+                mac:
                 let
                   # Sanitize MAC address for the systemd unit name
                   sanitizedMac = lib.replaceStrings [ ":" ] [ "-" ] mac;
@@ -425,7 +429,8 @@ in
                       MTUBytes = "9000";
                     };
                   };
-                }) cfg.bonding.members
+                }
+              ) cfg.bonding.members
             ))
 
             # Bond interface configuration
@@ -447,8 +452,8 @@ in
                 ];
               };
             }
-          ])
-        )
+          ]
+        ))
       ];
     };
 

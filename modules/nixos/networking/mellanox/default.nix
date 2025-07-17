@@ -131,8 +131,15 @@ in
       # This service prepares physical interfaces.
       # It should run after devices are available but before network configuration services
       # that might use these interfaces (like systemd-networkd for bonds).
-      after = [ "network-pre.target" "local-fs.target" ];
-      before = [ "network.target" "systemd-networkd.service" "NetworkManager.service" ];
+      after = [
+        "network-pre.target"
+        "local-fs.target"
+      ];
+      before = [
+        "network.target"
+        "systemd-networkd.service"
+        "NetworkManager.service"
+      ];
       # Upholds specifies that if this service is stopped or fails, systemd-networkd should also be stopped.
       # This is useful if systemd-networkd critically depends on this setup.
       # upholds = [ "systemd-networkd.service" ]; # Optional, consider if bond0 *must* use these

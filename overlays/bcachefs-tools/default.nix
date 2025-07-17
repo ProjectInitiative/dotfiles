@@ -20,14 +20,15 @@ final: prev: {
 
       # Use flake-compat to load the flake from the fetched source.
       # 'inputs.flake-compat' must be available from the overlay's arguments.
-      bcachefsFlakeOutputs = (import inputs.flake-compat {
-        src = bcachefsSrc;
-      }).defaultNix; # .defaultNix provides an attrset of the flake's outputs
+      bcachefsFlakeOutputs =
+        (import inputs.flake-compat {
+          src = bcachefsSrc;
+        }).defaultNix; # .defaultNix provides an attrset of the flake's outputs
 
     in
     # Access the desired package. The bcachefs-tools flake you provided
     # exposes 'default' and 'bcachefs-tools' packages per system.
     bcachefsFlakeOutputs.packages.${final.system}.bcachefs-tools;
-    # Alternatively, you could use:
-    # bcachefsFlakeOutputs.packages.${final.system}.default;
+  # Alternatively, you could use:
+  # bcachefsFlakeOutputs.packages.${final.system}.default;
 }

@@ -34,7 +34,7 @@ with lib.${namespace};
         development.enable = true;
       };
     };
-    
+
   };
 
   projectinitiative = {
@@ -46,7 +46,7 @@ with lib.${namespace};
     encrypted.nix-signing = enabled;
 
     system = {
-      displaylink.enable = false; 
+      displaylink.enable = false;
       nix-config = enabled;
 
       bcachefs-kernel = {
@@ -127,6 +127,8 @@ with lib.${namespace};
     multipath-tools
     usbutils
 
+    opensc
+
     wine64
     winetricks
     wineWowPackages.waylandFull
@@ -135,7 +137,7 @@ with lib.${namespace};
     obs-studio
 
     pkgs.${namespace}.mcp-proxy-runner
-    # gst_all_1.gst-plugins-rs 
+    # gst_all_1.gst-plugins-rs
   ];
 
   # Enable fingerprint reader
@@ -144,7 +146,7 @@ with lib.${namespace};
     tod = {
       enable = true;
       # driver = pkgs.libfprint-2-tod1-vfs0090; # (If the vfs0090 Driver does not work, use the following driver)
-      driver = pkgs.libfprint-2-tod1-goodix; #(On my device it only worked with this driver)
+      driver = pkgs.libfprint-2-tod1-goodix; # (On my device it only worked with this driver)
     };
   };
 
@@ -166,7 +168,8 @@ with lib.${namespace};
     };
   };
 
-  # users.users.YOUR_USER.extraGroups = [ "tss" ];  # tss group has access to TPM devices
+  users.users.kylepzak.extraGroups = [ "tss" ]; # tss group has access to TPM devices
+
   services.pipewire = {
     enable = true;
     alsa.enable = true;

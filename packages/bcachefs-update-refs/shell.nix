@@ -15,12 +15,12 @@ pkgs.mkShell {
   # Packages to make available in the development/runtime shell.
   # These are the dependencies needed to run the update-bcachefs.sh script.
   buildInputs = [
-    pkgs.bashInteractive        # Provides bash
-    pkgs.nix-prefetch-scripts   # Provides nix-prefetch-github
-    pkgs.jq                     # For parsing JSON output from nix-prefetch-github
-    pkgs.gnused                 # Provides sed for in-file replacements
-    pkgs.gnugrep                # Provides grep (used in the script's checks)
-    pkgs.coreutils              # For basic utilities like echo, cat, etc.
+    pkgs.bashInteractive # Provides bash
+    pkgs.nix-prefetch-scripts # Provides nix-prefetch-github
+    pkgs.jq # For parsing JSON output from nix-prefetch-github
+    pkgs.gnused # Provides sed for in-file replacements
+    pkgs.gnugrep # Provides grep (used in the script's checks)
+    pkgs.coreutils # For basic utilities like echo, cat, etc.
 
     # Optional: Add other tools you might use for development or debugging
     # pkgs.git                    # If you manage the script with Git

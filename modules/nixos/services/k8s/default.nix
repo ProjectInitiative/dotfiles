@@ -366,7 +366,8 @@ in
                   [
                     "--flannel-backend=wireguard-native"
                   ]
-                  ++ node-ip ++ node-iface
+                  ++ node-ip
+                  ++ node-iface
                 else if cfg.networkType == "cilium" then
                   [
                     "--flannel-backend=none"

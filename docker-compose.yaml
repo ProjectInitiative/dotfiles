@@ -14,13 +14,13 @@ services:
       - type: bind
         source: /home/kylepzak/dotfiles
         target: /projects/dotfiles
-      
+
       # # Mounts another directory as read-only
       # - type: bind
       #   source: /path/to/other/allowed/dir
       #   target: /projects/other/allowed/dir
       #   read_only: true
-      
+
       # # Mounts a single file with read-write access
       # - type: bind
       #   source: /path/to/file.txt

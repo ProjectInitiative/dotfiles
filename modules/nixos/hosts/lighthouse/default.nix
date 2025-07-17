@@ -1,4 +1,10 @@
-{ config, lib, pkgs, namespace, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  namespace,
+  ...
+}:
 
 with lib;
 with lib.${namespace};
@@ -18,7 +24,10 @@ in
 {
   options.${namespace}.hosts.lighthouse = {
     enable = mkBoolOpt false "Whether to enable base Hetzner k8s node configuration.";
-    role = mkOpt (types.enum [ "server" "agent" ]) "agent" "The role of the k8s node.";
+    role = mkOpt (types.enum [
+      "server"
+      "agent"
+    ]) "agent" "The role of the k8s node.";
     k8sServerAddr = mkOpt types.str "" "Address of the server node to connect to.";
     isFirstK8sNode = mkBoolOpt false "Whether node is the first in the cluster";
   };
@@ -34,7 +43,7 @@ in
         enable = true;
       };
     };
-    
+
     # Basic system packages
     environment.systemPackages = with pkgs; [
       vim
@@ -66,20 +75,20 @@ in
     projectinitiative = {
       networking = {
         tailscale = {
-            enable = true;
-            ephemeral = false;
-            extraArgs = [
-              "--accept-dns=false"
-              # "--accept-routes=true"
-              # "--advertise-routes=10.0.0.0/24"
-              # "--snat-subnet-routes=false"
-              "--accept-dns=false"
-              "--accept-routes=false"
-              "--advertise-routes="
-              "--snat-subnet-routes=true"
-            ];
-          };
+          enable = true;
+          ephemeral = false;
+          extraArgs = [
+            "--accept-dns=false"
+            # "--accept-routes=true"
+            # "--advertise-routes=10.0.0.0/24"
+            # "--snat-subnet-routes=false"
+            "--accept-dns=false"
+            "--accept-routes=false"
+            "--advertise-routes="
+            "--snat-subnet-routes=true"
+          ];
         };
+      };
       services = {
 
         eternal-terminal = enabled;
@@ -93,13 +102,13 @@ in
           networkType = "tailscale";
           environmentFile = k3sEnvFile;
           extraArgs = [
-              # TLS configuration
-              "--tls-san=k8s.projectinitiative.io"
+            # TLS configuration
+            "--tls-san=k8s.projectinitiative.io"
 
-              # Security
-              "--secrets-encryption"
-              "--disable=traefik"
-              "--disable local-storage"
+            # Security
+            "--secrets-encryption"
+            "--disable=traefik"
+            "--disable local-storage"
           ];
         };
       };

@@ -39,9 +39,9 @@ with lib.${namespace};
   };
   boot.binfmt = {
     emulatedSystems = [
-        "aarch64-linux"
-        "armv7l-linux"
-        "armv6l-linux"
+      "aarch64-linux"
+      "armv7l-linux"
+      "armv6l-linux"
     ];
   };
   # Basic bcachefs support

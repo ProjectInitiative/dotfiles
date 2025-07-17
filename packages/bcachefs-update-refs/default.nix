@@ -16,12 +16,12 @@ pkgs.stdenv.mkDerivation rec {
   # Runtime dependencies for the script. These will be available in $PATH
   # when the packaged script is executed.
   propagatedBuildInputs = [
-    pkgs.bashInteractive        # Provides bash
-    pkgs.nix-prefetch-scripts   # Provides nix-prefetch-github
-    pkgs.jq                     # For parsing JSON output
-    pkgs.gnused                 # Provides sed for in-file replacements
-    pkgs.gnugrep                # Provides grep
-    pkgs.coreutils              # For basic utilities like echo, cat, etc.
+    pkgs.bashInteractive # Provides bash
+    pkgs.nix-prefetch-scripts # Provides nix-prefetch-github
+    pkgs.jq # For parsing JSON output
+    pkgs.gnused # Provides sed for in-file replacements
+    pkgs.gnugrep # Provides grep
+    pkgs.coreutils # For basic utilities like echo, cat, etc.
   ];
 
   # This script doesn't need a build phase (no compilation).

@@ -96,14 +96,14 @@ in
         script = pkgs.writeShellScript "generate-ssh-pub-key" ''
           #!${pkgs.bash}/bin/bash
           set -euo pipefail
-      
+
           PRIVATE_KEY="$HOME/.ssh/id_ed25519"
           PUBLIC_KEY="$HOME/.ssh/id_ed25519.pub"
 
           if [ -f "$PRIVATE_KEY" ] && [ ! -s "$PUBLIC_KEY" ]; then
             # Use the full path to the 'echo' command from the coreutils package
             ${pkgs.coreutils}/bin/echo "Generating SSH public key: $PUBLIC_KEY"
-        
+
             # Use the full path to each command from its respective package
             ${pkgs.openssh}/bin/ssh-keygen -y -f "$PRIVATE_KEY" > "$PUBLIC_KEY.tmp"
             ${pkgs.coreutils}/bin/mv "$PUBLIC_KEY.tmp" "$PUBLIC_KEY"
@@ -124,7 +124,6 @@ in
           WantedBy = [ "default.target" ];
         };
       };
-
 
     programs.zsh.initContent = ''
       if [ ! -f "$HOME/.config/sops/age/keys.txt" ]; then

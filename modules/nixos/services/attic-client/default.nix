@@ -97,11 +97,10 @@ in
         connect-timeout = 5;
       };
       extraOptions = ''
-      # Ensure we can still build when missing-server is not accessible
-      fallback = true
+        # Ensure we can still build when missing-server is not accessible
+        fallback = true
       '';
     };
-
 
     # 3. Systemd service to log in automatically if requested
     # Service name includes cacheName for potential multi-cache setups

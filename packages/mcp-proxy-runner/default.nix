@@ -1,7 +1,7 @@
 # File: mcp-proxy-runner/default.nix
 {
   # This makes the file self-contained and buildable directly.
-  pkgs ? import <nixpkgs> { }
+  pkgs ? import <nixpkgs> { },
 }:
 
 let
