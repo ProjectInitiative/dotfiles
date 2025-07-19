@@ -23,9 +23,9 @@ in
 
     # Based on: https://nixos.wiki/wiki/TPM
     # Install specified TPM-related packages into the system profile
-    environment.systemPackages = with pkgs;[
+    environment.systemPackages = with pkgs; [
       opensc
-      tpm2-tools 
+      tpm2-tools
       tpm2-pkcs11
     ];
 

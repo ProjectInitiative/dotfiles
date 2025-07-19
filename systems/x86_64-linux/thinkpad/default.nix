@@ -18,7 +18,7 @@ with lib.${namespace};
 
   # enable displaylink
   services.xserver.videoDrivers = [
-    # "displaylink"
+    "displaylink"
     "modesetting"
   ];
 
