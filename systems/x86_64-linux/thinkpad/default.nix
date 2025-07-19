@@ -62,6 +62,7 @@ with lib.${namespace};
     };
     services = {
       power-profile-manager = enabled;
+      tpm = enabled;
       bcachefsRereplicateAuto.enable = mkForce false;
       bcachefsScrubAuto.enable = mkForce false;
       bcachefsSnapshots = {
@@ -127,8 +128,6 @@ with lib.${namespace};
     multipath-tools
     usbutils
 
-    opensc
-
     wine64
     winetricks
     wineWowPackages.waylandFull
@@ -158,15 +157,6 @@ with lib.${namespace};
 
   # Enable sound with pipewire.
   services.pulseaudio.enable = false;
-  # https://nixos.wiki/wiki/TPM
-  security = {
-    rtkit.enable = true;
-    tpm2 = {
-      enable = true;
-      pkcs11.enable = true; # expose /run/current-system/sw/lib/libtpm2_pkcs11.so
-      tctiEnvironment.enable = true; # TPM2TOOLS_TCTI and TPM2_PKCS11_TCTI env variables
-    };
-  };
 
   users.users.kylepzak.extraGroups = [ "tss" ]; # tss group has access to TPM devices
 

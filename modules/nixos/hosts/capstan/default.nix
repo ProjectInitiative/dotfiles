@@ -126,16 +126,6 @@ in
     #   '';
 
     # };
-    #
-    # https://nixos.wiki/wiki/TPM
-    # for openbao unsealing
-    security = {
-      tpm2 = {
-        enable = true;
-        pkcs11.enable = true; # expose /run/current-system/sw/lib/libtpm2_pkcs11.so
-        tctiEnvironment.enable = true; # TPM2TOOLS_TCTI and TPM2_PKCS11_TCTI env variables
-      };
-    };
 
     # users.users.YOUR_USER.extraGroups = [ "tss" ];  # tss group has access to TPM devices
 
@@ -146,10 +136,8 @@ in
       lsof
       pciutils
       iperf3
+
       # k8s specific
-      # tpm2-tools
-      # tpm2-pkcs11
-      opensc
       drbd
     ];
 
@@ -192,6 +180,8 @@ in
       services = {
 
         eternal-terminal = enabled;
+
+        tpm = enabled;
 
         bcachefsFileOptions = {
           enable = true;
