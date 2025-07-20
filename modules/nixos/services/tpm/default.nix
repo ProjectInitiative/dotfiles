@@ -21,6 +21,10 @@ in
   # Define the actual system configuration based on the options
   config = mkIf cfg.enable {
 
+    users.groups.tss = {
+      gid = 959; # A static GID from the system range
+    };
+
     # Based on: https://nixos.wiki/wiki/TPM
     # Install specified TPM-related packages into the system profile
     environment.systemPackages = with pkgs; [
