@@ -22,7 +22,7 @@ in
   config = mkIf cfg.enable {
 
     users.groups.tss = {
-      gid = 959; # A static GID from the system range
+      gid = 995; # A static GID from the system range
     };
 
     # Based on: https://nixos.wiki/wiki/TPM
