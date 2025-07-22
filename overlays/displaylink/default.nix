@@ -38,7 +38,9 @@ final: prev: {
           # sha256 = "RJgVrX+Y8Nvz106Xh+W9N9uRLC2VO00fBJeS8vs7fKw=";
         };
     }).overrideAttrs
+    
       (oldAttrs: {
+        __intentionallyOverridingVersion = true;
         version = "6.1.1-17"; # Match the .run file's version in the ZIP
       });
 }

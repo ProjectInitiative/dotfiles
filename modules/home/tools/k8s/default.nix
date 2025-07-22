@@ -48,5 +48,9 @@ in
       };
     };
 
+    programs.zsh.initContent = mkIf config.programs.zsh.enable ''
+      compdef kubecolor=kubectl
+    '';
+
   };
 }
