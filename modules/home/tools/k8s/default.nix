@@ -39,8 +39,9 @@ in
       shellAliases = {
         k = "kubecolor";
         kubectl = "kubecolor";
-        kc = "kubectx";
+        kx = "kubectx";
         kn = "kubens";
+        delete-unbound-pv = "kubectl get pv -o json | jq -r '.items[] | select(.status.phase == \"Released\") | .metadata.name' | xargs -r kubectl delete pv";
         # kx = "kubectl ctx";
         # kn = "kubectl ns";
         # ks = "kubeseal";
