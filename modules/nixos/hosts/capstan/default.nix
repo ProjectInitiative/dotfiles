@@ -163,7 +163,15 @@ in
     #     fsType = "bcachefs";
     #   };
 
-    services.openssh.enable = true;
+    services.openssh = {
+      enable = true;
+      # Disable password-based authentication for security.
+      settings = {
+        PasswordAuthentication = false;
+        KbdInteractiveAuthentication = false; # Disables keyboard-interactive auth, often a fallback for passwords.
+        PermitRootLogin = "prohibit-password"; # Allows root login with a key, but not a password.
+      };
+    };
 
     projectinitiative = {
 

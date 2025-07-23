@@ -13,38 +13,48 @@
   modulesPath,
   ...
 }:
-let
-  # Create files in the nix store
-  hostSSHFile = pkgs.writeText "ssh_host_ed25519_key" config.sensitiveNotSecret.stormjib_private_ssh_key;
-  hostSSHPubFile = pkgs.writeText "ssh_host_ed25519_key.pub" config.sensitiveNotSecret.stormjib_public_ssh_key;
-in
 {
-  imports = with inputs.nixos-hardware.nixosModules; [
-    (modulesPath + "/installer/scan/not-detected.nix")
-    # (modulesPath + "/installer/sd-card/sd-image-aarch64.nix")
-    (modulesPath + "/installer/sd-card/sd-image-aarch64-new-kernel.nix")
-    # raspberry-pi-4
+  imports = [
+    "${inputs.self}/lib/arm-tools/rockchip-image.nix"
   ];
 
-  boot.supportedFilesystems.zfs = lib.mkForce false;
+  # Platform configuration
+  nixpkgs.buildPlatform = "x86_64-linux";
+  nixpkgs.hostPlatform = "aarch64-linux";
 
-  sdImage.compressImage = true;
+  boot.initrd.availableKernelModules = [
+    "dw_mmc_rockchip"  # Specific driver for Rockchip SD/eMMC controllers
+    "usbnet" "cdc_ether" "rndis_host" # Drivers for USB-based networking
+  ];
 
-  environment.etc = {
-    "ssh/ssh_host_ed25519_key" = {
-      source = hostSSHFile;
-      mode = "0600";
-      user = "root";
-      group = "root";
+
+  # Rockchip board configuration
+  rockchip = {
+    enable = true;
+    # board = "rk3582-radxa-e52c";
+    
+    # U-Boot package - will use board default if not specified
+    uboot.package = pkgs.uboot-rk3582-generic;
+    
+    # Device tree - will use board default if not specified
+    deviceTree = "rockchip/rk3582-radxa-e52c.dtb";
+    
+    # Optional: customize console settings (uses board defaults if not specified)
+    console = {
+      earlycon = "uart8250,mmio32,0xfeb50000";
+      console = "ttyS4,1500000";
     };
-
-    "ssh/ssh_host_ed25519_key.pub" = {
-      source = hostSSHPubFile;
-      mode = "0644";
-      user = "root";
-      group = "root";
+    
+    # Configure which image variants to build
+    image.buildVariants = {
+      full = true;       # Build full eMMC image with U-Boot (nixos-e52c-full.img)
+      sdcard = true;     # Build SD card image without U-Boot (os-only.img)  
+      ubootOnly = true;  # Build U-Boot only image
     };
+    
   };
+
+
 
   projectinitiative = {
     hosts.masthead.stormjib.enable = true;
@@ -68,182 +78,59 @@ in
   #   generic-extlinux-compatible.enable = true;  # Enable extlinux bootloader
   # };
 
-  services.openssh.enable = true;
   console.enable = true;
-  environment.systemPackages = with pkgs; [
-    libraspberrypi
-    raspberrypi-eeprom
-  ];
 
-  # Single networking attribute set
+    # SSH access
+  services.openssh = {
+    enable = true;
+    settings.PermitRootLogin = "yes";
+  };
+  
+  # Enable NetworkManager for easier network setup
+  # enP4p65s0 - LAN
+  # enP3p49s0 - WAN
   networking = {
     networkmanager = {
-      enable = false;
-      wifi.powersave = false;
-    };
-    useDHCP = false;
-    interfaces = { }; # Clear interfaces - managed by systemd-networkd
-    useNetworkd = true;
-
-    # usePredictableInterfaceNames = false;
+        enable = true;
+      };
+    useDHCP = lib.mkForce true;
   };
 
-  systemd = {
-    # Enable networkd
-    network = {
-      enable = true;
-      # wait-online.enable = false; # Disable wait-online to avoid boot delays
+  # systemd = {
+  #   # Enable networkd
+  #   network = {
+  #     enable = true;
+  #     # wait-online.enable = false; # Disable wait-online to avoid boot delays
 
-      # Interface naming based on MAC addresses
-      links = {
-        "10-lan" = {
-          matchConfig.MACAddress = "d8:3a:dd:73:eb:33";
-          linkConfig.Name = "lan0";
-        };
-        "11-wan" = {
-          matchConfig.MACAddress = "c8:a3:62:b4:ce:fa";
-          linkConfig.Name = "wan0";
-        };
-      };
+  #     # Interface naming based on MAC addresses
+  #     links = {
+  #       "10-lan" = {
+  #         matchConfig.MACAddress = "d8:3a:dd:73:eb:33";
+  #         linkConfig.Name = "lan0";
+  #       };
+  #       "11-wan" = {
+  #         matchConfig.MACAddress = "c8:a3:62:b4:ce:fa";
+  #         linkConfig.Name = "wan0";
+  #       };
+  #     };
 
-      networks = {
-        "12-lan" = {
-          matchConfig.Name = "lan0"; # Match the future name
-          networkConfig = {
-            DHCP = "yes";
-            IPv6AcceptRA = "no";
-          };
-        };
-        "13-wan" = {
-          matchConfig.Name = "wan0"; # Match the future name
-          networkConfig = {
-            DHCP = "yes";
-            IPv6AcceptRA = "no";
-          };
-        };
-      };
-
-    };
-  };
-  # Use tmpfs for temporary files
-  # fileSystems."/tmp" = {
-  #   device = "tmpfs";
-  #   fsType = "tmpfs";
-  #   options = [
-  #     "nosuid"
-  #     "nodev"
-  #     "relatime"
-  #     "size=256M"
-  #   ];
-  # };
-
-  # journald settings to reduce writes
-  # services.journald.extraConfig = ''
-  #   Storage=volatile
-  #   RuntimeMaxUse=64M
-  #   SystemMaxUse=64M
-  # '';
-
-  # disko = {
-  #   devices = {
-
-  #     # Cross-compilation settings
-  #     # imageBuilder = {
-  #     #   enableBinfmt = true;
-  #     #   pkgs = pkgs;
-  #     #   kernelPackages = pkgs.legacyPackages.x86_64-linux.linuxPackages_latest;
-  #     # };
-  #     disk = {
-  #       sd = {
-  #         imageSize = "32G";
-  #         imageName = "stormjib-rpi";
-  #         device = "/dev/mmcblk0";
-  #         type = "disk";
-  #         content = {
-  #           type = "gpt";
-  #           partitions = {
-  #             # Boot partition - fixed 256MB size
-  #             boot = {
-  #               name = "boot";
-  #               size = "256M"; # Fixed size for boot
-  #               type = "EF00"; # EFI System Partition
-  #               content = {
-  #                 type = "filesystem";
-  #                 format = "vfat";
-  #                 mountpoint = "/boot";
-  #                 mountOptions = [
-  #                   "defaults"
-  #                   "noatime"
-  #                 ];
-  #               };
-  #             };
-
-  #             # Root partition - read-only
-  #             root = {
-  #               name = "root";
-  #               size = "20%"; # Percentage of remaining space
-  #               content = {
-  #                 type = "filesystem";
-  #                 format = "ext4";
-  #                 mountpoint = "/";
-  #                 mountOptions = [
-  #                   "defaults"
-  #                   "noatime"
-  #                 ]; # "ro" ]; # Read-only mount
-  #               };
-  #             };
-
-  #             # Nix store partition
-  #             nix = {
-  #               name = "nix";
-  #               size = "35%"; # Percentage of remaining space
-  #               content = {
-  #                 type = "filesystem";
-  #                 format = "ext4";
-  #                 mountpoint = "/nix";
-  #                 mountOptions = [
-  #                   "defaults"
-  #                   "noatime"
-  #                 ];
-  #               };
-  #             };
-
-  #             # Logs partition
-  #             logs = {
-  #               name = "logs";
-  #               size = "10%"; # Percentage of remaining space
-  #               content = {
-  #                 type = "filesystem";
-  #                 format = "ext4";
-  #                 mountpoint = "/var/log";
-  #                 mountOptions = [
-  #                   "defaults"
-  #                   "noatime"
-  #                   "commit=600"
-  #                 ];
-  #               };
-  #             };
-
-  #             # Persistent data partition
-  #             data = {
-  #               name = "data";
-  #               size = "100%"; # Use all remaining space
-  #               content = {
-  #                 type = "filesystem";
-  #                 format = "ext4";
-  #                 mountpoint = "/var/lib";
-  #                 mountOptions = [
-  #                   "defaults"
-  #                   "noatime"
-  #                   "commit=600"
-  #                 ];
-  #               };
-  #             };
-  #           };
+  #     networks = {
+  #       "12-lan" = {
+  #         matchConfig.Name = "lan0"; # Match the future name
+  #         networkConfig = {
+  #           DHCP = "yes";
+  #           IPv6AcceptRA = "no";
+  #         };
+  #       };
+  #       "13-wan" = {
+  #         matchConfig.Name = "wan0"; # Match the future name
+  #         networkConfig = {
+  #           DHCP = "yes";
+  #           IPv6AcceptRA = "no";
   #         };
   #       };
   #     };
   #   };
-  # };
 
+  # };
 }
