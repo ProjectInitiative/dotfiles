@@ -27,6 +27,20 @@
     "usbnet" "cdc_ether" "rndis_host" # Drivers for USB-based networking
   ];
 
+  users.users = {
+    root = {
+      # Set the root password to "root" in plaintext
+      initialPassword = "root";
+    };
+    nixos = {
+      isNormalUser = true;
+      extraGroups = [ "wheel" ];
+      # Set the nixos user password to "nixos" in plaintext
+      initialPassword = "nixos";
+    };
+  };
+
+
 
   # Rockchip board configuration
   rockchip = {
