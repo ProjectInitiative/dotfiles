@@ -28,6 +28,7 @@ in
           # signal-desktop
           telegram-desktop
           thunderbird
+          slack
         ];
     };
 

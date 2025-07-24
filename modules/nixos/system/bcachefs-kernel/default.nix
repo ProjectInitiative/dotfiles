@@ -147,6 +147,7 @@ in
   config = mkIf cfg.enable {
     boot.kernelPackages = mkForce linuxPackages_custom_bcachefs;
     boot.supportedFilesystems = [ "bcachefs" ];
+    # If enabled, NixOS will set up a kernel that will boot on crash, and leave the user in systemd rescue to be able to save the crashed kernel dump at /proc/vmcore. It also activates the NMI watchdog.
     boot.crashDump.enable = true;
     environment.systemPackages = with pkgs; [
       bcachefs-tools

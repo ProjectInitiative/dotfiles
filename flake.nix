@@ -349,13 +349,13 @@
       deploy = lib.mkDeploy {
         inherit (inputs) self;
         exclude = [
-          "stormjib"
+          # "stormjib"
           "thinkpad"
           "test"
           "dinghy"
           "capstan-test"
           "bcachefs-tester"
-          "cargohold"
+          # "cargohold"
           "lightship-aus"
         ];
       };
