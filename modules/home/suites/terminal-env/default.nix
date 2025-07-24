@@ -66,7 +66,7 @@ in
         icdiff
         usbutils
         rclone
-        magic-wormhole
+        magic-wormhole-rs
         file
         zstd
         xh
