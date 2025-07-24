@@ -147,6 +147,7 @@ in
   config = mkIf cfg.enable {
     boot.kernelPackages = mkForce linuxPackages_custom_bcachefs;
     boot.supportedFilesystems = [ "bcachefs" ];
+    boot.crashDump.enable = true;
     environment.systemPackages = with pkgs; [
       bcachefs-tools
       linuxPackages_custom_bcachefs.perf
