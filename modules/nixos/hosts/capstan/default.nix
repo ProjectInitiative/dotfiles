@@ -158,6 +158,11 @@ in
       options = [ "bind" ];
     };
 
+    fileSystems."/mnt/local-provisioner/host" = {
+      device = "/opt/local-provisioner";
+      options = [ "bind" ];
+    };
+
     # fileSystems."/mnt/pool" =
     #   { device = "UUID=27cac550-3836-765c-d107-51d27ab4a6e1";
     #     fsType = "bcachefs";
