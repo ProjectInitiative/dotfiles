@@ -307,6 +307,14 @@ in
 
           eternal-terminal = enabled;
 
+          bcachefs-fs-options.settings = {
+            "27cac550-3836-765c-d107-51d27ab4a6e1" = {
+              foreground_target = "cache.nvme1";
+              background_target = "hdd";
+              promote_target = "cache";
+            };
+          };
+
           health-reporter = {
             enable = true;
             telegramTokenPath = config.sops.secrets.health_reporter_bot_api_token.path;

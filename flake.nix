@@ -355,6 +355,7 @@
           "dinghy"
           "capstan-test"
           "bcachefs-tester"
+          "pawl"
           # "cargohold"
           "lightship-aus"
         ];
