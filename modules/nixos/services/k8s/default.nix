@@ -295,6 +295,20 @@ in
         '';
     };
 
+    # Flannel ethtool configuration - only when flannel is active (not cilium)
+    systemd.services.flannel-ethtool = mkIf (cfg.networkType != "cilium") {
+      description = "Disable VXLAN checksum offloading for flannel.1";
+      # Ensure this runs after the flannel.1 device is up
+      after = [ "sys-devices-virtual-net-flannel.1.device" ];
+      requires = [ "sys-devices-virtual-net-flannel.1.device" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        ExecStart = "${pkgs.ethtool}/bin/ethtool -K flannel.1 tx-checksum-ip-generic off";
+      };
+    };
+
     # Enable Wireguard kernel module if wireguard is selected
     boot.extraModulePackages = optionals (cfg.networkType == "wireguard") [
       config.boot.kernelPackages.wireguard
