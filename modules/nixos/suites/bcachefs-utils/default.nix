@@ -32,7 +32,8 @@ in
           targetMountPoints = [
             cfg.parentSubvolume # MANDATORY: Set your actual subvolume path
           ];
-          schedule = "weekly";
+          schedule = "*-*-01,15 00:00:00 America/Chicago";
+          randomizedDelaySec = "1w";
         };
 
         bcachefsRereplicateAuto = {

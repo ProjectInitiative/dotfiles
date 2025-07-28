@@ -132,6 +132,12 @@ in
       default = true;
       description = mdDoc "Send a Telegram notification if a scrub command fails.";
     };
+
+    randomizedDelaySec = mkOption {
+      type = types.str;
+      default = "1h";
+      description = mdDoc "Randomized delay for the scrub timers. Accepts systemd.time format (e.g., '1h', '2d').";
+    };
   };
 
   # The config block defines the actual system configuration based on the options.
@@ -231,7 +237,7 @@ in
               OnCalendar = cfg.schedule;
               Unit = "${sName}.service"; # Explicitly state the service unit to activate
               Persistent = true;
-              RandomizedDelaySec = "1h";
+              RandomizedDelaySec = cfg.randomizedDelaySec;
             };
           };
         }
