@@ -469,5 +469,27 @@ in
       ];
     };
 
+    systemd.services.bond-ethtool = mkIf (cfg.bonding.mode != "none") {
+      description = "Disable GRO and GSO for bond0 and its members";
+      after = [ "sys-devices-virtual-net-bond0.device" ];
+      requires = [ "sys-devices-virtual-net-bond0.device" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = ''
+        #!${pkgs.bash}/bin/bash
+        set -euo pipefail
+        ${pkgs.ethtool}/bin/ethtool -K bond0 gso off gro off
+        # The file might not exist if there are no slaves, so handle that gracefully.
+        if [ -f /sys/class/net/bond0/bonding/slaves ]; then
+          for iface in $(cat /sys/class/net/bond0/bonding/slaves); do
+            ${pkgs.ethtool}/bin/ethtool -K "$iface" gso off gro off
+          done
+        fi
+      '';
+    };
+
   };
 }
