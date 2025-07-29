@@ -167,5 +167,49 @@ in
 
     ###################################
 
+    # This service checks if the custom kernel version or git revision has changed
+    # after a `nixos-rebuild switch` and creates the reboot-required file.
+    systemd.services.reboot-required-check =
+      let
+        # The file where we store the last known version identifier.
+        versionStateFile = "/var/lib/kernel-and-module-version";
+        # Create a unique identifier from the kernel version and the module revision.
+        # This is robust against rebuilds of the same version string.
+        currentVersionIdentifier = "${builtins.readFile (versionInfo + "/version")}-${cfg.rev}";
+      in
+      {
+        description = "Check for bcachefs kernel updates and signal Kured for reboot";
+        after = [ "nixos-system-switch.service" ];
+        wants = [ "nixos-system-switch.service" ];
+
+        serviceConfig = {
+          Type = "oneshot";
+        };
+
+        script = ''
+          # Check if the old version file exists and read it.
+          if [ -f ${versionStateFile} ]; then
+            OLD_VERSION_IDENTIFIER=$(cat ${versionStateFile})
+          else
+            # If it doesn't exist, this is the first run.
+            OLD_VERSION_IDENTIFIER="none"
+          fi
+          
+          echo "Current identifier: ${currentVersionIdentifier}"
+          echo "Previous identifier: $OLD_VERSION_IDENTIFIER"
+
+          # If the identifier has changed, a reboot is needed.
+          if [ "${currentVersionIdentifier}" != "$OLD_VERSION_IDENTIFIER" ]; then
+            echo "Kernel version or module revision has changed. Signaling kured for a reboot."
+            touch /var/run/reboot-required
+          else
+            echo "No kernel change detected."
+          fi
+
+          # Update the state file with the new identifier for the next check.
+          echo -n "${currentVersionIdentifier}" > ${versionStateFile}
+        '';
+      };
+
   };
 }
