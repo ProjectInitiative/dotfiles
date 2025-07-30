@@ -76,8 +76,8 @@
 
     # Binary Cache
     attic = {
-      url = "github:projectinitiative/attic/updated-210";
-      # url = "path:/home/kylepzak/development/build-software/attic";
+      url = "github:projectinitiative/attic/feature/updates";
+      # url = "path:/home/kylepzak/development/custom-nix/attic";
       # url = "github:zhaofengli/attic";
 
       # FIXME: A specific version of Rust is needed right now or
