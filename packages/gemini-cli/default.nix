@@ -7,7 +7,7 @@
 
 let
   pname = "gemini-cli";
-  version = "0.1.7";
+  version = "0.1.15";
 in
 buildNpmPackage {
   inherit pname version;
@@ -17,8 +17,8 @@ buildNpmPackage {
     repo = "gemini-cli";
     # Currently there's no release tag, use the `package-lock.json` to see
     # what's the latest version
-    rev = "19d2a0fb35ff75ebbed2dda5c8574ffcc66cd4d5";
-    hash = "sha256-DAenod/w9BydYdYsOnuLj7kCQRcTnZ81tf4MhLUug6c=";
+    rev = "ed1483b06f630775bf75baedda8d475dac46dc0d";
+    hash = "sha256-J9pDSMsSh7FVPD61FFV2Aes3G/Vj1j5ULn9dOr+sglQ=";
   };
 
   npmDepsHash = "sha256-otogkSsKJ5j1BY00y4SRhL9pm7CK9nmzVisvGCDIMlU=";

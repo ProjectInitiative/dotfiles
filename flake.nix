@@ -271,15 +271,14 @@
 
       systems = {
         targets = [
-
           "x86_64-linux"
           "x86_64-darwin"
           "aarch64-linux"
         ];
         hosts = {
-          # stormjib = {
-          #   system = "aarch64-linux";
-          # };
+          stormjib = {
+            system = "aarch64-linux";
+          };
         };
         modules =
           let

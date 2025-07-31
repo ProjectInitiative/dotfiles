@@ -36,16 +36,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1746194557,
-        "narHash": "sha256-j2rPy02xn73YBL2hnqMQsFOSrN+Lnznxzy3s5lJ741k=",
+        "lastModified": 1753843552,
+        "narHash": "sha256-5UITHv5z1W+/9NIjqz47xwoclj6XXe8VGuNMNkzxbRw=",
         "owner": "projectinitiative",
         "repo": "attic",
-        "rev": "9d7850aff34d4ea3dbe0097f59e37bdf85c787b3",
+        "rev": "92ff496ede8d3dce1e0473bcfac963bafad75905",
         "type": "github"
       },
       "original": {
         "owner": "projectinitiative",
-        "ref": "updated-210",
+        "ref": "feature/updates",
         "repo": "attic",
         "type": "github"
       }
@@ -118,10 +118,7 @@
     },
     "crane": {
       "inputs": {
-        "nixpkgs": [
-          "attic",
-          "nixpkgs"
-        ]
+        "nixpkgs": "nixpkgs"
       },
       "locked": {
         "lastModified": 1722960479,
@@ -874,6 +871,22 @@
     },
     "nixpkgs": {
       "locked": {
+        "lastModified": 1753750875,
+        "narHash": "sha256-J1P0aQymehe8AHsID9wwoMjbaYrIB2eH5HftoXhF9xk=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "871381d997e4a063f25a3994ce8a9ac595246610",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_2": {
+      "locked": {
         "lastModified": 1752620740,
         "narHash": "sha256-f3pO+9lg66mV7IMmmIqG4PL3223TYMlnlw+pnpelbss=",
         "owner": "nixos",
@@ -888,7 +901,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_2": {
+    "nixpkgs_3": {
       "locked": {
         "lastModified": 1744868846,
         "narHash": "sha256-5RJTdUHDmj12Qsv7XOhuospjAjATNiTMElplWnJE9Hs=",
@@ -904,7 +917,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_3": {
+    "nixpkgs_4": {
       "locked": {
         "lastModified": 1700794826,
         "narHash": "sha256-RyJTnTNKhO0yqRpDISk03I/4A67/dp96YRxc86YOPgU=",
@@ -963,7 +976,7 @@
         "nix-ld": "nix-ld",
         "nixos-generators": "nixos-generators",
         "nixos-hardware": "nixos-hardware",
-        "nixpkgs": "nixpkgs",
+        "nixpkgs": "nixpkgs_2",
         "rockpi-quad": "rockpi-quad",
         "snowfall-lib": "snowfall-lib_5",
         "sops-nix": "sops-nix",
@@ -1119,7 +1132,7 @@
     },
     "sops-nix": {
       "inputs": {
-        "nixpkgs": "nixpkgs_2"
+        "nixpkgs": "nixpkgs_3"
       },
       "locked": {
         "lastModified": 1752544651,
@@ -1254,7 +1267,7 @@
     },
     "thaw": {
       "inputs": {
-        "nixpkgs": "nixpkgs_3",
+        "nixpkgs": "nixpkgs_4",
         "snowfall-lib": "snowfall-lib_6"
       },
       "locked": {

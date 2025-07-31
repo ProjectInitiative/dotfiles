@@ -35,6 +35,7 @@ in
         nix-output-monitor
         nvd
         sqlite
+        hydra-check
       ];
 
       sessionVariables = {
