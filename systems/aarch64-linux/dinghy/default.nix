@@ -73,7 +73,7 @@ in
             # A job named 'nodes' to scrape all your other servers
             nodes = {
               targets = [
-                "0.0.0.0:9100"
+                "127.0.0.1:9100"
                 "172.16.1.51:9100"
                 "172.16.1.52:9100"
                 "172.16.1.53:9100"
@@ -93,7 +93,7 @@ in
             # A job for scraping smartctl data if it's on a different port/host
             smart-devices = {
               targets = [
-                "0.0.0.0:9633"
+                "127.0.0.1:9633"
                 "172.16.1.51:9633"
                 "172.16.1.52:9633"
                 "172.16.1.53:9633"
