@@ -33,24 +33,25 @@ let
 
   # Parse size string (e.g., "256M", "1G") into bytes. Basic implementation.
   # More robust parsing could be added if needed.
-  sizeInBytes = builtins.readFile (pkgs.runCommand "size-in-bytes" { SIZE_STR=size; } ''
-    SIZE_STR="$SIZE_STR"
-    SIZE_VAL=$(echo "$SIZE_STR" | sed 's/[KMGTP]$//i')
-    UNIT=$(echo "$SIZE_STR" | sed 's/^[0-9]*//i' | tr '[:lower:]' '[:upper:]')
-    FACTOR=1
-    case "$UNIT" in
-        K) FACTOR=1024 ;;
-        M) FACTOR=$((1024*1024)) ;;
-        G) FACTOR=$((1024*1024*1024)) ;;
-        T) FACTOR=$((1024*1024*1024*1024)) ;;
-        P) FACTOR=$((1024*1024*1024*1024*1024)) ;;
-        "") FACTOR=1 ;; # Assume bytes if no unit
-        *) echo "Error: Unknown size unit '$UNIT' in '$SIZE_STR'" >&2; exit 1 ;;
-    esac
-    # Use awk for potentially large number arithmetic
-    echo "$SIZE_VAL $FACTOR" | ${gawk}/bin/awk '{printf "%.0f", $1 * $2}' > $out
-  '');
-
+  sizeInBytes = builtins.readFile (
+    pkgs.runCommand "size-in-bytes" { SIZE_STR = size; } ''
+      SIZE_STR="$SIZE_STR"
+      SIZE_VAL=$(echo "$SIZE_STR" | sed 's/[KMGTP]$//i')
+      UNIT=$(echo "$SIZE_STR" | sed 's/^[0-9]*//i' | tr '[:lower:]' '[:upper:]')
+      FACTOR=1
+      case "$UNIT" in
+          K) FACTOR=1024 ;;
+          M) FACTOR=$((1024*1024)) ;;
+          G) FACTOR=$((1024*1024*1024)) ;;
+          T) FACTOR=$((1024*1024*1024*1024)) ;;
+          P) FACTOR=$((1024*1024*1024*1024*1024)) ;;
+          "") FACTOR=1 ;; # Assume bytes if no unit
+          *) echo "Error: Unknown size unit '$UNIT' in '$SIZE_STR'" >&2; exit 1 ;;
+      esac
+      # Use awk for potentially large number arithmetic
+      echo "$SIZE_VAL $FACTOR" | ${gawk}/bin/awk '{printf "%.0f", $1 * $2}' > $out
+    ''
+  );
 
 in
 pkgs.stdenv.mkDerivation {
@@ -228,4 +229,3 @@ pkgs.stdenv.mkDerivation {
     echo "--- Finishing make-fat-fs buildCommand ---"
   '';
 }
-

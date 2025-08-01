@@ -1,12 +1,18 @@
-
-{ config, lib, namespace, pkgs, ... }:
+{
+  config,
+  lib,
+  namespace,
+  pkgs,
+  ...
+}:
 
 with lib;
 
 let
   cfg = config.${namespace}.services.bcachefs-fs-options;
 
-  fsOptionEntries = fsUUID: fsOptions:
+  fsOptionEntries =
+    fsUUID: fsOptions:
     let
       fsPath = "/sys/fs/bcachefs/${fsUUID}/options";
     in
@@ -19,8 +25,8 @@ let
   fsOptionsScript = pkgs.writeShellScript "bcachefs-fs-options-script" (
     concatStringsSep "
 " (
-      mapAttrsToList (fsUUID: fsOptions:
-        concatStringsSep "
+      mapAttrsToList (
+        fsUUID: fsOptions: concatStringsSep "
 " (fsOptionEntries fsUUID fsOptions)
       ) cfg.settings
     )
@@ -30,7 +36,7 @@ in
   options.${namespace}.services.bcachefs-fs-options = {
     settings = mkOption {
       type = types.attrsOf (types.attrsOf (types.either types.str types.int));
-      default = {};
+      default = { };
       description = ''
         Declaratively set bcachefs filesystem-level options.
         The top-level attribute name is the filesystem UUID.

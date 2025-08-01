@@ -1,4 +1,10 @@
-{ config, lib, pkgs, modulesPath, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  modulesPath,
+  ...
+}:
 
 with lib;
 
@@ -22,20 +28,53 @@ in
         description = "The U-Boot package providing idbloader.img and u-boot.itb.";
       };
       image = {
-        name = mkOption { type = types.str; default = "nixos-rockchip"; };
-        imagePaddingMB = mkOption { type = types.int; default = 100; };
-        fullImageBootOffsetMB = mkOption { type = types.int; default = 16; };
-        osImageBootOffsetMB = mkOption { type = types.int; default = 1; };
+        name = mkOption {
+          type = types.str;
+          default = "nixos-rockchip";
+        };
+        imagePaddingMB = mkOption {
+          type = types.int;
+          default = 100;
+        };
+        fullImageBootOffsetMB = mkOption {
+          type = types.int;
+          default = 16;
+        };
+        osImageBootOffsetMB = mkOption {
+          type = types.int;
+          default = 1;
+        };
         buildVariants = {
-          full = mkOption { type = types.bool; default = true; description = "Build full eMMC-style image with U-Boot."; };
-          sdcard = mkOption { type = types.bool; default = false; description = "Build OS-only image for SD cards (no U-Boot)."; };
-          ubootOnly = mkOption { type = types.bool; default = false; description = "Build a minimal image containing only U-Boot."; };
+          full = mkOption {
+            type = types.bool;
+            default = true;
+            description = "Build full eMMC-style image with U-Boot.";
+          };
+          sdcard = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Build OS-only image for SD cards (no U-Boot).";
+          };
+          ubootOnly = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Build a minimal image containing only U-Boot.";
+          };
         };
       };
-      deviceTree = mkOption { type = types.nullOr types.str; default = null; };
+      deviceTree = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+      };
       console = {
-        earlycon = mkOption { type = types.nullOr types.str; default = null; };
-        console = mkOption { type = types.nullOr types.str; default = null; };
+        earlycon = mkOption {
+          type = types.nullOr types.str;
+          default = null;
+        };
+        console = mkOption {
+          type = types.nullOr types.str;
+          default = null;
+        };
       };
     };
   };
@@ -64,11 +103,13 @@ in
       storePaths = [ ];
     };
 
-    system.build.nixosRootfsPartitionImage = pkgs.callPackage "${pkgs.path}/nixos/lib/make-ext4-fs.nix" {
-      storePaths = [ config.system.build.toplevel ];
-      volumeLabel = "NIXOS_ROOT";
-      compressImage = false;
-    };
+    system.build.nixosRootfsPartitionImage =
+      pkgs.callPackage "${pkgs.path}/nixos/lib/make-ext4-fs.nix"
+        {
+          storePaths = [ config.system.build.toplevel ];
+          volumeLabel = "NIXOS_ROOT";
+          compressImage = false;
+        };
 
     # C. Assemble the final image
     system.build.rockchipImages = assembleMonolithicImage {
@@ -91,8 +132,14 @@ in
 
     # E. Filesystem configuration
     fileSystems = {
-      "/" = { device = "/dev/disk/by-label/NIXOS_ROOT"; fsType = "ext4"; };
-      "/boot" = { device = "/dev/disk/by-label/NIXOS_BOOT"; fsType = "vfat"; };
+      "/" = {
+        device = "/dev/disk/by-label/NIXOS_ROOT";
+        fsType = "ext4";
+      };
+      "/boot" = {
+        device = "/dev/disk/by-label/NIXOS_BOOT";
+        fsType = "vfat";
+      };
     };
 
     # F. First boot partition resizing service
@@ -124,10 +171,10 @@ in
 
         # Get the actual device path (resolves symlink)
         rootDev=$(${pkgs.coreutils}/bin/readlink -f "$rootPart")
-        
+
         # Extract partition number from device name (e.g., /dev/mmcblk1p2 -> 2)
         partNum=$(echo "$rootDev" | ${pkgs.gnugrep}/bin/grep -o '[0-9]*$')
-        
+
         # Get the parent block device (e.g., /dev/mmcblk1p2 -> /dev/mmcblk1)
         bootDevice=$(echo "$rootDev" | ${pkgs.gnused}/bin/sed 's/p\?[0-9]*$//')
 
@@ -146,7 +193,16 @@ in
         Type = "oneshot";
         RemainAfterExit = false;
         ExecStartPost = "${pkgs.coreutils}/bin/touch /etc/nixos-partition-resized";
-        Path = with pkgs; [ coreutils util-linux parted e2fsprogs gawk cloud-utils gnugrep gnused ];
+        Path = with pkgs; [
+          coreutils
+          util-linux
+          parted
+          e2fsprogs
+          gawk
+          cloud-utils
+          gnugrep
+          gnused
+        ];
       };
     };
 

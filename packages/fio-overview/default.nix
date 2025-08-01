@@ -10,9 +10,9 @@ let
     name = "fio-overview"; # The name of the executable script within its own derivation
     runtimeInputs = [
       pkgs.bashInteractive # Provides bash itself
-      pkgs.coreutils     # Provides common utilities like echo, find, etc.
-      pkgs.findutils     # Provides the 'find' command for cleanup
-      pkgs.fio           # The Flexible I/O Tester executable
+      pkgs.coreutils # Provides common utilities like echo, find, etc.
+      pkgs.findutils # Provides the 'find' command for cleanup
+      pkgs.fio # The Flexible I/O Tester executable
     ];
     # Read the content of your fio-test.sh script to be the body of this shell application
     text = builtins.readFile ./fio-test.sh;

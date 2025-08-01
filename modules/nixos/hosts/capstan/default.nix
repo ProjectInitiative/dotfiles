@@ -223,7 +223,7 @@ in
             promote_target = "cache";
           };
         };
-        
+
         # specific file settings
         bcachefsFileOptions = {
           enable = true;

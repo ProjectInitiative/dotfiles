@@ -192,7 +192,7 @@ in
             # If it doesn't exist, this is the first run.
             OLD_VERSION_IDENTIFIER="none"
           fi
-          
+
           $ECHO "Current identifier: ${currentVersionIdentifier}"
           $ECHO "Previous identifier: $OLD_VERSION_IDENTIFIER"
 

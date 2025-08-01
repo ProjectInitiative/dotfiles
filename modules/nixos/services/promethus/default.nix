@@ -19,7 +19,10 @@ let
         type = types.listOf types.str;
         default = [ ];
         description = "A list of 'host:port' strings for this scrape job.";
-        example = [ "server1.example.com:9100" "server2.example.com:9100" ];
+        example = [
+          "server1.example.com:9100"
+          "server2.example.com:9100"
+        ];
       };
       extraConfig = mkOption {
         type = types.attrs;
@@ -30,12 +33,12 @@ let
   };
 
   # Helper function to generate a list of local targets if exporters are enabled
-  localExporterTargets = let
-    mkTarget = exporter: "${exporter.listenAddress}:${toString exporter.port}";
-  in
-    (optional cfg.exporters.node.enable (mkTarget cfg.exporters.node)) ++
-    (optional cfg.exporters.smartctl.enable (mkTarget cfg.exporters.smartctl));
-
+  localExporterTargets =
+    let
+      mkTarget = exporter: "${exporter.listenAddress}:${toString exporter.port}";
+    in
+    (optional cfg.exporters.node.enable (mkTarget cfg.exporters.node))
+    ++ (optional cfg.exporters.smartctl.enable (mkTarget cfg.exporters.smartctl));
 
 in
 {
@@ -78,27 +81,27 @@ in
     };
 
     grafana = {
-        enable = mkEnableOption "the Grafana dashboard server";
-        package = mkOption {
-            type = types.package;
-            default = pkgs.grafana;
-            description = "Grafana package to use.";
-        };
-        listenAddress = mkOption {
-            type = types.str;
-            default = "0.0.0.0";
-            description = "Address for Grafana to listen on.";
-        };
-        port = mkOption {
-            type = types.port;
-            default = 3000;
-            description = "Port for Grafana to listen on.";
-        };
-        dataDir = mkOption {
-            type = types.path;
-            default = "/var/lib/grafana";
-            description = "Directory to store Grafana data and dashboards.";
-        };
+      enable = mkEnableOption "the Grafana dashboard server";
+      package = mkOption {
+        type = types.package;
+        default = pkgs.grafana;
+        description = "Grafana package to use.";
+      };
+      listenAddress = mkOption {
+        type = types.str;
+        default = "0.0.0.0";
+        description = "Address for Grafana to listen on.";
+      };
+      port = mkOption {
+        type = types.port;
+        default = 3000;
+        description = "Port for Grafana to listen on.";
+      };
+      dataDir = mkOption {
+        type = types.path;
+        default = "/var/lib/grafana";
+        description = "Directory to store Grafana data and dashboards.";
+      };
     };
 
     exporters = {
@@ -133,26 +136,39 @@ in
   };
 
   config = mkIf cfg.enable {
-    
+
     services.prometheus = lib.mkMerge [
       (mkIf cfg.server.enable {
         enable = true;
-        inherit (cfg.server) package listenAddress port retentionTime;
+        inherit (cfg.server)
+          package
+          listenAddress
+          port
+          retentionTime
+          ;
 
         scrapeConfigs =
-          (mapAttrsToList (name: jobCfg: jobCfg.extraConfig // {
-            job_name = name;
-            static_configs = [{
-              inherit (jobCfg) targets;
-            }];
-          }) cfg.server.scrapeConfigs)
+          (mapAttrsToList (
+            name: jobCfg:
+            jobCfg.extraConfig
+            // {
+              job_name = name;
+              static_configs = [
+                {
+                  inherit (jobCfg) targets;
+                }
+              ];
+            }
+          ) cfg.server.scrapeConfigs)
           # Automatically add a job to scrape this host's own exporters
-          ++ (optional (localExporterTargets != []) {
-               job_name = "self";
-               static_configs = [{
-                 targets = localExporterTargets;
-               }];
-             });
+          ++ (optional (localExporterTargets != [ ]) {
+            job_name = "self";
+            static_configs = [
+              {
+                targets = localExporterTargets;
+              }
+            ];
+          });
       })
       {
         exporters = {
@@ -168,7 +184,6 @@ in
       }
     ];
 
-
     # This block correctly defines the prometheus user and group,
     # but only if one of the exporters in this module is enabled.
     # This prevents conflicts and ensures the definition is always complete.
@@ -180,27 +195,25 @@ in
     };
 
     # Also ensure the corresponding group exists.
-    users.groups.prometheus = mkIf (cfg.exporters.node.enable || cfg.exporters.smartctl.enable) {};
-
-
+    users.groups.prometheus = mkIf (cfg.exporters.node.enable || cfg.exporters.smartctl.enable) { };
 
     services.grafana = mkIf cfg.grafana.enable {
-        enable = true;
-        inherit (cfg.grafana) package dataDir;
-        settings = {
-            server = {
-                http_addr = cfg.grafana.listenAddress;
-                http_port = cfg.grafana.port;
-            };
+      enable = true;
+      inherit (cfg.grafana) package dataDir;
+      settings = {
+        server = {
+          http_addr = cfg.grafana.listenAddress;
+          http_port = cfg.grafana.port;
         };
-        # If the prometheus server is also enabled on this host, automatically add it as a data source.
-        provision.datasources.settings.datasources = optional cfg.server.enable {
-            name = "Prometheus (local)";
-            type = "prometheus";
-            access = "proxy";
-            url = "http://${cfg.server.listenAddress}:${toString cfg.server.port}";
-            isDefault = true;
-        };
+      };
+      # If the prometheus server is also enabled on this host, automatically add it as a data source.
+      provision.datasources.settings.datasources = optional cfg.server.enable {
+        name = "Prometheus (local)";
+        type = "prometheus";
+        access = "proxy";
+        url = "http://${cfg.server.listenAddress}:${toString cfg.server.port}";
+        isDefault = true;
+      };
     };
 
     networking.firewall.allowedTCPPorts = mkIf cfg.openFirewall (

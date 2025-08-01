@@ -23,8 +23,10 @@
   # nixpkgs.hostPlatform = "aarch64-linux";
 
   boot.initrd.availableKernelModules = [
-    "dw_mmc_rockchip"  # Specific driver for Rockchip SD/eMMC controllers
-    "usbnet" "cdc_ether" "rndis_host" # Drivers for USB-based networking
+    "dw_mmc_rockchip" # Specific driver for Rockchip SD/eMMC controllers
+    "usbnet"
+    "cdc_ether"
+    "rndis_host" # Drivers for USB-based networking
   ];
 
   # users.users = {
@@ -40,35 +42,31 @@
   #   };
   # };
 
-
-
   # Rockchip board configuration
   rockchip = {
     enable = true;
     # board = "rk3582-radxa-e52c";
-    
+
     # U-Boot package - will use board default if not specified
     uboot.package = pkgs.uboot-rk3582-generic;
-    
+
     # Device tree - will use board default if not specified
     deviceTree = "rockchip/rk3582-radxa-e52c.dtb";
-    
+
     # Optional: customize console settings (uses board defaults if not specified)
     console = {
       earlycon = "uart8250,mmio32,0xfeb50000";
       console = "ttyS4,1500000";
     };
-    
+
     # Configure which image variants to build
     image.buildVariants = {
-      full = true;       # Build full eMMC image with U-Boot (nixos-e52c-full.img)
-      sdcard = true;     # Build SD card image without U-Boot (os-only.img)  
-      ubootOnly = true;  # Build U-Boot only image
+      full = true; # Build full eMMC image with U-Boot (nixos-e52c-full.img)
+      sdcard = true; # Build SD card image without U-Boot (os-only.img)
+      ubootOnly = true; # Build U-Boot only image
     };
-    
+
   };
-
-
 
   projectinitiative = {
     services = {
@@ -143,19 +141,19 @@
 
   console.enable = true;
 
-    # SSH access
+  # SSH access
   services.openssh = {
     enable = true;
     settings.PermitRootLogin = "yes";
   };
-  
+
   # Enable NetworkManager for easier network setup
   # enP4p65s0 - LAN
   # enP3p49s0 - WAN
   networking = {
     networkmanager = {
-        enable = true;
-      };
+      enable = true;
+    };
     useDHCP = lib.mkForce true;
   };
 
