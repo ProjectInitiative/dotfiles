@@ -25,21 +25,21 @@ in
 
   sdImage.compressImage = false;
 
-  hardware.deviceTree.overlays = [
-    {
-      name = "gpio";
-      dtboFile = ./gpio.dtbo;
-    }
-  ];
+  # hardware.deviceTree.overlays = [
+  #   {
+  #     name = "gpio";
+  #     dtboFile = ./gpio.dtbo;
+  #   }
+  # ];
 
-  hardware.rockpi-quad = {
-    enable = true;
-    # Optional: Customize settings (see flake.nix for options)
-    settings = {
-      # fan.lv0 = 40;
-      # oled."f-temp" = true;
-    };
-  };
+  # hardware.rockpi-quad = {
+  #   enable = true;
+  #   # Optional: Customize settings (see flake.nix for options)
+  #   settings = {
+  #     # fan.lv0 = 40;
+  #     # oled."f-temp" = true;
+  #   };
+  # };
 
   environment.etc = {
     "ssh/ssh_host_ed25519_key" = {
@@ -58,6 +58,57 @@ in
   };
 
   projectinitiative = {
+    services = {
+      prometheus = {
+        enable = true;
+        openFirewall = true;
+
+        # Enable the Prometheus server on this node
+        server = {
+          enable = true;
+          retentionTime = "90d"; # Keep data for 90 days
+
+          # Define jobs to scrape other nodes
+          scrapeConfigs = {
+            # A job named 'nodes' to scrape all your other servers
+            nodes = {
+              targets = [
+                "172.16.1.51:9100"
+                "172.16.1.52:9100"
+                "172.16.1.53:9100"
+                "lepotato:9100"
+                "stormjib:9100"
+                "lighthouse-east:9100"
+                "lighthouse-west:9100"
+              ];
+            };
+            # A job for scraping smartctl data if it's on a different port/host
+            smart-devices = {
+              targets = [
+                "172.16.1.51:9633"
+                "172.16.1.52:9633"
+                "172.16.1.53:9633"
+                "stormjib:9100"
+                "lighthouse-east:9633"
+                "lighthouse-west:9633"
+              ];
+            };
+          };
+        };
+
+        # Enable Grafana on this node
+        grafana = {
+          enable = true;
+        };
+
+        # Also enable exporters on this monitoring server itself.
+        # The server will automatically pick these up under the 'self' job.
+        exporters = {
+          node.enable = true;
+          smartctl.enable = true;
+        };
+      };
+    };
     networking = {
       tailscale = {
         enable = true;
