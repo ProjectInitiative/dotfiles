@@ -18,6 +18,8 @@ let
   mountpoint = "/mnt/pool";
 in
 {
+  hardware.cpu.intel.updateMicrocode = true;
+
 
   disko.devices = {
     disk = {
