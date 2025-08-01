@@ -82,13 +82,19 @@ in
                 "lighthouse-west:9100"
               ];
             };
+            garage = {
+              targets = [
+                "172.16.1.51:31630"
+                "172.16.1.52:31630"
+                "172.16.1.53:31630"
+              ];
+            };
             # A job for scraping smartctl data if it's on a different port/host
             smart-devices = {
               targets = [
                 "172.16.1.51:9633"
                 "172.16.1.52:9633"
                 "172.16.1.53:9633"
-                "stormjib:9100"
                 "lighthouse-east:9633"
                 "lighthouse-west:9633"
               ];
