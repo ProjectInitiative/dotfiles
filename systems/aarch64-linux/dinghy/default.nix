@@ -114,7 +114,8 @@ in
         enable = true;
         ephemeral = false;
         extraArgs = [
-          "--accept-dns=false"
+          "--accept-dns=true"
+          "--accept-routes=true"
         ];
       };
     };

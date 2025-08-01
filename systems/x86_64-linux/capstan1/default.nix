@@ -10,6 +10,7 @@ let
   rootDiskDevicePath = "/dev/disk/by-id/nvme-PM991a_NVMe_Samsung_256GB__S660NE1R749627";
 in
 {
+  hardware.cpu.amd.updateMicrocode = true;
   ${namespace} = {
 
     system = {

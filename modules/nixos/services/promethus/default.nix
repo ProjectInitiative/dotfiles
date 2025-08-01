@@ -134,24 +134,6 @@ in
 
   config = mkIf cfg.enable {
     
-    systemd.services.prometheus-node-exporter = mkIf cfg.exporters.node.enable {
-      environment = {
-        # Force Go to prefer IPv4
-        GODEBUG = "netdns=go";
-        # Disable IPv6 for this service
-        GOOS = "linux";
-      };
-    };
-
-    systemd.services.prometheus-smartctl-exporter = mkIf cfg.exporters.smartctl.enable {
-      environment = {
-        # Force Go to prefer IPv4
-        GODEBUG = "netdns=go";
-        # Disable IPv6 for this service
-        GOOS = "linux";
-      };
-    };
-
     services.prometheus = lib.mkMerge [
       (mkIf cfg.server.enable {
         enable = true;
