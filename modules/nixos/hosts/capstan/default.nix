@@ -82,7 +82,12 @@ in
     #   keyMap = "us"; # Or your preferred keymap
     # };
     # advanced bcachefs support
-    boot.kernelParams = [ "pcie_aspm=off" ];
+    boot.kernelParams = [
+      # disable Active State Power Management for motherboards (b450F would put CPU power too low on idle and crash system)
+      "pcie_aspm=off"
+      # disable nvme sleep states
+      "nvme_core.default_ps_max_latency_us=0"
+     ];
     boot.supportedFilesystems = [ "bcachefs" ];
     boot.kernelModules = [
       "bcachefs"
@@ -134,6 +139,7 @@ in
       bcachefs-tools
       util-linux
       smartmontools
+      nvme-cli
       lsof
       pciutils
       iperf3
