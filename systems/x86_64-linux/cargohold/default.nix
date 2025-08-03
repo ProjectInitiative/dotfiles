@@ -20,7 +20,6 @@ in
 {
   hardware.cpu.intel.updateMicrocode = true;
 
-
   disko.devices = {
     disk = {
       # Boot Drive Configuration (Classic EXT4)

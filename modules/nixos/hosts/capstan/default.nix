@@ -87,7 +87,7 @@ in
       "pcie_aspm=off"
       # disable nvme sleep states
       "nvme_core.default_ps_max_latency_us=0"
-     ];
+    ];
     boot.supportedFilesystems = [ "bcachefs" ];
     boot.kernelModules = [
       "bcachefs"
@@ -188,6 +188,7 @@ in
     projectinitiative = {
 
       suites = {
+        monitoring = enabled;
         attic = {
           enableClient = true;
         };
@@ -202,25 +203,6 @@ in
         eternal-terminal = enabled;
 
         tpm = enabled;
-
-        prometheus = {
-          enable = true;
-
-          # Keep the firewall rule creation enabled
-          openFirewall = true;
-
-          # Enable the data collectors (exporters) on this machine
-          exporters = {
-            node = {
-              enable = true;
-              listenAddress = lib.head (lib.splitString "/" cfg.ipAddress);
-            };
-            smartctl = {
-              enable = true;
-              listenAddress = lib.head (lib.splitString "/" cfg.ipAddress);
-            };
-          };
-        };
 
         bcachefs-fs-options.settings = {
           "27cac550-3836-765c-d107-51d27ab4a6e1" = {

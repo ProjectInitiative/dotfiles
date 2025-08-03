@@ -89,24 +89,10 @@ in
           ];
         };
       };
+      suites = {
+        monitoring = enabled;
+      };
       services = {
-
-        prometheus = {
-          enable = true;
-
-          # Keep the firewall rule creation enabled
-          openFirewall = true;
-
-          # Enable the data collectors (exporters) on this machine
-          exporters = {
-            node = {
-              enable = true;
-            };
-            smartctl = {
-              enable = true;
-            };
-          };
-        };
 
         eternal-terminal = enabled;
 

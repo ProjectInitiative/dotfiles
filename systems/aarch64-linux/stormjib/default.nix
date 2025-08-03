@@ -70,12 +70,12 @@
 
   projectinitiative = {
     services = {
-      prometheus = {
+      monitoring = {
         enable = true;
         openFirewall = true;
 
         # Enable the Prometheus server on this node
-        server = {
+        prometheus = {
           enable = true;
           retentionTime = "90d"; # Keep data for 90 days
 

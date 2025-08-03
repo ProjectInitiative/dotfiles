@@ -1,4 +1,4 @@
-# /path/to/your/modules/services/prometheus.nix
+# /path/to/your/modules/services/monitoring.nix
 {
   config,
   lib,
@@ -10,7 +10,7 @@
 with lib;
 
 let
-  cfg = config.${namespace}.services.prometheus;
+  cfg = config.${namespace}.services.monitoring;
 
   # Submodule definition for a single scrape job
   scrapeJobOpts = {
@@ -42,8 +42,8 @@ let
 
 in
 {
-  options.${namespace}.services.prometheus = {
-    enable = mkEnableOption "Prometheus monitoring services";
+  options.${namespace}.services.monitoring = {
+    enable = mkEnableOption "Prometheus monitoring and Loki logging services";
 
     openFirewall = mkOption {
       type = types.bool;
@@ -51,7 +51,7 @@ in
       description = "Whether to automatically open firewall ports for enabled services.";
     };
 
-    server = {
+    prometheus = {
       enable = mkEnableOption "the Prometheus server";
       package = mkOption {
         type = types.package;
@@ -77,6 +77,60 @@ in
         type = types.attrsOf (types.submodule scrapeJobOpts);
         default = { };
         description = "An attribute set of scrape jobs for Prometheus to monitor.";
+      };
+    };
+
+    loki = {
+      enable = mkEnableOption "the Loki logging server";
+      listenAddress = mkOption {
+        type = types.str;
+        default = "0.0.0.0";
+        description = "Address for the Loki server to listen on.";
+      };
+      port = mkOption {
+        type = types.port;
+        default = 3100;
+        description = "Port for the Loki server to listen on.";
+      };
+      config = mkOption {
+        type = types.attrs;
+        default = { };
+        description = "Extra configuration for Loki's YAML configuration.";
+      };
+    };
+
+    promtail = {
+      enable = mkEnableOption "the Promtail log collector";
+      # Removed the 'package' option as it's not a valid attribute
+      listenAddress = mkOption {
+        type = types.str;
+        default = "0.0.0.0";
+        description = "Address for Promtail to listen on.";
+      };
+      port = mkOption {
+        type = types.port;
+        default = 9080;
+        description = "Port for Promtail to listen on.";
+      };
+      lokiAddress = mkOption {
+        type = types.str;
+        default = "127.0.0.1";
+        description = "The address of the Loki server to send logs to.";
+      };
+      lokiPort = mkOption {
+        type = types.port;
+        default = 3100;
+        description = "The port of the Loki server to send logs to.";
+      };
+      config = mkOption {
+        type = types.attrs;
+        default = { };
+        description = "Extra configuration for Promtail's YAML configuration.";
+      };
+      scrapeConfigs = mkOption {
+        type = types.listOf types.attrs;
+        default = [ ];
+        description = "A list of scrape jobs for Promtail to collect logs.";
       };
     };
 
@@ -136,11 +190,10 @@ in
   };
 
   config = mkIf cfg.enable {
-
     services.prometheus = lib.mkMerge [
-      (mkIf cfg.server.enable {
+      (mkIf cfg.prometheus.enable {
         enable = true;
-        inherit (cfg.server)
+        inherit (cfg.prometheus)
           package
           listenAddress
           port
@@ -159,7 +212,7 @@ in
                 }
               ];
             }
-          ) cfg.server.scrapeConfigs)
+          ) cfg.prometheus.scrapeConfigs)
           # Automatically add a job to scrape this host's own exporters
           ++ (optional (localExporterTargets != [ ]) {
             job_name = "self";
@@ -184,12 +237,37 @@ in
       }
     ];
 
-    # This block explicitly overrides the systemd service configurations
-    # for the exporters, allowing them to restart correctly.
+    services.loki = mkIf cfg.loki.enable {
+      enable = true;
+      configuration = {
+        server = {
+          http_listen_address = cfg.loki.listenAddress;
+          http_listen_port = cfg.loki.port;
+        };
+      } // cfg.loki.config;
+    };
+
+    # Corrected Promtail configuration
+    services.promtail = mkIf cfg.promtail.enable {
+      enable = true;
+      # Removed 'package' from the inherit list
+      configuration = {
+        server = {
+          http_listen_address = cfg.promtail.listenAddress;
+          http_listen_port = cfg.promtail.port;
+        };
+        clients = [
+          {
+            url = "http://${cfg.promtail.lokiAddress}:${toString cfg.promtail.lokiPort}/loki/api/v1/push";
+          }
+        ];
+        scrape_configs = cfg.promtail.scrapeConfigs;
+      } // cfg.promtail.config;
+    };
+
     systemd.services = lib.mkMerge [
       (mkIf cfg.exporters.node.enable {
         "prometheus-node-exporter" = {
-          # This merges our desired attributes with the upstream service definition
           serviceConfig = {
             After = [ "network-online.target" ];
             Requires = [ "network-online.target" ];
@@ -208,20 +286,39 @@ in
           };
         };
       })
+      # (mkIf cfg.loki.enable {
+      #   "loki" = {
+      #     serviceConfig = {
+      #       After = [ "network-online.target" ];
+      #       Requires = [ "network-online.target" ];
+      #       Restart = "on-failure";
+      #       RestartSec = "5s";
+      #     };
+      #   };
+      # })
+      (mkIf cfg.promtail.enable {
+        "promtail" = {
+          serviceConfig = {
+            After = [ "network-online.target" ];
+            Requires = [ "network-online.target" ];
+            Restart = "on-failure";
+            RestartSec = "5s";
+          };
+        };
+      })
     ];
 
-    # This block correctly defines the prometheus user and group,
-    # but only if one of the exporters in this module is enabled.
-    # This prevents conflicts and ensures the definition is always complete.
-    users.users.prometheus = mkIf (cfg.exporters.node.enable || cfg.exporters.smartctl.enable) {
-      isSystemUser = true;
-      group = "prometheus";
-      # Conditionally add the 'disk' group only when smartctl needs it.
-      extraGroups = lib.optional cfg.exporters.smartctl.enable "disk";
-    };
+    users.users.prometheus =
+      mkIf (cfg.exporters.node.enable || cfg.exporters.smartctl.enable || cfg.prometheus.enable)
+        {
+          isSystemUser = true;
+          group = "prometheus";
+          extraGroups = lib.optional cfg.exporters.smartctl.enable "disk";
+        };
 
-    # Also ensure the corresponding group exists.
-    users.groups.prometheus = mkIf (cfg.exporters.node.enable || cfg.exporters.smartctl.enable) { };
+    users.groups.prometheus = mkIf (
+      cfg.exporters.node.enable || cfg.exporters.smartctl.enable || cfg.prometheus.enable
+    ) { };
 
     services.grafana = mkIf cfg.grafana.enable {
       enable = true;
@@ -232,21 +329,29 @@ in
           http_port = cfg.grafana.port;
         };
       };
-      # If the prometheus server is also enabled on this host, automatically add it as a data source.
-      provision.datasources.settings.datasources = optional cfg.server.enable {
-        name = "Prometheus (local)";
-        type = "prometheus";
-        access = "proxy";
-        url = "http://${cfg.server.listenAddress}:${toString cfg.server.port}";
-        isDefault = true;
-      };
+      provision.datasources.settings.datasources =
+        (optional cfg.prometheus.enable {
+          name = "Prometheus (local)";
+          type = "prometheus";
+          access = "proxy";
+          url = "http://${cfg.prometheus.listenAddress}:${toString cfg.prometheus.port}";
+          isDefault = true;
+        })
+        ++ (optional cfg.loki.enable {
+          name = "Loki (local)";
+          type = "loki";
+          access = "proxy";
+          url = "http://${cfg.loki.listenAddress}:${toString cfg.loki.port}";
+        });
     };
 
     networking.firewall.allowedTCPPorts = mkIf cfg.openFirewall (
-      (optional cfg.server.enable cfg.server.port)
+      (optional cfg.prometheus.enable cfg.prometheus.port)
       ++ (optional cfg.exporters.node.enable cfg.exporters.node.port)
       ++ (optional cfg.exporters.smartctl.enable cfg.exporters.smartctl.port)
       ++ (optional cfg.grafana.enable cfg.grafana.port)
+      ++ (optional cfg.loki.enable cfg.loki.port)
+      ++ (optional cfg.promtail.enable cfg.promtail.port)
     );
   };
 }

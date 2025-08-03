@@ -59,12 +59,12 @@ in
 
   projectinitiative = {
     services = {
-      prometheus = {
+      monitoring = {
         enable = true;
         openFirewall = true;
 
         # Enable the Prometheus server on this node
-        server = {
+        prometheus = {
           enable = true;
           retentionTime = "90d"; # Keep data for 90 days
 
@@ -104,6 +104,91 @@ in
               ];
             };
           };
+        };
+
+        # Add the Loki server
+        loki = {
+          enable = true;
+          # Example configuration: using the default configuration
+          config = {
+            auth_enabled = false;
+
+            limits_config = {
+              allow_structured_metadata = false;
+            };
+
+            # Centralized configuration for components
+            common = {
+              path_prefix = "/var/lib/loki";
+              replication_factor = 1;
+              # Defines the storage backend used by all components.
+              storage = {
+                filesystem = {
+                  chunks_directory = "/var/lib/loki/chunks";
+                  rules_directory = "/var/lib/loki/rules";
+                };
+              };
+              # Required for single-node operation.
+              ring = {
+                instance_addr = "127.0.0.1";
+                kvstore = {
+                  store = "inmemory";
+                };
+              };
+            };
+
+            schema_config = {
+              configs = [
+                {
+                  from = "2024-01-01";
+                  store = "boltdb-shipper";
+                  object_store = "filesystem"; # This must match the storage type in 'common'
+                  schema = "v12";
+                  index = {
+                    prefix = "index_";
+                    period = "24h";
+                  };
+                }
+              ];
+            };
+
+            storage_config = {
+              boltdb_shipper = {
+                active_index_directory = "/var/lib/loki/index";
+                cache_location = "/var/lib/loki/cache";
+                cache_ttl = "24h";
+                # Note: 'shared_store' is removed; it's now handled by the 'common.storage' block.
+              };
+            };
+
+            compactor = {
+              working_directory = "/var/lib/loki/compactor";
+              # Note: 'shared_store' is removed; it's now handled by the 'common.storage' block.
+            };
+          };
+
+        };
+
+        # Add Promtail to scrape local logs and send them to Loki
+        promtail = {
+          enable = true;
+          scrapeConfigs = [
+            {
+              job_name = "journal";
+              journal = {
+                labels = {
+                  job = "systemd-journal";
+                  host = "dinghy";
+                };
+              };
+              relabel_configs = [
+                {
+                  source_labels = [ "__journal__systemd_unit" ];
+                  target_label = "unit";
+                }
+              ];
+            }
+          ];
         };
 
         # Enable Grafana on this node
