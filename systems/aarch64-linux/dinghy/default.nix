@@ -115,6 +115,7 @@ in
 
             limits_config = {
               allow_structured_metadata = false;
+              volume_enabled = true;  
             };
 
             # Centralized configuration for components
@@ -171,7 +172,7 @@ in
 
         # Add Promtail to scrape local logs and send them to Loki
         promtail = {
-          enable = true;
+          enable = false;
           scrapeConfigs = [
             {
               job_name = "journal";

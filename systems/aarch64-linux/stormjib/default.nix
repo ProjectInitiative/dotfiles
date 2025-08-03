@@ -109,6 +109,28 @@
           enable = true;
         };
 
+        promtail = {
+          enable = false;
+          scrapeConfigs = [
+            {
+              job_name = "journal";
+              journal = {
+                labels = {
+                  job = "systemd-journal";
+                  host = "dinghy";
+                };
+              };
+              relabel_configs = [
+                {
+                  source_labels = [ "__journal__systemd_unit" ];
+                  target_label = "unit";
+                }
+              ];
+            }
+          ];
+        };
+
+
         # Also enable exporters on this monitoring server itself.
         # The server will automatically pick these up under the 'self' job.
         exporters = {

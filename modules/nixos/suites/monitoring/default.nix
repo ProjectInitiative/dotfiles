@@ -40,7 +40,7 @@ in
           promtail = {
             enable = true;
             # This should be overridden in the final host configuration
-            lokiAddress = "dinghy";
+            lokiAddress = "100.98.243.120";
             lokiPort = 3100;
 
             scrapeConfigs = [
@@ -56,6 +56,10 @@ in
                   {
                     source_labels = [ "__journal__systemd_unit" ];
                     target_label = "unit";
+                  }
+                  {
+                    source_labels = [ "__journal__hostname" ];
+                    target_label = "host";
                   }
                 ];
               }
