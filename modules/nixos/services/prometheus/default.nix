@@ -184,6 +184,32 @@ in
       }
     ];
 
+    # This block explicitly overrides the systemd service configurations
+    # for the exporters, allowing them to restart correctly.
+    systemd.services = lib.mkMerge [
+      (mkIf cfg.exporters.node.enable {
+        "prometheus-node-exporter" = {
+          # This merges our desired attributes with the upstream service definition
+          serviceConfig = {
+            After = [ "network-online.target" ];
+            Requires = [ "network-online.target" ];
+            Restart = "on-failure";
+            RestartSec = "5s";
+          };
+        };
+      })
+      (mkIf cfg.exporters.smartctl.enable {
+        "prometheus-smartctl-exporter" = {
+          serviceConfig = {
+            After = [ "local-fs.target" ];
+            Requires = [ "local-fs.target" ];
+            Restart = "on-failure";
+            RestartSec = "5s";
+          };
+        };
+      })
+    ];
+
     # This block correctly defines the prometheus user and group,
     # but only if one of the exporters in this module is enabled.
     # This prevents conflicts and ensures the definition is always complete.
