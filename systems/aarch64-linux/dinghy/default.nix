@@ -270,9 +270,26 @@ in
     # usePredictableInterfaceNames = false;
   };
 
-  # Enable support for software RAID. NixOS will automatically scan for
-  # and assemble existing arrays during boot.
-  boot.swraid.enable = false;
+
+  # This service manually assembles the RAID array after the drives are powered on.
+  systemd.services.mdadm-assemble = {
+    description = "Manually assemble mdadm RAID array";
+
+    # This service is required for the local filesystems to be mounted.
+    wantedBy = [ "local-fs.target" ];
+  
+    # It must run after the rockpi-quad service powers on the drives.
+    after = [ "rockpi-quad.service" ];
+
+    serviceConfig = {
+      # This is a one-time setup task.
+      Type = "oneshot";
+      RemainAfterExit = true;
+
+      # The command to scan for and assemble all arrays defined in /etc/mdadm.conf
+      ExecStart = "${pkgs.mdadm}/bin/mdadm --assemble --scan --run";
+    };
+  };
 
   # Define the filesystem on the RAID array to be mounted.
   fileSystems."/mnt/pool" = {
