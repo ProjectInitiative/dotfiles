@@ -35,11 +35,11 @@ in
   };
 
   hardware.rockpi-quad = {
-    enable = false;
+    enable = true;
     # Optional: Customize settings (see flake.nix for options)
     settings = {
-      # fan.lv0 = 40;
-      # oled."f-temp" = true;
+      fan.lv0 = 40;
+      oled."f-temp" = true;
     };
   };
 

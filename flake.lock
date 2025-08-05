@@ -943,11 +943,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1754372482,
-        "narHash": "sha256-RwK6zSfQpN13ycjcIUaRBpmuJAOItrTA51mz/F+Y3Fc=",
+        "lastModified": 1754400614,
+        "narHash": "sha256-S5nrtOWChrMCiyvSFY6Sq1h4QpRr3oL3OK2tYRpTkDQ=",
         "owner": "ProjectInitiative",
         "repo": "rockpi-quad",
-        "rev": "0cbe2263783d36e818cb08c98afd72220da4c984",
+        "rev": "bf6eafb1c422e53635171c43caf88a2507054871",
         "type": "github"
       },
       "original": {
