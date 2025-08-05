@@ -6,6 +6,7 @@
   pkgs,
   lib,
   modulesPath,
+  namespace,
   ...
 }:
 let
@@ -16,30 +17,31 @@ in
 {
   imports = with inputs.nixos-hardware.nixosModules; [
     (modulesPath + "/installer/scan/not-detected.nix")
-    # (modulesPath + "/installer/sd-card/sd-image-aarch64.nix")
-    (modulesPath + "/installer/sd-card/sd-image-aarch64-new-kernel.nix")
-    # raspberry-pi-4
+    (modulesPath + "/installer/sd-card/sd-image-aarch64.nix")
+    # (modulesPath + "/installer/sd-card/sd-image-aarch64-new-kernel.nix")
+    raspberry-pi-4
   ];
 
+  hardware.enableAllHardware = lib.mkForce false;
   boot.supportedFilesystems.zfs = lib.mkForce false;
 
   sdImage.compressImage = false;
 
-  # hardware.deviceTree.overlays = [
-  #   {
-  #     name = "gpio";
-  #     dtboFile = ./gpio.dtbo;
-  #   }
-  # ];
+  hardware.raspberry-pi."4" = {
+    gpio.enable = true;
+    pwm0.enable = true;
+    # i2c0.enable = true;
+    i2c1.enable = true;
+  };
 
-  # hardware.rockpi-quad = {
-  #   enable = true;
-  #   # Optional: Customize settings (see flake.nix for options)
-  #   settings = {
-  #     # fan.lv0 = 40;
-  #     # oled."f-temp" = true;
-  #   };
-  # };
+  hardware.rockpi-quad = {
+    enable = false;
+    # Optional: Customize settings (see flake.nix for options)
+    settings = {
+      # fan.lv0 = 40;
+      # oled."f-temp" = true;
+    };
+  };
 
   environment.etc = {
     "ssh/ssh_host_ed25519_key" = {
@@ -57,8 +59,30 @@ in
     };
   };
 
+  
+
+  # Explicitly call development module
+  home-manager = {
+    backupFileExtension = "backup";
+    users.kylepzak.${namespace} = {
+      suites = {
+        development.enable = true;
+      };
+    };
+
+  };
+
   projectinitiative = {
+    suites = {
+      # TODO: fix this
+      development.enable = true;
+      attic = {
+        enableClient = true;
+      };
+    };
+
     services = {
+      eternal-terminal.enable = true;
       monitoring = {
         enable = true;
         openFirewall = true;

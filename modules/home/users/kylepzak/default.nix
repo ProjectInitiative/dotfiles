@@ -132,10 +132,6 @@ in
       fi
       export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
 
-      rebuild-host() {
-        export TARGET="$1"
-        nixos-rebuild --target-host "$TARGET" --use-remote-sudo --flake ".#$TARGET" switch
-      }
     '';
 
     home = {
