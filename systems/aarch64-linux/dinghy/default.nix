@@ -255,6 +255,7 @@ in
   environment.systemPackages = with pkgs; [
     libraspberrypi
     raspberrypi-eeprom
+    mdadm
   ];
 
   # Single networking attribute set
@@ -271,39 +272,61 @@ in
   };
 
 
-  # This service manually assembles the RAID array after the drives are powered on.
-  systemd.services.mdadm-assemble = {
-    description = "Manually assemble mdadm RAID array";
+  # --- Late-boot MDADM RAID Assembly and Mount ---
 
-    # This service is required for the local filesystems to be mounted.
-    wantedBy = [ "local-fs.target" ];
-  
-    # It must run after the rockpi-quad service powers on the drives.
-    after = [ "rockpi-quad.service" ];
+  # This service runs late in the boot process, after the system is up.
+  # It assembles the RAID array and then mounts it.
+  systemd.services.storage-mount = {
+    description = "Assemble and mount the storage RAID array";
+
+    # Run after the main system is up and running.
+    after = [ "multi-user.target" "rockpi-quad.service" ];
+    wantedBy = [ "multi-user.target" ];
 
     serviceConfig = {
-      # This is a one-time setup task.
       Type = "oneshot";
       RemainAfterExit = true;
 
-      # The command to scan for and assemble all arrays defined in /etc/mdadm.conf
-      ExecStart = "${pkgs.mdadm}/bin/mdadm --assemble --scan --run";
+      # Using 'writeShellScript' allows us to run multiple commands safely.
+      # `set -e` ensures the script exits immediately if any command fails.
+      ExecStart = pkgs.writeShellScript "mount-storage" ''
+        set -e
+        echo "Assembling RAID array /dev/md0..."
+        # Use the explicit command to assemble the array from specific devices
+        ${pkgs.mdadm}/bin/mdadm --assemble --run --verbose /dev/md0 /dev/sda /dev/sdb /dev/sdc /dev/sdd
+
+        echo "Mounting /dev/md0 to /mnt/pool..."
+        ${pkgs.coreutils}/bin/mkdir -p /mnt/pool
+        ${pkgs.util-linux}/bin/mount /dev/md0 /mnt/pool
+        echo "Storage mounted."
+      '';
+
+      # Defines how to unmount and stop the array when the service is stopped.
+      ExecStop = pkgs.writeShellScript "unmount-storage" ''
+        set -e
+        echo "Unmounting /mnt/storage..."
+        ${pkgs.util-linux}/bin/umount -l /mnt/pool
+
+        echo "Stopping RAID array /dev/md0..."
+        ${pkgs.mdadm}/bin/mdadm --stop /dev/md0
+        echo "Storage stopped."
+      '';
     };
   };
 
-  # Define the filesystem on the RAID array to be mounted.
-  fileSystems."/mnt/pool" = {
-    # This should be the device path for your assembled RAID array.
-    # You can verify this with `cat /proc/mdstat`. It's often /dev/md0 or /dev/md127.
-    device = "/dev/md0";
+  # # Define the filesystem on the RAID array to be mounted.
+  # fileSystems."/mnt/pool" = {
+  #   # This should be the device path for your assembled RAID array.
+  #   # You can verify this with `cat /proc/mdstat`. It's often /dev/md0 or /dev/md127.
+  #   device = "/dev/md0";
 
-    # Replace "ext4" with the actual filesystem type on your array (e.g., btrfs, xfs).
-    fsType = "ext4";
+  #   # Replace "ext4" with the actual filesystem type on your array (e.g., btrfs, xfs).
+  #   fsType = "ext4";
 
-    # The 'nofail' option is recommended. It prevents your system
-    # from failing to boot if the array cannot be assembled.
-    options = [ "defaults" "nofail" ];
-  };
+  #   # The 'nofail' option is recommended. It prevents your system
+  #   # from failing to boot if the array cannot be assembled.
+  #   options = [ "defaults" "nofail" ];
+  # };
 
   # Use tmpfs for temporary files
   # fileSystems."/tmp" = {
