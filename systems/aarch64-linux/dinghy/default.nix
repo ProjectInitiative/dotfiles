@@ -272,7 +272,7 @@ in
 
   # Enable support for software RAID. NixOS will automatically scan for
   # and assemble existing arrays during boot.
-  boot.swraid.enable = true;
+  boot.swraid.enable = false;
 
   # Define the filesystem on the RAID array to be mounted.
   fileSystems."/mnt/pool" = {
