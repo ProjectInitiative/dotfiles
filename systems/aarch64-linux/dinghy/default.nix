@@ -270,6 +270,24 @@ in
     # usePredictableInterfaceNames = false;
   };
 
+  # Enable support for software RAID. NixOS will automatically scan for
+  # and assemble existing arrays during boot.
+  boot.swraid.enable = true;
+
+  # Define the filesystem on the RAID array to be mounted.
+  fileSystems."/mnt/pool" = {
+    # This should be the device path for your assembled RAID array.
+    # You can verify this with `cat /proc/mdstat`. It's often /dev/md0 or /dev/md127.
+    device = "/dev/md0";
+
+    # Replace "ext4" with the actual filesystem type on your array (e.g., btrfs, xfs).
+    fsType = "ext4";
+
+    # The 'nofail' option is recommended. It prevents your system
+    # from failing to boot if the array cannot be assembled.
+    options = [ "defaults" "nofail" ];
+  };
+
   # Use tmpfs for temporary files
   # fileSystems."/tmp" = {
   #   device = "tmpfs";
