@@ -39,7 +39,7 @@ in
     # Optional: Customize settings (see flake.nix for options)
     settings = {
       fan.lv0 = 40;
-      oled."f-temp" = true;
+      oled."f-temp" = false;
     };
   };
 
