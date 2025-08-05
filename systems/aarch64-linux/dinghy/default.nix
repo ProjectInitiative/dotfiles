@@ -293,7 +293,7 @@ in
         set -e
         echo "Assembling RAID array /dev/md0..."
         # Use the explicit command to assemble the array from specific devices
-        ${pkgs.mdadm}/bin/mdadm --assemble --run --verbose /dev/md0 /dev/sda /dev/sdb /dev/sdc /dev/sdd
+        ${pkgs.mdadm}/bin/mdadm --assemble --run --verbose /dev/md0 /dev/sda /dev/sdb /dev/sdc /dev/sdd --force
 
         echo "Mounting /dev/md0 to /mnt/pool..."
         ${pkgs.coreutils}/bin/mkdir -p /mnt/pool
