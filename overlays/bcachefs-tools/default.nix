@@ -8,8 +8,8 @@ final: prev: {
   bcachefs-tools =
     let
       # Define the source details for bcachefs-tools
-      defaultRev = "2d5b35dd34b899c161ffea3135099d919438b450";
-      defaultHash = "sha256-ZS+a8FTH9A0V3aKzO3ahQrFh4OUUXuiOFHJi+42vsCE=";
+      defaultRev = "6abef4e0ed442cf7fc51d2d3771f3b3a456491fc";
+      defaultHash = "sha256-AinXnSUvLQl6JluXvLH+EnxNmrB3bOz5t3PThqP3xoU=";
 
       bcachefsSrc = final.fetchFromGitHub {
         owner = "koverstreet";
