@@ -180,36 +180,36 @@ in
       #     };
     };
 
-    #   bcachefs_filesystems = {
-    #     pool = {
-    #       # This name is referenced by the 'filesystem' attribute in partitions
-    #       type = "bcachefs_filesystem";
-    #       mountpoint = mountpoint; # Your original mountpoint variable
-    #       # Updated extraFormatArgs to match the other two configurations
-    #       extraFormatArgs = [
-    #         "--compression=lz4"
-    #         "--foreground_target=nvme" # Targets 'nvme.*' labeled devices
-    #         "--background_target=hdd" # Targets 'hdd.*' labeled devices
-    #         "--promote_target=ssd" # Will look for 'ssd.*' labeled devices
-    #         "--metadata_replicas=2"
-    #         "--metadata_replicas_required=1"
-    #         "--data_replicas=2"
-    #         "--data_replicas_required=1"
-    #       ];
-    #       mountOptions = [
-    #         # Your original mount options
-    #         "verbose"
-    #         "degraded"
-    #         # "fsck"
-    #         "nofail"
-    #       ];
-    #       # As before, if you need specific subvolumes, define them here.
-    #       # Otherwise, the entire filesystem is mounted at 'mountpoint'.
-    #       # subvolumes = {
-    #       #   "subvolumes/some_path" = { mountpoint = "/mnt/some_path"; };
-    #       # };
-    #     };
-    #   };
+      bcachefs_filesystems = {
+        pool = {
+          # This name is referenced by the 'filesystem' attribute in partitions
+          type = "bcachefs_filesystem";
+          mountpoint = mountpoint; # Your original mountpoint variable
+          # Updated extraFormatArgs to match the other two configurations
+          extraFormatArgs = [
+            "--compression=lz4"
+            "--foreground_target=nvme" # Targets 'nvme.*' labeled devices
+            "--background_target=hdd" # Targets 'hdd.*' labeled devices
+            "--promote_target=ssd" # Will look for 'ssd.*' labeled devices
+            "--metadata_replicas=2"
+            "--metadata_replicas_required=1"
+            "--data_replicas=2"
+            "--data_replicas_required=1"
+          ];
+          mountOptions = [
+            # Your original mount options
+            "verbose"
+            "degraded"
+            # "fsck"
+            "nofail"
+          ];
+          # As before, if you need specific subvolumes, define them here.
+          # Otherwise, the entire filesystem is mounted at 'mountpoint'.
+          # subvolumes = {
+          #   "subvolumes/some_path" = { mountpoint = "/mnt/some_path"; };
+          # };
+        };
+      };
   };
 
   projectinitiative.services.bcachefsScrubAuto.enable = mkForce false;
