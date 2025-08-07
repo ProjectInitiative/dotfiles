@@ -194,35 +194,35 @@ in
     {
 
       # --- Systemd Service Definition ---
-      # systemd.services.hddFanControl = {
-      #   description = "Hottest Drive Temperature Fan Control Service";
-      #   # Ensure all commands used in the script are in the path
-      #   path = with pkgs; [
-      #     smartmontools # for smartctl
-      #     coreutils # for head, mktemp, rm, cat
-      #     gawk # for awk
-      #     gnugrep # for grep
-      #     jq # for parsing lsblk JSON
-      #     util-linux # for lsblk
-      #     runtimeShell # Provides the shell itself (e.g., bash)
-      #   ];
-      #   serviceConfig = {
-      #     Type = "oneshot"; # Run script once and exit
-      #     User = "root"; # Needs root for smartctl and /sys writes
-      #     ExecStart = "${hddFanControlScript}/bin/hdd-fan-control-hottest";
-      #   };
-      # };
+      systemd.services.hddFanControl = {
+        description = "Hottest Drive Temperature Fan Control Service";
+        # Ensure all commands used in the script are in the path
+        path = with pkgs; [
+          smartmontools # for smartctl
+          coreutils # for head, mktemp, rm, cat
+          gawk # for awk
+          gnugrep # for grep
+          jq # for parsing lsblk JSON
+          util-linux # for lsblk
+          runtimeShell # Provides the shell itself (e.g., bash)
+        ];
+        serviceConfig = {
+          Type = "oneshot"; # Run script once and exit
+          User = "root"; # Needs root for smartctl and /sys writes
+          ExecStart = "${hddFanControlScript}/bin/hdd-fan-control-hottest";
+        };
+      };
 
-      # # --- Systemd Timer Definition ---
-      # systemd.timers.hddFanControl = {
-      #   description = "Run Hottest Drive Fan Control Script Periodically";
-      #   wantedBy = [ "timers.target" ];
-      #   timerConfig = {
-      #     OnBootSec = "1min"; # Run 1 minute after boot
-      #     OnUnitActiveSec = checkInterval; # Run again based on variable above
-      #     Unit = "hddFanControl.service"; # Service to activate
-      #   };
-      # };
+      # --- Systemd Timer Definition ---
+      systemd.timers.hddFanControl = {
+        description = "Run Hottest Drive Fan Control Script Periodically";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnBootSec = "1min"; # Run 1 minute after boot
+          OnUnitActiveSec = checkInterval; # Run again based on variable above
+          Unit = "hddFanControl.service"; # Service to activate
+        };
+      };
 
       # Base system packages
       environment.systemPackages = with pkgs; [
@@ -240,7 +240,7 @@ in
 
       boot.kernelModules = [
         "bcachefs"
-        # "it87-oot"
+        "it87-oot"
       ];
       # Consider using latest kernel if needed for bcachefs features
       boot.kernelPackages = pkgs.linuxPackages_latest;

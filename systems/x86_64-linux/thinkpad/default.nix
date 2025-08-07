@@ -122,6 +122,11 @@ in
     home = {
       paths = [ "/home/kylepzak" ];
       exclude = [
+        # lost and found
+        "/home/kylepzak/lost+found"
+        # snapshots
+        "/home/kylepzak/.bcachefs_automated_snapshots"
+
         # General Caches
         "/home/kylepzak/.cache"
         "/home/kylepzak/.cargo.bak"
@@ -159,7 +164,12 @@ in
     };
     void = {
       paths = [ "/void" ];
-      exclude = [ ];
+      exclude = [
+        # lost and found
+        "/void/lost+found"
+        # snapshots
+        "/void/.bcachefs_automated_snapshots"
+     ];
       repository = "s3:http://172.16.1.50:31292/laptop-backup/void";
       passwordFile = sops.secrets.restic_password.path;
       environmentFile = sops.secrets.restic_environment_file.path;
