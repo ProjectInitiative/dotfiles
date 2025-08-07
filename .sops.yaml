@@ -77,6 +77,13 @@ creation_rules:
           - *ssh_capstan3
           - *test_vm
 
+  - path_regex: thinkpad/[^/]+\.yaml$
+    # - path: thinkpad/secrets.enc.yaml
+    key_groups:
+      - age:
+          - *ssh_kylepzak
+          - *ssh_thinkpad
+
   - path_regex: lighthouse/[^/]+\.yaml$
     # - path: lighthouse/secrets.enc.yaml
     key_groups:

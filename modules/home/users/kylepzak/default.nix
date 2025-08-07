@@ -137,7 +137,7 @@ in
     home = {
 
       shellAliases = {
-        garage = "kubectl exec --context=capstan -n garage -it garage-0 -- /garage";
+        garage = "kubectl --context=capstan exec -n garage -c garage -it garage-0 -- /garage";
       };
 
       file = {
