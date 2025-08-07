@@ -161,6 +161,7 @@ in
         "--keep-monthly 12"
         "--keep-yearly 75"
       ];
+      extraBackupArgs = [ "--verbose" ];
     };
     void = {
       paths = [ "/void" ];
@@ -180,6 +181,7 @@ in
         "--keep-monthly 12"
         "--keep-yearly 75"
       ];
+      extraBackupArgs = [ "--verbose" ];
     };
   };
 
