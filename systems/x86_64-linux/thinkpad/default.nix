@@ -102,6 +102,64 @@ with lib.${namespace};
       # };
     };
 
+    services.restic.backups = {
+      home = {
+        paths = [ "/home/kylepzak" ];
+        exclude = [
+          # General Caches
+          "/home/kylepzak/.cache"
+          "/home/kylepzak/.cargo.bak"
+
+          # Package & Runtimes Caches
+          "/home/kylepzak/go/pkg/mod"
+          "/home/kylepzak/.local/share/flatpak"
+          "/home/kylepzak/.var/app"
+
+          # Virtual Machine Boxes
+          "/home/kylepzak/.vagrant.d/boxes"
+
+          # Redundant Backups
+          "/home/kylepzak/Desktop/server-backup"
+
+          # Build Artifacts
+          "**/target"
+
+          # Entire Downloads folder
+          "/home/kylepzak/Downloads"
+
+          # Large Image/VM Files
+          "/home/kylepzak/Documents/*.ova"
+
+          # Log Files
+          "/home/kylepzak/.local/share/probe-rs/*.log"
+        ];
+        repository = "s3:your-bucket-url/your-bucket-name";
+        passwordFile = "/path/to/your/restic-password";
+        environmentFile = "/path/to/your/restic-env";
+        initialize = true;
+        pruneOpts = [
+          "--keep-daily 7"
+          "--keep-weekly 5"
+          "--keep-monthly 12"
+          "--keep-yearly 75"
+        ];
+      };
+      void = {
+        paths = [ "/void" ];
+        exclude = [ ];
+        repository = "s3:your-bucket-url/your-bucket-name";
+        passwordFile = "/path/to/your/restic-password";
+        environmentFile = "/path/to/your/restic-env";
+        initialize = true;
+        pruneOpts = [
+          "--keep-daily 7"
+          "--keep-weekly 5"
+          "--keep-monthly 12"
+          "--keep-yearly 75"
+        ];
+      };
+    };
+
   };
 
   # Make sure NetworkManager is enabled

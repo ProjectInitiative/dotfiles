@@ -136,6 +136,10 @@ in
 
     home = {
 
+      shellAliases = {
+        garage = "kubectl exec --context=capstan -n garage -it garage-0 -- /garage";
+      };
+
       file = {
         # Add the directory creation to ensure it exists
         ".config/sops/age/.keep".text = "";
