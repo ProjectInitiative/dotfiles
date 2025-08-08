@@ -61,8 +61,6 @@ in
     };
   };
 
-  
-
   # Explicitly call development module
   home-manager = {
     backupFileExtension = "backup";
@@ -141,7 +139,7 @@ in
 
             limits_config = {
               allow_structured_metadata = false;
-              volume_enabled = true;  
+              volume_enabled = true;
             };
 
             # Centralized configuration for components
@@ -273,7 +271,6 @@ in
     # usePredictableInterfaceNames = false;
   };
 
-
   # --- Late-boot MDADM RAID Assembly and Mount ---
 
   # This service runs late in the boot process, after the system is up.
@@ -283,7 +280,7 @@ in
 
     # Run after the main system is up and running.
     after = [ "rockpi-quad.service" ];
-  # Be part of the local filesystem setup target.
+    # Be part of the local filesystem setup target.
     wantedBy = [ "local-fs.target" ];
 
     serviceConfig = {
@@ -306,7 +303,7 @@ in
             echo "All RAID devices found."
             break
           fi
-        
+
           # If we hit the timeout, exit with an error
           if [ $i -eq $TIMEOUT ]; then
             echo "Error: Timed out waiting for RAID devices." >&2

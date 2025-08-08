@@ -12,50 +12,51 @@ let
   sops = config.sops;
 
   nvmeDebugCollector = pkgs.writeShellApplication {
-  name = "nvme-debug-collector";
+    name = "nvme-debug-collector";
 
-  runtimeInputs = with pkgs; [
-    coreutils
-    gawk
-    nvme-cli
-    util-linux
-  ];
+    runtimeInputs = with pkgs; [
+      coreutils
+      gawk
+      nvme-cli
+      util-linux
+    ];
 
-  text = ''
-    #!/bin/bash
-    set -euo pipefail
+    text = ''
+      #!/bin/bash
+      set -euo pipefail
 
-    echo "Enabling NVMe dynamic debug..."
-    echo "file drivers/nvme/host/* +p" > /sys/kernel/debug/dynamic_debug/control || true
+      echo "Enabling NVMe dynamic debug..."
+      echo "file drivers/nvme/host/* +p" > /sys/kernel/debug/dynamic_debug/control || true
 
-    echo "Enabling NVMe trace events..."
-    for ev in nvme_complete_rq nvme_timeout nvme_setup_cmd nvme_sq; do
-      if [ -e "/sys/kernel/debug/tracing/events/nvme/$ev/enable" ]; then
-        echo 1 > "/sys/kernel/debug/tracing/events/nvme/$ev/enable"
-      fi
-    done
+      echo "Enabling NVMe trace events..."
+      for ev in nvme_complete_rq nvme_timeout nvme_setup_cmd nvme_sq; do
+        if [ -e "/sys/kernel/debug/tracing/events/nvme/$ev/enable" ]; then
+          echo 1 > "/sys/kernel/debug/tracing/events/nvme/$ev/enable"
+        fi
+      done
 
-    echo "Setting ftrace timestamp mode..."
-    # echo 1 > /sys/kernel/debug/tracing/options/print-timestamp
-    echo nop > /sys/kernel/debug/tracing/current_tracer
-    echo > /sys/kernel/debug/tracing/trace
+      echo "Setting ftrace timestamp mode..."
+      # echo 1 > /sys/kernel/debug/tracing/options/print-timestamp
+      echo nop > /sys/kernel/debug/tracing/current_tracer
+      echo > /sys/kernel/debug/tracing/trace
 
-    echo "Starting trace + dmesg streaming to journal..."
-    stdbuf -oL awk "{ print strftime(\"[%Y-%m-%d %H:%M:%S]\"), \$0 }" /sys/kernel/debug/tracing/trace_pipe &
-    stdbuf -oL awk "{ print strftime(\"[%Y-%m-%d %H:%M:%S]\"), \$0 }" < <(dmesg -wH) &
+      echo "Starting trace + dmesg streaming to journal..."
+      stdbuf -oL awk "{ print strftime(\"[%Y-%m-%d %H:%M:%S]\"), \$0 }" /sys/kernel/debug/tracing/trace_pipe &
+      stdbuf -oL awk "{ print strftime(\"[%Y-%m-%d %H:%M:%S]\"), \$0 }" < <(dmesg -wH) &
 
-    echo "Starting SMART log polling..."
-    while :; do
-      echo "===== SMART log $(date) ====="
-      nvme smart-log /dev/nvme1n1 || echo "SMART read failed"
-      sleep 30
-    done
-  '';
-};
+      echo "Starting SMART log polling..."
+      while :; do
+        echo "===== SMART log $(date) ====="
+        nvme smart-log /dev/nvme1n1 || echo "SMART read failed"
+        sleep 30
+      done
+    '';
+  };
 in
 {
   options.${namespace}.hosts.capstan = {
     enable = mkBoolOpt false "Whether to enable base capstan server configuration";
+    allFeatures = mkBoolOpt true "Whether to enable all features. Set to false for safe boot mode with minimal services.";
     # hostname = mkOpt types.str "" "Hostname for the server";
     ipAddress = mkOpt types.str "" "Main Static management IP address with CIDR";
     bonding = {
@@ -190,7 +191,7 @@ in
       drbd
     ];
 
-    fileSystems."/jfs-cache" = {
+    fileSystems."/jfs-cache" = mkIf cfg.allFeatures {
       device = "tmpfs";
       fsType = "tmpfs";
       options = [
@@ -202,12 +203,12 @@ in
       ];
     };
 
-    fileSystems."/mnt/local-provisioner" = {
+    fileSystems."/mnt/local-provisioner" = mkIf cfg.allFeatures {
       device = "/mnt/pool/k8s";
       options = [ "bind" ];
     };
 
-    fileSystems."/mnt/local-provisioner/host" = {
+    fileSystems."/mnt/local-provisioner/host" = mkIf cfg.allFeatures {
       device = "/opt/local-provisioner";
       options = [ "bind" ];
     };
@@ -230,11 +231,11 @@ in
     projectinitiative = {
 
       suites = {
-        monitoring = enabled;
-        attic = {
+        monitoring = mkIf cfg.allFeatures enabled;
+        attic = mkIf cfg.allFeatures {
           enableClient = true;
         };
-        bcachefs-utils = {
+        bcachefs-utils = mkIf cfg.allFeatures {
           enable = true;
           parentSubvolume = "/mnt/pool";
         };
@@ -242,20 +243,22 @@ in
 
       services = {
 
-        eternal-terminal = enabled;
+        eternal-terminal = mkIf cfg.allFeatures enabled;
 
-        tpm = enabled;
+        tpm = mkIf cfg.allFeatures enabled;
 
-        bcachefs-fs-options.settings = {
-          "27cac550-3836-765c-d107-51d27ab4a6e1" = {
-            foreground_target = "cache.nvme1";
-            background_target = "hdd";
-            promote_target = "cache";
+        bcachefs-fs-options = mkIf cfg.allFeatures {
+          settings = {
+            "27cac550-3836-765c-d107-51d27ab4a6e1" = {
+              foreground_target = "cache.nvme1";
+              background_target = "hdd";
+              promote_target = "cache";
+            };
           };
         };
 
         # specific file settings
-        bcachefsFileOptions = {
+        bcachefsFileOptions = mkIf cfg.allFeatures {
           enable = true;
           jobs = {
             # This is a custom, descriptive name for your job.
@@ -277,7 +280,7 @@ in
           };
         };
 
-        health-reporter = {
+        health-reporter = mkIf cfg.allFeatures {
           enable = true;
           telegramTokenPath = config.sops.secrets.health_reporter_bot_api_token.path;
           telegramChatIdPath = config.sops.secrets.telegram_chat_id.path;
@@ -289,7 +292,7 @@ in
           reportTime = "08:00"; # Send report at 8 AM
         };
 
-        juicefs = {
+        juicefs = mkIf cfg.allFeatures {
           enable = true;
           mounts = {
             backup = {
@@ -314,7 +317,7 @@ in
           };
         };
 
-        k8s = {
+        k8s = mkIf cfg.allFeatures {
           enable = true;
           tokenFile = sops.secrets.k8s_token.path;
           isFirstNode = cfg.isFirstK8sNode;
@@ -523,7 +526,7 @@ in
       description = "Disable GRO and GSO for bond0 and its members";
       after = [ "sys-devices-virtual-net-bond0.device" ];
       requires = [ "sys-devices-virtual-net-bond0.device" ];
-      wantedBy = [ "multi-user.target" ];
+      wantedBy = mkIf cfg.allFeatures [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
@@ -541,23 +544,20 @@ in
       '';
     };
 
-
-  systemd.services.nvme-debug-collector = {
-    description = "Collect NVMe debug, kernel trace events, and SMART logs";
-    after = [ "network.target" ];
-    wantedBy = [ "multi-user.target" ];
-    serviceConfig = {
-      Type = "simple";
-      ExecStart = "${nvmeDebugCollector}/bin/nvme-debug-collector";
-      Restart = "always";
-      StandardOutput = "journal";
-      StandardError = "journal";
-      User = "root";
-      Group = "root";
+    systemd.services.nvme-debug-collector = {
+      description = "Collect NVMe debug, kernel trace events, and SMART logs";
+      after = [ "network.target" ];
+      wantedBy = mkIf cfg.allFeatures [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "simple";
+        ExecStart = "${nvmeDebugCollector}/bin/nvme-debug-collector";
+        Restart = "always";
+        StandardOutput = "journal";
+        StandardError = "journal";
+        User = "root";
+        Group = "root";
+      };
     };
-  };    
-    
-
 
   };
 }

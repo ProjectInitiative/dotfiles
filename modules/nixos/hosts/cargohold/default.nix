@@ -247,7 +247,10 @@ in
       # Add the out-of-tree module package here
       boot.extraModulePackages = [ it87-driver ];
 
-      boot.kernelParams = [ "nomodeset" "intel_idle.max_cstate=1"];
+      boot.kernelParams = [
+        "nomodeset"
+        "intel_idle.max_cstate=1"
+      ];
 
       console.enable = true;
       # enable GPU drivers

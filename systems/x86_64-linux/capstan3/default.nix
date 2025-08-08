@@ -6,36 +6,179 @@
   ...
 }:
 let
-  mountpoint = "/mnt/pool";
+  #############################################################################
+  #                             1. Core Variables                             #
+  #############################################################################
   rootDiskDevicePath = "/dev/disk/by-id/nvme-PM991a_NVMe_Samsung_256GB__S660NX1T487734";
-in
-{
-  hardware.cpu.amd.updateMicrocode = true;
-  ${namespace} = {
+  bcachefsMountpoint = "/mnt/pool";
 
-    suites = {
-      attic = {
-        enableServer = true;
+  #############################################################################
+  #                         2. Component Definitions                          #
+  #############################################################################
+  # --- Common System & Bootloader Config ---
+  commonSystemConfig = {
+    hardware.cpu.amd.updateMicrocode = true;
+
+    boot.loader = {
+      grub = {
+        enable = true;
+        efiSupport = true;
+        efiInstallAsRemovable = true;
+        device = "nodev";
       };
+      efi.canTouchEfiVariables = false;
     };
 
-    system = {
+    ${namespace}.system = {
       bcachefs-kernel = {
         enable = true;
-        # rev = "";
-        # hash = "";
         debug = true;
       };
       bcachefs-module = {
         enable = false;
-        rev = ""; # Or specify a specific commit hash
+        rev = "";
         hash = "";
         debug = true;
       };
     };
+  };
+
+  # --- Core Disko Config (Root & Boot only) ---
+  coreDiskoConfig = {
+    devices = {
+      disk.rootSystemDisk = {
+        type = "disk";
+        device = rootDiskDevicePath;
+        content = {
+          type = "gpt";
+          partitions = {
+            ESP = {
+              name = "ESP";
+              type = "EF00";
+              size = "512M";
+              content = {
+                type = "filesystem";
+                format = "vfat";
+                mountpoint = "/boot";
+              };
+            };
+            lvm_pv_root = {
+              name = "lvm_pv";
+              size = "100%";
+              content = {
+                type = "lvm_pv";
+                vg = "vgSystem";
+              };
+            };
+          };
+        };
+      };
+      lvm_vg.vgSystem = {
+        type = "lvm_vg";
+        lvs.lvRoot = {
+          name = "root";
+          size = "100%FREE";
+          content = {
+            type = "filesystem";
+            format = "ext4";
+            mountpoint = "/";
+          };
+        };
+      };
+    };
+  };
+
+  # --- Bcachefs Disko Config (Data Pool only) ---
+  bcachefsDiskoConfig = {
+    devices = {
+      # disk = {
+      #   nvme1 = {
+      #     type = "disk";
+      #     device = "/dev/disk/by-id/nvme-TEAM_TM8FPD002T_TPBF2310170080200016";
+      #     content.partitions.nvme1_1.content = {
+      #       type = "bcachefs";
+      #       filesystem = "pool";
+      #       label = "nvme.nvme1";
+      #     };
+      #   };
+      #   ssd1 = {
+      #     type = "disk";
+      #     device = "/dev/disk/by-id/ata-SPCC_Solid_State_Disk_AA000000000000000101";
+      #     content.partitions.ssd1_1.content = {
+      #       type = "bcachefs";
+      #       filesystem = "pool";
+      #       label = "ssd.ssd1";
+      #     };
+      #   };
+      #   hdd1 = {
+      #     type = "disk";
+      #     device = "/dev/disk/by-id/ata-ST6000DM003-2CY186_ZCT2DSW5";
+      #     content.partitions.hdd1_1.content = {
+      #       type = "bcachefs";
+      #       filesystem = "pool";
+      #       label = "hdd.hdd1";
+      #     };
+      #   };
+      #   hdd2 = {
+      #     type = "disk";
+      #     device = "/dev/disk/by-id/ata-ST6000DM003-2CY186_ZCT2EMGM";
+      #     content.partitions.hdd2_1.content = {
+      #       type = "bcachefs";
+      #       filesystem = "pool";
+      #       label = "hdd.hdd2";
+      #     };
+      #   };
+      #   hdd3 = {
+      #     type = "disk";
+      #     device = "/dev/disk/by-id/ata-ST6000NM0115-1YZ110_ZADABZPK";
+      #     content.partitions.hdd3_1.content = {
+      #       type = "bcachefs";
+      #       filesystem = "pool";
+      #       label = "hdd.hdd3";
+      #     };
+      #   };
+      # };
+      bcachefs_filesystems.pool = {
+        type = "bcachefs_filesystem";
+        mountpoint = bcachefsMountpoint;
+        extraFormatArgs = [
+          "--compression=lz4"
+          "--foreground_target=nvme"
+          "--background_target=hdd"
+          "--promote_target=ssd"
+          "--metadata_replicas=2"
+          "--metadata_replicas_required=1"
+          "--data_replicas=2"
+          "--data_replicas_required=1"
+        ];
+        mountOptions = [
+          "verbose"
+          "degraded"
+          "nofail"
+        ];
+      };
+    };
+  };
+
+in
+###############################################################################
+#                           3. Final Configuration                            #
+###############################################################################
+lib.recursiveUpdate commonSystemConfig {
+
+  # --- Full System Configuration ---
+  disko = lib.recursiveUpdate coreDiskoConfig bcachefsDiskoConfig;
+
+  ${namespace} = {
+    suites.attic.enableServer = true;
 
     hosts.capstan = {
       enable = true;
+      # This new flag will control which features are enabled inside the module.
+      # You will eventually define this as a proper option in the module itself.
+      allFeatures = true;
+
+      # The full configuration is defined once.
       ipAddress = "${config.sensitiveNotSecret.default_subnet}53/24";
       interfaceMac = "7c:10:c9:3c:80:a9";
       bonding = {
@@ -47,218 +190,21 @@ in
         ipAddress = "172.16.4.53";
       };
       bcachefsInitDevice = "/dev/disk/by-id/nvme-TEAM_TM8FPD002T_TPBF2310170080200016";
-      mountpoint = mountpoint;
+      mountpoint = bcachefsMountpoint;
       k8sServerAddr = "https://172.16.1.50:6443";
       k8sNodeIp = "172.16.4.53";
       k8sNodeIface = "bond0";
     };
-
   };
 
-  disko = {
-    devices = {
-      disk = {
-        rootSystemDisk = {
-          type = "disk";
-          device = rootDiskDevicePath;
-          content = {
-            type = "gpt";
-            partitions = {
-              # EFI System Partition (ESP) for booting
-              ESP = {
-                name = "ESP"; # Partition label
-                type = "EF00"; # Standard EFI partition type
-                size = "512M";
-                content = {
-                  type = "filesystem";
-                  format = "vfat"; # FAT32 for ESP
-                  mountpoint = "/boot"; # Common mountpoint for ESP, especially with systemd-boot
-                };
-              };
-              # Partition for LVM Physical Volume
-              lvm_pv_root = {
-                name = "lvm_pv"; # Partition label
-                size = "100%"; # Use the rest of the disk
-                content = {
-                  type = "lvm_pv";
-                  vg = "vgSystem"; # This PV will belong to the 'vgSystem' Volume Group
-                };
-              };
-            };
-          };
-        };
+  # --- Specializations ---
+  specialisation.core = {
+    configuration = lib.recursiveUpdate commonSystemConfig {
+      disko = lib.mkForce coreDiskoConfig;
 
-        #   nvme1 = {
-        #     type = "disk";
-        #     device = "/dev/disk/by-id/nvme-TEAM_TM8FPD002T_TPBF2310170080200016";
-        #     content = {
-        #       type = "gpt";
-        #       partitions = {
-        #         nvme1_1 = {
-        #           # Partition name (can be customized)
-        #           size = "100%";
-        #           content = {
-        #             type = "bcachefs";
-        #             filesystem = "pool"; # Links to the definition below
-        #             label = "nvme.nvme1"; # bcachefs device label
-        #           };
-        #         };
-        #       };
-        #     };
-        #   };
-
-        #   ssd1 = {
-        #     type = "disk";
-        #     device = "/dev/disk/by-id/ata-SPCC_Solid_State_Disk_AA000000000000000101";
-        #     content = {
-        #       type = "gpt";
-        #       partitions = {
-        #         ssd1_1 = {
-        #           size = "100%";
-        #           content = {
-        #             type = "bcachefs";
-        #             filesystem = "pool";
-        #             label = "ssd.ssd1";
-        #           };
-        #         };
-        #       };
-        #     };
-        #   };
-
-        #   hdd1 = {
-        #     type = "disk";
-        #     device = "/dev/disk/by-id/ata-ST6000DM003-2CY186_ZCT2DSW5";
-        #     content = {
-        #       type = "gpt";
-        #       partitions = {
-        #         hdd1_1 = {
-        #           size = "100%";
-        #           content = {
-        #             type = "bcachefs";
-        #             filesystem = "pool";
-        #             label = "hdd.hdd1";
-        #           };
-        #         };
-        #       };
-        #     };
-        #   };
-
-        #   hdd2 = {
-        #     type = "disk";
-        #     device = "/dev/disk/by-id/ata-ST6000DM003-2CY186_ZCT2EMGM";
-        #     content = {
-        #       type = "gpt";
-        #       partitions = {
-        #         hdd2_1 = {
-        #           size = "100%";
-        #           content = {
-        #             type = "bcachefs";
-        #             filesystem = "pool";
-        #             label = "hdd.hdd2";
-        #           };
-        #         };
-        #       };
-        #     };
-        #   };
-
-        #   hdd3 = {
-        #     type = "disk";
-        #     device = "/dev/disk/by-id/ata-ST6000NM0115-1YZ110_ZADABZPK";
-        #     content = {
-        #       type = "gpt";
-        #       partitions = {
-        #         hdd3_1 = {
-        #           size = "100%";
-        #           content = {
-        #             type = "bcachefs";
-        #             filesystem = "pool";
-        #             label = "hdd.hdd3";
-        #           };
-        #         };
-        #       };
-        #     };
-        #   };
-      };
-
-      # == LVM Volume Group and Logical Volume Definitions ==
-      lvm_vg = {
-        vgSystem = {
-          # Name of the Volume Group for the system
-          type = "lvm_vg";
-          # 'pvs' attribute is automatically determined from partitions using this VG.
-          lvs = {
-            # Logical Volume for the root filesystem
-            lvRoot = {
-              name = "root"; # Name of the LV
-              size = "100%FREE";
-              # Use all available space in this VG for root.
-              # Or specify a fixed size like "50G".
-              content = {
-                type = "filesystem";
-                format = "ext4"; # Format as ext4
-                mountpoint = "/"; # Mount as the root filesystem
-                # mountOptions = [ "defaults", "noatime" ]; # Optional: specify mount options
-              };
-            };
-            # Example: You could add a swap LV here if needed
-            # lvSwap = {
-            #   type = "lvm_lv";
-            #   name = "swap";
-            #   size = "8G"; # Example size for swap
-            #   content = {
-            #     type = "swap";
-            #   };
-            # };
-          };
-        };
-      }; # End of 'lvm_vg' section
-
-      bcachefs_filesystems = {
-        pool = {
-          # This name ("pool") is referenced by the partitions above
-          type = "bcachefs_filesystem";
-          mountpoint = mountpoint; # Preserving your variable reference
-          # These are the global formatting options for the bcachefs filesystem
-          extraFormatArgs = [
-            "--compression=lz4"
-            "--foreground_target=nvme" # Targets refer to device labels (e.g., "nvme.nvme1" matches "nvme")
-            "--background_target=hdd"
-            "--promote_target=ssd"
-            "--metadata_replicas=2"
-            "--metadata_replicas_required=1"
-            "--data_replicas=2"
-            "--data_replicas_required=1"
-          ];
-          mountOptions = [
-            "verbose"
-            "degraded"
-            # "fsck"
-            "nofail"
-          ];
-          # If you don't define subvolumes here, the entire filesystem is typically
-          # mounted at the 'mountpoint'. If you need specific subvolumes, add them like:
-          # subvolumes = {
-          #   "subvolumes/data" = { mountpoint = "/data"; };
-          # };
-        };
-      };
+      # Simply override the one flag for the core specialization.
+      # The rest of the host's config (like networking) is inherited.
+      ${namespace}.hosts.capstan.allFeatures = lib.mkForce false;
     };
   };
-
-  # == GRUB Bootloader Configuration ==
-  # These settings configure GRUB for an EFI system with an LVM root.
-  boot.loader.grub = {
-    enable = true;
-    efiSupport = true; # Enable EFI support
-    efiInstallAsRemovable = true; # Installs GRUB to the fallback path, often more compatible
-    device = "nodev"; # Install GRUB on this disk (must match disko's rootSystemDisk.device)
-    # device = "${rootDiskDevicePath}";  # Install GRUB on this disk (must match disko's rootSystemDisk.device)
-  };
-
-  # This allows NixOS to manage EFI boot entries.
-  boot.loader.efi.canTouchEfiVariables = false;
-
-  # Optional: If your ESP is not at /boot, specify it. Disko sets it to /boot.
-  # boot.loader.efi.efiSysMountPoint = "/boot";
-
 }
