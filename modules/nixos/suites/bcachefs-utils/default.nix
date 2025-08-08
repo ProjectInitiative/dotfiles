@@ -28,8 +28,7 @@ in
 
       services = {
         bcachefsScrubAuto = {
-          # TODO: remove after testing
-          enable = false;
+          enable = true;
           targetMountPoints = [
             cfg.parentSubvolume # MANDATORY: Set your actual subvolume path
           ];

@@ -61,6 +61,12 @@ in
                     source_labels = [ "__journal__hostname" ];
                     target_label = "host";
                   }
+                  {
+                    source_labels = [ "__journal__systemd_unit" ];
+                    regex = "nvme-debug-collector.service";
+                    target_label = "job";
+                    replacement = "nvme-debug";
+                  }
                 ];
               }
             ];

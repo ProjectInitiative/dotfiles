@@ -10,6 +10,48 @@ with lib.${namespace};
 let
   cfg = config.${namespace}.hosts.capstan;
   sops = config.sops;
+
+  nvmeDebugCollector = pkgs.writeShellApplication {
+  name = "nvme-debug-collector";
+
+  runtimeInputs = with pkgs; [
+    coreutils
+    gawk
+    nvme-cli
+    util-linux
+  ];
+
+  text = ''
+    #!/bin/bash
+    set -euo pipefail
+
+    echo "Enabling NVMe dynamic debug..."
+    echo "file drivers/nvme/host/* +p" > /sys/kernel/debug/dynamic_debug/control || true
+
+    echo "Enabling NVMe trace events..."
+    for ev in nvme_complete_rq nvme_timeout nvme_setup_cmd nvme_sq; do
+      if [ -e "/sys/kernel/debug/tracing/events/nvme/$ev/enable" ]; then
+        echo 1 > "/sys/kernel/debug/tracing/events/nvme/$ev/enable"
+      fi
+    done
+
+    echo "Setting ftrace timestamp mode..."
+    # echo 1 > /sys/kernel/debug/tracing/options/print-timestamp
+    echo nop > /sys/kernel/debug/tracing/current_tracer
+    echo > /sys/kernel/debug/tracing/trace
+
+    echo "Starting trace + dmesg streaming to journal..."
+    stdbuf -oL awk "{ print strftime(\"[%Y-%m-%d %H:%M:%S]\"), \$0 }" /sys/kernel/debug/tracing/trace_pipe &
+    stdbuf -oL awk "{ print strftime(\"[%Y-%m-%d %H:%M:%S]\"), \$0 }" < <(dmesg -wH) &
+
+    echo "Starting SMART log polling..."
+    while :; do
+      echo "===== SMART log $(date) ====="
+      nvme smart-log /dev/nvme1n1 || echo "SMART read failed"
+      sleep 30
+    done
+  '';
+};
 in
 {
   options.${namespace}.hosts.capstan = {
@@ -85,13 +127,13 @@ in
     boot.kernelParams = [
       # disable Active State Power Management for motherboards (b450F would put CPU power too low on idle and crash system)
       "pcie_aspm=off"
+      "pcie_port_pm=off"
       # disable nvme sleep states
       "nvme_core.default_ps_max_latency_us=0"
     ];
     boot.supportedFilesystems = [ "bcachefs" ];
     boot.kernelModules = [
       "bcachefs"
-      "drbd"
     ];
     # use latest kernel - required by bcachefs
     boot.kernelPackages = pkgs.linuxPackages_latest;
@@ -498,6 +540,24 @@ in
         fi
       '';
     };
+
+
+  systemd.services.nvme-debug-collector = {
+    description = "Collect NVMe debug, kernel trace events, and SMART logs";
+    after = [ "network.target" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = "${nvmeDebugCollector}/bin/nvme-debug-collector";
+      Restart = "always";
+      StandardOutput = "journal";
+      StandardError = "journal";
+      User = "root";
+      Group = "root";
+    };
+  };    
+    
+
 
   };
 }

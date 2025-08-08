@@ -10,6 +10,8 @@
   ...
 }:
 let
+  # Define the RAID storage mount point in one place
+  storageMountPoint = "/mnt/pool";
   # Create files in the nix store
   hostSSHFile = pkgs.writeText "ssh_host_ed25519_key" config.sensitiveNotSecret.dinghy_private_ssh_key;
   hostSSHPubFile = pkgs.writeText "ssh_host_ed25519_key.pub" config.sensitiveNotSecret.dinghy_public_ssh_key;
@@ -144,13 +146,13 @@ in
 
             # Centralized configuration for components
             common = {
-              path_prefix = "/var/lib/loki";
+              path_prefix = "${storageMountPoint}/loki";
               replication_factor = 1;
               # Defines the storage backend used by all components.
               storage = {
                 filesystem = {
-                  chunks_directory = "/var/lib/loki/chunks";
-                  rules_directory = "/var/lib/loki/rules";
+                  chunks_directory = "${storageMountPoint}/loki/chunks";
+                  rules_directory = "${storageMountPoint}/loki/rules";
                 };
               };
               # Required for single-node operation.
@@ -179,15 +181,15 @@ in
 
             storage_config = {
               boltdb_shipper = {
-                active_index_directory = "/var/lib/loki/index";
-                cache_location = "/var/lib/loki/cache";
+                active_index_directory = "${storageMountPoint}/loki/index";
+                cache_location = "${storageMountPoint}/loki/cache";
                 cache_ttl = "24h";
                 # Note: 'shared_store' is removed; it's now handled by the 'common.storage' block.
               };
             };
 
             compactor = {
-              working_directory = "/var/lib/loki/compactor";
+              working_directory = "${storageMountPoint}/loki/compactor";
               # Note: 'shared_store' is removed; it's now handled by the 'common.storage' block.
             };
           };
@@ -280,8 +282,9 @@ in
     description = "Assemble and mount the storage RAID array";
 
     # Run after the main system is up and running.
-    after = [ "multi-user.target" "rockpi-quad.service" ];
-    wantedBy = [ "multi-user.target" ];
+    after = [ "rockpi-quad.service" ];
+  # Be part of the local filesystem setup target.
+    wantedBy = [ "local-fs.target" ];
 
     serviceConfig = {
       Type = "oneshot";
@@ -291,27 +294,57 @@ in
       # `set -e` ensures the script exits immediately if any command fails.
       ExecStart = pkgs.writeShellScript "mount-storage" ''
         set -e
+        echo "Waiting for RAID devices to appear..."
+        DEVICES_TO_WAIT_FOR=("/dev/sda" "/dev/sdb" "/dev/sdc" "/dev/sdd")
+        TIMEOUT=30
+        for i in $(seq $TIMEOUT); do
+          # Check if all devices exist as block devices
+          if [ -b "''${DEVICES_TO_WAIT_FOR[0]}" ] && \
+             [ -b "''${DEVICES_TO_WAIT_FOR[1]}" ] && \
+             [ -b "''${DEVICES_TO_WAIT_FOR[2]}" ] && \
+             [ -b "''${DEVICES_TO_WAIT_FOR[3]}" ]; then
+            echo "All RAID devices found."
+            break
+          fi
+        
+          # If we hit the timeout, exit with an error
+          if [ $i -eq $TIMEOUT ]; then
+            echo "Error: Timed out waiting for RAID devices." >&2
+            exit 1
+          fi
+          sleep 1
+        done
         echo "Assembling RAID array /dev/md0..."
         # Use the explicit command to assemble the array from specific devices
         ${pkgs.mdadm}/bin/mdadm --assemble --run --verbose /dev/md0 /dev/sda /dev/sdb /dev/sdc /dev/sdd --force
 
-        echo "Mounting /dev/md0 to /mnt/pool..."
-        ${pkgs.coreutils}/bin/mkdir -p /mnt/pool
-        ${pkgs.util-linux}/bin/mount /dev/md0 /mnt/pool
+        echo "Mounting /dev/md0 to ${storageMountPoint}..."
+        ${pkgs.coreutils}/bin/mkdir -p ${storageMountPoint}
+        ${pkgs.util-linux}/bin/mount /dev/md0 ${storageMountPoint}
         echo "Storage mounted."
       '';
 
       # Defines how to unmount and stop the array when the service is stopped.
       ExecStop = pkgs.writeShellScript "unmount-storage" ''
         set -e
-        echo "Unmounting /mnt/storage..."
-        ${pkgs.util-linux}/bin/umount -l /mnt/pool
+        echo "Unmounting ${storageMountPoint}..."
+        ${pkgs.util-linux}/bin/umount -l ${storageMountPoint}
 
         echo "Stopping RAID array /dev/md0..."
         ${pkgs.mdadm}/bin/mdadm --stop /dev/md0
         echo "Storage stopped."
       '';
     };
+  };
+
+  systemd.services.prometheus = {
+    after = [ "storage-mount.service" ];
+    requires = [ "storage-mount.service" ];
+  };
+
+  systemd.services.loki = {
+    after = [ "storage-mount.service" ];
+    requires = [ "storage-mount.service" ];
   };
 
   # # Define the filesystem on the RAID array to be mounted.

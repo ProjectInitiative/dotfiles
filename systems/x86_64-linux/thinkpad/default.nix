@@ -122,34 +122,52 @@ in
     home = {
       paths = [ "/home/kylepzak" ];
       exclude = [
-        # lost and found
         "/home/kylepzak/lost+found"
-        # snapshots
-        "/home/kylepzak/.bcachefs_automated_snapshots"
-
-        # General Caches
-        "/home/kylepzak/.cache"
-        "/home/kylepzak/.cargo.bak"
-
-        # Package & Runtimes Caches
-        "/home/kylepzak/go/pkg/mod"
-        "/home/kylepzak/.local/share/flatpak"
-        "/home/kylepzak/.var/app"
-
-        # Virtual Machine Boxes
-        "/home/kylepzak/.vagrant.d/boxes"
-
-        # Redundant Backups
-        "/home/kylepzak/Desktop/server-backup"
-
-        # Build Artifacts
-        "**/target"
-
-        # Entire Downloads folder
+        "**/target" # Rust build artifacts
         "/home/kylepzak/Downloads"
 
-        # Log Files
+        # --- System & Filesystem ---
+        "/home/kylepzak/.bcachefs_automated_snapshots"
+
+        # --- General Caches ---
+        "/home/kylepzak/.cache"
+        "/home/kylepzak/.cargo.bak"
+        "**/*cache*" # Broadly catch cache-named dirs
+
+        # --- Package Managers & Toolchains ---
+        "/home/kylepzak/go/pkg/mod"
+        "/home/kylepzak/.npm"
+        "/home/kylepzak/.nvm"
+        "/home/kylepzak/.rustup"
+        "/home/kylepzak/.cargo/registry"
+        "/home/kylepzak/.platformio"
+        "**/node_modules"
+        "**/.venv"
+
+        # --- Runtimes & Sandboxes ---
+        "/home/kylepzak/.local/share/flatpak"
+        "/home/kylepzak/.var/app"
+        "/home/kylepzak/snap"
+
+        # --- Virtualization & Containers ---
+        "/home/kylepzak/.docker"
+        "/home/kylepzak/.minikube"
+        "/home/kylepzak/.vagrant.d/boxes"
+        "/home/kylepzak/.local/share/libvirt"
+
+        # --- Application Caches ---
+        "/home/kylepzak/.mozilla"
+        "/home/kylepzak/.thunderbird"
+        "/home/kylepzak/.steam"
+        "/home/kylepzak/.android/avd"
+        "/home/kylepzak/.vscode/extensions"
+        "/home/kylepzak/.vscode-server"
+        "/home/kylepzak/.zcompdump*"
+
+        # --- Temporary / Log Files ---
         "/home/kylepzak/.local/share/probe-rs/*.log"
+        "**/*.log"
+        "**/*.sock"
       ];
       repository = "s3:http://172.16.1.50:31292/laptop-backup/home";
       passwordFile = sops.secrets.restic_password.path;
