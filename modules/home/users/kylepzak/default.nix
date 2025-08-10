@@ -132,6 +132,14 @@ in
       fi
       export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
 
+      # # Check if the current session is a login shell
+      # if [[ -o login ]]; then
+      #     # Check if $ZELLIJ is not equal to 0
+      #     if [[ -z "$ZELLIJ" || "$ZELLIJ" != "0" ]]; then
+      #         # Run the command to attach to zellij
+      #         zellij attach || zellij
+      #     fi
+      # fi
     '';
 
     home = {

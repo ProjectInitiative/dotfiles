@@ -2,42 +2,58 @@
   lib,
   buildNpmPackage,
   fetchFromGitHub,
-  nix-update-script,
+  fetchNpmDeps,
+  writeShellApplication,
+  cacert,
+  curl,
+  gnused,
+  jq,
+  nix-prefetch-github,
+  prefetch-npm-deps,
+  gitUpdater,
 }:
 
-let
+buildNpmPackage (finalAttrs: {
   pname = "gemini-cli";
-  version = "0.1.15";
-in
-buildNpmPackage {
-  inherit pname version;
+  version = "0.1.7";
 
   src = fetchFromGitHub {
     owner = "google-gemini";
     repo = "gemini-cli";
-    # Currently there's no release tag, use the `package-lock.json` to see
-    # what's the latest version
-    rev = "ed1483b06f630775bf75baedda8d475dac46dc0d";
-    hash = "sha256-J9pDSMsSh7FVPD61FFV2Aes3G/Vj1j5ULn9dOr+sglQ=";
+    tag = "v${finalAttrs.version}";
+    hash = "sha256-DAenod/w9BydYdYsOnuLj7kCQRcTnZ81tf4MhLUug6c=";
   };
 
-  npmDepsHash = "sha256-otogkSsKJ5j1BY00y4SRhL9pm7CK9nmzVisvGCDIMlU=";
+  npmDeps = fetchNpmDeps {
+    inherit (finalAttrs) src;
+    hash = "sha256-otogkSsKJ5j1BY00y4SRhL9pm7CK9nmzVisvGCDIMlU=";
+  };
 
-  fixupPhase = ''
-    runHook preFixup
-
-    # Remove broken symlinks
-    find $out -type l -exec test ! -e {} \; -delete 2>/dev/null || true
-
-    mkdir -p "$out/bin"
-    ln -sf "$out/lib/node_modules/@google/gemini-cli/bundle/gemini.js" "$out/bin/gemini"
-
-    patchShebangs "$out/bin" "$out/lib/node_modules/@google/gemini-cli/bundle/"
-
-    runHook postFixup
+  preConfigure = ''
+    mkdir -p packages/generated
+    echo "export const GIT_COMMIT_INFO = { commitHash: '${finalAttrs.src.rev}' };" > packages/generated/git-commit.ts
   '';
 
-  passthru.updateScript = nix-update-script { };
+  installPhase = ''
+    runHook preInstall
+    mkdir -p $out/{bin,share/gemini-cli}
+
+    cp -r node_modules $out/share/gemini-cli/
+
+    rm -f $out/share/gemini-cli/node_modules/@google/gemini-cli
+    rm -f $out/share/gemini-cli/node_modules/@google/gemini-cli-core
+    cp -r packages/cli $out/share/gemini-cli/node_modules/@google/gemini-cli
+    cp -r packages/core $out/share/gemini-cli/node_modules/@google/gemini-cli-core
+
+    ln -s $out/share/gemini-cli/node_modules/@google/gemini-cli/dist/index.js $out/bin/gemini
+    runHook postInstall
+  '';
+
+  postInstall = ''
+    chmod +x "$out/bin/gemini"
+  '';
+
+  passthru.updateScript = gitUpdater { };
 
   meta = {
     description = "AI agent that brings the power of Gemini directly into your terminal";
@@ -47,4 +63,4 @@ buildNpmPackage {
     platforms = lib.platforms.all;
     mainProgram = "gemini";
   };
-}
+})

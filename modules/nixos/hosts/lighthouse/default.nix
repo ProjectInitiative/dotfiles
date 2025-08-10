@@ -53,23 +53,34 @@ in
       htop
     ];
 
-    # Networking -- Hetzner provides IP via DHCP
-    networking.useNetworkd = true;
-    networking.networkmanager.enable = false;
+    # Networking -- cloud provides IP via DHCP
+    #
+    #####################################################
+    # PUBLIC CLOUD EXPLICITLY DEFINE AND OVERRIDE ANY PORTS
+    #####################################################
+    networking = {
+      useNetworkd = true;
+      networkmanager.enable = true;
 
-    # # Firewall rules for k3s
-    # networking.firewall.allowedTCPPorts = [
-    #   # Kube-API server
-    #   6443
-    # ] ++ (
-    #   # Ports for agents
-    #   if cfg.role == "agent" then [
-    #     10250 # Kubelet
-    #   ] else [ ]
-    # );
-    # networking.firewall.allowedUDPPorts = [
-    #   8472 # Flannel VXLAN
-    # ];
+      firewall = {
+        allowedTCPPorts = mkForce [
+          22
+          # specific ports
+          80
+          443
+        ];
+        allowedTCPPortRanges = mkForce [];
+        allowedUDPPorts = mkForce [
+          # DNS
+          53
+        ];
+        allowedUDPPortRanges = mkForce [];
+      };
+      
+    };
+
+
+    #####################################################
 
     # Kubernetes (k3s) configuration
     projectinitiative = {

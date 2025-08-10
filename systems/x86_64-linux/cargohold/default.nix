@@ -115,8 +115,8 @@ lib.recursiveUpdate commonSystemConfig {
   # --- Full System Configuration ---
   disko = lib.recursiveUpdate coreDiskoConfig bcachefsDiskoConfig;
 
-  projectinitiative.services.bcachefsScrubAuto.enable = mkForce false;
-  projectinitiative.services.bcachefsRereplicateAuto.enable = mkForce false;
+  # projectinitiative.services.bcachefsScrubAuto.enable = true;
+  # projectinitiative.services.bcachefsRereplicateAuto.enable = true;
 
   # Enable the cargohold host configuration
   projectinitiative.hosts.cargohold = {
