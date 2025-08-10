@@ -60,13 +60,16 @@ let
 in
 {
   # Define options for sensitiveNotSecret
-  options.sensitiveNotSecret = mkOption {
-    type = types.attrs;
-    description = "Decrypted sensitive but not secret configuration";
-    default = warnIfEmpty "sensitiveNotSecret" { };
+  options = {
+    enableCommonEncryption = mkBoolOpt true "Whether or not to enable encryption handling";
+    sensitiveNotSecret = mkOption {
+      type = types.attrs;
+      description = "Decrypted sensitive but not secret configuration";
+      default = warnIfEmpty "sensitiveNotSecret" { };
+    };
   };
 
-  config = (
+  config = mkIf config.enableCommonEncryption (
     # common config
     {
 

@@ -16,6 +16,7 @@ let
 in
 {
   options.${namespace}.user = with types; {
+    enable = mkBoolOpt true "Whether or not to enable auto user creation";
     name = mkOpt str "kylepzak" "The name to use for the user account.";
     fullName = mkOpt str "Kyle Petryszak" "The full name of the user.";
     email = mkOpt str "6314611+ProjectInitiative@users.noreply.github.com" "The email of the user.";
@@ -29,7 +30,7 @@ in
     authorized-keys = mkOpt (listOf path) [ "${inputs.ssh-pub-keys}" ] "Authorized SSH keys for user.";
   };
 
-  config = {
+  config = mkIf cfg.enable {
     # projectinitiative.home = {
     #   file = {};
 

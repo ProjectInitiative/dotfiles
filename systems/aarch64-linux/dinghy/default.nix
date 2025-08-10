@@ -101,11 +101,13 @@ in
                 "172.16.1.51:9100"
                 "172.16.1.52:9100"
                 "172.16.1.53:9100"
+                "openwrt:9100"
                 "cargohold:9100"
                 "lepotato:9100"
                 "stormjib:9100"
                 "lighthouse-east:9100"
                 "lighthouse-west:9100"
+                "lighthouse-yul-1:9100"
               ];
             };
             garage = {

@@ -36,11 +36,25 @@ in
     enableClient = mkBoolOpt false "Enable the pre-defined Attic Client configuration for this host.";
     enableServer = mkBoolOpt false "Enable the pre-defined Attic Server configuration for this host.";
     # NO OTHER OPTIONS DEFINED HERE.
+      settings = mkOption {
+        type = types.attrs;
+        internal = true; # Hide from manual
+        description = "Internal settings for the Attic suite.";
+        default = {};
+      };
   };
 
   # --- Configuration Logic ---
   # This block applies the hardcoded configurations below when enabled.
   config = mkMerge [
+    {
+      # expose settings for other modules to use
+      ${namespace}.suites.attic.settings = {
+        cacheName = commonSettings.cacheName;
+        serverUrl = commonSettings.serverUrl;
+        publicKey = commonSettings.publicKey;
+      };
+    }
 
     # === Apply Predefined Client Config if enableClient is true ===
     (mkIf cfg.enableClient {
