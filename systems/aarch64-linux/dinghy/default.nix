@@ -108,6 +108,7 @@ in
                 "lighthouse-east:9100"
                 "lighthouse-west:9100"
                 "lighthouse-yul-1:9100"
+                "lighthouse-yul-2:9100"
               ];
             };
             garage = {
