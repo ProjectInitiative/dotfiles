@@ -19,7 +19,7 @@ keys:
     - &ssh_lighthouse_east age1k393g9cgc0xa88ej05tsppcktrrgsp6efp70hffu3zmzhmkwr4jsgs3lg3
     - &ssh_lighthouse_west age1ex6z7fus35kvm42annhs9spzcmlccn2p7l3ugqdrt6wjee4evdqs9evvm6
     - &ssh_lighthouse_yul1 age1u22wfqweftvgwf0vrszzkagz3w5u5jzsa2y7ez8ap3s7pxngp34sc2t9qj
-    - &ssh_lighthouse_yul2 age1czyg6je2n0l87uf3rhermwwcfjkykazp5889a62mgq8jx679tg8savqccu
+    - &ssh_lighthouse_yul2 age1mgj529x49h0w28jluaxgkxl3e8dgk9l5d94wt9g7mmgx5e7ylsqsslmsma
 
 creation_rules:
   - path_regex: sensitive/[^/]+\.yaml$
