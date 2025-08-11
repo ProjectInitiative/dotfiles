@@ -96,7 +96,9 @@ in
       defaultSopsFile = ./secrets.enc.yaml;
       secrets = {
         k8s_token = {};
-        user_password = {};
+        user_password = {
+          neededForUsers = true;
+        };
         tailscale_auth_key = {};
       };
     };
