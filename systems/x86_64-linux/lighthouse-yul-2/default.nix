@@ -4,6 +4,7 @@
   pkgs,
   namespace,
   modulesPath,
+  lib,
   ...
 }:
 
