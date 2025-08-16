@@ -1,4 +1,3 @@
-# /etc/nixos/hosts/lighthouse-east.nix
 {
   config,
   pkgs,
@@ -8,14 +7,9 @@
   lib,
   ...
 }:
-
 {
   imports = inputs.nixos-on-arm.bootModules.rock5a ++ [
     # Any additional modules you want to import
-
-    # Call the function from your library, passing it the key path.
-    # The impurity of getEnv is now handled cleanly at the call site.
-    (lib.preseedSshKey (builtins.getEnv "HOST_SSH_KEY"))
   ];
 
   # Enable and configure the common hetzner module for this host
@@ -23,6 +17,31 @@
     enable = true;
     role = "server"; # This is the master node
     k8sServerAddr = "https://100.94.107.39:6443";
+  };
+
+  # Filesystem configuration converted from fstab
+  fileSystems = {
+    # NVMe drive mount
+    "/mnt/nvme/nvme-TEAM_TM8FP6512G_TPBF2502270050300037-part1" = {
+      device = "/dev/disk/by-id/nvme-TEAM_TM8FP6512G_TPBF2502270050300037-part1";
+      fsType = "ext4";
+      options = [ 
+        "rw"
+        "noatime" 
+        "nodiratime"
+        "nofail"
+      ];
+    };
+
+    # Bind mount for local provisioner
+    "/mnt/local-provisioner" = {
+      device = "/mnt/nvme/nvme-TEAM_TM8FP6512G_TPBF2502270050300037-part1";
+      fsType = "none";
+      options = [ 
+        "bind"
+        "nofail"
+      ];
+    };
   };
 
   systemd.services.custom-leds = {
@@ -37,6 +56,21 @@
     };
     wantedBy = [ "multi-user.target" ];
   };
+
+  # Systemd service to set thermal governor (replaces /config/config.txt)
+  systemd.services.thermal-governor = {
+    description = "Set Thermal Governor to power_allocator";
+    script = ''
+      echo power_allocator > /sys/devices/virtual/thermal/thermal_zone0/policy
+    '';
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    wantedBy = [ "multi-user.target" ];
+  };
+
+  system.stateVersion = lib.mkForce "25.11";
 
   # Load the watchdog kernel module
   # boot.kernelModules = [ "rockchip_wdt" ];

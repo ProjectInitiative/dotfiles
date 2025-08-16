@@ -18,10 +18,10 @@ let
   # This reads your local file and writes it to a new, independent
   # file in the Nix store. The `k3sEnvFile` variable will hold the
   # resulting store path (e.g., /nix/store/<hash>-k3s-lighthouse-env).
-  k3sEnvFile = pkgs.writeTextFile {
-    name = "k3s-lighthouse-env";
-    text = builtins.readFile ./k3s-lighthouse-env;
-  };
+  # k3sEnvFile = pkgs.writeTextFile {
+  #   name = "k3s-lightship-env";
+  #   text = builtins.readFile ./k3s-lightship-env;
+  # };
 
 in
 {
@@ -194,7 +194,7 @@ in
           serverAddr = cfg.k8sServerAddr;
           role = cfg.role;
           networkType = "tailscale";
-          environmentFile = k3sEnvFile;
+          # environmentFile = k3sEnvFile;
           extraArgs = [
             # TLS configuration
             "--tls-san=k8s.projectinitiative.io"
