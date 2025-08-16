@@ -105,8 +105,6 @@ in
                 "cargohold:9100"
                 "lepotato:9100"
                 "stormjib:9100"
-                "lighthouse-east:9100"
-                "lighthouse-west:9100"
                 "lighthouse-yul-1:9100"
                 "lighthouse-yul-2:9100"
               ];
@@ -126,10 +124,20 @@ in
                 "172.16.1.52:9633"
                 "172.16.1.53:9633"
                 "cargohold:9633"
-                "lighthouse-east:9633"
-                "lighthouse-west:9633"
               ];
             };
+            speedtest = {
+              targets = [ "openwrt:9469" ];
+              extraConfig = {
+                metrics_path = "/probe";
+                params = {
+                  script = [ "speedtest" ];
+                };
+                scrape_interval = "60m";
+                scrape_timeout = "90s";
+              };
+            };
+
           };
         };
 

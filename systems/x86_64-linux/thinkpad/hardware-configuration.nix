@@ -45,6 +45,7 @@
       "bcachefs"
       "kvm-intel"
     ];
+
     # kernelModules = [ "kvm-intel" ];
     # extraModulePackages = [ ];
 

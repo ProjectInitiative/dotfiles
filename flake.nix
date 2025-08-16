@@ -19,6 +19,12 @@
     # Hardware Configuration
     nixos-hardware.url = "github:nixos/nixos-hardware";
 
+    # pull in base image builder
+    nixos-on-arm = {
+      url = "github:projectinitiative/nixos-on-arm";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Generate System Images
     nixos-generators.url = "github:nix-community/nixos-generators";
     nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
@@ -356,7 +362,7 @@
           "bcachefs-tester"
           "pawl"
           # "cargohold"
-          "lightship-aus"
+          "lightship-atx"
         ];
       };
 

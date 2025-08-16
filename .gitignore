@@ -1,6 +1,7 @@
 ####==  sops  ==####
 *secrets.yaml
 *sensitive.yaml
+keys/
 ####==  Env   ==####
 .env
 ####==  Nix   ==####

@@ -9,7 +9,7 @@
 with lib;
 with lib.${namespace};
 let
-  cfg = config.${namespace}.hosts.lighthouse;
+  cfg = config.${namespace}.hosts.lightship;
   sops = config.sops;
 
   # default attic suite settings:
@@ -25,7 +25,7 @@ let
 
 in
 {
-  options.${namespace}.hosts.lighthouse = {
+  options.${namespace}.hosts.lightship = {
     enable = mkBoolOpt false "Whether to enable base Hetzner k8s node configuration.";
     role = mkOpt (types.enum [
       "server"

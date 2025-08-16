@@ -27,12 +27,72 @@ in
       restic_environment_file = {
         sopsFile = ./secrets.enc.yaml;
       };
+      netbird_setup_key = {
+        sopsFile = ./secrets.enc.yaml;
+        mode = "0400";
+      };
     }
   ];
 
+  # nixpkgs.overlays = [
+  #   (final: prev: {
+  #     netbird = prev.netbird.overrideAttrs (oldAttrs: rec {
+  #       version = "0.54.2";
+  #       src = prev.fetchFromGitHub {
+  #         owner = "projectinitiative";
+  #         repo = "netbird";
+  #         rev = "53f3cefd4f1a6751f064bda2ccc870005c311386";
+  #         hash = "sha256-AiVACuzTyLX0qGRCOLC655IOJKz75UjluqDiRRnCq40=";
+  #         # owner = "netbirdio";
+  #         # repo = "netbird";
+  #         # rev = "v${version}";
+  #         # hash = "sha256-1xCaH29CweLxbOXyesxDc3vBkvHo5aQr4icyf/8VwJk=";
+  #       };
+  #       vendorHash = "sha256-zpZZdkEqYYmojd5M74jPOaSdt8uvv80XGLH/CmfjWLg=";
+  #     });
+  #   })
+  # ];
+
+  # # Create environment file using sops template
+  # sops.templates.netbird-env = {
+  #   content = ''
+  #     NB_SETUP_KEY=${config.sops.placeholder.netbird_setup_key}
+  #   '';
+  #   mode = "0400";
+  #   owner = "root";  # Match the service user
+  # };
+
+  # services.netbird = {
+  #   enable = false;
+  #   clients.default = {
+  #     port = 51820;
+  #     interface = "wt0";
+  #     name = "netbird";
+  #     hardened = false;
+
+  #     config = {
+  #       DisableDNS = true;
+  #       DisableFirewall = true;
+  #     };
+  #   };
+  # };
+
+  # # Add the environment file to the systemd service
+  # # This will make NB_SETUP_KEY available to the netbird process
+  # # TODO: Figure out why this isn't working
+  # systemd.services.netbird.serviceConfig.EnvironmentFile = [
+  #   config.sops.templates.netbird-env.path
+  # ];
+
+  # # Override the ExecStart to include the setup key file
+  # # systemd.services.netbird.serviceConfig.ExecStart = lib.mkForce ''
+  # #   ${config.services.netbird.clients.default.wrapper}/bin/netbird service run \
+  # #     --setup-key-file ${config.sops.secrets.netbird_setup_key.path}
+  # # '';
+
   # enable displaylink
   services.xserver.videoDrivers = [
-    "displaylink"
+    # "displaylink"
     "modesetting"
   ];
 
@@ -235,6 +295,10 @@ in
 
     pkgs.${namespace}.mcp-proxy-runner
     # gst_all_1.gst-plugins-rs
+
+    alsa-utils # for alsamixer
+    pavucontrol # for PipeWire profile control
+
   ];
 
   # Enable fingerprint reader
@@ -253,17 +317,29 @@ in
   # Enable CUPS to print documents.
   services.printing.enable = true;
 
-  # Enable sound with pipewire.
-  services.pulseaudio.enable = false;
-
   users.users.kylepzak.extraGroups = [ "tss" ]; # tss group has access to TPM devices
 
   services.pipewire = {
-    enable = true;
+    enable = mkForce true;
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
   };
+
+  # Enable sound with pipewire.
+  services.pulseaudio.enable = false;
+
+  # Ensure ALSA hardware layer is enabled
+  hardware.alsa.enable = true;
+
+  # Install firmware for Intel SOF devices
+  hardware.firmware = [ pkgs.sof-firmware ];
+
+  # Force snd_hda_intel instead of SOF
+  boot.extraModprobeConfig = ''
+    options snd-intel-dspcfg dsp_driver=1
+  '';
+
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
   # on your system were taken. It‘s perfectly fine and recommended to leave

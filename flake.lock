@@ -197,6 +197,27 @@
         "type": "github"
       }
     },
+    "disko_2": {
+      "inputs": {
+        "nixpkgs": [
+          "nixos-on-arm",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1753100035,
+        "narHash": "sha256-cw+vVkef8EOjzJyr94wEKk34JDJu4lkGp2tkVUWaUxk=",
+        "owner": "nix-community",
+        "repo": "disko",
+        "rev": "3db2f0476516b2758fe8f1559f70c937b9d9b16b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "disko",
+        "type": "github"
+      }
+    },
     "drift": {
       "inputs": {
         "nixpkgs": [
@@ -869,6 +890,27 @@
         "type": "github"
       }
     },
+    "nixos-on-arm": {
+      "inputs": {
+        "disko": "disko_2",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1755309162,
+        "narHash": "sha256-2JBfduIoy+4K6fTaS0miy38aClsVcSOJlVr9sNTY/Ts=",
+        "owner": "projectinitiative",
+        "repo": "nixos-on-arm",
+        "rev": "a641eefab0196391a8abed01b10e1fedc104c92f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "projectinitiative",
+        "repo": "nixos-on-arm",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1753750875,
@@ -976,6 +1018,7 @@
         "nix-ld": "nix-ld",
         "nixos-generators": "nixos-generators",
         "nixos-hardware": "nixos-hardware",
+        "nixos-on-arm": "nixos-on-arm",
         "nixpkgs": "nixpkgs_2",
         "rockpi-quad": "rockpi-quad",
         "snowfall-lib": "snowfall-lib_5",

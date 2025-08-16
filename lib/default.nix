@@ -50,4 +50,26 @@ rec {
       builtins.trace "Warning: ${name} is empty!" set
     else
       set;
+
+  ## Impurely pre-seed an SSH host key via an activation script.
+  ## Takes the path to the key and returns a NixOS module.
+  #@ Path -> NixOS Module
+  preseedSshKey =
+    hostKey:
+    { config, pkgs, ... }:
+    {
+      config = lib.mkIf (hostKey != "" && builtins.typeOf hostKey == "string") {
+        system.activationScripts.preseed-ssh-key = ''
+          # Make sure the source files actually exist before trying to install
+          if [ ! -f "${hostKey}" ] || [ ! -f "${hostKey}.pub" ]; then
+            echo "!!! SSH host key or its .pub file not found. Skipping pre-seeding."
+            exit 0
+          fi
+
+          echo ">>> Preseeding SSH host key from ${hostKey}"
+          install -D -m 600 ${hostKey} /etc/ssh/ssh_host_ed25519_key
+          install -D -m 644 ${hostKey}.pub /etc/ssh/ssh_host_ed25519_key.pub
+        '';
+      };
+    };
 }
