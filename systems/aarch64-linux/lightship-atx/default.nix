@@ -31,35 +31,35 @@
 
 
   # Filesystem configuration converted from fstab
-  # fileSystems = {
-  #   # NVMe drive mount
-  #   "/mnt/nvme/nvme-TEAM_TM8FP6512G_TPBF2502270050300037-part1" = {
-  #     device = "/dev/disk/by-id/nvme-TEAM_TM8FP6512G_TPBF2502270050300037-part1";
-  #     fsType = "ext4";
-  #     options = [ 
-  #       "rw"
-  #       "noatime" 
-  #       "nodiratime"
-  #       "nofail"
-  #     ];
-  #   };
+  fileSystems = {
+    # NVMe drive mount
+    "/mnt/nvme/nvme-TEAM_TM8FP6512G_TPBF2502270050300037-part1" = {
+      device = "/dev/disk/by-id/nvme-TEAM_TM8FP6512G_TPBF2502270050300037-part1";
+      fsType = "ext4";
+      options = [ 
+        "rw"
+        "noatime" 
+        "nodiratime"
+        "nofail"
+      ];
+    };
 
-  #   # Bind mount for local provisioner
-  #   "/mnt/local-provisioner" = {
-  #     device = "/mnt/nvme/nvme-TEAM_TM8FP6512G_TPBF2502270050300037-part1";
-  #     fsType = "none";
-  #     options = [ 
-  #       "bind"
-  #       "nofail"
-  #     ];
-  #   };
-  # };
+    # Bind mount for local provisioner
+    "/mnt/local-provisioner" = {
+      device = "/mnt/nvme/nvme-TEAM_TM8FP6512G_TPBF2502270050300037-part1";
+      fsType = "none";
+      options = [ 
+        "bind"
+        "nofail"
+      ];
+    };
+  };
 
   # systemd.services.custom-leds = {
   #   description = "Custom LED Configuration";
   #   script = ''
-  #     echo none > /sys/class/leds/user-led2/trigger
-  #     echo none > /sys/class/leds/user-led1/trigger
+  #     echo none > /sys/class/leds/blue\:status/trigger
+      # echo none > /sys/class/leds/user-led1/trigger
   #   '';
   #   serviceConfig = {
   #     Type = "oneshot";
