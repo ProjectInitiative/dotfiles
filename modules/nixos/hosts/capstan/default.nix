@@ -132,6 +132,9 @@ in
       # disable nvme sleep states
       "nvme_core.default_ps_max_latency_us=0"
     ];
+    boot.kernel.sysctl = {
+      "kernel.modprobe.nvme_core.io_timeout" = 60;
+    };
     boot.supportedFilesystems = [ "bcachefs" ];
     boot.kernelModules = [
       "bcachefs"
@@ -375,7 +378,6 @@ in
           enable = true;
           ephemeral = false;
           extraArgs = [
-            "--accept-dns=false"
             # "--accept-routes=true"
             # "--advertise-routes=10.0.0.0/24"
             # "--snat-subnet-routes=false"

@@ -98,6 +98,10 @@
         # "fsck"
       ];
     };
+    "/tmpfs" = {
+      device = "tmpfs";
+      fsType = "tmpfs";
+    };
   };
 
   swapDevices = [

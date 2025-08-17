@@ -898,11 +898,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1755309162,
-        "narHash": "sha256-2JBfduIoy+4K6fTaS0miy38aClsVcSOJlVr9sNTY/Ts=",
+        "lastModified": 1755395110,
+        "narHash": "sha256-wCz12bh8yQvSUpj9HW2dPQbFFzkXhCYL/4Yt5tFYZ+4=",
         "owner": "projectinitiative",
         "repo": "nixos-on-arm",
-        "rev": "a641eefab0196391a8abed01b10e1fedc104c92f",
+        "rev": "6faa1e8e16b2117a891368c506474900de801dcc",
         "type": "github"
       },
       "original": {
