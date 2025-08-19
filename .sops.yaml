@@ -17,9 +17,9 @@ keys:
     - &ssh_capstan3 age1wwtevxuhkfh6nyl23axkx0s3pnywrw95tj85qrg03fhh6jkmf5nsfknx09
   - &lightships:
     - &ssh_lightship_atx age1csp7a8m4d8gfpeq86wje2ttxw9f66phehlacsuqckrft46s6s4csfjzrsl
+    - &ssh_lightship_dfw age132gpza62jw8hehnz8yy9yrwepe0rl5hmhdnzf3zpr33vrrh02edqdxn4lu
+    - &ssh_lightship_dal age16tpc43h2e3jmlaeqd2xpethpkdwj0vewlf8gxkfjwn93vjyf9cuqr2d32m
   - &lighthouses:
-    - &ssh_lighthouse_east age1k393g9cgc0xa88ej05tsppcktrrgsp6efp70hffu3zmzhmkwr4jsgs3lg3
-    - &ssh_lighthouse_west age1ex6z7fus35kvm42annhs9spzcmlccn2p7l3ugqdrt6wjee4evdqs9evvm6
     - &ssh_lighthouse_yul1 age1u22wfqweftvgwf0vrszzkagz3w5u5jzsa2y7ez8ap3s7pxngp34sc2t9qj
     - &ssh_lighthouse_yul2 age1mgj529x49h0w28jluaxgkxl3e8dgk9l5d94wt9g7mmgx5e7ylsqsslmsma
 
@@ -50,6 +50,8 @@ creation_rules:
           - *ssh_capstan2
           - *ssh_capstan3
           - *ssh_lightship_atx
+          - *ssh_lightship_dfw
+          - *ssh_lightship_dal
           - *stormjib
           - *cargohold
           - *dinghy
@@ -93,6 +95,8 @@ creation_rules:
           - *ssh_kylepzak
           - *ssh_thinkpad
           - *ssh_lightship_atx
+          - *ssh_lightship_dfw
+          - *ssh_lightship_dal
 
   - path_regex: lighthouse/[^/]+\.yaml$
     # - path: lighthouse/secrets.enc.yaml
