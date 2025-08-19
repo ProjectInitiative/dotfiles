@@ -102,7 +102,7 @@ in
                 "172.16.1.52:9100"
                 "172.16.1.53:9100"
                 "openwrt:9100"
-                "cargohold:9100"
+                "172.16.1.1:9100"
                 "lepotato:9100"
                 "stormjib:9100"
                 "lighthouse-yul-1:9100"
@@ -127,7 +127,7 @@ in
               ];
             };
             speedtest = {
-              targets = [ "openwrt:9469" ];
+              targets = [ "172.16.1.1:9469" ];
               extraConfig = {
                 metrics_path = "/probe";
                 params = {

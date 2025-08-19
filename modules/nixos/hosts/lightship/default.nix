@@ -34,8 +34,8 @@ in
   };
 
   config = mkIf cfg.enable {
-    # Define the sops secret for the k8s token
 
+    # Define the sops secret for the k8s token
     sops.secrets = mkMerge [
       {
         k8s_token = {
