@@ -15,41 +15,11 @@
   home-manager.backupFileExtension = "backup";
 
   # Enable and configure the common hetzner module for this host
-  # ${namespace}.hosts.lightship = {
-  #   enable = false;
-  #   role = "server"; # This is the master node
-  #   k8sServerAddr = "https://100.94.107.39:6443";
-  # };
-
-  # Enable and configure SSH, restricting access to public keys only
-  services.openssh = {
+  ${namespace}.hosts.lightship = {
     enable = true;
-    # Disable password-based authentication for security.
-    settings = {
-      PasswordAuthentication = true;
-      KbdInteractiveAuthentication = true; # Disables keyboard-interactive auth, often a fallback for passwords.
-      PermitRootLogin = "prohibit-password"; # Allows root login with a key, but not a password.
-    };
+    role = "server"; # This is the master node
+    k8sServerAddr = "https://100.94.107.39:6443";
   };
-  projectinitiative = {
-
-    networking = {
-      tailscale = {
-        enable = true;
-        ephemeral = true;
-        extraArgs = [
-          # "--accept-routes=true"
-          # "--advertise-routes=10.0.0.0/24"
-          # "--snat-subnet-routes=false"
-          "--accept-dns=true"
-          "--accept-routes=false"
-          "--advertise-routes="
-          "--snat-subnet-routes=true"
-        ];
-      };
-    };
-  };
-
 
   # Filesystem configuration converted from fstab
   fileSystems = {
@@ -76,31 +46,31 @@
     };
   };
 
-  # systemd.services.custom-leds = {
-  #   description = "Custom LED Configuration";
-  #   script = ''
-  #     echo none > /sys/class/leds/blue\:status/trigger
-      # echo none > /sys/class/leds/user-led1/trigger
-  #   '';
-  #   serviceConfig = {
-  #     Type = "oneshot";
-  #     RemainAfterExit = true;
-  #   };
-  #   wantedBy = [ "multi-user.target" ];
-  # };
+  systemd.services.custom-leds = {
+    description = "Custom LED Configuration";
+    script = ''
+      echo none > /sys/class/leds/blue\:status/trigger
+    # echo none > /sys/class/leds/user-led1/trigger
+    '';
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    wantedBy = [ "multi-user.target" ];
+  };
 
-  # # Systemd service to set thermal governor (replaces /config/config.txt)
-  # systemd.services.thermal-governor = {
-  #   description = "Set Thermal Governor to power_allocator";
-  #   script = ''
-  #     echo power_allocator > /sys/devices/virtual/thermal/thermal_zone0/policy
-  #   '';
-  #   serviceConfig = {
-  #     Type = "oneshot";
-  #     RemainAfterExit = true;
-  #   };
-  #   wantedBy = [ "multi-user.target" ];
-  # };
+  # Systemd service to set thermal governor (replaces /config/config.txt)
+  systemd.services.thermal-governor = {
+    description = "Set Thermal Governor to power_allocator";
+    script = ''
+      echo power_allocator > /sys/devices/virtual/thermal/thermal_zone0/policy
+    '';
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    wantedBy = [ "multi-user.target" ];
+  };
 
   system.stateVersion = lib.mkForce "25.05";
 
