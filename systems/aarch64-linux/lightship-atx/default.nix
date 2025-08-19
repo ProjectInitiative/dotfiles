@@ -46,11 +46,47 @@
     };
   };
 
+  boot.supportedFilesystems = {
+    zfs = false;
+  };
+
+  # boot.kernelPatches = [{
+  #   name = "rock-5a-led-overlay";
+  #   patch = null;
+  #   extraDts = ''
+  #     /dts-v1/;
+  #     /plugin/;
+
+  #     &leds {
+  #         green-led {
+  #             compatible = "gpio-leds";
+  #             gpios = <&gpio3 20 GPIO_ACTIVE_HIGH>; /* Corresponds to RK_PC4 */
+  #             label = "green:power";
+  #             linux,default-trigger = "default-on";
+  #         };
+  #     };
+  #   '';
+  # }];
+  # 
+  # hardware.deviceTree.overlays = [
+  #   {
+  #     name = "rock-5a-leds";
+  #     dtsFile = ../rock-5a-leds.dts;
+  #   }
+  # ];
+
+  boot.kernelPatches = [
+    {
+      name = "rock-5a-green-led-fix";
+      patch = ../rock-5a-led.patch;
+    }
+  ];
+
   systemd.services.custom-leds = {
     description = "Custom LED Configuration";
     script = ''
       echo none > /sys/class/leds/blue\:status/trigger
-    # echo none > /sys/class/leds/user-led1/trigger
+      echo none > /sys/class/leds/green\:status/trigger
     '';
     serviceConfig = {
       Type = "oneshot";

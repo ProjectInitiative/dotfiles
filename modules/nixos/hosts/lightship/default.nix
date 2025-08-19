@@ -44,6 +44,75 @@ in
       }
     ];
 
+    #######################################################
+    # CUSTOM FIRMWARE
+    #######################################################
+    
+    boot.supportedFilesystems = {
+      zfs = false;
+    };
+
+    # boot.kernelPatches = [{
+    #   name = "rock-5a-led-overlay";
+    #   patch = null;
+    #   extraDts = ''
+    #     /dts-v1/;
+    #     /plugin/;
+
+    #     &leds {
+    #         green-led {
+    #             compatible = "gpio-leds";
+    #             gpios = <&gpio3 20 GPIO_ACTIVE_HIGH>; /* Corresponds to RK_PC4 */
+    #             label = "green:power";
+    #             linux,default-trigger = "default-on";
+    #         };
+    #     };
+    #   '';
+    # }];
+    # 
+    # hardware.deviceTree.overlays = [
+    #   {
+    #     name = "rock-5a-leds";
+    #     dtsFile = ./rock-5a-leds.dts;
+    #   }
+    # ];
+
+    boot.kernelPatches = [
+      {
+        name = "rock-5a-green-led-fix";
+        patch = ./rock-5a-led.patch;
+      }
+    ];
+
+    systemd.services.custom-leds = {
+      description = "Custom LED Configuration";
+      script = ''
+        echo none > /sys/class/leds/blue\:status/trigger
+        echo none > /sys/class/leds/green\:status/trigger
+      '';
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      wantedBy = [ "multi-user.target" ];
+    };
+
+    # Systemd service to set thermal governor (replaces /config/config.txt)
+    systemd.services.thermal-governor = {
+      description = "Set Thermal Governor to power_allocator";
+      script = ''
+        echo power_allocator > /sys/devices/virtual/thermal/thermal_zone0/policy
+      '';
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      wantedBy = [ "multi-user.target" ];
+    };
+    #######################################################
+
+    
+
     programs.zsh.enable = true;
 
     # Enable and configure SSH, restricting access to public keys only

@@ -1,0 +1,13 @@
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/gpio/gpio.h>
+
+&leds {
+    green-led {
+        compatible = "gpio-leds";
+        gpios = <&gpio3 20 GPIO_ACTIVE_HIGH>;
+        label = "green:power";
+        linux,default-trigger = "default-on";
+    };
+};
