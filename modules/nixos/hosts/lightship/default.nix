@@ -88,7 +88,7 @@ in
       description = "Custom LED Configuration";
       script = ''
         echo none > /sys/class/leds/blue\:status/trigger
-        echo none > /sys/class/leds/green\:status/trigger
+        echo none > /sys/class/leds/green\:power/trigger
       '';
       serviceConfig = {
         Type = "oneshot";
