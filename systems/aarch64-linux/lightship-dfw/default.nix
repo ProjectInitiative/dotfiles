@@ -8,7 +8,7 @@
   ...
 }:
 let
-  nvme = "nvme-TEAM_TM8FP6512G_TPBF2502270050300037-part1";
+  nvme = "nvme-TEAM_TM8FP6512G_TPBF2502270050300142-part1";
 in
 {
   imports = inputs.nixos-on-arm.bootModules.rock5a ++ [
