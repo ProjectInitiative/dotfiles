@@ -34,6 +34,8 @@ in
     home = {
       packages = with pkgs; [
         git
+        git-credential-oauth
+        msmtp
         git-filter-repo
         gitleaks
         gitui
