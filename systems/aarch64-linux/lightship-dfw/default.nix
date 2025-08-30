@@ -21,7 +21,7 @@ in
   ${namespace}.hosts.lightship = {
     enable = true;
     role = "server"; # This is the master node
-    k8sServerAddr = "https://100.94.107.39:6443";
+    k8sServerAddr = "https://100.92.52.46:6443";
   };
 
   # Filesystem configuration converted from fstab

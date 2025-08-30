@@ -132,9 +132,6 @@ in
       # disable nvme sleep states
       "nvme_core.default_ps_max_latency_us=0"
     ];
-    boot.kernel.sysctl = {
-      "kernel.modprobe.nvme_core.io_timeout" = 60;
-    };
     boot.supportedFilesystems = [ "bcachefs" ];
     boot.kernelModules = [
       "bcachefs"
@@ -546,20 +543,20 @@ in
       '';
     };
 
-    systemd.services.nvme-debug-collector = {
-      description = "Collect NVMe debug, kernel trace events, and SMART logs";
-      after = [ "network.target" ];
-      wantedBy = mkIf cfg.allFeatures [ "multi-user.target" ];
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = "${nvmeDebugCollector}/bin/nvme-debug-collector";
-        Restart = "always";
-        StandardOutput = "journal";
-        StandardError = "journal";
-        User = "root";
-        Group = "root";
-      };
-    };
+    # systemd.services.nvme-debug-collector = {
+    #   description = "Collect NVMe debug, kernel trace events, and SMART logs";
+    #   after = [ "network.target" ];
+    #   wantedBy = mkIf cfg.allFeatures [ "multi-user.target" ];
+    #   serviceConfig = {
+    #     Type = "simple";
+    #     ExecStart = "${nvmeDebugCollector}/bin/nvme-debug-collector";
+    #     Restart = "always";
+    #     StandardOutput = "journal";
+    #     StandardError = "journal";
+    #     User = "root";
+    #     Group = "root";
+    #   };
+    # };
 
   };
 }

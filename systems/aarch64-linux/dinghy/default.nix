@@ -13,8 +13,8 @@ let
   # Define the RAID storage mount point in one place
   storageMountPoint = "/mnt/pool";
   # Create files in the nix store
-  hostSSHFile = pkgs.writeText "ssh_host_ed25519_key" config.sensitiveNotSecret.dinghy_private_ssh_key;
-  hostSSHPubFile = pkgs.writeText "ssh_host_ed25519_key.pub" config.sensitiveNotSecret.dinghy_public_ssh_key;
+  # hostSSHFile = pkgs.writeText "ssh_host_ed25519_key" config.sensitiveNotSecret.dinghy_private_ssh_key;
+  # hostSSHPubFile = pkgs.writeText "ssh_host_ed25519_key.pub" config.sensitiveNotSecret.dinghy_public_ssh_key;
 in
 {
   imports = with inputs.nixos-hardware.nixosModules; [
@@ -45,21 +45,21 @@ in
     };
   };
 
-  environment.etc = {
-    "ssh/ssh_host_ed25519_key" = {
-      source = hostSSHFile;
-      mode = "0600";
-      user = "root";
-      group = "root";
-    };
+  # environment.etc = {
+  #   "ssh/ssh_host_ed25519_key" = {
+  #     source = hostSSHFile;
+  #     mode = "0600";
+  #     user = "root";
+  #     group = "root";
+  #   };
 
-    "ssh/ssh_host_ed25519_key.pub" = {
-      source = hostSSHPubFile;
-      mode = "0644";
-      user = "root";
-      group = "root";
-    };
-  };
+  #   "ssh/ssh_host_ed25519_key.pub" = {
+  #     source = hostSSHPubFile;
+  #     mode = "0644";
+  #     user = "root";
+  #     group = "root";
+  #   };
+  # };
 
   # Explicitly call development module
   home-manager = {
@@ -98,31 +98,43 @@ in
             nodes = {
               targets = [
                 "127.0.0.1:9100"
-                "172.16.1.51:9100"
-                "172.16.1.52:9100"
-                "172.16.1.53:9100"
+                # "172.16.1.51:9100"
+                # "172.16.1.52:9100"
+                # "172.16.1.53:9100"
+                "capstan1:9100"
+                "capstan2:9100"
+                "capstan3:9100"
                 "openwrt:9100"
                 "172.16.1.1:9100"
                 "lepotato:9100"
                 "stormjib:9100"
+                "lightship-atx:9100"
+                "lightship-dal:9100"
+                "lightship-dfw:9100"
                 "lighthouse-yul-1:9100"
                 "lighthouse-yul-2:9100"
               ];
             };
             garage = {
               targets = [
-                "172.16.1.51:31630"
-                "172.16.1.52:31630"
-                "172.16.1.53:31630"
+                # "172.16.1.51:31630"
+                # "172.16.1.52:31630"
+                # "172.16.1.53:31630"
+                "capstan1:31630"
+                "capstan2:31630"
+                "capstan3:31630"
               ];
             };
             # A job for scraping smartctl data if it's on a different port/host
             smart-devices = {
               targets = [
                 "127.0.0.1:9633"
-                "172.16.1.51:9633"
-                "172.16.1.52:9633"
-                "172.16.1.53:9633"
+                # "172.16.1.51:9633"
+                # "172.16.1.52:9633"
+                # "172.16.1.53:9633"
+                "capstan1:9633"
+                "capstan2:9633"
+                "capstan3:9633"
                 "cargohold:9633"
               ];
             };

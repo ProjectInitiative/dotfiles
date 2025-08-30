@@ -299,6 +299,10 @@ in
     alsa-utils # for alsamixer
     pavucontrol # for PipeWire profile control
 
+    yubikey-manager
+    yubioath-flutter
+    yubikey-personalization
+    yubikey-personalization-gui
   ];
 
   # Enable fingerprint reader

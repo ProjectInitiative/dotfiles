@@ -110,6 +110,32 @@ in
       wantedBy = [ "multi-user.target" ];
     };
 
+
+  systemd.services.pwm-fan-control = {
+    description = "Set PWM Fan to Reasonable Speed";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "sys-devices-platform-pwm\\x2dfan.device" ];
+    path = with pkgs; [ coreutils findutils gnugrep ];
+    script = ''
+      sleep 3  # Wait for hwmon to be ready
+    
+      # Find the actual hwmon device (not the parent directory)
+      HWMON_PATH=$(find /sys/devices/platform/pwm-fan/hwmon -name "hwmon*" -type d | grep -v "hwmon$" | head -1)
+    
+      if [ -n "$HWMON_PATH" ]; then
+        echo "Setting PWM fan to manual mode and 30% speed"
+        echo 1 > "$HWMON_PATH/pwm1_enable"
+        echo 77 > "$HWMON_PATH/pwm1"  # 30% speed
+        echo "PWM fan set to 30% speed at $HWMON_PATH"
+      else
+        echo "Could not find hwmon device"
+      fi
+    '';
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+  };
     
   # Load the watchdog kernel module
   # boot.kernelModules = [ "rockchip_wdt" ];
@@ -157,11 +183,11 @@ in
           enable = true;
           ephemeral = false;
           extraArgs = [
-            # "--accept-routes=true"
+            "--accept-routes=true"
             # "--advertise-routes=10.0.0.0/24"
             # "--snat-subnet-routes=false"
             "--accept-dns=false"
-            "--accept-routes=false"
+            # "--accept-routes=false"
             "--advertise-routes="
             "--snat-subnet-routes=true"
           ];

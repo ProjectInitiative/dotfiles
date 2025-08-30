@@ -62,7 +62,6 @@ in
         glow
         mtr
         ncdu
-        tree
         icdiff
         usbutils
         rclone

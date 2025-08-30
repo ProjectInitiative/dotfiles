@@ -24,8 +24,9 @@ in
       ];
 
       shellAliases = {
-        ls = "eza -alh";
-        # ll = "eza -al";
+        ls = "eza -al";
+        tree = "eza -T";
+        ll = "eza -alB";
       };
     };
   };
