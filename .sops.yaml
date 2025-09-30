@@ -11,6 +11,7 @@ keys:
     - &stormjib age1zh045acnsrzgqxvlggdultqkq8ksvmuruu92akrsyxq5v6xk54sqn3j0pq
     - &cargohold age1vv7x7cupsczqaducs2pxpn7t3mqj5e5jkyc70489fad05rvyga4s57hwan
     - &dinghy age1v96s5f9tqz6xgndsgg5lt2zy8xe6j7k9wxz3k52paw9sena4q3gszjy425
+    - &wharfmaster age14lyx3jvucynqqpdklza3j6j2wq7g3lhncgq0phkdpapg2yzh89uqrfy405
   - &capstans:
     - &ssh_capstan1 age1katkdmh05xy9n5pmrkaznw0e5j4p96js88dzxy4l0zt06pfa4qzs0gsua5
     - &ssh_capstan2 age1daxggyz58h525ww5clnwwuwxu7tf5mlz8as8n7cy8dhv74u4qcqq0jagrp
@@ -55,6 +56,7 @@ creation_rules:
           - *stormjib
           - *cargohold
           - *dinghy
+          - *wharfmaster
 
   - path_regex: attic-server/[^/]+\.yaml$
     key_groups:

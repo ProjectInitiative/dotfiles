@@ -206,7 +206,6 @@ alias mount-gluster="sudo mount -t nfs pve.projecti.org:/mnt/main-pool /mnt/main
 
 # setup-rust
 . "$HOME/.cargo/env"
-alias grep="rg"
 alias ls="exa"
 alias ll="exa -al"
 alias cat="bat"

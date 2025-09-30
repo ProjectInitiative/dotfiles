@@ -31,8 +31,88 @@ in
         sopsFile = ./secrets.enc.yaml;
         mode = "0400";
       };
+
+      
+      # TODO: remove this and add to suite
+      aws-nix-cache-push-id = {
+        sopsFile = ../../../modules/common/encrypted/secrets/secrets.enc.yaml;
+      };
+      aws-nix-cache-push-key = {
+        sopsFile = ../../../modules/common/encrypted/secrets/secrets.enc.yaml;
+      };
+      aws-nix-cache-pull-id = {
+        sopsFile = ../../../modules/common/encrypted/secrets/secrets.enc.yaml;
+      };
+      aws-nix-cache-pull-key = {
+        sopsFile = ../../../modules/common/encrypted/secrets/secrets.enc.yaml;
+      };
+
+
+      nix-cache-signing-key = {
+        sopsFile = ../../../modules/common/encrypted/secrets/secrets.enc.yaml;
+      };
     }
   ];
+
+  systemd.tmpfiles.rules = [
+  "L+ /root/.aws/credentials - - - - ${config.sops.templates.aws-creds.path}"
+];
+
+
+  sops.templates."aws-credentials.ini" = {
+    mode = "0444"; 
+    content = ''
+      [nix-cache-puller]
+      aws_access_key_id=${config.sops.placeholder.aws-nix-cache-pull-id}
+      aws_secret_access_key=${config.sops.placeholder.aws-nix-cache-pull-key}
+      [nix-cache-pusher]
+      aws_access_key_id=${config.sops.placeholder.aws-nix-cache-push-id}
+      aws_secret_access_key=${config.sops.placeholder.aws-nix-cache-push-key}
+    '';
+  };
+
+  sops.templates.aws-creds = {
+    mode = "0444"; 
+    content = ''
+      [nix-cache-puller]
+      aws_access_key_id=${config.sops.placeholder.aws-nix-cache-pull-id}
+      aws_secret_access_key=${config.sops.placeholder.aws-nix-cache-pull-key}
+      [nix-cache-pusher]
+      aws_access_key_id=${config.sops.placeholder.aws-nix-cache-push-id}
+      aws_secret_access_key=${config.sops.placeholder.aws-nix-cache-push-key}
+    '';
+  };
+
+  nix = {
+    envVars = {
+      AWS_SHARED_CREDENTIALS_FILE = config.sops.templates."aws-credentials.ini".path;
+    };
+
+
+    # extraOptions = ''
+    #   access-tokens = s3-nix-cache-test:file://${config.sops.templates."aws-credentials.ini".path}
+    # '';
+    settings = {
+
+      substituters = [
+        # Pusher
+        # "s3://nix-cache-test?region=us-east-1&endpoint=http://172.16.1.50:31292&profile=nix-cache-pusher"
+        # "s3://nix-cache?region=us-east-1&endpoint=http://172.16.1.50:31292&profile=nix-cache-pusher"
+
+        # Puller
+        # "s3://nix-cache?region=us-east-1&endpoint=http://172.16.1.50:31292&profile=nix-cache-puller"
+        "s3://nix-cache-test?region=us-east-1&endpoint=http://172.16.1.50:31292&profile=nix-cache-puller"
+
+        # "s3://nix-cache-test?region=us-east-1&endpoint=http://172.16.1.50:31292&profile=nix-cache-puller&readonly=1"
+        # "s3://nix-cache-test?region=us-east-1&profile=nix-cache-puller&endpoint=http://172.16.1.50:31292"
+        # "s3://nix-cache-test?endpoint=http://172.16.1.50:31292"
+      ];
+      trusted-public-keys = [
+        "nix-cache:S7lSpN8xTtMELxw2cBl9nq4hEv2nCSShIe1re3P/q/s="
+      ];
+    };
+  };
+
 
   # nixpkgs.overlays = [
   #   (final: prev: {
@@ -90,6 +170,55 @@ in
   # #     --setup-key-file ${config.sops.secrets.netbird_setup_key.path}
   # # '';
 
+  # In your NixOS configuration (e.g., configuration.nix)
+  # services.loft = {
+  #   enable = true;
+
+  #   # Corrected S3 URL with a bucket name and endpoint parameter
+  #   # Replace "nix-cache" with your actual bucket name on the server.
+  #   # cache.s3Url = "s3://nix-cache?endpoint=http://172.16.1.50:31292&region=us-east-1";
+  #   # publicKey = "nix-cache:S7lSpN8xTtMELxw2cBl9nq4hEv2nCSShIe1re3P/q/s=";
+
+  #       # --- PULLER CONFIG ---
+  #   puller = {
+  #     enable = true;
+  #     trustedPublicKeys = [ "nix-cache:S7lSpN8xTtMELxw2cBl9nq4hEv2nCSShIe1re3P/q/s=" ];
+  #   };
+
+  #   # --- PUSHER (SERVICE) CONFIG ---
+  #   s3 = {
+  #     bucket = "nix-cache";
+  #     region = "us-east-1";
+  #     endpoint = "s3://nix-cache?endpoint=http://172.16.1.50:31292&region=us-east-1";
+  #     accessKeyFile = sops.secrets.nix-cache-pull-access-key.path;
+  #     secretKeyFile = sops.secrets.nix-cache-pull-secret-key.path;
+  #   };
+
+  #   # Private pulls only
+  #   pull = {
+  #     enable = true;
+  #     mode = "private";
+  #     aws = {
+  #       # Use ...Secret options with the name of the sops secret
+  #       accessKeySecret = "nix-cache-pull-access-key";
+  #       secretKeySecret = "nix-cache-pull-secret-key";
+  #     };
+  #   };
+
+  #   # Private pushes
+  #   push = {
+  #     enable = true;
+  #     uploader.mode = "periodic";
+  #     uploader.periodicInterval = 30;
+  #     # Use ...Secret options with the name of the sops secret
+  #     signingKeySecret = "nix-cache-signing-key";
+  #     aws = {
+  #       accessKeySecret = "nix-cache-push-access-key";
+  #       secretKeySecret = "nix-cache-push-secret-key";
+  #     };
+  #   };
+  # };
+
   # enable displaylink
   services.xserver.videoDrivers = [
     "displaylink"
@@ -125,6 +254,13 @@ in
 
       bcachefs-kernel = {
         enable = true;
+        # rev = "09e0711c260f1d14dd439315465c495003e02b4f";
+        # hash = "sha256-jSN8o7XxbSY/o3gyVsDtYPWGnsQedeLAI8ZzgjNJuuE=";
+
+        # TODO: fix pinning kernel for evdi compat
+        rev = "63ea3cf07639ec8ef5bd2c3f457eb54b6cd33198";
+        hash = "sha256-dY0yb0ZO0L5zOdloasqyEU80bitr1VNdmoyvxJv/sYE=";
+
         # rev = "";
         # hash = "";
         debug = true;
@@ -161,6 +297,9 @@ in
     };
 
     suites = {
+        attic = {
+          enableClient = mkForce false;
+        };
       development = enabled;
       bcachefs-utils = {
         enable = true;
@@ -283,6 +422,8 @@ in
     ## temp
     minicom
     rkdeveloptool
+    flashrom
+
     multipath-tools
     usbutils
 

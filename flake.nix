@@ -22,7 +22,7 @@
     # pull in base image builder
     nixos-on-arm = {
       url = "github:projectinitiative/nixos-on-arm";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "unstable";
     };
 
     # Generate System Images
@@ -81,6 +81,11 @@
     nix-ld.inputs.nixpkgs.follows = "unstable";
 
     # Binary Cache
+    loft = {
+      url = "github:projectinitiative/loft";
+      inputs.nixpkgs.follows = "unstable";
+    };
+
     attic = {
       url = "github:projectinitiative/attic/feature/updates";
       # url = "path:/home/kylepzak/development/custom-nix/attic";
@@ -309,6 +314,7 @@
                 home-manager.nixosModules.home-manager
                 # nix-ld.nixosModules.nix-ld
                 sops-nix.nixosModules.sops
+                # loft.nixosModules.loft
                 # agenix.nixosModules.age
                 attic.nixosModules.atticd
                 # (import ./encrypted/sops.nix)

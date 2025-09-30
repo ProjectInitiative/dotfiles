@@ -24,7 +24,6 @@ in
       ];
 
       shellAliases = {
-        grep = "rg";
       };
     };
   };
