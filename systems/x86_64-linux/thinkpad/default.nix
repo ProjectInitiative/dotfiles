@@ -100,8 +100,8 @@ in
         # "s3://nix-cache?region=us-east-1&endpoint=http://172.16.1.50:31292&profile=nix-cache-pusher"
 
         # Puller
-        # "s3://nix-cache?region=us-east-1&endpoint=http://172.16.1.50:31292&profile=nix-cache-puller"
-        "s3://nix-cache-test?region=us-east-1&endpoint=http://172.16.1.50:31292&profile=nix-cache-puller"
+        "s3://nix-cache?region=us-east-1&endpoint=http://172.16.1.50:31292&profile=nix-cache-puller"
+        # "s3://nix-cache-test?region=us-east-1&endpoint=http://172.16.1.50:31292&profile=nix-cache-puller"
 
         # "s3://nix-cache-test?region=us-east-1&endpoint=http://172.16.1.50:31292&profile=nix-cache-puller&readonly=1"
         # "s3://nix-cache-test?region=us-east-1&profile=nix-cache-puller&endpoint=http://172.16.1.50:31292"

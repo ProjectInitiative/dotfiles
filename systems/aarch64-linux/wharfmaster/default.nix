@@ -9,18 +9,7 @@
 }:
 {
 
-  imports = inputs.nixos-on-arm.bootModules.orangepi5ultra ++ [
-    "${inputs.unstable}/pkgs/misc/uboot/default.nix"
-  ];
-
-  disabledModules = [ "pkgs/misc/uboot/default.nix" ];
-
-  # nixpkgs.overlays = [
-  #   (final: prev: {
-  #     # take U-Boot family from unstable
-  #     inherit (inputs.unstable.legacyPackages.${prev.system}) buildUBoot ubootTools;
-  #   })
-  # ];
+  imports = inputs.nixos-on-arm.bootModules.orangepi5ultra;
 
   home-manager.backupFileExtension = "backup";
 
@@ -33,8 +22,8 @@
     enable = true;
     # Disable password-based authentication for security.
     settings = {
-      PasswordAuthentication = true;
-      KbdInteractiveAuthentication = true; # Disables keyboard-interactive auth, often a fallback for passwords.
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false; # Disables keyboard-interactive auth, often a fallback for passwords.
       PermitRootLogin = "prohibit-password"; # Allows root login with a key, but not a password.
     };
   };
@@ -44,6 +33,14 @@
       enable = true;
     };
     useDHCP = lib.mkForce true;
+    
+    # VLAN configuration for vlan21
+    interfaces.enP3p49s0.useDHCP = true;
+    vlans."vlan21" = {
+      id = 21;
+      interface = "enP3p49s0";
+    };
+    interfaces.vlan21.useDHCP = true;
   };
 
   # Kubernetes (k3s) configuration
@@ -57,7 +54,7 @@
           "--accept-routes=true"
           # "--advertise-routes=10.0.0.0/24"
           # "--snat-subnet-routes=false"
-          "--accept-dns=false"
+          "--accept-dns=true"
           # "--accept-routes=false"
           "--advertise-routes="
           "--snat-subnet-routes=true"
@@ -65,6 +62,9 @@
       };
     };
     suites = {
+      development = {
+        enable = true;
+      };
       monitoring.enable = true;
       attic = {
         enableClient = true;
