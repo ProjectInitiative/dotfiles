@@ -43,7 +43,18 @@
     interfaces.vlan21.useDHCP = true;
   };
 
-  # Kubernetes (k3s) configuration
+  # setup funnel for home-assistant
+  systemd.services.tailscale-funnel = {
+    description = "Tailscale Funnel";
+    after = [ "tailscaled.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.tailscale}/bin/tailscale funnel --bg 8123";
+      User = "root"; # Funnel needs root to bind to privileged ports
+    };
+  };
+
   projectinitiative = {
 
     networking = {

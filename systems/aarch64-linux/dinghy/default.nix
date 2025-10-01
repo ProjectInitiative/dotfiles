@@ -106,6 +106,7 @@ in
                 "capstan3:9100"
                 "openwrt:9100"
                 "172.16.1.1:9100"
+                "wharfmaster:9100"
                 "lepotato:9100"
                 "stormjib:9100"
                 "lightship-atx:9100"
