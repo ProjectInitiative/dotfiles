@@ -37,7 +37,7 @@ in
   };
 
   hardware.rockpi-quad = {
-    enable = true;
+    enable = false;
     # Optional: Customize settings (see flake.nix for options)
     settings = {
       fan.lv0 = 40;
@@ -104,7 +104,6 @@ in
                 "capstan1:9100"
                 "capstan2:9100"
                 "capstan3:9100"
-                "openwrt:9100"
                 "172.16.1.1:9100"
                 "wharfmaster:9100"
                 "lepotato:9100"
@@ -299,64 +298,64 @@ in
 
   # This service runs late in the boot process, after the system is up.
   # It assembles the RAID array and then mounts it.
-  systemd.services.storage-mount = {
-    description = "Assemble and mount the storage RAID array";
+  # systemd.services.storage-mount = {
+  #   description = "Assemble and mount the storage RAID array";
 
-    # Run after the main system is up and running.
-    after = [ "rockpi-quad.service" ];
-    # Be part of the local filesystem setup target.
-    wantedBy = [ "local-fs.target" ];
+  #   # Run after the main system is up and running.
+  #   after = [ "rockpi-quad.service" ];
+  #   # Be part of the local filesystem setup target.
+  #   wantedBy = [ "local-fs.target" ];
 
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
+  #   serviceConfig = {
+  #     Type = "oneshot";
+  #     RemainAfterExit = true;
 
-      # Using 'writeShellScript' allows us to run multiple commands safely.
-      # `set -e` ensures the script exits immediately if any command fails.
-      ExecStart = pkgs.writeShellScript "mount-storage" ''
-        set -e
-        echo "Waiting for RAID devices to appear..."
-        DEVICES_TO_WAIT_FOR=("/dev/sda" "/dev/sdb" "/dev/sdc" "/dev/sdd")
-        TIMEOUT=30
-        for i in $(seq $TIMEOUT); do
-          # Check if all devices exist as block devices
-          if [ -b "''${DEVICES_TO_WAIT_FOR[0]}" ] && \
-             [ -b "''${DEVICES_TO_WAIT_FOR[1]}" ] && \
-             [ -b "''${DEVICES_TO_WAIT_FOR[2]}" ] && \
-             [ -b "''${DEVICES_TO_WAIT_FOR[3]}" ]; then
-            echo "All RAID devices found."
-            break
-          fi
+  #     # Using 'writeShellScript' allows us to run multiple commands safely.
+  #     # `set -e` ensures the script exits immediately if any command fails.
+  #     ExecStart = pkgs.writeShellScript "mount-storage" ''
+  #       set -e
+  #       echo "Waiting for RAID devices to appear..."
+  #       DEVICES_TO_WAIT_FOR=("/dev/sda" "/dev/sdb" "/dev/sdc" "/dev/sdd")
+  #       TIMEOUT=30
+  #       for i in $(seq $TIMEOUT); do
+  #         # Check if all devices exist as block devices
+  #         if [ -b "''${DEVICES_TO_WAIT_FOR[0]}" ] && \
+  #            [ -b "''${DEVICES_TO_WAIT_FOR[1]}" ] && \
+  #            [ -b "''${DEVICES_TO_WAIT_FOR[2]}" ] && \
+  #            [ -b "''${DEVICES_TO_WAIT_FOR[3]}" ]; then
+  #           echo "All RAID devices found."
+  #           break
+  #         fi
 
-          # If we hit the timeout, exit with an error
-          if [ $i -eq $TIMEOUT ]; then
-            echo "Error: Timed out waiting for RAID devices." >&2
-            exit 1
-          fi
-          sleep 1
-        done
-        echo "Assembling RAID array /dev/md0..."
-        # Use the explicit command to assemble the array from specific devices
-        ${pkgs.mdadm}/bin/mdadm --assemble --run --verbose /dev/md0 /dev/sda /dev/sdb /dev/sdc /dev/sdd --force
+  #         # If we hit the timeout, exit with an error
+  #         if [ $i -eq $TIMEOUT ]; then
+  #           echo "Error: Timed out waiting for RAID devices." >&2
+  #           exit 1
+  #         fi
+  #         sleep 1
+  #       done
+  #       echo "Assembling RAID array /dev/md0..."
+  #       # Use the explicit command to assemble the array from specific devices
+  #       ${pkgs.mdadm}/bin/mdadm --assemble --run --verbose /dev/md0 /dev/sda /dev/sdb /dev/sdc /dev/sdd --force
 
-        echo "Mounting /dev/md0 to ${storageMountPoint}..."
-        ${pkgs.coreutils}/bin/mkdir -p ${storageMountPoint}
-        ${pkgs.util-linux}/bin/mount /dev/md0 ${storageMountPoint}
-        echo "Storage mounted."
-      '';
+  #       echo "Mounting /dev/md0 to ${storageMountPoint}..."
+  #       ${pkgs.coreutils}/bin/mkdir -p ${storageMountPoint}
+  #       ${pkgs.util-linux}/bin/mount /dev/md0 ${storageMountPoint}
+  #       echo "Storage mounted."
+  #     '';
 
-      # Defines how to unmount and stop the array when the service is stopped.
-      ExecStop = pkgs.writeShellScript "unmount-storage" ''
-        set -e
-        echo "Unmounting ${storageMountPoint}..."
-        ${pkgs.util-linux}/bin/umount -l ${storageMountPoint}
+  #     # Defines how to unmount and stop the array when the service is stopped.
+  #     ExecStop = pkgs.writeShellScript "unmount-storage" ''
+  #       set -e
+  #       echo "Unmounting ${storageMountPoint}..."
+  #       ${pkgs.util-linux}/bin/umount -l ${storageMountPoint}
 
-        echo "Stopping RAID array /dev/md0..."
-        ${pkgs.mdadm}/bin/mdadm --stop /dev/md0
-        echo "Storage stopped."
-      '';
-    };
-  };
+  #       echo "Stopping RAID array /dev/md0..."
+  #       ${pkgs.mdadm}/bin/mdadm --stop /dev/md0
+  #       echo "Storage stopped."
+  #     '';
+  #   };
+  # };
 
   systemd.services.prometheus = {
     after = [ "storage-mount.service" ];
