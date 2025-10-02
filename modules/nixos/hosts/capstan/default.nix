@@ -232,6 +232,10 @@ in
 
       suites = {
         monitoring = mkIf cfg.allFeatures enabled;
+        loft = {
+          enable = true;
+          enableClient = true;
+        };
         attic = mkIf cfg.allFeatures {
           enableClient = true;
         };

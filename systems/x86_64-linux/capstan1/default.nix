@@ -141,28 +141,37 @@ lib.recursiveUpdate commonSystemConfig {
   # --- Full System Configuration ---
   disko = lib.recursiveUpdate coreDiskoConfig bcachefsDiskoConfig;
 
-  ${namespace}.hosts.capstan = {
-    enable = true;
-    # This new flag will control which features are enabled inside the module.
-    # You will eventually define this as a proper option in the module itself.
-    allFeatures = true;
-
-    # The full configuration is defined once.
-    ipAddress = "${config.sensitiveNotSecret.default_subnet}51/24";
-    interfaceMac = "3c:7c:3f:20:45:e6";
-    bonding = {
-      mode = "standard";
-      members = [
-        "d0:67:26:b3:ab:98"
-        "d0:67:26:b3:ab:9c"
-      ];
-      ipAddress = "172.16.4.51";
+  ${namespace} =
+  {
+    suites = {
+        loft = {
+          enableServer = true;
+        };
     };
-    bcachefsInitDevice = "/dev/disk/by-id/nvme-TEAM_TM8FPD002T_TPBF2310170080206935";
-    mountpoint = bcachefsMountpoint;
-    k8sServerAddr = "https://172.16.1.50:6443";
-    k8sNodeIp = "172.16.4.51";
-    k8sNodeIface = "bond0";
+
+    hosts.capstan = {
+      enable = true;
+      # This new flag will control which features are enabled inside the module.
+      # You will eventually define this as a proper option in the module itself.
+      allFeatures = true;
+
+      # The full configuration is defined once.
+      ipAddress = "${config.sensitiveNotSecret.default_subnet}51/24";
+      interfaceMac = "3c:7c:3f:20:45:e6";
+      bonding = {
+        mode = "standard";
+        members = [
+          "d0:67:26:b3:ab:98"
+          "d0:67:26:b3:ab:9c"
+        ];
+        ipAddress = "172.16.4.51";
+      };
+      bcachefsInitDevice = "/dev/disk/by-id/nvme-TEAM_TM8FPD002T_TPBF2310170080206935";
+      mountpoint = bcachefsMountpoint;
+      k8sServerAddr = "https://172.16.1.50:6443";
+      k8sNodeIp = "172.16.4.51";
+      k8sNodeIface = "bond0";
+    };
   };
 
   # --- Specializations ---
