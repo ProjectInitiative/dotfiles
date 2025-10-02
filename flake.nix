@@ -314,7 +314,7 @@
                 home-manager.nixosModules.home-manager
                 # nix-ld.nixosModules.nix-ld
                 sops-nix.nixosModules.sops
-                # loft.nixosModules.loft
+                loft.nixosModules.loft
                 # agenix.nixosModules.age
                 attic.nixosModules.atticd
                 # (import ./encrypted/sops.nix)
