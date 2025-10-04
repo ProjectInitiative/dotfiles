@@ -414,8 +414,8 @@ in
 
     yubikey-manager
     yubioath-flutter
-    yubikey-personalization
-    yubikey-personalization-gui
+    # yubikey-personalization
+    # yubikey-personalization-gui
   ];
 
   # Enable fingerprint reader

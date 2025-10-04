@@ -1137,16 +1137,16 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1759281824,
-        "narHash": "sha256-FIBE1qXv9TKvSNwst6FumyHwCRH3BlWDpfsnqRDCll0=",
+        "lastModified": 1759381078,
+        "narHash": "sha256-gTrEEp5gEspIcCOx9PD8kMaF1iEmfBcTbO0Jag2QhQs=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "5b5be50345d4113d04ba58c444348849f5585b4a",
+        "rev": "7df7ff7d8e00218376575f0acdcc5d66741351ee",
         "type": "github"
       },
       "original": {
         "owner": "nixos",
-        "ref": "nixos-25.05",
+        "ref": "nixos-unstable",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -1236,6 +1236,7 @@
         "thaw": "thaw",
         "treefmt-nix": "treefmt-nix",
         "unstable": "unstable_2",
+        "upstream": "upstream",
         "yubikey-guide": "yubikey-guide"
       }
     },
@@ -1635,6 +1636,22 @@
       "original": {
         "owner": "nixos",
         "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "upstream": {
+      "locked": {
+        "lastModified": 1759548953,
+        "narHash": "sha256-zqD/ic7IGo43Hsekqc/CFNC1cys7k9PDB+eat85S/J4=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "955dacef9de29cbb7883fec19567a181869779ab",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "master",
         "repo": "nixpkgs",
         "type": "github"
       }

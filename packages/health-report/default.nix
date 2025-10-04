@@ -3,16 +3,7 @@
 }:
 
 let
-  hurry-filesize = pkgs.python3Packages.buildPythonPackage {
-    pname = "hurry.filesize";
-    version = "0.9";
-    src = pkgs.fetchPypi {
-      pname = "hurry.filesize";
-      version = "0.9";
-      sha256 = "sha256-9TaDKa2++GrM07yUkFIjQLt5JgRVromxpCwQ9jgBuaY="; # You may need to update this
-    };
-    doCheck = false;
-  };
+  hurry-filesize = (import ./common.nix) { inherit pkgs; };
 
   pythonEnv = pkgs.python3.withPackages (
     ps: with ps; [

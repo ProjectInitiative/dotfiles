@@ -7,13 +7,18 @@
   pkgs,
   modulesPath,
   nixos-hardware,
+  inputs,
   ...
 }:
 
 {
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
+    # "${inputs.unstable}/nixos/modules/tasks/filesystems/bcachefs.nix"
   ];
+
+  # TODO: I think I need to move all modules to unstable.
+  # disabledModules = [ "nixos/modules/tasks/filesystems/bcachefs.nix" ];
 
   boot = {
     binfmt = {
@@ -25,12 +30,12 @@
     };
 
     initrd = {
-      availableKernelModules = [
+      availableKernelModules = lib.mkForce [
         "xhci_pci"
         "thunderbolt"
         "nvme"
       ];
-      kernelModules = [ "dm-snapshot" ];
+      kernelModules = lib.mkForce [ "dm-snapshot" ];
       luks.devices = {
         "nixos" = {
           device = "/dev/disk/by-uuid/fb793780-923f-4f0d-bb9b-cead23745d39";
@@ -40,13 +45,12 @@
     };
 
     # this should pull in the new bcachefs module
-    kernelPackages = pkgs.linuxPackages_latest;
-    # Add the DKMS-built module
-    boot.extraModulePackages = [ pkgs.bcachefs-kernel-module ];
+    # kernelPackages = pkgs.linuxPackages_latest;
+    kernelPackages = pkgs.linuxPackages_6_16;
 
-    # supportedFilesystems = [ "bcachefs" ];
+    supportedFilesystems = [ "bcachefs" ];
     kernelModules = [
-      # "bcachefs"
+      "bcachefs"
       "kvm-intel"
     ];
 

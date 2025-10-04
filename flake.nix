@@ -3,9 +3,12 @@
 
   inputs = {
     # NixPkgs
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
+    # nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     # NixPkgs Unstable
     unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    # NixPkgs Master
+    upstream.url = "github:nixos/nixpkgs/master";
 
     # Home Manager
     home-manager.url = "github:nix-community/home-manager/release-25.05";
