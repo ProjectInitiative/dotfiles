@@ -19,6 +19,21 @@ in
     ./hardware-configuration.nix
   ];
 
+  # enable numlock during boot
+  systemd.services.numLockOnTty = {
+    description = "Enable numlock on TTYs";
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      ExecStart = "${pkgs.writeShellScript "numLockOnTty" ''
+        for tty in /dev/tty{1..6}; do
+          ${pkgs.kbd}/bin/setleds -D +num < "$tty"
+        done
+      ''}";
+      Type = "oneshot";
+      RemainAfterExit = "yes";
+    };
+  };
+
   sops.secrets = mkMerge [
     {
       restic_password = {
@@ -204,19 +219,19 @@ in
       displaylink.enable = false;
       nix-config = enabled;
 
-      bcachefs-kernel = {
-        enable = true;
-        # rev = "09e0711c260f1d14dd439315465c495003e02b4f";
-        # hash = "sha256-jSN8o7XxbSY/o3gyVsDtYPWGnsQedeLAI8ZzgjNJuuE=";
+    #   bcachefs-kernel = {
+    #     enable = true;
+    #     # rev = "09e0711c260f1d14dd439315465c495003e02b4f";
+    #     # hash = "sha256-jSN8o7XxbSY/o3gyVsDtYPWGnsQedeLAI8ZzgjNJuuE=";
 
-        # TODO: fix pinning kernel for evdi compat
-        rev = "63ea3cf07639ec8ef5bd2c3f457eb54b6cd33198";
-        hash = "sha256-dY0yb0ZO0L5zOdloasqyEU80bitr1VNdmoyvxJv/sYE=";
+    #     # TODO: fix pinning kernel for evdi compat
+    #     rev = "63ea3cf07639ec8ef5bd2c3f457eb54b6cd33198";
+    #     hash = "sha256-dY0yb0ZO0L5zOdloasqyEU80bitr1VNdmoyvxJv/sYE=";
 
-        # rev = "";
-        # hash = "";
-        debug = true;
-      };
+    #     # rev = "";
+    #     # hash = "";
+    #     debug = true;
+    #   };
     };
 
     gui = {

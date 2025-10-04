@@ -39,10 +39,14 @@
       };
     };
 
+    # this should pull in the new bcachefs module
     kernelPackages = pkgs.linuxPackages_latest;
+    # Add the DKMS-built module
+    boot.extraModulePackages = [ pkgs.bcachefs-kernel-module ];
+
     # supportedFilesystems = [ "bcachefs" ];
     kernelModules = [
-      "bcachefs"
+      # "bcachefs"
       "kvm-intel"
     ];
 
