@@ -77,7 +77,7 @@
         enable = true;
       };
       monitoring.enable = true;
-      attic = {
+      loft = {
         enableClient = true;
       };
     };

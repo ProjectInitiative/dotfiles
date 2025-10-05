@@ -237,7 +237,7 @@ in
           enableClient = true;
         };
         attic = mkIf cfg.allFeatures {
-          enableClient = true;
+          enableClient = false;
         };
         bcachefs-utils = mkIf cfg.allFeatures {
           enable = true;

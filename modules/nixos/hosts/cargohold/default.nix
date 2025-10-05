@@ -332,7 +332,7 @@ in
         };
         suites = {
           monitoring = enabled;
-          attic = {
+          loft = {
             enableClient = true;
           };
           bcachefs-utils = {

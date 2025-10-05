@@ -51,8 +51,8 @@ in
         };
 
         suites = {
-          attic = {
-            enableClient = true;
+          loft = {
+            enableClient = false;
           };
         };
 

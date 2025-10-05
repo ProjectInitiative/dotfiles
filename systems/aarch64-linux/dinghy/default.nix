@@ -76,7 +76,7 @@ in
     suites = {
       # TODO: fix this
       development.enable = true;
-      attic = {
+      loft = {
         enableClient = true;
       };
     };
