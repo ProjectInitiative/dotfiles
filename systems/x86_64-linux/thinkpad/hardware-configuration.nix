@@ -30,12 +30,12 @@
     };
 
     initrd = {
-      availableKernelModules = lib.mkForce [
+      availableKernelModules = [
         "xhci_pci"
         "thunderbolt"
         "nvme"
       ];
-      kernelModules = lib.mkForce [ "dm-snapshot" ];
+      kernelModules = [ "dm-snapshot" ];
       luks.devices = {
         "nixos" = {
           device = "/dev/disk/by-uuid/fb793780-923f-4f0d-bb9b-cead23745d39";
