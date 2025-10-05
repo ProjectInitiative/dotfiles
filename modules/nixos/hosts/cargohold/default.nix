@@ -346,7 +346,7 @@ in
           nix-config = enabled;
 
           bcachefs-kernel = {
-            enable = true;
+            enable = false;
             # rev = "";
             # hash = "";
             debug = true;

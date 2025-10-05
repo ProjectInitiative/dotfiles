@@ -31,7 +31,7 @@ let
 
     ${namespace}.system = {
       bcachefs-kernel = {
-        enable = true;
+        enable = false;
         debug = true;
       };
       bcachefs-module = {
@@ -170,7 +170,7 @@ lib.recursiveUpdate commonSystemConfig {
   disko = lib.recursiveUpdate coreDiskoConfig bcachefsDiskoConfig;
 
   ${namespace} = {
-    suites.attic.enableServer = true;
+    suites.attic.enableServer = false;
 
     hosts.capstan = {
       enable = true;

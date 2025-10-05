@@ -31,7 +31,7 @@ let
 
     ${namespace}.system = {
       bcachefs-kernel = {
-        enable = true;
+        enable = false;
         debug = true;
       };
       bcachefs-module = {
