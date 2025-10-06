@@ -169,6 +169,7 @@ in
       };
       suites = {
         monitoring = enabled;
+        loft.enableClient = true;
       };
 
       system = {
@@ -178,7 +179,7 @@ in
       services = {
 
         attic.client = {
-          enable = true;
+          enable = false;
           cacheName = defaultAtticSettings.cacheName;
           serverUrl = defaultAtticSettings.serverUrl;
           publicKey = defaultAtticSettings.publicKey;
