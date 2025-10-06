@@ -1,4 +1,3 @@
-
 # /modules/nixos/suites/loft/default.nix
 { config, lib, pkgs, namespace, inputs, ... }:
 
@@ -16,6 +15,7 @@ in
 
     enableClient = mkBoolOpt false "Enable the Loft client configuration for this host.";
     enableServer = mkBoolOpt false "Enable the Loft server (uploader) configuration for this host.";
+    trustKeyOnly = mkBoolOpt false "Only trust the Loft binary cache public key on this host.";
 
     settings = {
       s3 = {
@@ -101,6 +101,11 @@ in
           ];
         };
       };
+    })
+
+    # === Trust Key Only Configuration ===
+    (mkIf cfg.trustKeyOnly {
+      nix.settings.trusted-public-keys = [ cfg.settings.publicKey ];
     })
 
     # === Server Configuration ===

@@ -169,7 +169,8 @@ in
       };
       suites = {
         monitoring = enabled;
-        loft.enableClient = true;
+        # Only add the trusted key, don't add access to the binary cache
+        loft.trustKeyOnly = true;
       };
 
       system = {
