@@ -54,24 +54,13 @@ in
 
   # --- Configuration Logic ---
   config = mkIf cfg.enable (mkMerge [
-    {
-      # Unified secrets definition to avoid conflicts.
-      sops.secrets = {
-        # Client-specific secrets for pulling.
-        loft-puller-access-key = mkIf cfg.enableClient { sopsFile = ../../../common/encrypted/secrets/secrets.enc.yaml; };
-        loft-puller-secret-key = mkIf cfg.enableClient { sopsFile = ../../../common/encrypted/secrets/secrets.enc.yaml; };
-
-        # Pusher secrets, needed by server and by client (for credentials file).
-        loft-pusher-access-key = mkIf (cfg.enableClient || cfg.enableServer) { sopsFile = ../../../common/encrypted/secrets/secrets.enc.yaml; };
-        loft-pusher-secret-key = mkIf (cfg.enableClient || cfg.enableServer) { sopsFile = ../../../common/encrypted/secrets/secrets.enc.yaml; };
-
-        # Server-specific secret for signing.
-        loft-signing-key = mkIf cfg.enableServer { sopsFile = ../../../common/encrypted/secrets/secrets.enc.yaml; };
-      };
-    }
 
     # === Client Configuration ===
     (mkIf cfg.enableClient {
+      sops.secrets = {
+        loft-puller-access-key = { sopsFile = ../../../common/encrypted/secrets/secrets.enc.yaml; };
+        loft-puller-secret-key = { sopsFile = ../../../common/encrypted/secrets/secrets.enc.yaml; };
+      };
       # Generate the AWS credentials file from sops secrets
       sops.templates."loft-aws-credentials.ini" = {
         mode = "0440";
@@ -79,9 +68,11 @@ in
           [nix-cache-puller]
           aws_access_key_id = ${config.sops.placeholder."loft-puller-access-key"}
           aws_secret_access_key = ${config.sops.placeholder."loft-puller-secret-key"}
+          ${mkIf cfg.enableServer ''
           [nix-cache-pusher]
           aws_access_key_id = ${config.sops.placeholder."loft-pusher-access-key"}
           aws_secret_access_key = ${config.sops.placeholder."loft-pusher-secret-key"}
+          ''}
         '';
       };
 
@@ -110,6 +101,13 @@ in
 
     # === Server Configuration ===
     (mkIf cfg.enableServer {
+
+      sops.secrets = {
+        loft-pusher-access-key = { sopsFile = ../../../common/encrypted/secrets/secrets.enc.yaml; };
+        loft-pusher-secret-key = { sopsFile = ../../../common/encrypted/secrets/secrets.enc.yaml; };
+        loft-signing-key = { sopsFile = ../../../common/encrypted/secrets/secrets.enc.yaml; };
+      };
+
       # Configure the Loft service using the suite's options
       services.loft = {
         enable = true;

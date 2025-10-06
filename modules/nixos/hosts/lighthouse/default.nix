@@ -170,7 +170,10 @@ in
       suites = {
         monitoring = enabled;
         # Only add the trusted key, don't add access to the binary cache
-        loft.trustKeyOnly = true;
+        loft = {
+          enable = true;
+          trustKeyOnly = true;
+        };
       };
 
       system = {
