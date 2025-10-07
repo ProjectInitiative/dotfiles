@@ -52,7 +52,7 @@ in
 
         suites = {
           loft = {
-            enableClient = false;
+            enableClient = true;
           };
         };
 

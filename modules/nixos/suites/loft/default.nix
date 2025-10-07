@@ -62,17 +62,13 @@ in
         loft-puller-secret-key = { sopsFile = ../../../common/encrypted/secrets/secrets.enc.yaml; };
       };
       # Generate the AWS credentials file from sops secrets
+      # TODO: make this optional only if keys are provided. Otherwise don't create
       sops.templates."loft-aws-credentials.ini" = {
         mode = "0440";
         content = ''
           [nix-cache-puller]
           aws_access_key_id = ${config.sops.placeholder."loft-puller-access-key"}
           aws_secret_access_key = ${config.sops.placeholder."loft-puller-secret-key"}
-          ${mkIf cfg.enableServer ''
-          [nix-cache-pusher]
-          aws_access_key_id = ${config.sops.placeholder."loft-pusher-access-key"}
-          aws_secret_access_key = ${config.sops.placeholder."loft-pusher-secret-key"}
-          ''}
         '';
       };
 
