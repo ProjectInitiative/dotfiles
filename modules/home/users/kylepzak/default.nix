@@ -148,8 +148,8 @@ in
         fi
 
         local bucket_name="$1"
-        local rw_key_name="${bucket_name}-rw"
-        local ro_key_name="${bucket_name}-ro"
+        local rw_key_name="''${bucket_name}-rw"
+        local ro_key_name="''${bucket_name}-ro"
         # The alias is defined as: kubectl --context=capstan exec -n garage -c garage -it garage-0 -- /garage
         # Removing -it for scripting. Also, this assumes garage-0 is the correct pod.
         local garage_exec="kubectl --context=capstan exec -n garage -c garage garage-0 -- /garage"
@@ -157,20 +157,20 @@ in
         echo "Creating bucket: $bucket_name"
         $garage_exec bucket create "$bucket_name"
 
-        echo "Creating read-write key: $rw_key_name. Saving to ${bucket_name}-rw.key.txt"
-        $garage_exec key create "$rw_key_name" | tee "${bucket_name}-rw.key.txt"
+        echo "Creating read-write key: $rw_key_name. Saving to ''${bucket_name}-rw.key.txt"
+        $garage_exec key create "$rw_key_name" | tee "''${bucket_name}-rw.key.txt"
 
         echo "Granting read-write access to $bucket_name for key $rw_key_name"
         $garage_exec bucket allow "$bucket_name" --key "$rw_key_name" --read --write
 
-        echo "Creating read-only key: $ro_key_name. Saving to ${bucket_name}-ro.key.txt"
-        $garage_exec key create "$ro_key_name" | tee "${bucket_name}-ro.key.txt"
+        echo "Creating read-only key: $ro_key_name. Saving to ''${bucket_name}-ro.key.txt"
+        $garage_exec key create "$ro_key_name" | tee "''${bucket_name}-ro.key.txt"
 
         echo "Granting read-only access to $bucket_name for key $ro_key_name"
         $garage_exec bucket allow "$bucket_name" --key "$ro_key_name" --read
 
         echo "Bucket '$bucket_name' created with read-write key '$rw_key_name' and read-only key '$ro_key_name'."
-        echo "Credentials have been saved to ${bucket_name}-rw.key.txt and ${bucket_name}-ro.key.txt in the current directory."
+        echo "Credentials have been saved to ''${bucket_name}-rw.key.txt and ''${bucket_name}-ro.key.txt in the current directory."
       }
     '';
 
