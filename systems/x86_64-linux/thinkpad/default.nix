@@ -434,7 +434,8 @@ in
   # Enable CUPS to print documents.
   services.printing.enable = true;
 
-  users.users.kylepzak.extraGroups = [ "tss" ]; # tss group has access to TPM devices
+  programs.adb.enable = true;
+  users.users.kylepzak.extraGroups = [ "tss" "adbusers" ]; # tss group has access to TPM devices
 
   services.pipewire = {
     enable = mkForce true;

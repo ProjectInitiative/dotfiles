@@ -24,26 +24,25 @@ in
     services = {
       xserver = {
         enable = true;
+      };
 
-        displayManager = {
-          gdm = {
-            enable = true;
-            wayland = mkIf xorg.enable false;
-          };
+      displayManager = {
+        gdm = {
+          enable = true;
+          wayland = mkIf xorg.enable false;
         };
+      };
 
-        desktopManager = {
-          gnome = {
-            enable = true;
-            extraGSettingsOverrides = ''
-              [org.gnome.mutter]
-              edge-tiling=true
-              [org.gnome.desktop.wm.preferences]
-              button-layout=':minimize,maximize,close'
-            '';
-          };
+      desktopManager = {
+        gnome = {
+          enable = true;
+          extraGSettingsOverrides = ''
+            [org.gnome.mutter]
+            edge-tiling=true
+            [org.gnome.desktop.wm.preferences]
+            button-layout=':minimize,maximize,close'
+          '';
         };
-
       };
     };
 

@@ -22,6 +22,10 @@
     # Hardware Configuration
     nixos-hardware.url = "github:nixos/nixos-hardware";
 
+    # Package pinning:
+    # old nixpkgs just for bambu-studio
+    nixpkgs-bambu.url = "github:NixOS/nixpkgs/4697fbbba609";
+
     # pull in base image builder
     nixos-on-arm = {
       url = "github:projectinitiative/nixos-on-arm";
