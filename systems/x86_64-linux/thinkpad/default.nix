@@ -384,7 +384,7 @@ in
     solaar
     # spotify
     mtr
-    virtualbox
+    # virtualbox
     vlc
     wireshark
     mqttx

@@ -29,7 +29,6 @@
     # pull in base image builder
     nixos-on-arm = {
       url = "github:projectinitiative/nixos-on-arm";
-      inputs.nixpkgs.follows = "unstable";
     };
 
     # Generate System Images
@@ -90,7 +89,6 @@
     # Binary Cache
     loft = {
       url = "github:projectinitiative/loft";
-      inputs.nixpkgs.follows = "unstable";
     };
 
     attic = {
