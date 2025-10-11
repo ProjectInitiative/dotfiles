@@ -188,7 +188,7 @@ in
 
   # enable displaylink
   services.xserver.videoDrivers = [
-    "displaylink"
+    # "displaylink"
     "modesetting"
   ];
 
