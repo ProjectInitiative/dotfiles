@@ -20,7 +20,7 @@ in
   ${namespace}.hosts.lighthouse = {
     enable = true;
     role = "server"; # This is the master node
-    k8sServerAddr = "https://100.94.107.39:6443";
+    k8sServerAddr = "https://100.100.250.2:6443";
   };
 
   # Disko configuration for a single disk with LVM
