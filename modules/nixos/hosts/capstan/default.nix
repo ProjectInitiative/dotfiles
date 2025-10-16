@@ -193,9 +193,9 @@ in
 
     environment.etc."rancher/k3s/registries.yaml".text = ''
       mirrors:
-        "172.16.1.50:32239":
+        "172.16.1.50:31872":
           endpoint:
-            - "http://172.16.1.50:32239"
+            - "http://172.16.1.50:31872"
     '';
 
     fileSystems."/jfs-cache" = mkIf cfg.allFeatures {
