@@ -200,6 +200,7 @@ in
   virtualisation.docker.extraOptions="--insecure-registry 172.16.1.50:31872";
 
   home-manager = {
+
     backupFileExtension = "backup";
     users.kylepzak.${namespace} = {
       suites = {
@@ -439,11 +440,22 @@ in
   programs.adb.enable = true;
   users.users.kylepzak.extraGroups = [ "tss" "adbusers" ]; # tss group has access to TPM devices
 
+
+  # rtkit is optional but recommended
+  security.rtkit.enable = true;
   services.pipewire = {
     enable = mkForce true;
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
+    wireplumber.extraConfig.bluetoothEnhancements = {
+      "monitor.bluez.properties" = {
+        "bluez5.enable-sbc-xq" = true;
+        "bluez5.enable-msbc" = true;
+        "bluez5.enable-hw-volume" = true;
+        "bluez5.roles" = [ "hsp_hs" "hsp_ag" "hfp_hf" "hfp_ag" ];
+      };
+    };
   };
 
   # Enable sound with pipewire.
@@ -467,4 +479,24 @@ in
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   # system.stateVersion = "24.11"; # Did you read the comment?
+
+  specialisation.safe = {
+    configuration = {
+      system.stateVersion = "25.05";
+      fileSystems = lib.mkForce {
+        "/" = {
+          device = "/dev/disk/by-uuid/04f9ecc2-bb20-415f-aff5-c54285523fd3";
+          fsType = "ext4";
+        };
+        "/boot" = {
+          device = "/dev/disk/by-partuuid/05399427-3ed0-4da7-bd08-740ddb6ce486";
+          fsType = "vfat";
+        };
+        "/home/kylepzak" = {
+          fsType = "tmpfs";
+          options = [ "defaults" "size=2g" ];
+        };
+      };
+    };
+  };
 }
