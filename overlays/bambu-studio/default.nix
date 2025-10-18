@@ -25,6 +25,17 @@ self: super: {
       gst_all_1.gst-plugins-good
       webkitgtk_4_1
     ];
+
+    desktopItems = [
+      (super.makeDesktopItem {
+        name = "bambu-studio";
+        exec = "bambu-studio";
+        icon = "bambu-studio"; # TODO: package the icon
+        desktopName = "Bambu Studio";
+        genericName = "3D Printer Slicer";
+        categories = [ "3DGraphics" "Development" ];
+      })
+    ];
   };
 }
 # final: prev:

@@ -21,6 +21,7 @@ in
   config = mkIf (cfg.enable && isGraphical) {
     home = {
       packages = with pkgs; [
+        prusa-slicer
         bambu-studio
         gimp
         inkscape
