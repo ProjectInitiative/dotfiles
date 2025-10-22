@@ -145,4 +145,22 @@ lib.recursiveUpdate commonSystemConfig {
       projectinitiative.services.bcachefsRereplicateAuto.enable = mkForce false;
     };
   };
+
+  # Specialization for manual debugging - disables RTC wake functionality
+  specialisation.disable-rtcwake = {
+    configuration = lib.recursiveUpdate commonSystemConfig {
+      # Keep all functionality but disable RTC wake for manual access
+      projectinitiative.hosts.cargohold = {
+        enable = true;
+        # Keep the same bcachefs mountpoint as the main configuration
+        bcachefsMountpoint = mountpoint;
+      };
+      
+      # Disable RTC wake functionality for debugging
+      services.sync-host = {
+        disableRTCWake = true; # This will prevent automatic shutdown
+        powerOff = false; # Don't power off automatically
+      };
+    };
+  };
 }

@@ -367,6 +367,19 @@ in
         # Add other services like Samba, NFS configuration here
         # services.samba = { enable = true; /* ... */ };
       };
+      
+      # Enable the sync-host service for automated backup tasks
+      services.sync-host = {
+        enable = true;
+        # Configure rclone remotes for backup (example configuration)
+        rcloneRemotes = [ ]; # Add your rclone remotes here
+        rcloneConfig = ""; # Add your rclone configuration here
+        powerOff = true; # Power off after sync completion
+        disableRTCWake = false; # Enable RTC wake by default
+        wakeUpDelay = "24h"; # Wake up every 24 hours
+        localTargetPath = "/mnt/storage/backups";
+        bcachefsMountpoint = config.${namespace}.hosts.cargohold.bcachefsMountpoint;
+      };
 
       # Set the state version
       system.stateVersion = "24.05"; # Adjust as needed

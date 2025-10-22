@@ -1064,6 +1064,21 @@
         "type": "github"
       }
     },
+    "nixos-hardware_2": {
+      "locked": {
+        "lastModified": 1760106635,
+        "narHash": "sha256-2GoxVaKWTHBxRoeUYSjv0AfSOx4qw5CWSFz2b+VolKU=",
+        "owner": "NixOS",
+        "repo": "nixos-hardware",
+        "rev": "9ed85f8afebf2b7478f25db0a98d0e782c0ed903",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixos-hardware",
+        "type": "github"
+      }
+    },
     "nixos-on-arm": {
       "inputs": {
         "disko": "disko_2",
@@ -1197,6 +1212,22 @@
     },
     "nixpkgs_6": {
       "locked": {
+        "lastModified": 1760524057,
+        "narHash": "sha256-EVAqOteLBFmd7pKkb0+FIUyzTF61VKi7YmvP1tw4nEw=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "544961dfcce86422ba200ed9a0b00dd4b1486ec5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_7": {
+      "locked": {
         "lastModified": 1759570798,
         "narHash": "sha256-kbkzsUKYzKhuvMOuxt/aTwWU2mnrwoY964yN3Y4dE98=",
         "owner": "NixOS",
@@ -1211,7 +1242,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_7": {
+    "nixpkgs_8": {
       "locked": {
         "lastModified": 1700794826,
         "narHash": "sha256-RyJTnTNKhO0yqRpDISk03I/4A67/dp96YRxc86YOPgU=",
@@ -1229,12 +1260,8 @@
     },
     "rockpi-quad": {
       "inputs": {
-        "nixos-hardware": [
-          "nixos-hardware"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ]
+        "nixos-hardware": "nixos-hardware_2",
+        "nixpkgs": "nixpkgs_6"
       },
       "locked": {
         "lastModified": 1754669800,
@@ -1465,7 +1492,7 @@
     },
     "sops-nix": {
       "inputs": {
-        "nixpkgs": "nixpkgs_6"
+        "nixpkgs": "nixpkgs_7"
       },
       "locked": {
         "lastModified": 1759635238,
@@ -1615,7 +1642,7 @@
     },
     "thaw": {
       "inputs": {
-        "nixpkgs": "nixpkgs_7",
+        "nixpkgs": "nixpkgs_8",
         "snowfall-lib": "snowfall-lib_6"
       },
       "locked": {
