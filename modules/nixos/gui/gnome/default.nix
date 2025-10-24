@@ -38,6 +38,7 @@ in
           enable = true;
           extraGSettingsOverrides = ''
             [org.gnome.mutter]
+            check-alive-timeout=15000
             edge-tiling=true
             [org.gnome.desktop.wm.preferences]
             button-layout=':minimize,maximize,close'

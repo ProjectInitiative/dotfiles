@@ -1714,11 +1714,11 @@
     },
     "upstream": {
       "locked": {
-        "lastModified": 1760041025,
-        "narHash": "sha256-dL+HctMG/Eh9VxgEoIRFGI2rtK/DeVYds41eytTs6uo=",
+        "lastModified": 1761276502,
+        "narHash": "sha256-XHCwl2A4lDWzaTEd6C1v6FXUJveLTctzOzpmBbp1cd8=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "090fe40cb236b697d15538ec75b39d021e9dc0e1",
+        "rev": "e56c8c71d8aee0ca9ef7dd9cd9c7e7579d49e6b6",
         "type": "github"
       },
       "original": {

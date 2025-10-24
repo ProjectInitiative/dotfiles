@@ -192,6 +192,24 @@ in
 
     in
     {
+      sops = {
+        secrets = {
+          readonly_backup_access_key_id = {};
+          readonly_backup_secret_access_key = {};
+        };
+        templates."rclone.conf" = {
+          mode = "0400";
+          content = ''
+            [s3]
+            type = s3
+            access_key_id = ${config.sops.placeholder."readonly_backup_access_key_id"}
+            secret_access_key = ${config.sops.placeholder."readonly_backup_secret_access_key"}
+            provider = Other
+            s3_force_path_style = true
+            endpoint = http://172.16.1.50:31292
+          '';
+        };
+      };
 
       # --- Systemd Service Definition ---
       systemd.services.hddFanControl = {
@@ -372,13 +390,13 @@ in
       services.sync-host = {
         enable = true;
         # Configure rclone remotes for backup (example configuration)
-        rcloneRemotes = [ ]; # Add your rclone remotes here
-        rcloneConfig = ""; # Add your rclone configuration here
+        rcloneRemotes = [ "s3" ]; # Add your rclone remotes here
+        rcloneConfigPath = config.sops.templates."rclone.conf".path; # Path to rclone config template
         powerOff = true; # Power off after sync completion
         disableRTCWake = false; # Enable RTC wake by default
-        wakeUpDelay = "24h"; # Wake up every 24 hours
-        localTargetPath = "/mnt/storage/backups";
-        bcachefsMountpoint = config.${namespace}.hosts.cargohold.bcachefsMountpoint;
+        wakeUpDelay = "168h"; # Wake up a week after last backup
+        coolOffTime = "24h"; # Wait 24 hour after sync completion before shutdown for filesystem operations
+        localTargetPath = "/mnt/pool/rclone/";
       };
 
       # Set the state version
