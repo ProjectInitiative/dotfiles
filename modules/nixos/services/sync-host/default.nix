@@ -148,9 +148,6 @@ let
             result = subprocess.run(command, check=True, capture_output=True, text=True)
             logging.info("Successfully started bcachefs snapshot creation. Waiting for it to complete...")
             logging.debug(f"Stdout: {result.stdout}")
-            # Wait for the snapshot service to complete.
-            # PROBABLY DON'T NEED THIS AS BCACHEFS SNAPSHOTS ARE INSTANT
-            # wait_for_bcachefs_services()
             return True
         except subprocess.CalledProcessError as e:
             logging.error(f"Error starting bcachefs snapshot creation: {e}")
@@ -360,14 +357,19 @@ in
         ${pkgs.python3}/bin/python3 ${syncScriptPath} ${if cfg.debug then "--debug" else ""} ${if cfg.dryRun then "--dry-run" else ""}
       '';
 
-      serviceConfig = {
-        Type = "oneshot";
-        User = "root";  # Run as root to access system functions and write to protected locations
-        Restart = "no";
-        TimeoutSec = "4h";  # Allow up to 4 hours for sync operations
-        StandardOutput = "journal";
-        StandardError = "journal";
+        serviceConfig = {
+            Type = "simple";           # 👈 Run in background (doesn't block boot)
+            User = "root";
+            Restart = "on-failure";    # 🔁 Retry if the script fails
+            RestartSec = "60s";        # Wait 60 seconds before retry
+            StartLimitIntervalSec = 600; # 10-minute failure window
+            StartLimitBurst = 3;       # Max 3 retries in that window
+            StandardOutput = "journal";
+            StandardError = "journal";
       };
+
+      # Run once automatically after boot (non-blocking)
+      wantedBy = [ "multi-user.target" ];
     };
 
     # Timer to trigger the sync service periodically (when not using RTC wake)
