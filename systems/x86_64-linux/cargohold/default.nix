@@ -159,7 +159,6 @@ lib.recursiveUpdate commonSystemConfig {
       # Disable RTC wake functionality for debugging
       services.sync-host = {
         disableRTCWake = mkForce true; # This will prevent automatic shutdown
-        powerOff = mkForce false; # Don't power off automatically
       };
     };
   };

@@ -15,10 +15,12 @@ let
     import os
     import concurrent.futures
     import time
-    from datetime import datetime
+    from datetime import datetime, timedelta
+    import re
     import logging
     import argparse
     import shlex
+    from pytimeparse2 import parse as parse_duration
 
     # Configuration passed from Nix
     RCLONE_BIN = "${pkgs.rclone}/bin/rclone"
@@ -27,7 +29,6 @@ let
     LOCAL_TARGET = "${cfg.localTargetPath}"
     WAKEUP_DELAY = "${cfg.wakeUpDelay}"
     COOL_OFF_TIME = "${cfg.coolOffTime}"
-    SHOULD_POWER_OFF = ${if cfg.powerOff then "True" else "False"}
     DISABLE_RTC_WAKE = ${if cfg.disableRTCWake then "True" else "False"}
     MAX_WORKERS = ${toString cfg.maxWorkers}
 
@@ -67,6 +68,11 @@ let
             target_dir  # Local target directory
         ]
 
+        if DRY_RUN:
+            logging.info(f"[DRY-RUN] Would sync {remote} to {target_dir}")
+            logging.info(f"[DRY-RUN] Command would be: {shlex.join(command)}")
+            return True  # Return success in dry-run mode
+            
         logging.debug(f"Running command: {shlex.join(command)}")
         try:
             # Run the rclone command
@@ -132,47 +138,54 @@ let
         
         logging.info("All bcachefs services completed, safe to proceed with shutdown")
 
+    def create_bcachefs_snapshot():
+        """Creates a bcachefs snapshot by starting the systemd service."""
+        # TODO: Consolidate bcachefs snapshot management with the external module.
+        logging.info("Creating bcachefs snapshot...")
+        command = ["${pkgs.systemd}/bin/systemctl", "start", "bcachefs-snap-create.service"]
+        logging.debug(f"Running command: {shlex.join(command)}")
+        try:
+            result = subprocess.run(command, check=True, capture_output=True, text=True)
+            logging.info("Successfully started bcachefs snapshot creation. Waiting for it to complete...")
+            logging.debug(f"Stdout: {result.stdout}")
+            # Wait for the snapshot service to complete.
+            # PROBABLY DON'T NEED THIS AS BCACHEFS SNAPSHOTS ARE INSTANT
+            # wait_for_bcachefs_services()
+            return True
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Error starting bcachefs snapshot creation: {e}")
+            logging.error(f"Stderr: {e.stderr}")
+            return False
+
     def set_next_wakeup():
         """Sets the RTC alarm and shuts down the system."""
         if DISABLE_RTC_WAKE:
             logging.warning("RTC wake disabled for debugging. Skipping power off and wake scheduling.")
             return
-        if not SHOULD_POWER_OFF:
-            logging.info("Power off is disabled. Exiting.")
-            return
-
-        # First wait for any running bcachefs services to complete
-        wait_for_bcachefs_services()
 
         # Add cool-off time before shutdown to allow filesystem operations to complete
         if COOL_OFF_TIME != "0s":
             logging.info(f"Waiting for cool-off period: {COOL_OFF_TIME}")
-            # Parse the cool-off time using date command to handle various formats like "1h", "30m", etc.
-            date_command = ["${pkgs.coreutils}/bin/date", "+%s", "-d", f"now + {COOL_OFF_TIME}"]
-            logging.debug(f"Running command: {shlex.join(date_command)}")
-            cool_off_seconds = subprocess.check_output(date_command, text=True).strip()
+            # Parse the cool-off time and sleep for that duration
+            cool_off_seconds = parse_duration(COOL_OFF_TIME)
+            logging.info(f"Sleeping for {cool_off_seconds} seconds before shutdown...")
+            time.sleep(cool_off_seconds)
 
-            date_command = ["${pkgs.coreutils}/bin/date", "+%s"]
-            logging.debug(f"Running command: {shlex.join(date_command)}")
-            current_time = int(subprocess.check_output(date_command, text=True).strip())
-            sleep_seconds = int(cool_off_seconds) - current_time
-            if sleep_seconds > 0:
-                logging.info(f"Sleeping for {sleep_seconds} seconds before shutdown...")
-                time.sleep(sleep_seconds)
-            else:
-                logging.warning("Cool-off time is in the past, continuing immediately...")
+        # finally wait for any running bcachefs services to complete
+        wait_for_bcachefs_services()
 
         try:
             # Calculate the wake-up time and set the alarm, then power off
-            date_command = ["${pkgs.coreutils}/bin/date", "+%s", "-d", f"now + {WAKEUP_DELAY}"]
-            logging.debug(f"Running command: {shlex.join(date_command)}")
-            wakeup_time = subprocess.check_output(date_command, text=True).strip()
+            # Calculate the future time based on the delay from now
+            wakeup_delay_seconds = parse_duration(WAKEUP_DELAY)
+            future_time = datetime.now() + timedelta(seconds=wakeup_delay_seconds)
+            wakeup_timestamp = int(future_time.timestamp())
 
             # Execute rtcwake command
             rtcwake_command = [
                 "${pkgs.util-linux}/bin/rtcwake",
                 "-m", "off",  # Power off mode
-                "-t", wakeup_time
+                "-t", str(wakeup_timestamp)
             ]
 
             logging.info(f"Scheduled next wake-up with: {shlex.join(rtcwake_command)}")
@@ -187,9 +200,19 @@ let
     def main():
         parser = argparse.ArgumentParser(description="Sync host script.")
         parser.add_argument("--debug", action="store_true", help="Enable debug logging.")
+        parser.add_argument("--dry-run", action="store_true", help="Enable dry-run mode, skipping actual sync operations.")
         args = parser.parse_args()
 
         setup_logging(args.debug)
+        
+        # Set global dry-run flag so other functions can access it
+        global DRY_RUN
+        DRY_RUN = args.dry_run
+
+        # Manually trigger a snapshot before syncing.
+        if not create_bcachefs_snapshot():
+            logging.error("Failed to create bcachefs snapshot. Aborting sync.")
+            sys.exit(1)
 
         success_count = 0
         failure_count = 0
@@ -259,25 +282,7 @@ in
       default = "";
       description = "Path to rclone configuration file. Use this for SOPS secrets instead of embedding in nix store.";
     };
-
-    preSyncScripts = mkOption {
-      type = types.listOf types.str;
-      default = [];
-      description = "List of scripts to run before the sync.";
-    };
-
-    postSyncScripts = mkOption {
-      type = types.listOf types.str;
-      default = [];
-      description = "List of scripts to run after the sync.";
-    };
-
-    powerOff = mkOption {
-      type = types.bool;
-      default = true;
-      description = "Power off the machine after the sync is complete.";
-    };
-    
+   
     disableRTCWake = mkOption {
       type = types.bool;
       default = false;
@@ -320,7 +325,11 @@ in
       description = "Enable debug logging for the sync-host script.";
     };
 
-
+    dryRun = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Enable dry run mode for rclone sync operations.";
+    };
 
     backupTasks = mkOption {
       type = types.listOf types.attrs;
@@ -332,10 +341,12 @@ in
   config = mkIf cfg.enable {
     environment.systemPackages = with pkgs; [
       rclone
-      python3
       util-linux
       coreutils
       systemd
+      (pkgs.python3.withPackages (ps: with ps; [
+        pytimeparse2
+      ]))
     ];
 
     # rcloneConfigFile is not needed since we pass the path directly to the script
@@ -346,7 +357,7 @@ in
       after = [ "network-online.target" ];
 
       script = ''
-        ${pkgs.python3}/bin/python3 ${syncScriptPath} ${if cfg.debug then "--debug" else ""}
+        ${pkgs.python3}/bin/python3 ${syncScriptPath} ${if cfg.debug then "--debug" else ""} ${if cfg.dryRun then "--dry-run" else ""}
       '';
 
       serviceConfig = {
@@ -360,7 +371,7 @@ in
     };
 
     # Timer to trigger the sync service periodically (when not using RTC wake)
-    systemd.timers."sync-host" = mkIf (!cfg.powerOff) {  # Only create timer if not powering off
+    systemd.timers."sync-host" = mkIf (cfg.disableRTCWake) {  # Only create timer if not powering off
       description = "Timer for sync-host service";
       wantedBy = [ "timers.target" ];
       timerConfig = {

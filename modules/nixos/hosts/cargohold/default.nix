@@ -392,7 +392,6 @@ in
         # Configure rclone remotes for backup (example configuration)
         rcloneRemotes = [ "s3" ]; # Add your rclone remotes here
         rcloneConfigPath = config.sops.templates."rclone.conf".path; # Path to rclone config template
-        powerOff = true; # Power off after sync completion
         disableRTCWake = false; # Enable RTC wake by default
         wakeUpDelay = "168h"; # Wake up a week after last backup
         coolOffTime = "24h"; # Wait 24 hour after sync completion before shutdown for filesystem operations
