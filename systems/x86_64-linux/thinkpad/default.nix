@@ -185,12 +185,20 @@ in
   # #     --setup-key-file ${config.sops.secrets.netbird_setup_key.path}
   # # '';
 
+  services.comin = {
+    enable = true;
+    remotes = [{
+      name = "origin";
+      url = "https://github.com/projectinitiative/dotfiles.git";
+      branches.main.name = "comin-testing";
+    }];
+  };
 
-  # enable displaylink
-  services.xserver.videoDrivers = [
-    # "displaylink"
-    "modesetting"
-  ];
+  # # enable displaylink
+  # services.xserver.videoDrivers = [
+  #   # "displaylink"
+  #   "modesetting"
+  # ];
 
   # add second monitor
   services.xserver.displayManager.sessionCommands = ''

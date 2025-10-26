@@ -31,6 +31,11 @@
       url = "github:projectinitiative/nixos-on-arm";
     };
 
+    # GitOps
+    comin = {
+      url = "github:projectinitiative/comin";
+    };
+
     # Generate System Images
     nixos-generators.url = "github:nix-community/nixos-generators";
     nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
@@ -317,6 +322,7 @@
                 )
                 disko.nixosModules.disko
                 home-manager.nixosModules.home-manager
+                comin.nixosModules.comin
                 # nix-ld.nixosModules.nix-ld
                 sops-nix.nixosModules.sops
                 loft.nixosModules.loft
