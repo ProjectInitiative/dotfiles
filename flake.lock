@@ -121,15 +121,16 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1761442480,
-        "narHash": "sha256-KNjHD1+a82RZ92T8uCxL71JTiv38TPKKfK8SBD8031w=",
+        "lastModified": 1761447496,
+        "narHash": "sha256-YTYKS4WhmS0jmRPyCKocQqaue7ANKwSvn7hH8PuARZw=",
         "owner": "projectinitiative",
         "repo": "comin",
-        "rev": "9699f75d3293f9a7d333f4c4f8e5576c9a60b845",
+        "rev": "2af8b01cc039e56769c936fa17ba5c4a380f33c0",
         "type": "github"
       },
       "original": {
         "owner": "projectinitiative",
+        "ref": "wip/liveliness-and-bugs",
         "repo": "comin",
         "type": "github"
       }

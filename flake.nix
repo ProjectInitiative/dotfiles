@@ -33,7 +33,8 @@
 
     # GitOps
     comin = {
-      url = "github:projectinitiative/comin";
+      # url = "github:projectinitiative/comin";
+      url = "github:projectinitiative/comin/wip/liveliness-and-bugs";
     };
 
     # Generate System Images
