@@ -192,7 +192,7 @@ in
       url = "https://github.com/projectinitiative/dotfiles.git";
       branches.main.name = "comin-testing";
     }];
-    livelinessCheckCommand = "curl --fail http://localhost:8080/health";
+    livelinessCheckCommand = "ping -c 5 google.com";
   };
 
   # # enable displaylink
