@@ -186,7 +186,6 @@ in
   # # '';
 
   services.comin = {
-
     enable = true;
     remotes = [{
       name = "origin";
