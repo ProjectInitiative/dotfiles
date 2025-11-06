@@ -191,7 +191,8 @@ in
         name = "comin-liveliness-check";
         runtimeInputs = [ pkgs.iputils ];
         text = ''
-          ping -c 5 google.com
+          # ping -c 5 google.com
+          curl --fail http://localhost:8080/health
         '';
       };
     in
