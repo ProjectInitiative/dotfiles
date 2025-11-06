@@ -245,6 +245,7 @@ in
       # Base system packages
       environment.systemPackages = with pkgs; [
         bcachefs-tools
+        linuxPackages_latest.perf
         smartmontools
         lsof
         pciutils
@@ -394,7 +395,7 @@ in
         rcloneConfigPath = config.sops.templates."rclone.conf".path; # Path to rclone config template
         disableRTCWake = false; # Enable RTC wake by default
         wakeUpDelay = "168h"; # Wake up a week after last backup
-        coolOffTime = "24h"; # Wait 24 hour after sync completion before shutdown for filesystem operations
+        coolOffTime = "4h"; # Wait 4 hour after sync completion before shutdown for filesystem operations
         localTargetPath = "/mnt/pool/rclone/";
       };
 

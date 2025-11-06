@@ -93,6 +93,7 @@ in
     // lib.optionalAttrs isHomeManager {
       home.sessionVariables = lib.mkIf cfg.defaultUserShell {
         SHELL = "${pkgs.zsh}/bin/zsh";
+        ET_NO_TELEMETRY = "1";
       };
 
       home.packages = with pkgs; [

@@ -87,6 +87,7 @@ def check_bcachefs_services():
 def wait_for_bcachefs_services():
     """Wait for any running bcachefs services before shutdown."""
     bcachefs_services = [
+        'bcachefs-rereplicate-mnt-pool.service',
         'bcachefs-scrub-mnt-pool.service',
         'bcachefs-snap-create.service', 
         'bcachefs-snap-prune.service'

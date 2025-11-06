@@ -83,6 +83,41 @@ in
 
     programs.zsh.enable = true;
 
+    # FAIL2BAN
+    services.fail2ban = {
+      enable = true;
+
+      # Global default: Ban after 5 failures
+      maxretry = 5;
+
+      # Global default: Ban for 24 hours (your preference)
+      bantime = "24h";
+
+      # Allowlist trusted IPs.
+      # ignoreIP = [
+      #   "10.0.0.0/8" "172.16.0.0/12" "192.168.0.0/16"
+      #   "8.8.8.8" # Example of a trusted static IP
+      # ];
+
+      # Exponential backoff for repeat offenders
+      bantime-increment = {
+        enable = true;
+        formula = "ban.Time * math.exp(float(ban.Count+1)*banFactor)/math.exp(1*banFactor)";
+        maxtime = "168h"; # Max ban of 1 week
+        overalljails = true;
+        # 'multipliers' line removed to fix conflict with 'formula'
+      };
+
+      jails = {
+        # CRITICAL: Protects SSH from brute-force scans and log spam
+        sshd.settings = {
+          enable = true;
+          # This jail will use your global 24h bantime and 5 maxretry
+        };
+
+      };
+    };
+
     # ROOT PASSWORD UNSETABLE
     users.users.root.hashedPassword = mkForce "!";
 
@@ -128,7 +163,8 @@ in
         enable = true;
         allowPing = false;
         allowedTCPPorts = [
-          22
+          # only SSH through tailscale
+          # 22
           # specific ports
           80
           443
@@ -137,6 +173,8 @@ in
         allowedUDPPorts = [
           # DNS
           53
+          # Tailscale
+          41641
         ];
         allowedUDPPortRanges = [ ];
       };
@@ -156,7 +194,6 @@ in
           enable = true;
           ephemeral = false;
           extraArgs = [
-            "--accept-dns=false"
             # "--accept-routes=true"
             # "--advertise-routes=10.0.0.0/24"
             # "--snat-subnet-routes=false"

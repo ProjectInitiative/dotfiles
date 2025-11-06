@@ -31,6 +31,8 @@
       url = "github:projectinitiative/nixos-on-arm";
     };
 
+    wrappers.url = "github:lassulus/wrappers";
+
     # GitOps
     comin = {
       # url = "github:projectinitiative/comin";

@@ -140,7 +140,13 @@ lib.recursiveUpdate commonSystemConfig {
         bcachefsMountpoint = lib.mkForce null; # Disable bcachefs mountpoint in core mode
       };
 
+
+      services.sync-host = {
+        enable = mkForce false;
+      };
+
       # Ensure bcachefs services are disabled in core specialization
+      projectinitiative.services.bcachefs-fs-options.settings = mkForce {};
       projectinitiative.services.bcachefsScrubAuto.enable = mkForce false;
       projectinitiative.services.bcachefsRereplicateAuto.enable = mkForce false;
     };

@@ -426,6 +426,7 @@ in
     wineWowPackages.waylandFull
 
     ani-cli
+    pkgs.${namespace}.stremio-linux-shell
     obs-studio
 
     pkgs.${namespace}.mcp-proxy-runner

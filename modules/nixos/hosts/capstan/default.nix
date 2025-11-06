@@ -461,7 +461,6 @@ in
             networkConfig = {
               DHCP = "no";
               Gateway = "172.16.1.1";
-              DNS = "172.16.1.1 1.1.1.1 9.9.9.9";
               IPv6AcceptRA = "no";
             };
             address = [

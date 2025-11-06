@@ -13,7 +13,9 @@
 
   home-manager.backupFileExtension = "backup";
 
-
+  environment.systemPackages = with pkgs; [
+    pkgs.${namespace}.rknpu2
+  ];
 
   programs.zsh.enable = true;
 
