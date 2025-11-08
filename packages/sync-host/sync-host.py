@@ -10,6 +10,8 @@ import re
 import logging
 import argparse
 import shlex
+import requests
+from pathlib import Path
 from pytimeparse2 import parse as parse_duration
 
 
@@ -17,6 +19,33 @@ def setup_logging(debug):
     """Sets up logging."""
     log_level = logging.DEBUG if debug else logging.INFO
     logging.basicConfig(level=log_level, format='%(asctime)s - %(levelname)s - %(message)s', stream=sys.stdout)
+
+
+def send_telegram_message(message, token, chat_id):
+    """Send a message to Telegram."""
+    if not token or not chat_id:
+        logging.warning("Telegram token or chat_id not provided. Skipping notification.")
+        return False
+
+    # Make sure the message doesn't exceed Telegram's limit
+    if len(message) > 4000:
+        message = message[:3950] + "...\n(Message truncated due to length limits)"
+        
+    try:
+        response = requests.post(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            data={
+                "chat_id": chat_id,
+                "text": message,
+                "parse_mode": "Markdown"
+            }
+        )
+        response.raise_for_status()
+        logging.info("Successfully sent Telegram message.")
+        return True
+    except Exception as e:
+        logging.error(f"Failed to send Telegram message: {str(e)}")
+        return False
 
 
 def run_rclone_sync(remote, rclone_config, local_target_path, dry_run):
@@ -202,10 +231,32 @@ def main():
                        help="Maximum number of concurrent sync operations")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging.")
     parser.add_argument("--dry-run", action="store_true", help="Enable dry-run mode, skipping actual sync operations.")
+    parser.add_argument("--send-to-telegram", action="store_true", help="Send status notifications to Telegram.")
+    parser.add_argument("--telegram-token-path", help="Path to the Telegram token file.")
+    parser.add_argument("--telegram-chat-id-path", help="Path to the Telegram chat ID file.")
     
     args = parser.parse_args()
 
     setup_logging(args.debug)
+
+    telegram_token = None
+    telegram_chat_id = None
+    if args.send_to_telegram:
+        try:
+            if args.telegram_token_path:
+                telegram_token = Path(args.telegram_token_path).read_text().strip()
+            if args.telegram_chat_id_path:
+                telegram_chat_id = Path(args.telegram_chat_id_path).read_text().strip()
+            
+            if not telegram_token or not telegram_chat_id:
+                logging.warning("Telegram token or chat ID path is missing.")
+                args.send_to_telegram = False
+        except Exception as e:
+            logging.error(f"Failed to read Telegram credentials: {e}")
+            args.send_to_telegram = False
+
+    if args.send_to_telegram:
+        send_telegram_message("🚀 Sync host process started.", telegram_token, telegram_chat_id)
     
     success_count = 0
     failure_count = 0
@@ -213,6 +264,8 @@ def main():
     # 1. Manually trigger a snapshot before syncing.
     if not create_bcachefs_snapshot():
         logging.error("Failed to create bcachefs snapshot. Aborting sync.")
+        if args.send_to_telegram:
+            send_telegram_message("❌ Failed to create bcachefs snapshot. Aborting sync.", telegram_token, telegram_chat_id)
         sys.exit(1)
 
     # 2. Run additional backup tasks (if any)
@@ -256,9 +309,24 @@ def main():
 
     # 5. Handle wake-up and power off (with bcachefs service checks)
     if failure_count == 0:
+        if args.send_to_telegram:
+            summary_message = (
+                f"✅ Sync host process completed successfully.\n"
+                f"Successful tasks: {success_count}\n"
+                f"Next wake-up in: {args.wake_up_delay}"
+            )
+            send_telegram_message(summary_message, telegram_token, telegram_chat_id)
         set_next_wakeup(args.wake_up_delay, args.cool_off_time, args.disable_rtc_wake)
     else:
         logging.error("Not powering off due to sync failures.")
+        if args.send_to_telegram:
+            summary_message = (
+                f"❌ Sync host process failed.\n"
+                f"Successful tasks: {success_count}\n"
+                f"Failed tasks: {failure_count}\n"
+                f"System will not be powered off."
+            )
+            send_telegram_message(summary_message, telegram_token, telegram_chat_id)
         sys.exit(1)
 
 

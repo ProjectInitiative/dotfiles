@@ -390,6 +390,10 @@ in
       # Enable the sync-host service for automated backup tasks
       services.sync-host = {
         enable = true;
+        telegram = {
+          tokenPath = config.sops.secrets.health_reporter_bot_api_token.path;
+          chatIdPath = config.sops.secrets.telegram_chat_id.path;
+        };
         # Configure rclone remotes for backup (example configuration)
         rcloneRemotes = [ "s3" ]; # Add your rclone remotes here
         rcloneConfigPath = config.sops.templates."rclone.conf".path; # Path to rclone config template

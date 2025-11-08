@@ -107,6 +107,19 @@ services.sync-host = {
 - **Default**: `[]`
 - **Description**: List of additional backup tasks to run
 
+#### `telegram.enable`
+- **Type**: `bool`
+- **Default**: `false`
+- **Description**: Enable Telegram notifications for sync-host.
+
+#### `telegram.tokenPath`
+- **Type**: `path`
+- **Description**: Path to the file containing the Telegram bot token.
+
+#### `telegram.chatIdPath`
+- **Type**: `path`
+- **Description**: Path to the file containing the Telegram chat ID.
+
 ## Operation
 
 The sync-host service implements the following workflow:

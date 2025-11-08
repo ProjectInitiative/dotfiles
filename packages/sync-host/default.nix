@@ -6,6 +6,7 @@ let
   pythonEnv = pkgs.python3.withPackages (
     ps: with ps; [
       pytimeparse2
+      requests
     ]
   );
 in

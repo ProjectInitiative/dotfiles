@@ -10,5 +10,6 @@ pkgs.mkShell {
     systemd
     coreutils
     python3Packages.pytimeparse2
+    python3Packages.requests
   ];
 }

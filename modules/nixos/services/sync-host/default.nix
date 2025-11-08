@@ -77,6 +77,18 @@ in
       default = [];
       description = "List of additional backup tasks to run";
     };
+
+    telegram = {
+      enable = mkEnableOption "Enable Telegram notifications for sync-host.";
+      tokenPath = mkOption {
+        type = types.path;
+        description = "Path to the file containing the Telegram bot token.";
+      };
+      chatIdPath = mkOption {
+        type = types.path;
+        description = "Path to the file containing the Telegram chat ID.";
+      };
+    };
   };
 
   config = mkIf cfg.enable {
@@ -97,6 +109,9 @@ in
             ${optionalString cfg.disableRTCWake "--disable-rtc-wake"} \
             ${optionalString cfg.debug "--debug"} \
             ${optionalString cfg.dryRun "--dry-run"} \
+            ${optionalString cfg.telegram.enable "--send-to-telegram"} \
+            ${optionalString (cfg.telegram.tokenPath != null) ''--telegram-token-path "${cfg.telegram.tokenPath}"''} \
+            ${optionalString (cfg.telegram.chatIdPath != null) ''--telegram-chat-id-path "${cfg.telegram.chatIdPath}"''} \
             ${optionalString (cfg.rcloneRemotes != []) "--remotes ${concatMapStrings (r: "'${r}' ") cfg.rcloneRemotes}"}
       '';
 
