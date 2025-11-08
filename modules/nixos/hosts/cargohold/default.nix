@@ -391,6 +391,7 @@ in
       services.sync-host = {
         enable = true;
         telegram = {
+          enable = true;
           tokenPath = config.sops.secrets.health_reporter_bot_api_token.path;
           chatIdPath = config.sops.secrets.telegram_chat_id.path;
         };
