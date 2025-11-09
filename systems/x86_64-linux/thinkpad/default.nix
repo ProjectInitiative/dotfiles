@@ -185,26 +185,26 @@ in
   # #     --setup-key-file ${config.sops.secrets.netbird_setup_key.path}
   # # '';
 
-  services.comin =
-    let
-      livelinessCheck = pkgs.writeShellApplication {
-        name = "comin-liveliness-check";
-        runtimeInputs = [ pkgs.iputils ];
-        text = ''
-          ping -c 5 google.com
-          # curl --fail http://localhost:8080/health
-        '';
-      };
-    in
-    {
-      enable = true;
-      remotes = [{
-        name = "origin";
-        url = "https://github.com/projectinitiative/dotfiles.git";
-        branches.main.name = "comin-testing";
-      }];
-      livelinessCheckCommand = "${livelinessCheck}/bin/comin-liveliness-check";
-    };
+  # services.comin =
+  #   let
+  #     livelinessCheck = pkgs.writeShellApplication {
+  #       name = "comin-liveliness-check";
+  #       runtimeInputs = [ pkgs.iputils ];
+  #       text = ''
+  #         ping -c 5 google.com
+  #         # curl --fail http://localhost:8080/health
+  #       '';
+  #     };
+  #   in
+  #   {
+  #     enable = true;
+  #     remotes = [{
+  #       name = "origin";
+  #       url = "https://github.com/projectinitiative/dotfiles.git";
+  #       branches.main.name = "main";
+  #     }];
+  #     livelinessCheckCommand = "${livelinessCheck}/bin/comin-liveliness-check";
+  #   };
 
   # # enable displaylink
   # services.xserver.videoDrivers = [
