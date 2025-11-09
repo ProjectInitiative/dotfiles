@@ -182,6 +182,8 @@ lib.recursiveUpdate commonSystemConfig {
       k8sServerAddr = "https://172.16.1.50:6443";
       k8sNodeIp = "172.16.4.51";
       k8sNodeIface = "bond0";
+      # override poll delay, pull when available
+      cominPollerRandomDelay = 0;
     };
   };
 
