@@ -121,11 +121,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1762393920,
-        "narHash": "sha256-ZwOTkaRBi7bkc0PqPRo3tzke+zuZYL5Ga3Z8z6Ms1PM=",
+        "lastModified": 1762658645,
+        "narHash": "sha256-XPZDiUUyp7El7LoZIbdoyh4eywFmkzImDXIRSGAtZ3o=",
         "owner": "projectinitiative",
         "repo": "comin",
-        "rev": "79011b8ca275460059ecfbb1b59af4e8cd2d29f0",
+        "rev": "966f7349e680addb436d172dd289666ebd68393a",
         "type": "github"
       },
       "original": {
