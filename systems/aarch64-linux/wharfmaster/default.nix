@@ -30,6 +30,34 @@
     };
   };
 
+  services.comin =
+    let
+      livelinessCheck = pkgs.writeShellApplication {
+        name = "comin-liveliness-check";
+        runtimeInputs = [ pkgs.iputils pkgs.systemd ];
+        text = ''
+          echo "--- Starting Health Checks ---"
+
+          echo "Pinging gateway 192.168.21.1..."
+          ping -c 5 192.168.21.1
+
+          echo "Checking docker service status..."
+          systemctl is-active --quiet docker
+
+          echo "--- Health Checks Complete ---"
+        '';
+      };
+    in
+    {
+      enable = true;
+      remotes = [{
+        name = "origin";
+        url = "https://github.com/projectinitiative/dotfiles.git";
+        branches.main.name = "main";
+      }];
+      livelinessCheckCommand = "${livelinessCheck}/bin/comin-liveliness-check";
+    };
+
   networking = {
     networkmanager = {
       enable = true;
