@@ -13,6 +13,8 @@
 
   home-manager.backupFileExtension = "backup";
 
+  boot.supportedFilesystems.zfs = lib.mkForce false;
+
   environment.systemPackages = with pkgs; [
     pkgs.${namespace}.rknpu2
   ];
