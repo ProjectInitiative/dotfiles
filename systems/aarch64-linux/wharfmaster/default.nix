@@ -61,40 +61,21 @@
     };
 
   networking = {
-    networkmanager.enable = false;
+    networkmanager = {
+      enable = false;
+      # unmanaged = [
+      #   "enP3p49s0"  # Don't let NetworkManager manage the physical interface
+      # ];
+    };
     useDHCP = false;
-    nameservers = [
-      "1.1.1.1"
-      "9.9.9.9"
-    ];
-  };
-
-  systemd.network = {
-    enable = true;
-    networks = {
-      "10-parent" = {
-        matchConfig.Name = "enP3p49s0";
-        networkConfig.DHCP = "no";
-        linkConfig.RequiredForOnline = "no";
-      };
-      "20-vlan" = {
-        matchConfig.Name = "vlan21";
-        networkConfig.DHCP = "ipv4";
-      };
+    
+    # VLAN configuration for vlan21
+    interfaces.enP3p49s0.useDHCP = false;
+    vlans."vlan21" = {
+      id = 21;
+      interface = "enP3p49s0";
     };
-    netdevs."20-vlan" = {
-      netdevConfig = {
-        Name = "vlan21";
-        Kind = "vlan";
-      };
-      vlanConfig = {
-        Id = 21;
-      };
-    };
-    links."20-vlan" = {
-      matchConfig.OriginalName = "vlan21";
-      linkConfig.RequiredForOnline = "routable";
-    };
+    interfaces.vlan21.useDHCP = true;
   };
 
   # setup funnel for home-assistant
