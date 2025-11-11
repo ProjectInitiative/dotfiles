@@ -104,7 +104,7 @@
           "--accept-routes=true"
           # "--advertise-routes=10.0.0.0/24"
           # "--snat-subnet-routes=false"
-          "--accept-dns=true"
+          "--accept-dns=false"
           # "--accept-routes=false"
           "--advertise-routes="
           "--snat-subnet-routes=true"
