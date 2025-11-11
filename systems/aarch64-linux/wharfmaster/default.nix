@@ -60,6 +60,17 @@
       livelinessCheckCommand = "${livelinessCheck}/bin/comin-liveliness-check";
     };
 
+  services.avahi = {
+    enable = true;
+    services.dbus.enable = true; 
+    reflector = {
+      enable = true;
+      # Use the full interface name you provided earlier:
+      allowInterfaces = [ "vlan21@enP3p49s0" ]; 
+    };
+    openFirewall = true; 
+  };
+
   networking = {
     networkmanager = {
       enable = false;
