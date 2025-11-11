@@ -64,10 +64,10 @@
     networkmanager = {
       enable = true;
     };
-    useDHCP = lib.mkForce true;
+    useDHCP = false;
     
     # VLAN configuration for vlan21
-    interfaces.enP3p49s0.useDHCP = true;
+    interfaces.enP3p49s0.useDHCP = false;
     vlans."vlan21" = {
       id = 21;
       interface = "enP3p49s0";
