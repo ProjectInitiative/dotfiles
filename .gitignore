@@ -14,3 +14,5 @@ runtime/
 
 prompt.txt
 .aider*
+####== local ==####
+vendor/

@@ -45,8 +45,8 @@
     };
 
     # this should pull in the new bcachefs module
-    # kernelPackages = pkgs.linuxPackages_latest;
-    kernelPackages = pkgs.linuxPackages_6_16;
+    kernelPackages = pkgs.linuxPackages_latest;
+    # kernelPackages = pkgs.linuxPackages_6_16;
 
     supportedFilesystems = [ "bcachefs" ];
     kernelModules = [

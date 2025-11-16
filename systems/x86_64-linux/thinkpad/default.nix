@@ -440,6 +440,8 @@ in
     yubioath-flutter
     # yubikey-personalization
     # yubikey-personalization-gui
+
+    openbao
   ];
 
   # Enable fingerprint reader
