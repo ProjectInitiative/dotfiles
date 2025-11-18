@@ -177,8 +177,8 @@ in
 
     home = {
 
-      # remove warning
-      enableNixpkgsReleaseCheck = false;
+      # # remove warning
+      # enableNixpkgsReleaseCheck = false;
 
       shellAliases = {
         garage = "kubectl --context=capstan exec -n garage -c garage -it garage-0 -- /garage";

@@ -4,6 +4,7 @@
   pkgs,
   lib,
   namespace,
+  inputs,
   ...
 }:
 with lib;
@@ -331,6 +332,18 @@ in
       services = {
         # use custom version, not provided in nixpkgs
         k3s = {
+
+
+          #####################
+          #
+          #
+          # REMOVE ONCE STABLE CATCHES UP
+          #
+          # 
+          # ##################
+          package = inputs.nixpkgs-catch-up.legacyPackages.${pkgs.system}.k3s;
+
+          
           enable = true;
           role = cfg.role;
           tokenFile = cfg.tokenFile;

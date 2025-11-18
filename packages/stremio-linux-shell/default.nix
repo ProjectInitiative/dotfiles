@@ -43,6 +43,8 @@
     cp $src/data/com.stremio.Stremio.desktop $out/share/applications/com.stremio.Stremio.desktop
     cp $src/data/icons/com.stremio.Stremio.svg $out/share/icons/hicolor/scalable/apps/com.stremio.Stremio.svg
 
+    substituteInPlace $out/share/applications/com.stremio.Stremio.desktop \
+      --replace "Exec=stremio" "Exec=$out/bin/stremio"
 
     wrapProgram $out/bin/stremio \
        --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ pkgs.libappindicator ]} \

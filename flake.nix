@@ -3,8 +3,16 @@
 
   inputs = {
     # NixPkgs
-    # nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
+    # nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    #
+    # This input will pin the nixpkgs version of unstable until the packages catch
+    # up in stable. current trackers: k3s, tailscaled
+    # when stable includes: 89c2b2330e733d6cdb5eae7b899326930c2c0648 it is safe to
+    # switch
+    nixpkgs-catch-up.url = "github:nixos/nixpkgs/nixos-unstable";
+
+    
     # NixPkgs Unstable
     unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     # NixPkgs Master

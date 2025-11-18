@@ -63,7 +63,10 @@ in
         tools = {
           direnv = enabled;
           k8s = enabled;
-          ansible = enabled;
+          ansible = {
+            enable = true;
+            lint.enable = false;
+          };
           aider = enabled;
         };
         security = {

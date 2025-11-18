@@ -14,6 +14,9 @@ in
 {
   options.${namespace}.tools.ansible = with types; {
     enable = mkBoolOpt false "Whether or not to enable ansible.";
+    lint = {
+      enable = mkBoolOpt true "Whether or not to enable ansible-lint.";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -21,8 +24,9 @@ in
     home = {
       packages = with pkgs; [
         ansible
-        ansible-lint
-      ];
+      ] ++ (
+        if cfg.lint.enable then [ ansible-lint ] else [ ]
+      );
 
       shellAliases = {
         ap = "ansible-playbook";
