@@ -15,6 +15,12 @@ let
   # Create files in the nix store
   # hostSSHFile = pkgs.writeText "ssh_host_ed25519_key" config.sensitiveNotSecret.dinghy_private_ssh_key;
   # hostSSHPubFile = pkgs.writeText "ssh_host_ed25519_key.pub" config.sensitiveNotSecret.dinghy_public_ssh_key;
+  # 1. Define the serial number extraction script
+  serialScript = pkgs.writeShellScript "serial.sh" ''
+    #!/bin/bash
+    # Read the full serial number from the drive identified by its kernel name ($1)
+    ${pkgs.hdparm}/sbin/hdparm -I /dev/"$1" | grep 'Serial Number' | awk '{print $3}'
+  '';
 in
 {
   imports = with inputs.nixos-hardware.nixosModules; [
@@ -25,7 +31,6 @@ in
   ];
 
   hardware.enableAllHardware = lib.mkForce false;
-  boot.supportedFilesystems.zfs = lib.mkForce false;
 
   sdImage.compressImage = false;
 
@@ -36,8 +41,50 @@ in
     i2c1.enable = true;
   };
 
+  services.udev.extraRules = ''
+    # Fix Quad SATA HAT disk serial number
+    KERNEL=="sd*", ATTRS{idVendor}=="1058", ATTRS{idProduct}=="0a10", SUBSYSTEMS=="usb", \
+    PROGRAM="${serialScript} %k", ENV{ID_SERIAL}="USB-%c", ENV{ID_SERIAL_SHORT}="%c"
+  '';
+
+  # Basic bcachefs support
+  boot.kernelPackages = lib.mkForce pkgs.linuxPackages_latest;
+  boot.supportedFilesystems = lib.mkForce [
+    "ext4"
+    "xfs"
+    "vfat"
+    "f2fs"
+    "cifs"
+    "ntfs"
+    "bcachefs"
+  ];
+  boot.kernelModules = [ "bcachefs" ];
+
+  boot.kernelParams = [
+    # 1. Quirk to force the stable usb-storage driver for the HAT ID
+    "usb-storage.quirks=1058:0a10:u" 
+  
+    # 2. Add a 1-second delay during device probe for stability
+    "usb-storage.delay_use=1" 
+  
+    # 3. Increase I/O timeout tolerance (prevents the kernel from giving up too quickly)
+    "usb-storage.protocol_enclosures=1" 
+  
+    # 4. Disable power saving for all USB devices, preventing disconnects when idle
+    "usbcore.autosuspend=-1" 
+  
+    # 5. [NEW] Disable USB 3.0 power management for the XHCI controller 
+    #    This is a common fix for XHCI reset errors on RPi4.
+    "usb.quirks=0x01:0x00:0x00" 
+  
+    # 6. [NEW] Set the XHCI driver to ignore the command timeout error (last resort)
+    "xhci_hcd.quirks=0x20000000" 
+    "xhci_hcd.quirks=0x40000000" # NEW: Disable command ring interruption
+    "coherent_pool=2M"
+  ];
+
   hardware.rockpi-quad = {
-    enable = false;
+    enable = true;
     # Optional: Customize settings (see flake.nix for options)
     settings = {
       fan.lv0 = 40;
@@ -60,6 +107,10 @@ in
   #     group = "root";
   #   };
   # };
+
+  
+  # doesn't support -E 
+  security.sudo-rs.enable = lib.mkForce false;
 
   # Explicitly call development module
   home-manager = {
@@ -106,13 +157,12 @@ in
                 "capstan3:9100"
                 "172.16.1.1:9100"
                 "wharfmaster:9100"
-                "lepotato:9100"
                 "stormjib:9100"
                 "lightship-atx:9100"
                 "lightship-dal:9100"
                 "lightship-dfw:9100"
                 "lighthouse-yul-1:9100"
-                "lighthouse-yul-2:9100"
+                "lighthouse-den-1:9100"
               ];
             };
             garage = {
@@ -267,6 +317,8 @@ in
     };
   };
 
+
+
   # boot.loader = {
   #   grub.enable = false;
   #   systemd-boot.enable = false;  # Disable systemd-boot
@@ -278,7 +330,9 @@ in
   environment.systemPackages = with pkgs; [
     libraspberrypi
     raspberrypi-eeprom
+    hdparm
     mdadm
+    bcachefs-tools
   ];
 
   # Single networking attribute set
@@ -292,6 +346,59 @@ in
     useNetworkd = true;
 
     # usePredictableInterfaceNames = false;
+  };
+
+  # --- Late-boot bcachefs Mount ---
+
+  # This service runs late in the boot process to mount the bcachefs pool.
+  systemd.services.storage-mount = {
+    description = "Mount the bcachefs storage pool";
+
+    # Run after the main system is up and running.
+    after = [ "rockpi-quad.service" ];
+    # Be part of the local filesystem setup target.
+    wantedBy = [ "local-fs.target" ];
+
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+
+      ExecStart = pkgs.writeShellScript "mount-storage" ''
+        set -e
+        echo "Waiting for storage devices to appear..."
+        DEVICES_TO_WAIT_FOR=("/dev/sda" "/dev/sdb" "/dev/sdc" "/dev/sdd")
+        TIMEOUT=30
+        for i in $(seq $TIMEOUT); do
+          # Check if all devices exist as block devices
+          if [ -b "''${DEVICES_TO_WAIT_FOR[0]}" ] && \
+             [ -b "''${DEVICES_TO_WAIT_FOR[1]}" ] && \
+             [ -b "''${DEVICES_TO_WAIT_FOR[2]}" ] && \
+             [ -b "''${DEVICES_TO_WAIT_FOR[3]}" ]; then
+            echo "All storage devices found."
+            break
+          fi
+
+          # If we hit the timeout, exit with an error
+          if [ $i -eq $TIMEOUT ]; then
+            echo "Error: Timed out waiting for storage devices." >&2
+            exit 1
+          fi
+          sleep 1
+        done
+
+        echo "Mounting bcachefs filesystem to ${storageMountPoint}..."
+        ${pkgs.coreutils}/bin/mkdir -p ${storageMountPoint}
+        ${pkgs.util-linux}/bin/mount -t bcachefs UUID=27cac550-3836-765c-d107-51d27ab4a6e1 ${storageMountPoint}
+        echo "Storage mounted."
+      '';
+
+      ExecStop = pkgs.writeShellScript "unmount-storage" ''
+        set -e
+        echo "Unmounting ${storageMountPoint}..."
+        ${pkgs.util-linux}/bin/umount -l ${storageMountPoint}
+        echo "Storage unmounted."
+      '';
+    };
   };
 
   # --- Late-boot MDADM RAID Assembly and Mount ---

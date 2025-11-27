@@ -10,7 +10,7 @@ keys:
     - &test_vm age1gfamaev28ur53f09qllqhs7fqv74yd0unye4yaduhf436cl8usys640ld5
     - &stormjib age1zh045acnsrzgqxvlggdultqkq8ksvmuruu92akrsyxq5v6xk54sqn3j0pq
     - &cargohold age1vv7x7cupsczqaducs2pxpn7t3mqj5e5jkyc70489fad05rvyga4s57hwan
-    - &dinghy age1v96s5f9tqz6xgndsgg5lt2zy8xe6j7k9wxz3k52paw9sena4q3gszjy425
+    - &dinghy age1wfmdnez90tcqw4rzmehtjmhle8revyk9hlyxm03z6nlm77teg4cq7fmswu
     - &wharfmaster age14lyx3jvucynqqpdklza3j6j2wq7g3lhncgq0phkdpapg2yzh89uqrfy405
   - &capstans:
     - &ssh_capstan1 age1katkdmh05xy9n5pmrkaznw0e5j4p96js88dzxy4l0zt06pfa4qzs0gsua5

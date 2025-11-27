@@ -198,7 +198,7 @@ in
             # "--advertise-routes=10.0.0.0/24"
             # "--snat-subnet-routes=false"
             "--accept-dns=false"
-            "--accept-routes=false"
+            "--accept-routes=true"
             "--advertise-routes="
             "--snat-subnet-routes=true"
           ];
