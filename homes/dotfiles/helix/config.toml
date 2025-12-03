@@ -5,6 +5,7 @@ line-number = "relative"
 bufferline = "always"
 completion-replace = true
 end-of-line-diagnostics = "hint"
+insert-final-newline = "false"
 
 [editor.file-picker]
 hidden = false
