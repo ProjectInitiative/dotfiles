@@ -5,6 +5,7 @@
 # # where 'inputs' comes from your main system flake's inputs.
 
 final: prev: {
+  inherit (channels.upstream) bcachefs-tools;
 #   bcachefs-tools =
 #     let
 #       # Define the source details for bcachefs-tools
