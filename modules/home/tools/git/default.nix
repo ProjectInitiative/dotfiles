@@ -42,6 +42,7 @@ in
         delta
         lazygit
         trufflehog
+        gh
       ];
     };
 
