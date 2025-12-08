@@ -404,6 +404,7 @@ in
     # quickemu
     # quickgui
     smartmontools
+    nvme-cli
     bitwarden-desktop
     solaar
     # spotify

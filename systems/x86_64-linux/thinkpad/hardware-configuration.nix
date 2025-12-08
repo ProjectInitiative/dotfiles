@@ -44,6 +44,8 @@
       };
     };
 
+
+    kernelParams = [ "nvme_core.default_ps_max_latency_us=0" ];
     # this should pull in the new bcachefs module
     kernelPackages = pkgs.linuxPackages_latest;
     # kernelPackages = pkgs.linuxPackages_6_16;
