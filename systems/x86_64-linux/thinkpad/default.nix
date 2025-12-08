@@ -403,6 +403,7 @@ in
   environment.systemPackages = with pkgs; [
     # quickemu
     # quickgui
+    smartmontools
     bitwarden-desktop
     solaar
     # spotify
