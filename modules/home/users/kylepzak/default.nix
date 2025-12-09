@@ -195,6 +195,7 @@ in
         ".alacritty.toml".source = "${inputs.self}/homes/dotfiles/alacritty.toml";
         ".config/ghostty".source = "${inputs.self}/homes/dotfiles/ghostty";
         ".config/atuin/config.toml".source = "${inputs.self}/homes/dotfiles/atuin/config.toml";
+        ".config/direnv/direnv.toml".source = "${inputs.self}/homes/dotfiles/direnv.toml";
       };
     };
 
