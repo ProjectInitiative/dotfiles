@@ -15,6 +15,11 @@ in
 {
   options.${namespace}.suites.monitoring = with types; {
     enable = mkBoolOpt false "Whether or not to enable monitoring suite";
+    extraPromtailJournalRelabelConfigs = mkOption {
+      type = types.listOf types.attrs;
+      default = [ ];
+      description = "Extra relabel_configs to add to the systemd-journal scrape job.";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -67,7 +72,7 @@ in
                     target_label = "job";
                     replacement = "nvme-debug";
                   }
-                ];
+                ] ++ cfg.extraPromtailJournalRelabelConfigs;
               }
             ];
           };

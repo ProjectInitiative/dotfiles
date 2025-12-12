@@ -115,7 +115,16 @@
       development = {
         enable = true;
       };
-      monitoring.enable = true;
+      monitoring = {
+        enable = true;
+        extraPromtailJournalRelabelConfigs = [
+          {
+            source_labels = [ "__journal__systemd_unit" ];
+            regex = "docker.service";
+            action = "drop";
+          }
+        ];
+      };
       loft = {
         enableClient = true;
       };
