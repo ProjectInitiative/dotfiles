@@ -23,65 +23,137 @@ let
   '';
 in
 {
+
   imports = with inputs.nixos-hardware.nixosModules; [
     (modulesPath + "/installer/scan/not-detected.nix")
     (modulesPath + "/installer/sd-card/sd-image-aarch64.nix")
-    # (modulesPath + "/installer/sd-card/sd-image-aarch64-new-kernel.nix")
-    raspberry-pi-4
   ];
 
-  hardware.enableAllHardware = lib.mkForce false;
-
-  sdImage.compressImage = false;
-
-  hardware.raspberry-pi."4" = {
-    gpio.enable = true;
-    pwm0.enable = true;
-    # i2c0.enable = true;
-    i2c1.enable = true;
+  # ============================================================================
+  # 1. Image Generation (Minimal)
+  # ============================================================================
+  sdImage = {
+    compressImage = false;
+    imageBaseName = "dinghy-rpi4-pure";
+    
+    # We still provide a basic config.txt to boot U-Boot, 
+    # but we assume the detailed overlays might be ignored by the EEPROM.
+    populateFirmwareCommands = let
+      configTxt = pkgs.writeText "config.txt" ''
+        [pi4]
+        kernel=u-boot-rpi4.bin
+        enable_uart=1
+        arm_64bit=1
+        avoid_warnings=1
+      '';
+      in lib.mkForce ''
+        cp ${pkgs.raspberrypi-armstubs}/armstub8-gic.bin firmware/
+        cp ${pkgs.raspberrypifw}/share/raspberrypi/boot/bcm2711-rpi-4-b.dtb firmware/
+        cp ${pkgs.raspberrypifw}/share/raspberrypi/boot/bootcode.bin firmware/
+        cp ${pkgs.raspberrypifw}/share/raspberrypi/boot/fixup4.dat firmware/
+        cp ${pkgs.raspberrypifw}/share/raspberrypi/boot/start4.elf firmware/
+        cp ${pkgs.ubootRaspberryPi4_64bit}/u-boot.bin firmware/u-boot-rpi4.bin
+        cp ${configTxt} firmware/config.txt
+      '';
   };
 
-  services.udev.extraRules = ''
-    # Fix Quad SATA HAT disk serial number
-    KERNEL=="sd*", ATTRS{idVendor}=="1058", ATTRS{idProduct}=="0a10", SUBSYSTEMS=="usb", \
-    PROGRAM="${serialScript} %k", ENV{ID_SERIAL}="USB-%c", ENV{ID_SERIAL_SHORT}="%c"
-  '';
+  # ============================================================================
+  # 2. Kernel & Hardware (The "Pure Linux" Logic)
+  # ============================================================================
 
-  # Basic bcachefs support
+  # Use Mainline Kernel (Documentation confirms this is well-supported now)
   boot.kernelPackages = lib.mkForce pkgs.linuxPackages_latest;
-  boot.supportedFilesystems = lib.mkForce [
-    "ext4"
-    "xfs"
-    "vfat"
-    "f2fs"
-    "cifs"
-    "ntfs"
-    "bcachefs"
+
+  # Explicitly load the RPi4 Device Tree
+  hardware.deviceTree = {
+    enable = true;
+    name = "broadcom/bcm2711-rpi-4-b.dtb";
+    
+    # --- FAN CONTROL (NixOS-Managed Overlay) ---
+    # Since config.txt is unreliable, we compile a custom overlay to enable 
+    # the PWM fan on Pin 13 (PWM1) and apply it at OS boot time.
+    overlays = [
+      {
+        name = "pwm-fan-control";
+        dtsText = ''
+          /dts-v1/;
+          /plugin/;
+          / {
+            compatible = "brcm,bcm2711";
+            fragment@0 {
+              target = <&pwm1>;
+              __overlay__ {
+                status = "okay";
+                pinctrl-names = "default";
+                pinctrl-0 = <&pwm1_pins>;
+              };
+            };
+            fragment@1 {
+              target = <&gpio>;
+              __overlay__ {
+                pwm1_pins: pwm1_pins {
+                  brcm,pins = <13>;
+                  brcm,function = <4>; /* Alt0 = PWM1 */
+                  brcm,pull = <0>;
+                };
+              };
+            };
+          };
+        '';
+      }
+    ];
+  };
+
+  boot.loader.grub.enable = false;
+  boot.loader.generic-extlinux-compatible.enable = true;
+  hardware.enableAllHardware = lib.mkForce false;
+
+  # --- KERNEL PARAMETERS & BLACKLISTS ---
+  # This is where we kill the interfering hardware without needing config.txt
+  hardware.bluetooth.enable = false;
+  boot.blacklistedKernelModules = [ 
+    "btusb" "btrtl" "btbcm" "btintel" "bluetooth" # Kill BT
+    "snd_bcm2835"                                 # Kill Audio (Free up PWM pins)
   ];
-  boot.kernelModules = [ "bcachefs" ];
 
   boot.kernelParams = [
-    # 1. Quirk to force the stable usb-storage driver for the HAT ID
-    "usb-storage.quirks=1058:0a10:u" 
-  
-    # 2. Add a 1-second delay during device probe for stability
-    "usb-storage.delay_use=1" 
-  
-    # 3. Increase I/O timeout tolerance (prevents the kernel from giving up too quickly)
-    "usb-storage.protocol_enclosures=1" 
-  
-    # 4. Disable power saving for all USB devices, preventing disconnects when idle
-    "usbcore.autosuspend=-1" 
-  
-    # 5. [NEW] Disable USB 3.0 power management for the XHCI controller 
-    #    This is a common fix for XHCI reset errors on RPi4.
-    "usb.quirks=0x01:0x00:0x00" 
-  
-    # 6. [NEW] Set the XHCI driver to ignore the command timeout error (last resort)
-    "xhci_hcd.quirks=0x20000000" 
-    "xhci_hcd.quirks=0x40000000" # NEW: Disable command ring interruption
-    "coherent_pool=2M"
+    # 1. DISABLE UAS (Critical Stability Fix)
+    # The JMicron bridge cannot handle UAS with bcachefs. Force Bulk-Only.
+    # "usb-storage.quirks=152d:0561:u,1058:0a10:u"
+
+    # 2. MEMORY STABILITY
+    # "swiotlb=65536" # Fix DMA buffer exhaustion on Mainline
+
+    # 3. HARDWARE MASKING (Aggressive)
+    # Tell the kernel these devices don't exist to prevent reset loops
+    # "bcm2835_dma.fake_channels=0x1f00" # Mask BT DMA channels
+    
+    # 4. GENERAL STABILITY
+    # "pcie_aspm=off"
+    # "usb-storage.delay_use=10"
+    # "usbcore.autosuspend=-1"
+    # "dwc_otg.lpm_enable=0"
+    "console=ttyS0,115200n8"
+    "console=tty1"
   ];
+
+  # --- UDEV RULES ---
+  # services.udev.extraRules = ''
+  #   # Serial Number Logic
+  #   KERNEL=="sd*", ATTRS{idVendor}=="1058", ATTRS{idProduct}=="0a10", SUBSYSTEMS=="usb", \
+  #   PROGRAM="${serialScript} %k", ENV{ID_SERIAL}="USB-%c", ENV{ID_SERIAL_SHORT}="%c"
+
+  #   # I/O Throttling (Safety Net for the JMicron Bridge)
+  #   ACTION=="add|change", KERNEL=="sd[a-z]", ATTRS{idVendor}=="1058", ATTRS{idProduct}=="0a10", \
+  #   ATTR{queue/max_sectors_kb}="64"
+    
+  #   # Auto-Export Fan Control (Since we enabled it via Overlay above)
+  #   KERNEL=="pwmchip0", SUBSYSTEM=="pwm", ACTION=="add", PROGRAM="/bin/sh -c 'echo 1 > /sys/class/pwm/pwmchip0/export'"
+  #   KERNEL=="pwmchip0", SUBSYSTEM=="pwm", ACTION=="add", RUN+="/bin/sh -c 'chown -R root:gpio /sys/class/pwm/pwmchip0/pwm1 && chmod -R g+w /sys/class/pwm/pwmchip0/pwm1'"
+  # '';
+
+  boot.supportedFilesystems = lib.mkForce [ "ext4" "vfat" "bcachefs" ];
+  boot.kernelModules = [ "bcachefs" ];
 
   hardware.rockpi-quad = {
     enable = true;
@@ -268,6 +340,7 @@ in
         };
 
         # Add Promtail to scrape local logs and send them to Loki
+        # TODO: change port from 9095, conflicts with loki
         promtail = {
           enable = false;
           scrapeConfigs = [

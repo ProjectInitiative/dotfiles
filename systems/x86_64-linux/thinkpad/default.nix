@@ -347,6 +347,7 @@ in
         "/home/kylepzak/.minikube"
         "/home/kylepzak/.vagrant.d/boxes"
         "/home/kylepzak/.local/share/libvirt"
+        "/home/kylepzak/quickemu"
 
         # --- Application Caches ---
         "/home/kylepzak/.mozilla"
@@ -399,9 +400,11 @@ in
   # Make sure NetworkManager is enabled
   networking.networkmanager.enable = true;
 
+  virtualisation.spiceUSBRedirection.enable = true;
   # System-wide packages
   environment.systemPackages = with pkgs; [
-    # quickemu
+    quickemu
+    spice-gtk
     # quickgui
     smartmontools
     nvme-cli

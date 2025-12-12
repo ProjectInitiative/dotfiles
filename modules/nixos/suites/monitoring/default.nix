@@ -40,7 +40,7 @@ in
           promtail = {
             enable = true;
             # This should be overridden in the final host configuration
-            lokiAddress = "100.98.243.120";
+            lokiAddress = "100.119.112.42";
             lokiPort = 3100;
 
             scrapeConfigs = [
