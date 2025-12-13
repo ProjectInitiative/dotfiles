@@ -78,6 +78,11 @@ in
         default = { };
         description = "An attribute set of scrape jobs for Prometheus to monitor.";
       };
+      extraFlags = mkOption {
+        type = types.listOf types.str;
+        default = [ ];
+        description = "Extra command-line flags to pass to the Prometheus server.";
+      };
     };
 
     loki = {
@@ -99,18 +104,17 @@ in
       };
     };
 
-    promtail = {
-      enable = mkEnableOption "the Promtail log collector";
-      # Removed the 'package' option as it's not a valid attribute
+    alloy = {
+      enable = mkEnableOption "the Grafana Alloy collector";
       listenAddress = mkOption {
         type = types.str;
         default = "0.0.0.0";
-        description = "Address for Promtail to listen on.";
+        description = "Address for Alloy to listen on.";
       };
       port = mkOption {
         type = types.port;
-        default = 9080;
-        description = "Port for Promtail to listen on.";
+        default = 12345;
+        description = "Port for Alloy to listen on.";
       };
       lokiAddress = mkOption {
         type = types.str;
@@ -122,15 +126,15 @@ in
         default = 3100;
         description = "The port of the Loki server to send logs to.";
       };
-      config = mkOption {
-        type = types.attrs;
-        default = { };
-        description = "Extra configuration for Promtail's YAML configuration.";
-      };
-      scrapeConfigs = mkOption {
+      journalRelabelConfig = mkOption {
         type = types.listOf types.attrs;
         default = [ ];
-        description = "A list of scrape jobs for Promtail to collect logs.";
+        description = "List of relabeling rules for the journal job.";
+      };
+      extraConfig = mkOption {
+        type = types.lines;
+        default = "";
+        description = "Extra configuration for Alloy (River syntax).";
       };
     };
 
@@ -198,6 +202,7 @@ in
           listenAddress
           port
           retentionTime
+          extraFlags
           ;
 
         scrapeConfigs =
@@ -247,22 +252,57 @@ in
       } // cfg.loki.config;
     };
 
-    # Corrected Promtail configuration
-    services.promtail = mkIf cfg.promtail.enable {
+    services.alloy = mkIf cfg.alloy.enable {
       enable = true;
-      # Removed 'package' from the inherit list
-      configuration = {
-        server = {
-          http_listen_address = cfg.promtail.listenAddress;
-          http_listen_port = cfg.promtail.port;
-        };
-        clients = [
-          {
-            url = "http://${cfg.promtail.lokiAddress}:${toString cfg.promtail.lokiPort}/loki/api/v1/push";
+      extraFlags = [ "--server.http.listen-addr=${cfg.alloy.listenAddress}:${toString cfg.alloy.port}" ];
+    };
+
+    environment.etc."alloy/config.alloy" = mkIf cfg.alloy.enable {
+      text = ''
+        loki.write "local" {
+          endpoint {
+            url = "http://${cfg.alloy.lokiAddress}:${toString cfg.alloy.lokiPort}/loki/api/v1/push"
           }
-        ];
-        scrape_configs = cfg.promtail.scrapeConfigs;
-      } // cfg.promtail.config;
+        }
+
+        loki.source.journal "read" {
+          max_age = "12h"
+          labels = { job = "systemd-journal" }
+          forward_to = [loki.process.process.receiver]
+        }
+
+        loki.process.process {
+          forward_to = [loki.write.local.receiver]
+
+          stage.relabel {
+            rule {
+              source_labels = ["__journal__systemd_unit"]
+              target_label  = "unit"
+            }
+            rule {
+              source_labels = ["__journal__hostname"]
+              target_label  = "host"
+            }
+            rule {
+              source_labels = ["__journal__systemd_unit"]
+              regex = "nvme-debug-collector.service"
+              target_label = "job"
+              replacement = "nvme-debug"
+            }
+            ${concatStringsSep "\n" (map (rule: ''
+              rule {
+                ${optionalString (hasAttr "source_labels" rule) ("source_labels = " + builtins.toJSON rule.source_labels)}
+                ${optionalString (hasAttr "target_label" rule) ("target_label = " + builtins.toJSON rule.target_label)}
+                ${optionalString (hasAttr "regex" rule) ("regex = " + builtins.toJSON rule.regex)}
+                ${optionalString (hasAttr "action" rule) ("action = " + builtins.toJSON rule.action)}
+                ${optionalString (hasAttr "replacement" rule) ("replacement = " + builtins.toJSON rule.replacement)}
+              }
+            '') cfg.alloy.journalRelabelConfig)}
+          }
+        }
+
+        ${cfg.alloy.extraConfig}
+      '';
     };
 
     systemd.services = lib.mkMerge [
@@ -281,26 +321,6 @@ in
           serviceConfig = {
             After = [ "local-fs.target" ];
             Requires = [ "local-fs.target" ];
-            Restart = "on-failure";
-            RestartSec = "5s";
-          };
-        };
-      })
-      # (mkIf cfg.loki.enable {
-      #   "loki" = {
-      #     serviceConfig = {
-      #       After = [ "network-online.target" ];
-      #       Requires = [ "network-online.target" ];
-      #       Restart = "on-failure";
-      #       RestartSec = "5s";
-      #     };
-      #   };
-      # })
-      (mkIf cfg.promtail.enable {
-        "promtail" = {
-          serviceConfig = {
-            After = [ "network-online.target" ];
-            Requires = [ "network-online.target" ];
             Restart = "on-failure";
             RestartSec = "5s";
           };
@@ -351,7 +371,7 @@ in
       ++ (optional cfg.exporters.smartctl.enable cfg.exporters.smartctl.port)
       ++ (optional cfg.grafana.enable cfg.grafana.port)
       ++ (optional cfg.loki.enable cfg.loki.port)
-      ++ (optional cfg.promtail.enable cfg.promtail.port)
+      ++ (optional cfg.alloy.enable cfg.alloy.port)
     );
   };
 }

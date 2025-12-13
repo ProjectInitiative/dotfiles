@@ -67,35 +67,42 @@ in
   # Explicitly load the RPi4 Device Tree
   hardware.deviceTree = {
     enable = true;
-    name = "broadcom/bcm2711-rpi-4-b.dtb";
+    # name = "broadcom/bcm2711-rpi-4-b.dtb";
     
     # --- FAN CONTROL (NixOS-Managed Overlay) ---
     # Since config.txt is unreliable, we compile a custom overlay to enable 
     # the PWM fan on Pin 13 (PWM1) and apply it at OS boot time.
     overlays = [
       {
-        name = "pwm-fan-control";
+        name = "pwm-2chan-gpio12-13";
         dtsText = ''
           /dts-v1/;
           /plugin/;
+
           / {
             compatible = "brcm,bcm2711";
+
             fragment@0 {
-              target = <&pwm1>;
+              target = <&gpio>;
+              __overlay__ {
+                pwm_pins: pwm_pins {
+                  /* GPIO 12 (Pin 32) -> PWM0 (Function ALT0 = 4) 
+                     GPIO 13 (Pin 33) -> PWM1 (Function ALT0 = 4) 
+                  */
+                  brcm,pins = <12 13>;
+                  brcm,function = <4 4>; 
+                  brcm,pull = <0 0>;
+                };
+              };
+            };
+
+            fragment@1 {
+              target = <&pwm>;
               __overlay__ {
                 status = "okay";
                 pinctrl-names = "default";
-                pinctrl-0 = <&pwm1_pins>;
-              };
-            };
-            fragment@1 {
-              target = <&gpio>;
-              __overlay__ {
-                pwm1_pins: pwm1_pins {
-                  brcm,pins = <13>;
-                  brcm,function = <4>; /* Alt0 = PWM1 */
-                  brcm,pull = <0>;
-                };
+                pinctrl-0 = <&pwm_pins>;
+                assigned-clock-rates = <100000000>;
               };
             };
           };
@@ -103,7 +110,6 @@ in
       }
     ];
   };
-
   boot.loader.grub.enable = false;
   boot.loader.generic-extlinux-compatible.enable = true;
   hardware.enableAllHardware = lib.mkForce false;
@@ -137,20 +143,16 @@ in
     "console=tty1"
   ];
 
-  # --- UDEV RULES ---
-  # services.udev.extraRules = ''
-  #   # Serial Number Logic
-  #   KERNEL=="sd*", ATTRS{idVendor}=="1058", ATTRS{idProduct}=="0a10", SUBSYSTEMS=="usb", \
-  #   PROGRAM="${serialScript} %k", ENV{ID_SERIAL}="USB-%c", ENV{ID_SERIAL_SHORT}="%c"
+  # --- UDEV RULES (Auto-Export PWM) ---
+  services.udev.extraRules = ''
+    # 1. Export PWM0 (GPIO 12) and PWM1 (GPIO 13)
+    KERNEL=="pwmchip0", SUBSYSTEM=="pwm", ACTION=="add", PROGRAM="/bin/sh -c 'echo 0 > /sys/class/pwm/pwmchip0/export'"
+    KERNEL=="pwmchip0", SUBSYSTEM=="pwm", ACTION=="add", PROGRAM="/bin/sh -c 'echo 1 > /sys/class/pwm/pwmchip0/export'"
 
-  #   # I/O Throttling (Safety Net for the JMicron Bridge)
-  #   ACTION=="add|change", KERNEL=="sd[a-z]", ATTRS{idVendor}=="1058", ATTRS{idProduct}=="0a10", \
-  #   ATTR{queue/max_sectors_kb}="64"
-    
-  #   # Auto-Export Fan Control (Since we enabled it via Overlay above)
-  #   KERNEL=="pwmchip0", SUBSYSTEM=="pwm", ACTION=="add", PROGRAM="/bin/sh -c 'echo 1 > /sys/class/pwm/pwmchip0/export'"
-  #   KERNEL=="pwmchip0", SUBSYSTEM=="pwm", ACTION=="add", RUN+="/bin/sh -c 'chown -R root:gpio /sys/class/pwm/pwmchip0/pwm1 && chmod -R g+w /sys/class/pwm/pwmchip0/pwm1'"
-  # '';
+    # 2. Set permissions so we can write to them without sudo
+    KERNEL=="pwmchip0", SUBSYSTEM=="pwm", ACTION=="add", RUN+="/bin/sh -c 'chown -R root:gpio /sys/class/pwm/pwmchip0/pwm0 && chmod -R g+w /sys/class/pwm/pwmchip0/pwm0'"
+    KERNEL=="pwmchip0", SUBSYSTEM=="pwm", ACTION=="add", RUN+="/bin/sh -c 'chown -R root:gpio /sys/class/pwm/pwmchip0/pwm1 && chmod -R g+w /sys/class/pwm/pwmchip0/pwm1'"
+  '';
 
   boot.supportedFilesystems = lib.mkForce [ "ext4" "vfat" "bcachefs" ];
   boot.kernelModules = [ "bcachefs" ];
@@ -215,6 +217,10 @@ in
           enable = true;
           retentionTime = "90d"; # Keep data for 90 days
 
+          extraFlags = [
+            "--web.enable-remote-write-receiver"
+          ];
+
           # Define jobs to scrape other nodes
           scrapeConfigs = {
             # A job named 'nodes' to scrape all your other servers
@@ -237,16 +243,16 @@ in
                 "lighthouse-den-1:9100"
               ];
             };
-            garage = {
-              targets = [
-                # "172.16.1.51:31630"
-                # "172.16.1.52:31630"
-                # "172.16.1.53:31630"
-                "capstan1:31630"
-                "capstan2:31630"
-                "capstan3:31630"
-              ];
-            };
+            # garage = {
+            #   targets = [
+            #     # "172.16.1.51:31630"
+            #     # "172.16.1.52:31630"
+            #     # "172.16.1.53:31630"
+            #     "capstan1:31630"
+            #     "capstan2:31630"
+            #     "capstan3:31630"
+            #   ];
+            # };
             # A job for scraping smartctl data if it's on a different port/host
             smart-devices = {
               targets = [
@@ -337,29 +343,6 @@ in
             };
           };
 
-        };
-
-        # Add Promtail to scrape local logs and send them to Loki
-        # TODO: change port from 9095, conflicts with loki
-        promtail = {
-          enable = false;
-          scrapeConfigs = [
-            {
-              job_name = "journal";
-              journal = {
-                labels = {
-                  job = "systemd-journal";
-                  host = "dinghy";
-                };
-              };
-              relabel_configs = [
-                {
-                  source_labels = [ "__journal__systemd_unit" ];
-                  target_label = "unit";
-                }
-              ];
-            }
-          ];
         };
 
         # Enable Grafana on this node

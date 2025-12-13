@@ -117,7 +117,7 @@
       };
       monitoring = {
         enable = true;
-        extraPromtailJournalRelabelConfigs = [
+        extraAlloyJournalRelabelRules = [
           {
             source_labels = [ "__journal__systemd_unit" ];
             regex = "docker.service";

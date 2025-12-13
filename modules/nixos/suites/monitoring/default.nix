@@ -15,10 +15,10 @@ in
 {
   options.${namespace}.suites.monitoring = with types; {
     enable = mkBoolOpt false "Whether or not to enable monitoring suite";
-    extraPromtailJournalRelabelConfigs = mkOption {
+    extraAlloyJournalRelabelRules = mkOption {
       type = types.listOf types.attrs;
       default = [ ];
-      description = "Extra relabel_configs to add to the systemd-journal scrape job.";
+      description = "Extra relabeling rules to add to the systemd-journal scrape job in Alloy.";
     };
   };
 
@@ -41,40 +41,14 @@ in
             };
           };
 
-          # Enable Promtail to send logs to a central Loki server
-          promtail = {
+          # Enable Alloy to send logs to a central Loki server
+          alloy = {
             enable = true;
             # This should be overridden in the final host configuration
             lokiAddress = "100.119.112.42";
             lokiPort = 3100;
-
-            scrapeConfigs = [
-              {
-                job_name = "systemd-journal";
-                journal = {
-                  max_age = "12h";
-                  labels = {
-                    job = "systemd-journal";
-                  };
-                };
-                relabel_configs = [
-                  {
-                    source_labels = [ "__journal__systemd_unit" ];
-                    target_label = "unit";
-                  }
-                  {
-                    source_labels = [ "__journal__hostname" ];
-                    target_label = "host";
-                  }
-                  {
-                    source_labels = [ "__journal__systemd_unit" ];
-                    regex = "nvme-debug-collector.service";
-                    target_label = "job";
-                    replacement = "nvme-debug";
-                  }
-                ] ++ cfg.extraPromtailJournalRelabelConfigs;
-              }
-            ];
+            
+            journalRelabelConfig = cfg.extraAlloyJournalRelabelRules;
           };
 
         };
