@@ -21,6 +21,8 @@ in
     (modulesPath + "/profiles/qemu-guest.nix")
   ];
 
+  boot.load.systemd-boot.enable = lib.mkDefault true;
+  boot.loader.grub.enable = lib.mkDefault false;
 
   # Bootloader and kernel modules for a VM
   boot.initrd.availableKernelModules = [
