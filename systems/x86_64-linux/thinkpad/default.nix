@@ -448,7 +448,6 @@ in
     # yubikey-personalization-gui
 
     openbao
-    esphome
   ];
 
   # Enable fingerprint reader

@@ -167,6 +167,11 @@
       # inputs.nixos-hardware.follows = "nixos-hardware";
     };
 
+    nixos-avf = {
+      url = "github:nix-community/nixos-avf";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   outputs =
