@@ -300,6 +300,7 @@ in
 
         tpm = mkIf cfg.allFeatures enabled;
 
+        # filesystem level options
         bcachefs-fs-options = mkIf cfg.allFeatures {
           settings = {
             "27cac550-3836-765c-d107-51d27ab4a6e1" = {
@@ -328,6 +329,21 @@ in
                 background_target = "cache";
                 foreground_target = "cache";
                 promote_target = "cache";
+              };
+            };
+            k8s-hdd = {
+
+              # The directory to apply options to.
+              path = "/mnt/pool/k8s/hdd";
+
+              # Set the schedule using a systemd OnCalendar expression.
+              onCalendar = "daily"; # Runs at 00:00 every day.
+
+              # The bcachefs file options to set.
+              fileOptions = {
+                background_target = "hdd";
+                foreground_target = "hdd";
+                promote_target = "hdd";
               };
             };
           };
