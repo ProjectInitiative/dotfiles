@@ -5,7 +5,7 @@ keys:
   - &users:
     - &kylepzak age1q3mp87y8ddl2x0skpjla8n7cuqr0attzm6ywt3axgrj28ukvy5lqq5l32t
     - &ssh_thinkpad age14hqndcn28shcmyqafh53ykqsz26rs6hre94nfwr9xm5laln8d9qs3mp3lt
-    - &cutter age1h8u9vwwgltea4dxyleq3zhrgt57d3mdmz9yp93zxg0t3rlrcpytsandqq8
+    - &cutter age12epntxry9xrgpe83t8xnzy5zfvvm93635cqajqxj88axtlrg2p0s0lyxrd
     - &ssh_kylepzak age1fepmpsw6v9juhx3nkq5es0mhjs40xtmajn3fl9jxe779flmjh5wq0palxn
     - &bcachefs_test age1l057emzajvutettkmsv8tw86wenxghn3z2aerae07tne9ay0ugkqusz877
     - &test_vm age1gfamaev28ur53f09qllqhs7fqv74yd0unye4yaduhf436cl8usys640ld5
