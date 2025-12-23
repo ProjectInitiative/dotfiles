@@ -75,6 +75,7 @@ creation_rules:
           - *kylepzak
           - *ssh_kylepzak
           - *ssh_thinkpad
+          - *ssh_capstan1
 
   - path_regex: capstan/[^/]+\.yaml$
     # - path: capstan/secrets.enc.yaml
