@@ -37,19 +37,24 @@ let
       efi.canTouchEfiVariables = false;
     };
 
-    ${namespace}.system = {
-      bcachefs-kernel = {
-        enable = false;
-        debug = true;
-      };
-      bcachefs-module = {
-        enable = false;
-        rev = "";
-        hash = "";
-        debug = true;
+    projectinitiative = {
+
+      encrypted.nix-signing.enable = true;
+
+      system = {
+        bcachefs-kernel = {
+          enable = false;
+          debug = true;
+        };
+
+        bcachefs-module = {
+          enable = false;
+          rev = "";
+          hash = "";
+          debug = true;
+        };
       };
     };
-  };
 
   # --- Core Disko Config (Root & Boot only) ---
   coreDiskoConfig = {
