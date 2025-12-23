@@ -55,6 +55,7 @@ let
         };
       };
     };
+  };
 
   # --- Core Disko Config (Root & Boot only) ---
   coreDiskoConfig = {
