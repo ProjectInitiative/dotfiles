@@ -140,6 +140,15 @@ in
     # use latest kernel - required by bcachefs
     boot.kernelPackages = pkgs.linuxPackages_latest;
 
+    boot.binfmt = {
+      emulatedSystems = [
+        "aarch64-linux"
+        "armv7l-linux"
+        "armv6l-linux"
+      ];
+    };
+    
+
     # Late-mounting service
     # systemd.services.mount-bcachefs = {
     #   description = "Mount bcachefs test filesystem";

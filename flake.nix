@@ -172,6 +172,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    nix-on-droid = {
+      url = "github:nix-community/nix-on-droid";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
+
   };
 
   outputs =
@@ -416,5 +422,18 @@
     // {
       # Add this line to expose self
       self = inputs.self;
+
+      nixOnDroidConfigurations = {
+        termux = inputs.nix-on-droid.lib.nixOnDroidConfiguration {
+          pkgs = import inputs.nixpkgs { system = "aarch64-linux"; };
+          modules = [
+            ./systems/nix-on-droid/termux/default.nix
+          ];
+          extraSpecialArgs = {
+            namespace = "projectinitiative";
+            inputs = inputs;
+          };
+        };
+      };
     };
 }
