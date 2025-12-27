@@ -305,6 +305,8 @@ in
 
       services = {
 
+        monitoring.alloy.enable = mkForce false;
+
         eternal-terminal = mkIf cfg.allFeatures enabled;
 
         tpm = mkIf cfg.allFeatures enabled;
