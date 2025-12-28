@@ -31,6 +31,7 @@ in
     ]) "agent" "The role of the k8s node.";
     k8sServerAddr = mkOpt types.str "" "Address of the server node to connect to.";
     isFirstK8sNode = mkBoolOpt false "Whether node is the first in the cluster";
+    k3sDataDir = mkOpt types.path "/var/lib/rancher/k3s" "Directory to use for k3s data.";
   };
 
   config = mkIf cfg.enable {
@@ -212,6 +213,7 @@ in
           isFirstNode = cfg.isFirstK8sNode;
           serverAddr = cfg.k8sServerAddr;
           role = cfg.role;
+          dataDir = cfg.k3sDataDir;
           networkType = "tailscale";
           # environmentFile = k3sEnvFile;
           extraArgs = [

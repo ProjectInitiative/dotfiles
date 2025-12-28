@@ -65,6 +65,7 @@ in
     gpuSupport = mkBoolOpt false "Enable GPU support for this node.";
     extraArgs = mkOpt (listOf str) [ ] "Additional arguments to pass to k3s.";
     environmentFile = mkOpt (nullOr path) null "Environment file for k3s service.";
+    dataDir = mkOpt path "/var/lib/rancher/k3s" "Directory to use for k3s data.";
 
   };
 
@@ -348,6 +349,7 @@ in
           role = cfg.role;
           tokenFile = cfg.tokenFile;
           environmentFile = cfg.environmentFile;
+          dataDir = cfg.dataDir;
 
           # Configure based on whether this is the first node
           clusterInit = cfg.isFirstNode;

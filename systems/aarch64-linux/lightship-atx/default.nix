@@ -22,6 +22,7 @@ in
     enable = true;
     role = "server"; # This is the master node
     k8sServerAddr = "https://100.94.107.39:6443";
+    k3sDataDir = "/mnt/nvme/${nvme}/k3s";
   };
 
   # Filesystem configuration converted from fstab

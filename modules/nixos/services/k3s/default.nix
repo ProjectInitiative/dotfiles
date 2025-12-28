@@ -17,10 +17,10 @@ let
       ++ config
     ) instruction;
 
-  manifestDir = "/var/lib/rancher/k3s/server/manifests";
-  chartDir = "/var/lib/rancher/k3s/server/static/charts";
-  imageDir = "/var/lib/rancher/k3s/agent/images";
-  containerdConfigTemplateFile = "/var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl";
+  manifestDir = "${cfg.dataDir}/server/manifests";
+  chartDir = "${cfg.dataDir}/server/static/charts";
+  imageDir = "${cfg.dataDir}/agent/images";
+  containerdConfigTemplateFile = "${cfg.dataDir}/agent/etc/containerd/config.toml.tmpl";
 
   manifestModule =
     let
@@ -157,6 +157,7 @@ let
         ++ (lib.optional (cfg.token != "") "--token ${cfg.token}")
         ++ (lib.optional (cfg.tokenFile != null) "--token-file ${cfg.tokenFile}")
         ++ (lib.optional (cfg.configPath != null) "--config ${cfg.configPath}")
+        ++ (lib.optional (cfg.dataDir != "/var/lib/rancher/k3s") "--data-dir ${cfg.dataDir}")
         ++ (lib.optional (kubeletParams != { }) "--kubelet-arg=config=${kubeletConfig}")
         ++ (lib.optional (cfg.extraKubeProxyConfig != { }) "--kube-proxy-arg=config=${kubeProxyConfig}")
         ++ (lib.flatten cfg.extraFlags)
@@ -276,6 +277,12 @@ in
       type = lib.types.nullOr lib.types.path;
       default = null;
       description = "File path containing the k3s YAML config. This is useful when the config is generated (for example on boot).";
+    };
+
+    dataDir = lib.mkOption {
+      type = lib.types.path;
+      default = "/var/lib/rancher/k3s";
+      description = "Directory to use for k3s data.";
     };
 
     manifests = lib.mkOption {
