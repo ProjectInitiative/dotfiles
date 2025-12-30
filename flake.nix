@@ -3,7 +3,7 @@
 
   inputs = {
     # NixPkgs
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
     # nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     #
     # This input will pin the nixpkgs version of unstable until the packages catch
@@ -19,7 +19,7 @@
     upstream.url = "github:nixos/nixpkgs/master";
 
     # Home Manager
-    home-manager.url = "github:nix-community/home-manager/release-25.05";
+    home-manager.url = "github:nix-community/home-manager/release-25.11";
     # home-manager.url = "github:nix-community/home-manager/release-24.11";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -63,7 +63,7 @@
     # agenix.url = "github:ryantm/agenix";
 
     # Snowfall Lib
-    # snowfall-lib.url = "path:/home/kylepzak/development/build-software/snowfall-lib";
+    # snowfall-lib.url = "path:/home/kylepzak/dotfiles/vendor/snowfall-lib";
     snowfall-lib.url = "github:projectinitiative/snowfall-lib/fixes";
     # snowfall-lib.url = "github:snowfallorg/lib?ref=v3.0.3";
     # snowfall-lib.url = "path:/home/short/work/@snowfallorg/lib";
