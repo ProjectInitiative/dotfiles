@@ -207,6 +207,8 @@ in
 
       services = {
 
+        monitoring.alloy.enable = mkForce false;
+
         k8s = {
           enable = true;
           tokenFile = sops.secrets.k8s_token.path;

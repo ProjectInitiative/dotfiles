@@ -3,7 +3,7 @@
   pkgs,
   inputs,
   namespace,
-  system,
+  stdenv, # This argument replaces the deprecated 'system' argument
   config,
   options,
   ...
@@ -18,6 +18,12 @@ in
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
   ];
+
+  # add rust based init
+  system.nixos-init.enable = true;
+  boot.initrd.systemd.enable = true;
+  system.etc.overlay.enable = true;
+  services.userborn.enable = true;
 
   # enable numlock during boot
   systemd.services.numLockOnTty = {
@@ -233,7 +239,7 @@ in
   projectinitiative = {
 
     settings = {
-      stateVersion = "25.05";
+      stateVersion = "25.11";
     };
 
     encrypted.nix-signing = enabled;
@@ -512,7 +518,7 @@ in
 
   specialisation.safe = {
     configuration = {
-      system.stateVersion = "25.05";
+      system.stateVersion = "25.11";
       fileSystems = lib.mkForce {
         "/" = {
           device = "/dev/disk/by-uuid/04f9ecc2-bb20-415f-aff5-c54285523fd3";

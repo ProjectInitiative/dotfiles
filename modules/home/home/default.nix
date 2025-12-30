@@ -10,11 +10,12 @@
 
 {
   lib,
-  config,
-  system,
-  namespace,
   pkgs,
+  stdenv,
   osConfig,
+  config,
+  options,
+  namespace,
   ...
 }:
 with lib;

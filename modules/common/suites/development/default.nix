@@ -1,12 +1,11 @@
 {
-  options,
-  config,
   lib,
   pkgs,
+  stdenv,
+  osConfig, # Restored osConfig
+  config,
+  options,
   namespace,
-  osConfig ? { },
-  system,
-  inputs,
   ...
 }:
 with lib;
@@ -88,7 +87,7 @@ in
           # pkgs.${namespace}.gemini-cli
           # pkgs.${namespace}.qwen-code
         ];
-        # ++ lib.optionals isGraphical [ inputs.claude-desktop.packages.${system}.claude-desktop-with-fhs ];
+        # ++ lib.optionals isGraphical [ inputs.claude-desktop.packages.${pkgs.system}.claude-desktop-with-fhs ];
       };
     }
   );
