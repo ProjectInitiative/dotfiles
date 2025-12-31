@@ -78,12 +78,14 @@ in
     #   }
     # ];
 
-    boot.kernelPatches = [
-      {
-        name = "rock-5a-green-led-fix";
-        patch = ./rock-5a-led.patch;
-      }
-    ];
+    # not needed, latest kernel is merged
+    # https://github.com/torvalds/linux/tree/v6.18/arch/arm64/boot/dts/rockchip
+    # boot.kernelPatches = [
+    #   {
+    #     name = "rock-5a-green-led-fix";
+    #     patch = ./rock-5a-led.patch;
+    #   }
+    # ];
 
     systemd.services.custom-leds = {
       description = "Custom LED Configuration";
