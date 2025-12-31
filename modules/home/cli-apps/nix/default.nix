@@ -23,7 +23,7 @@ let
       fi
       export TARGET="$1"
       # The |& operator pipes both stdout and stderr
-      nixos-rebuild --target-host "$TARGET" --use-remote-sudo --flake ".#$TARGET" switch --log-format internal-json |& nom --json
+      nixos-rebuild --target-host "$TARGET" --sudo --flake ".#$TARGET" switch --log-format internal-json |& nom --json
     }
   '';
 
