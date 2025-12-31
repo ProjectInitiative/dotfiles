@@ -20,10 +20,12 @@ in
   ];
 
   # add rust based init
-  system.nixos-init.enable = true;
+  # system.nixos-init.enable = true;
+  # system.etc.overlay.enable = true;
+  # services.userborn.enable = true;
+  # 
   boot.initrd.systemd.enable = true;
-  system.etc.overlay.enable = true;
-  services.userborn.enable = true;
+  boot.initrd.systemd.fido2.enable = true;
 
   # enable numlock during boot
   systemd.services.numLockOnTty = {

@@ -23,7 +23,7 @@ in
   options.${namespace}.settings = {
     stateVersion = mkOption {
       type = types.str;
-      default = "24.11";
+      default = "25.11";
       description = ''
         The state version for use within ${namespace} modules.
         Defaults to an inferred system or Home Manager stateVersion if possible.

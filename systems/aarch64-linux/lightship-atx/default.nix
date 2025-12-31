@@ -50,7 +50,4 @@ in
     };
   };
 
-
-  system.stateVersion = lib.mkForce "25.05";
-
 }

@@ -1682,14 +1682,18 @@
         ]
       },
       "locked": {
-        "lastModified": 1767116653,
-        "narHash": "sha256-jKGuA/je7CYmC3wHJN+am/8IlxeAzRaRkdvWbhbVs5M=",
-        "path": "/home/kylepzak/dotfiles/vendor/snowfall-lib",
-        "type": "path"
+        "lastModified": 1767115770,
+        "narHash": "sha256-yWpSD7NpczrcW7D40IXx2ZDnnrVkFtLQIVQ+9k8OMno=",
+        "owner": "projectinitiative",
+        "repo": "snowfall-lib",
+        "rev": "f14646bf9790a791f49c03b3c2d05e8f00674867",
+        "type": "github"
       },
       "original": {
-        "path": "/home/kylepzak/dotfiles/vendor/snowfall-lib",
-        "type": "path"
+        "owner": "projectinitiative",
+        "ref": "fixes",
+        "repo": "snowfall-lib",
+        "type": "github"
       }
     },
     "snowfall-lib_6": {

@@ -245,7 +245,7 @@ in
       # Base system packages
       environment.systemPackages = with pkgs; [
         bcachefs-tools
-        linuxPackages_latest.perf
+        perf
         smartmontools
         lsof
         pciutils
@@ -404,8 +404,6 @@ in
         localTargetPath = "/mnt/pool/rclone/";
       };
 
-      # Set the state version
-      system.stateVersion = "24.05"; # Adjust as needed
     }
   );
 }

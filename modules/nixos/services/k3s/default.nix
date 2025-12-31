@@ -536,7 +536,8 @@ in
       "fs.inotify.max_user_watches" = 524288;
       "fs.inotify.max_user_instances" = 512;
     };
-    systemd.extraConfig = "DefaultLimitNOFILE=1048576";
+
+    systemd.settings.Manager.DefaultLimitNOFILE = "1048576";
 
     environment.systemPackages = [ config.services.k3s.package ];
 

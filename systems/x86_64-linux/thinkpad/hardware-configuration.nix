@@ -36,10 +36,15 @@
         "nvme"
       ];
       kernelModules = [ "dm-snapshot" ];
-      luks.devices = {
-        "nixos" = {
-          device = "/dev/disk/by-uuid/fb793780-923f-4f0d-bb9b-cead23745d39";
-          preLVM = true;
+      luks = {
+        devices = {
+          "nixos" = {
+            device = "/dev/disk/by-uuid/fb793780-923f-4f0d-bb9b-cead23745d39";
+            preLVM = true;
+            crypttabExtraOpts = [
+              "fido2-device=auto"
+            ];
+          };
         };
       };
     };
