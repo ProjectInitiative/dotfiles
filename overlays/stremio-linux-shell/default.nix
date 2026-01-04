@@ -2,7 +2,7 @@
 final: prev:
 let
   unstablePkgs = import inputs.unstable {
-    system = prev.system;
+    system = prev.stdenv.hostPlatform.system;
     config = prev.config;
   };
 in {

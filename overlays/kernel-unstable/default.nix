@@ -2,7 +2,7 @@
 final: prev:
 let
   upstreamPkgs = import inputs.upstream {
-    system = prev.system;
+    system = prev.stdenv.hostPlatform.system;
     # Pass configuration from the main nixpkgs to keep it consistent
     config = prev.config;
   };

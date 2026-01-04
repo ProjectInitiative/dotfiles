@@ -5,7 +5,7 @@ let
   # Create a dedicated unstable package set to draw from.
   # We only pass `system` to avoid configuration conflicts.
   unstablePkgs = import inputs.unstable {
-    system = prev.system;
+    system = prev.stdenv.hostPlatform.system;
   };
 in
 {

@@ -69,14 +69,10 @@
     # snowfall-lib.url = "path:/home/short/work/@snowfallorg/lib";
     snowfall-lib.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Avalanche
-    avalanche.url = "github:snowfallorg/avalanche";
-    # avalanche.url = "path:/home/short/work/@snowfallorg/avalanche";
-    avalanche.inputs.nixpkgs.follows = "unstable";
 
     # Snowfall Flake
-    flake.url = "github:snowfallorg/flake?ref=v1.4.1";
-    flake.inputs.nixpkgs.follows = "unstable";
+    # flake.url = "github:snowfallorg/flake?ref=v1.4.1";
+    # flake.inputs.nixpkgs.follows = "unstable";
 
     # flake compat
     flake-compat = {
@@ -84,12 +80,9 @@
       flake = false;
     };
 
-    # Snowfall Thaw
-    thaw.url = "github:snowfallorg/thaw?ref=v1.0.7";
-
-    # Snowfall Drift
-    drift.url = "github:snowfallorg/drift";
-    drift.inputs.nixpkgs.follows = "nixpkgs";
+    # # Snowfall Drift
+    # drift.url = "github:snowfallorg/drift";
+    # drift.inputs.nixpkgs.follows = "nixpkgs";
 
     # Comma
     comma.url = "github:nix-community/comma";
@@ -120,10 +113,10 @@
     };
 
     # Backup management
-    icehouse = {
-      url = "github:snowfallorg/icehouse?ref=v1.1.1";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # icehouse = {
+    #   url = "github:snowfallorg/icehouse?ref=v1.1.1";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
 
     # formatter
     treefmt-nix = {
@@ -296,9 +289,9 @@
       };
 
       overlays = with inputs; [
-        flake.overlays.default
-        thaw.overlays.default
-        drift.overlays.default
+        # flake.overlays.default
+        # thaw.overlays.default
+        # drift.overlays.default
       ];
       # modules = {
       #   nixos = lib.snowfall.module.create-modules {

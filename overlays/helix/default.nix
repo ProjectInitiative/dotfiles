@@ -20,6 +20,6 @@ final: prev: {
           src = helixSrc;
         }).defaultNix;
     in
-    helixFlake.packages.${final.system}.default;
+    helixFlake.packages.${final.stdenv.hostPlatform.system}.default;
 
 }
