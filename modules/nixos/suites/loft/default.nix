@@ -107,7 +107,7 @@ in
       # Configure the Loft service using the suite's options
       services.loft = {
         enable = true;
-        package = inputs.loft.packages.${pkgs.system}.default;
+        package = inputs.loft.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
         s3 = {
           bucket = cfg.settings.s3.bucket;

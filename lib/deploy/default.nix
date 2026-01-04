@@ -30,15 +30,14 @@ rec {
       hosts = self.nixosConfigurations or { };
       # Filter out excluded hosts
       names = builtins.filter (name: !(builtins.elem name exclude)) (builtins.attrNames hosts);
-      nodes = lib.foldl (
-        result: name:
+      nodes = lib.foldr (
+        name: result:
         let
           host = hosts.${name};
           user = host.config.${namespace}.user.name or null;
-          inherit (host.pkgs) system;
+          system = host.pkgs.stdenv.hostPlatform.system;
         in
-        result
-        // {
+        {
           ${name} = (overrides.${name} or { }) // {
             hostname = overrides.${name}.hostname or "${name}";
             profiles = (overrides.${name}.profiles or { }) // {
@@ -56,7 +55,7 @@ rec {
                 // lib.optionalAttrs (host.config.${namespace}.security.doas.enable or false) { sudo = "doas -u"; };
             };
           };
-        }
+        } // result
       ) { } names;
     in
     {

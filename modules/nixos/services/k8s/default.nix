@@ -342,7 +342,7 @@ in
           #
           # 
           # ##################
-          package = inputs.nixpkgs-catch-up.legacyPackages.${pkgs.system}.k3s;
+          package = inputs.nixpkgs-catch-up.legacyPackages.${pkgs.stdenv.hostPlatform.system}.k3s;
 
           
           enable = true;
