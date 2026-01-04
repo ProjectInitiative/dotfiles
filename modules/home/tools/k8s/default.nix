@@ -26,6 +26,7 @@ in
         kubectx
         # kubeseal
         # krew
+        pkgs.${namespace}.karmadactl
         kubernetes-helm
         kustomize
         kustomize-sops
