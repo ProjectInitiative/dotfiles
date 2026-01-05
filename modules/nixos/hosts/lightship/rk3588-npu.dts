@@ -9,9 +9,10 @@
     npu: accelerator@fed00000 {
         compatible = "rockchip,rk3588-rknn";
         reg = <0x0 0xfed00000 0x0 0x10000>;
-        interrupts = <GIC_SPI 181 IRQ_TYPE_LEVEL_HIGH 0>,
-                     <GIC_SPI 182 IRQ_TYPE_LEVEL_HIGH 0>,
-                     <GIC_SPI 183 IRQ_TYPE_LEVEL_HIGH 0>;
+        /* SPI interrupts take 3 cells: <type number flags> */
+        interrupts = <GIC_SPI 181 IRQ_TYPE_LEVEL_HIGH>,
+                     <GIC_SPI 182 IRQ_TYPE_LEVEL_HIGH>,
+                     <GIC_SPI 183 IRQ_TYPE_LEVEL_HIGH>;
         interrupt-names = "npu0", "npu1", "npu2";
         clocks = <&cru CLK_NPU0>, <&cru CLK_NPU1>, <&cru CLK_NPU2>, <&cru PCLK_NPU>;
         clock-names = "clk_npu0", "clk_npu1", "clk_npu2", "pclk";
@@ -26,7 +27,7 @@
     npu_mmu: iommu@fed10000 {
         compatible = "rockchip,rk3588-iommu";
         reg = <0x0 0xfed10000 0x0 0x1000>;
-        interrupts = <GIC_SPI 184 IRQ_TYPE_LEVEL_HIGH 0>;
+        interrupts = <GIC_SPI 184 IRQ_TYPE_LEVEL_HIGH>;
         #iommu-cells = <0>;
         rockchip,disable-mmu-reset;
         status = "okay";

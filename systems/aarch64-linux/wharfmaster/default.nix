@@ -1,5 +1,4 @@
 {
-  self,
   config,
   pkgs,
   inputs,
@@ -15,8 +14,8 @@
   
   hardware.deviceTree.overlays = [
     {
-      name = "orange-pi-5-npu";
-      dtsFile = "${self}/modules/nixos/hosts/lightship/rk3588-npu.dts";
+      name = "rk3588-npu";
+      dtsFile = "${inputs.self}/modules/nixos/hosts/lightship/rk3588-npu.dts";
     }
   ];
 

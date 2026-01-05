@@ -77,8 +77,8 @@ in
       #   dtsFile = ./rock-5a-leds.dts;
       # }
       {
-        name = "rock-5a-npu";
-        dtsFile = ./rk3588-npu.dts;
+        name = "rk3588-npu";
+        dtsFile = "${inputs.self}/modules/nixos/hosts/lightship/rk3588-npu.dts";
       }
     ];
 
