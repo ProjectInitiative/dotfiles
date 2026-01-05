@@ -1,0 +1,34 @@
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/interrupt-controller/arm-gic.h>
+#include <dt-bindings/clock/rockchip,rk3588-cru.h>
+#include <dt-bindings/power/rk3588-power.h>
+
+&{/} {
+    npu: accelerator@fed00000 {
+        compatible = "rockchip,rk3588-rknn";
+        reg = <0x0 0xfed00000 0x0 0x10000>;
+        interrupts = <GIC_SPI 181 IRQ_TYPE_LEVEL_HIGH 0>,
+                     <GIC_SPI 182 IRQ_TYPE_LEVEL_HIGH 0>,
+                     <GIC_SPI 183 IRQ_TYPE_LEVEL_HIGH 0>;
+        interrupt-names = "npu0", "npu1", "npu2";
+        clocks = <&cru CLK_NPU0>, <&cru CLK_NPU1>, <&cru CLK_NPU2>, <&cru PCLK_NPU>;
+        clock-names = "clk_npu0", "clk_npu1", "clk_npu2", "pclk";
+        resets = <&cru SRST_NPU0>, <&cru SRST_NPU1>, <&cru SRST_NPU2>;
+        reset-names = "srst_npu0", "srst_npu1", "srst_npu2";
+        power-domains = <&power RK3588_PD_NPU>;
+        iommus = <&npu_mmu>;
+        npu-supply = <&vdd_npu_s0>;
+        status = "okay";
+    };
+
+    npu_mmu: iommu@fed10000 {
+        compatible = "rockchip,rk3588-iommu";
+        reg = <0x0 0xfed10000 0x0 0x1000>;
+        interrupts = <GIC_SPI 184 IRQ_TYPE_LEVEL_HIGH 0>;
+        #iommu-cells = <0>;
+        rockchip,disable-mmu-reset;
+        status = "okay";
+    };
+};

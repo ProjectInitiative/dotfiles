@@ -71,12 +71,16 @@ in
     #   '';
     # }];
     # 
-    # hardware.deviceTree.overlays = [
-    #   {
-    #     name = "rock-5a-leds";
-    #     dtsFile = ./rock-5a-leds.dts;
-    #   }
-    # ];
+    hardware.deviceTree.overlays = [
+      # {
+      #   name = "rock-5a-leds";
+      #   dtsFile = ./rock-5a-leds.dts;
+      # }
+      {
+        name = "rock-5a-npu";
+        dtsFile = ./rk3588-npu.dts;
+      }
+    ];
 
     # not needed, latest kernel is merged
     # https://github.com/torvalds/linux/tree/v6.18/arch/arm64/boot/dts/rockchip
