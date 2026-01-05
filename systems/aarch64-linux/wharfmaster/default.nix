@@ -1,4 +1,5 @@
 {
+  self,
   config,
   pkgs,
   inputs,
@@ -10,6 +11,14 @@
 {
 
   imports = inputs.nixos-on-arm.bootModules.orangepi5ultra;
+
+  
+  hardware.deviceTree.overlays = [
+    {
+      name = "orange-pi-5-npu";
+      dtsFile = "${self}/modules/nixos/hosts/lightship/rk3588-npu.dts";
+    }
+  ];
 
   home-manager.backupFileExtension = "backup";
 
