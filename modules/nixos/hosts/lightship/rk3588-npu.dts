@@ -5,6 +5,28 @@
 #include <dt-bindings/clock/rockchip,rk3588-cru.h>
 #include <dt-bindings/power/rk3588-power.h>
 
+#ifndef ACLK_NPU0
+#define ACLK_NPU0 301
+#endif
+#ifndef ACLK_NPU1
+#define ACLK_NPU1 290
+#endif
+#ifndef ACLK_NPU2
+#define ACLK_NPU2 292
+#endif
+#ifndef PCLK_NPU_ROOT
+#define PCLK_NPU_ROOT 305
+#endif
+#ifndef SRST_A_RKNN0
+#define SRST_A_RKNN0 486
+#endif
+#ifndef SRST_A_RKNN1
+#define SRST_A_RKNN1 432
+#endif
+#ifndef SRST_A_RKNN2
+#define SRST_A_RKNN2 448
+#endif
+
 &{/} {
     npu: accelerator@fed00000 {
         compatible = "rockchip,rk3588-rknn";
@@ -14,9 +36,9 @@
                      <GIC_SPI 182 IRQ_TYPE_LEVEL_HIGH>,
                      <GIC_SPI 183 IRQ_TYPE_LEVEL_HIGH>;
         interrupt-names = "npu0", "npu1", "npu2";
-        clocks = <&cru CLK_NPU0>, <&cru CLK_NPU1>, <&cru CLK_NPU2>, <&cru PCLK_NPU>;
+        clocks = <&cru ACLK_NPU0>, <&cru ACLK_NPU1>, <&cru ACLK_NPU2>, <&cru PCLK_NPU_ROOT>;
         clock-names = "clk_npu0", "clk_npu1", "clk_npu2", "pclk";
-        resets = <&cru SRST_NPU0>, <&cru SRST_NPU1>, <&cru SRST_NPU2>;
+        resets = <&cru SRST_A_RKNN0>, <&cru SRST_A_RKNN1>, <&cru SRST_A_RKNN2>;
         reset-names = "srst_npu0", "srst_npu1", "srst_npu2";
         power-domains = <&power RK3588_PD_NPU>;
         iommus = <&npu_mmu>;
