@@ -79,7 +79,7 @@ in
       # }
       {
         name = "rk3588-npu";
-        dtsFile = "${inputs.self}/modules/nixos/hosts/lightship/rk3588-npu.dts";
+        dtsFile = "${inputs.self}/modules/nixos/hosts/lightship/rk3588s-rock-5a-npu.dts";
       }
     ];
 

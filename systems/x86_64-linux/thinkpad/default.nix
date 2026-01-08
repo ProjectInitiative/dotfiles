@@ -431,6 +431,7 @@ in
     minicom
     rkdeveloptool
     flashrom
+    kicad
 
     multipath-tools
     usbutils

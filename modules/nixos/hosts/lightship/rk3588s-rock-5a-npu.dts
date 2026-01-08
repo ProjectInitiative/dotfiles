@@ -1,0 +1,49 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "radxa,rock-5a";
+};
+
+/*
+ * Enable RK3588 NPU cores and link the NPU power domain to the regulator.
+ * Rock 5A requires &pd_npu to have domain-supply = <&vdd_npu_s0>.
+ */
+
+&rknn_core_0 {
+    status = "okay";
+    npu-supply = <&vdd_npu_s0>;
+    sram-supply = <&vdd_npu_s0>;
+    testing-overlay = "true";
+};
+
+&rknn_core_1 {
+    status = "okay";
+    npu-supply = <&vdd_npu_s0>;
+    sram-supply = <&vdd_npu_s0>;
+};
+
+&rknn_core_2 {
+    status = "okay";
+    npu-supply = <&vdd_npu_s0>;
+    sram-supply = <&vdd_npu_s0>;
+};
+
+&rknn_mmu_0 {
+    status = "okay";
+    rockchip,disable-mmu-reset;
+};
+
+&rknn_mmu_1 {
+    status = "okay";
+    rockchip,disable-mmu-reset;
+};
+
+&rknn_mmu_2 {
+    status = "okay";
+    rockchip,disable-mmu-reset;
+};
+
+&pd_npu {
+    domain-supply = <&vdd_npu_s0>;
+};

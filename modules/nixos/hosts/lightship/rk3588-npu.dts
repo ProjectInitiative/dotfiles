@@ -1,57 +1,35 @@
 /dts-v1/;
 /plugin/;
 
-#include <dt-bindings/interrupt-controller/arm-gic.h>
-#include <dt-bindings/clock/rockchip,rk3588-cru.h>
-#include <dt-bindings/power/rk3588-power.h>
+/* 
+ * Enable the RK3588 NPU cores defined in mainline rk3588-base.dtsi.
+ * This generic overlay is used by wharfmaster (Orange Pi 5) and assumes
+ * power/regulators are handled by the base board DTS or default on.
+ */
 
-#ifndef ACLK_NPU0
-#define ACLK_NPU0 301
-#endif
-#ifndef ACLK_NPU1
-#define ACLK_NPU1 290
-#endif
-#ifndef ACLK_NPU2
-#define ACLK_NPU2 292
-#endif
-#ifndef PCLK_NPU_ROOT
-#define PCLK_NPU_ROOT 305
-#endif
-#ifndef SRST_A_RKNN0
-#define SRST_A_RKNN0 486
-#endif
-#ifndef SRST_A_RKNN1
-#define SRST_A_RKNN1 432
-#endif
-#ifndef SRST_A_RKNN2
-#define SRST_A_RKNN2 448
-#endif
+&rknn_core_0 {
+    status = "okay";
+};
 
-&{/} {
-    npu: accelerator@fed00000 {
-        compatible = "rockchip,rk3588-rknn";
-        reg = <0x0 0xfed00000 0x0 0x10000>;
-        /* SPI interrupts take 3 cells: <type number flags> */
-        interrupts = <GIC_SPI 181 IRQ_TYPE_LEVEL_HIGH>,
-                     <GIC_SPI 182 IRQ_TYPE_LEVEL_HIGH>,
-                     <GIC_SPI 183 IRQ_TYPE_LEVEL_HIGH>;
-        interrupt-names = "npu0", "npu1", "npu2";
-        clocks = <&cru ACLK_NPU0>, <&cru ACLK_NPU1>, <&cru ACLK_NPU2>, <&cru PCLK_NPU_ROOT>;
-        clock-names = "clk_npu0", "clk_npu1", "clk_npu2", "pclk";
-        resets = <&cru SRST_A_RKNN0>, <&cru SRST_A_RKNN1>, <&cru SRST_A_RKNN2>;
-        reset-names = "srst_npu0", "srst_npu1", "srst_npu2";
-        power-domains = <&power RK3588_PD_NPU>;
-        iommus = <&npu_mmu>;
-        npu-supply = <&vdd_npu_s0>;
-        status = "okay";
-    };
+&rknn_core_1 {
+    status = "okay";
+};
 
-    npu_mmu: iommu@fed10000 {
-        compatible = "rockchip,rk3588-iommu";
-        reg = <0x0 0xfed10000 0x0 0x1000>;
-        interrupts = <GIC_SPI 184 IRQ_TYPE_LEVEL_HIGH>;
-        #iommu-cells = <0>;
-        rockchip,disable-mmu-reset;
-        status = "okay";
-    };
+&rknn_core_2 {
+    status = "okay";
+};
+
+&rknn_mmu_0 {
+    status = "okay";
+    rockchip,disable-mmu-reset;
+};
+
+&rknn_mmu_1 {
+    status = "okay";
+    rockchip,disable-mmu-reset;
+};
+
+&rknn_mmu_2 {
+    status = "okay";
+    rockchip,disable-mmu-reset;
 };
