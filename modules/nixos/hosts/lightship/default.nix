@@ -54,6 +54,11 @@ in
       zfs = false;
     };
 
+    boot.kernelParams = [
+      "nvme_core.default_ps_max_latency_us=0"
+      "pcie_aspm=off"
+    ];
+
     # boot.kernelPatches = [{
     #   name = "rock-5a-led-overlay";
     #   patch = null;
