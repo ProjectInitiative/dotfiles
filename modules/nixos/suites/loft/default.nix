@@ -37,7 +37,7 @@ in
 
     server = {
       debug = mkBoolOpt false "Enable debug logging for the Loft service.";
-      uploadThreads = mkOpt types.int 12 "Number of parallel upload threads.";
+      uploadThreads = mkOpt types.int 4 "Number of parallel upload threads.";
       scanOnStartup = mkBoolOpt true "Scan existing store paths on startup.";
       compression = mkOpt (types.enum [ "zstd" "xz" ]) "zstd" "Compression algorithm to use.";
       skipSignedByKeys = mkOpt (types.listOf types.str) [

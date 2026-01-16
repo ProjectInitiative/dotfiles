@@ -150,10 +150,10 @@ in
         local bucket_name="$1"
         local rw_key_name="''${bucket_name}-rw"
         local ro_key_name="''${bucket_name}-ro"
-        # The alias is defined as: kubectl --context=capstan exec -n garage -c garage -it garage-0 -- /garage
+        # The alias is defined as: kubectl --context=mc exec -n garage -c garage -it garage-0 -- /garage
         # Removing -it for scripting. Also, this assumes garage-0 is the correct pod.
         local -a garage_exec
-        garage_exec=(kubectl --context=capstan exec -n garage -c garage garage-0 -- /garage)
+        garage_exec=(kubectl --context=mc exec -n garage -c garage garage-0 -- /garage)
 
         echo "Creating bucket: $bucket_name"
         "''${garage_exec[@]}" bucket create "$bucket_name"
@@ -181,7 +181,7 @@ in
       # enableNixpkgsReleaseCheck = false;
 
       shellAliases = {
-        garage = "kubectl --context=capstan exec -n garage -c garage -it garage-0 -- /garage";
+        garage = "kubectl --context=mc exec -n garage -c garage -it garage-0 -- /garage";
       };
 
       file = {
