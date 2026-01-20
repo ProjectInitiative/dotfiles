@@ -119,9 +119,15 @@
     };
   };
 
-  swapDevices = [
-    { device = "/dev/disk/by-uuid/b2530dee-4381-4a0f-a063-4871e2203999"; }
-  ];
+  zramSwap = {
+    enable = true;
+    algorithm = "zstd";   # Best compression ratio for servers
+    memoryPercent = 25;  # Allow zram to use up to 25% your RAM if needed
+  };
+  
+  # swapDevices = [
+  #   { device = "/dev/disk/by-uuid/b2530dee-4381-4a0f-a063-4871e2203999"; }
+  # ];
 
   networking = {
     useDHCP = lib.mkDefault true;
