@@ -78,6 +78,26 @@ in
       }
     ];
 
+    # SYSTEM CONFIG TO SUPPORT K8S
+
+    boot.kernel.sysctl = {
+      "fs.file-max" = 2097152;
+      "fs.inotify.max_user_watches" = 524288;
+      "fs.inotify.max_user_instances" = 512;
+    };
+
+    systemd.settings.Manager.DefaultLimitNOFILE = "1048576";
+
+    zramSwap = {
+      enable = true;
+      algorithm = "zstd";   # Best compression ratio for servers
+      memoryPercent = 25;  # Allow zram to use up to half your RAM if needed
+    };
+
+    # Increase swappiness to encourage compressing idle/useless pages 
+    # into zram earlier, keeping your actual RAM fresh for active workloads.
+    boot.kernel.sysctl."vm.swappiness" = 180;
+
     # NETWORKING
     boot.kernel.sysctl."net.ipv4.ip_forward" = 1;
     networking = {

@@ -57,6 +57,8 @@ in
     boot.kernelParams = [
       "nvme_core.default_ps_max_latency_us=0"
       "pcie_aspm=off"
+      "nvme_core.max_pid=0"
+      "nvme.noacpi=1"
     ];
 
     # boot.kernelPatches = [{

@@ -531,14 +531,6 @@ in
       }
     ];
 
-    boot.kernel.sysctl = {
-      "fs.file-max" = 2097152;
-      "fs.inotify.max_user_watches" = 524288;
-      "fs.inotify.max_user_instances" = 512;
-    };
-
-    systemd.settings.Manager.DefaultLimitNOFILE = "1048576";
-
     environment.systemPackages = [ config.services.k3s.package ];
 
     systemd.services.k3s = {
