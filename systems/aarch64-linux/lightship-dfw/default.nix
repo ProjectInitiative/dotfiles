@@ -8,7 +8,7 @@
   ...
 }:
 let
-  nvme = "nvme-TEAM_TM8FP6512G_TPBF2502270050300142-part1";
+  nvme = "nvme-Inland_TN320_NVMe_SSD_IB23AK0512P00800-part1";
 in
 {
   imports = inputs.nixos-on-arm.bootModules.rock5a ++ [
@@ -17,12 +17,17 @@ in
 
   home-manager.backupFileExtension = "backup";
 
-  # Enable and configure the common hetzner module for this host
-  ${namespace}.hosts.lightship = {
-    enable = true;
-    role = "server"; # This is the master node
-    k8sServerAddr = "https://100.92.52.46:6443";
-    k3sDataDir = "/mnt/nvme/${nvme}/k3s";
+  ${namespace} = {
+
+    # services.k8s.enable = lib.mkForce false;
+
+    # Enable and configure the common hetzner module for this host
+    hosts.lightship = {
+      enable = true;
+      role = "server"; # This is the master node
+      k8sServerAddr = "https://100.92.52.46:6443";
+      k3sDataDir = "/mnt/nvme/${nvme}/k3s";
+    };
   };
 
   # Filesystem configuration converted from fstab

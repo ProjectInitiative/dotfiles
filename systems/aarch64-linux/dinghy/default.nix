@@ -125,19 +125,26 @@ in
   boot.kernelParams = [
     # 1. DISABLE UAS (Critical Stability Fix)
     # The JMicron bridge cannot handle UAS with bcachefs. Force Bulk-Only.
-    # "usb-storage.quirks=152d:0561:u,1058:0a10:u"
+    "usb-storage.quirks=152d:0561:u,1058:0a10:u"
+    # This tells the xhci driver to ignore LPM for the JMicron chips
+    "usbcore.quirks=1058:0a10:k"
 
     # 2. MEMORY STABILITY
     # "swiotlb=65536" # Fix DMA buffer exhaustion on Mainline
+    # Increase the DMA bounce buffer size to prevent xHCI stalls under heavy I/O
+    "swiotlb=131072"
 
     # 3. HARDWARE MASKING (Aggressive)
     # Tell the kernel these devices don't exist to prevent reset loops
     # "bcm2835_dma.fake_channels=0x1f00" # Mask BT DMA channels
+    #
+    "scsi_mod.scan=async"         # Helps avoid timeout during staggered spin-up
     
     # 4. GENERAL STABILITY
-    # "pcie_aspm=off"
+    "pcie_aspm=off"
+    "pci=pcie_bus_perf" # Forces the bus to prioritize performance/stability
     # "usb-storage.delay_use=10"
-    # "usbcore.autosuspend=-1"
+    "usbcore.autosuspend=-1"
     # "dwc_otg.lpm_enable=0"
     "console=ttyS0,115200n8"
     "console=tty1"
@@ -152,6 +159,17 @@ in
     # 2. Set permissions so we can write to them without sudo
     KERNEL=="pwmchip0", SUBSYSTEM=="pwm", ACTION=="add", RUN+="/bin/sh -c 'chown -R root:gpio /sys/class/pwm/pwmchip0/pwm0 && chmod -R g+w /sys/class/pwm/pwmchip0/pwm0'"
     KERNEL=="pwmchip0", SUBSYSTEM=="pwm", ACTION=="add", RUN+="/bin/sh -c 'chown -R root:gpio /sys/class/pwm/pwmchip0/pwm1 && chmod -R g+w /sys/class/pwm/pwmchip0/pwm1'"
+
+    # Set the scheduler to mq-deadline for all rotating disks on the USB bus
+    ACTION=="add|change", SUBSYSTEM=="block", ENV{ID_BUS}=="usb", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="mq-deadline"
+  
+    # Lower the 'nr_requests' to prevent the kernel from flooding the JMicron chip's tiny buffer
+    ACTION=="add|change", SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="1058", ATTR{queue/nr_requests}="16"
+  
+    # Keep your existing max_sectors limit
+    ACTION=="add", SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="152d", ENV{ID_MODEL_ID}=="0561", ATTR{device/max_sectors}="64"
+    ACTION=="add", SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="1058", ENV{ID_MODEL_ID}=="0a10", ATTR{device/max_sectors}="64"
+    
   '';
 
   boot.supportedFilesystems = lib.mkForce [ "ext4" "vfat" "bcachefs" ];
@@ -407,55 +425,55 @@ in
   # --- Late-boot bcachefs Mount ---
 
   # This service runs late in the boot process to mount the bcachefs pool.
-  systemd.services.storage-mount = {
-    description = "Mount the bcachefs storage pool";
+  # systemd.services.storage-mount = {
+  #   description = "Mount the bcachefs storage pool";
 
-    # Run after the main system is up and running.
-    after = [ "rockpi-quad.service" ];
-    # Be part of the local filesystem setup target.
-    wantedBy = [ "local-fs.target" ];
+  #   # Run after the main system is up and running.
+  #   after = [ "rockpi-quad.service" ];
+  #   # Be part of the local filesystem setup target.
+  #   wantedBy = [ "local-fs.target" ];
 
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
+  #   serviceConfig = {
+  #     Type = "oneshot";
+  #     RemainAfterExit = true;
 
-      ExecStart = pkgs.writeShellScript "mount-storage" ''
-        set -e
-        echo "Waiting for storage devices to appear..."
-        DEVICES_TO_WAIT_FOR=("/dev/sda" "/dev/sdb" "/dev/sdc" "/dev/sdd")
-        TIMEOUT=30
-        for i in $(seq $TIMEOUT); do
-          # Check if all devices exist as block devices
-          if [ -b "''${DEVICES_TO_WAIT_FOR[0]}" ] && \
-             [ -b "''${DEVICES_TO_WAIT_FOR[1]}" ] && \
-             [ -b "''${DEVICES_TO_WAIT_FOR[2]}" ] && \
-             [ -b "''${DEVICES_TO_WAIT_FOR[3]}" ]; then
-            echo "All storage devices found."
-            break
-          fi
+  #     ExecStart = pkgs.writeShellScript "mount-storage" ''
+  #       set -e
+  #       echo "Waiting for storage devices to appear..."
+  #       DEVICES_TO_WAIT_FOR=("/dev/sda" "/dev/sdb" "/dev/sdc" "/dev/sdd")
+  #       TIMEOUT=30
+  #       for i in $(seq $TIMEOUT); do
+  #         # Check if all devices exist as block devices
+  #         if [ -b "''${DEVICES_TO_WAIT_FOR[0]}" ] && \
+  #            [ -b "''${DEVICES_TO_WAIT_FOR[1]}" ] && \
+  #            [ -b "''${DEVICES_TO_WAIT_FOR[2]}" ] && \
+  #            [ -b "''${DEVICES_TO_WAIT_FOR[3]}" ]; then
+  #           echo "All storage devices found."
+  #           break
+  #         fi
 
-          # If we hit the timeout, exit with an error
-          if [ $i -eq $TIMEOUT ]; then
-            echo "Error: Timed out waiting for storage devices." >&2
-            exit 1
-          fi
-          sleep 1
-        done
+  #         # If we hit the timeout, exit with an error
+  #         if [ $i -eq $TIMEOUT ]; then
+  #           echo "Error: Timed out waiting for storage devices." >&2
+  #           exit 1
+  #         fi
+  #         sleep 1
+  #       done
 
-        echo "Mounting bcachefs filesystem to ${storageMountPoint}..."
-        ${pkgs.coreutils}/bin/mkdir -p ${storageMountPoint}
-        ${pkgs.util-linux}/bin/mount -t bcachefs UUID=27cac550-3836-765c-d107-51d27ab4a6e1 ${storageMountPoint}
-        echo "Storage mounted."
-      '';
+  #       echo "Mounting bcachefs filesystem to ${storageMountPoint}..."
+  #       ${pkgs.coreutils}/bin/mkdir -p ${storageMountPoint}
+  #       ${pkgs.util-linux}/bin/mount -t bcachefs UUID=27cac550-3836-765c-d107-51d27ab4a6e1 ${storageMountPoint}
+  #       echo "Storage mounted."
+  #     '';
 
-      ExecStop = pkgs.writeShellScript "unmount-storage" ''
-        set -e
-        echo "Unmounting ${storageMountPoint}..."
-        ${pkgs.util-linux}/bin/umount -l ${storageMountPoint}
-        echo "Storage unmounted."
-      '';
-    };
-  };
+  #     ExecStop = pkgs.writeShellScript "unmount-storage" ''
+  #       set -e
+  #       echo "Unmounting ${storageMountPoint}..."
+  #       ${pkgs.util-linux}/bin/umount -l ${storageMountPoint}
+  #       echo "Storage unmounted."
+  #     '';
+  #   };
+  # };
 
   # --- Late-boot MDADM RAID Assembly and Mount ---
 
