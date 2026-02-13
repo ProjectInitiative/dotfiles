@@ -28,12 +28,22 @@ let
     boot.loader.systemd-boot.enable = true;
     boot.loader.efi.canTouchEfiVariables = true;
 
-    swapDevices = [
-      {
-        device = "/swapfile";
-        size = 8 * 1024; # 8GB
-      }
-    ];
+    zramSwap = {
+      enable = true;
+      algorithm = "zstd";   # Best compression ratio for servers
+      memoryPercent = 15;  # Allow zram to use up to half your RAM if needed
+    };
+
+    # Increase swappiness to encourage compressing idle/useless pages 
+    # into zram earlier, keeping your actual RAM fresh for active workloads.
+    boot.kernel.sysctl."vm.swappiness" = 180;
+
+    # swapDevices = [
+    #   {
+    #     device = "/swapfile";
+    #     size = 8 * 1024; # 8GB
+    #   }
+    # ];
   };
 
   # --- Core Disko Config (Boot & Root only) ---
