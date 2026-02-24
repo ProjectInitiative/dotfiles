@@ -787,6 +787,47 @@ class ProcessesSection(ReportSection):
                 
         return processes
 
+class ReadOnlySection(ReportSection):
+    """Checks if specific mount points are read-only"""
+    def collect_summary(self):
+        ro_mounts = self._check_ro_mounts()
+        if ro_mounts:
+            return [f"🔴 *Read-Only Mounts:* {', '.join(ro_mounts)}"]
+        return []
+
+    def collect_detailed(self):
+        ro_mounts = self._check_ro_mounts()
+        if not ro_mounts:
+            return []
+
+        lines = ["*READ-ONLY MOUNTS:*"]
+        for mount in ro_mounts:
+             lines.append(f"🔴 {mount} is read-only!")
+        lines.append("")
+        return lines
+
+    def _check_ro_mounts(self):
+        mounts_to_check = self.config.get("check_read_only_mounts", [])
+        ro_detected = []
+        for mount in mounts_to_check:
+             if self._is_readonly(mount):
+                 ro_detected.append(mount)
+        return ro_detected
+
+    def _is_readonly(self, path):
+        try:
+            # Check if mount point exists
+            if not os.path.exists(path):
+                logger.warning(f"Mount point {path} does not exist")
+                return False
+
+            # Check filesystem flags
+            st = os.statvfs(path)
+            return bool(st.f_flag & os.ST_RDONLY)
+        except Exception as e:
+            logger.error(f"Error checking read-only status for {path}: {e}")
+            return False
+
 class HealthReporter:
     def __init__(self, config_file=None, config_dict=None):
         """
@@ -818,7 +859,8 @@ class HealthReporter:
             ],
             "critical_disk_usage": 90,
             "warning_disk_usage": 75,
-            "detailed_report": False
+            "detailed_report": False,
+            "check_read_only_mounts": []
         }
         
         # Load configuration from file or dictionary
@@ -829,6 +871,7 @@ class HealthReporter:
             
         # Initialize report sections - easy to add new sections here
         self.report_sections = [
+            ReadOnlySection(self),
             UptimeSection(self),
             CPUSection(self),
             MemorySection(self),
@@ -1007,6 +1050,7 @@ def main():
     parser.add_argument("--telegram-token-path", help="Path to the Telegram token file")
     parser.add_argument("--telegram-chat-id-path", help="Path to the Telegram chat ID file")
     parser.add_argument("--detailed", action="store_true", help="Generate detailed report")
+    parser.add_argument("--check-read-only-mounts", help="Comma-separated list of mount points to check for read-only status")
     args = parser.parse_args()
     
 
@@ -1024,6 +1068,8 @@ def main():
         config_dict["telegram_chat_id_path"] = args.telegram_chat_id_path
     if args.detailed:
         config_dict["detailed_report"] = True
+    if args.check_read_only_mounts:
+        config_dict["check_read_only_mounts"] = [m.strip() for m in args.check_read_only_mounts.split(",") if m.strip()]
         
     try:
         # Create and run the reporter
