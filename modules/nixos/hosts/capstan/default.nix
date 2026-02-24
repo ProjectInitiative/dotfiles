@@ -370,6 +370,7 @@ in
             "sr"
           ]; # Default exclusions
           reportTime = "08:00"; # Send report at 8 AM
+          checkReadOnlyMounts = [ cfg.mountpoint ];
         };
 
         juicefs = mkIf cfg.allFeatures {
