@@ -347,6 +347,8 @@ in
               "sr"
             ]; # Default exclusions
             reportTime = "08:00"; # Send report at 8 AM
+            runAtBoot = true;
+            checkReadOnlyMounts = [ "/mnt/pool" ];
           };
         };
         suites = {

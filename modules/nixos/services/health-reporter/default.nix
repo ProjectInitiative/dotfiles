@@ -94,6 +94,18 @@ in
       default = false;
       description = "Whether to include detailed information in the report";
     };
+
+    checkReadOnlyMounts = mkOption {
+      type = types.listOf types.str;
+      default = [ ];
+      description = "List of mount points to check if they are read-only";
+    };
+
+    runAtBoot = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Run the health monitor at boot time instead of a scheduled time";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -105,16 +117,22 @@ in
           ${pkgs.${namespace}.health-report}/bin/health-report \
                   --send-to-telegram \
                   --telegram-token-path ${config.sops.secrets.health_reporter_bot_api_token.path} \
-                  --telegram-chat-id-path ${config.sops.secrets.telegram_chat_id.path}
+                  --telegram-chat-id-path ${config.sops.secrets.telegram_chat_id.path} ${
+                    lib.optionalString (cfg.checkReadOnlyMounts != []) ''\
+                  --check-read-only-mounts ${lib.concatStringsSep "," cfg.checkReadOnlyMounts}''
+                  }
         '';
       };
     };
 
-    # Schedule daily execution
+    # Schedule execution
     systemd.timers.server-health-monitor = {
       description = "Timer for Server Health Monitor";
       wantedBy = [ "timers.target" ];
-      timerConfig = {
+      timerConfig = if cfg.runAtBoot then {
+        OnBootSec = "5min";
+        Unit = "server-health-monitor.service";
+      } else {
         OnCalendar = "*-*-* ${cfg.reportTime}:00";
         Unit = "server-health-monitor.service";
         Persistent = true;
