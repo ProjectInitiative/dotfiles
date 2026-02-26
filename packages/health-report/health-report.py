@@ -21,6 +21,7 @@ from pathlib import Path
 import psutil
 import requests
 import shutil
+import glob
 from hurry.filesize import size
 
 # Configure logging
@@ -809,9 +810,21 @@ class ReadOnlySection(ReportSection):
     def _check_ro_mounts(self):
         mounts_to_check = self.config.get("check_read_only_mounts", [])
         ro_detected = []
-        for mount in mounts_to_check:
-             if self._is_readonly(mount):
-                 ro_detected.append(mount)
+        for pattern in mounts_to_check:
+             # Expand glob patterns
+             expanded_mounts = glob.glob(pattern)
+             if not expanded_mounts:
+                 # If pattern doesn't match anything, maybe it's a literal path that doesn't exist yet or isn't globbable
+                 # Check if it looks like a glob pattern
+                 if any(char in pattern for char in ['*', '?', '[']):
+                     logger.warning(f"Pattern {pattern} did not match any files/directories")
+                 else:
+                     # Treat as literal
+                     expanded_mounts = [pattern]
+
+             for mount in expanded_mounts:
+                 if self._is_readonly(mount):
+                     ro_detected.append(mount)
         return ro_detected
 
     def _is_readonly(self, path):
