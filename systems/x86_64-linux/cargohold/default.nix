@@ -34,10 +34,6 @@ let
       memoryPercent = 15;  # Allow zram to use up to half your RAM if needed
     };
 
-    # Increase swappiness to encourage compressing idle/useless pages 
-    # into zram earlier, keeping your actual RAM fresh for active workloads.
-    boot.kernel.sysctl."vm.swappiness" = 180;
-
     # swapDevices = [
     #   {
     #     device = "/swapfile";

@@ -81,8 +81,9 @@ in
         settings = {
           # Add the S3 endpoint as a substituter, using the puller profile
           substituters = [
-            "s3://${cfg.settings.s3.bucket}?region=${cfg.settings.s3.region}&endpoint=${cfg.settings.s3.endpoint}&profile=nix-cache-puller"
+            "s3://${cfg.settings.s3.bucket}?region=${cfg.settings.s3.region}&endpoint=${cfg.settings.s3.endpoint}&profile=nix-cache-puller&want-mass-query=true&priority=50"
           ];
+          max-substitution-jobs = 32;
           trusted-public-keys = [
             cfg.settings.publicKey
           ];

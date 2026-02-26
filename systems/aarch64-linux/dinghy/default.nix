@@ -120,56 +120,47 @@ in
   boot.blacklistedKernelModules = [ 
     "btusb" "btrtl" "btbcm" "btintel" "bluetooth" # Kill BT
     "snd_bcm2835"                                 # Kill Audio (Free up PWM pins)
+    "uas"
   ];
 
+  boot.initrd.availableKernelModules = [ "usb-storage" ];
+
   boot.kernelParams = [
-    # 1. DISABLE UAS (Critical Stability Fix)
-    # The JMicron bridge cannot handle UAS with bcachefs. Force Bulk-Only.
-    "usb-storage.quirks=152d:0561:u,1058:0a10:u"
-    # This tells the xhci driver to ignore LPM for the JMicron chips
-    "usbcore.quirks=1058:0a10:k"
+    # 1. STORAGE QUIRKS: :u = No UAS, :k = No Link Power Management (LPM)
+    # Applied to JMicron (152d, 1058) and OWC (7825)
+    "usb-storage.quirks=152d:0561:u,1058:0a10:u,7825:a2a4:u"
+    "usbcore.quirks=152d:0561:k,1058:0a10:k,7825:a2a4:k"
 
-    # 2. MEMORY STABILITY
-    # "swiotlb=65536" # Fix DMA buffer exhaustion on Mainline
-    # Increase the DMA bounce buffer size to prevent xHCI stalls under heavy I/O
+    # 2. DMA & IOMMU: Fixes buffer exhaustion on 8GB Pi4/Mainline
     "swiotlb=131072"
+    "iommu.passthrough=1"
+    "iommu.strict=0"
 
-    # 3. HARDWARE MASKING (Aggressive)
-    # Tell the kernel these devices don't exist to prevent reset loops
-    # "bcm2835_dma.fake_channels=0x1f00" # Mask BT DMA channels
-    #
-    "scsi_mod.scan=async"         # Helps avoid timeout during staggered spin-up
-    
-    # 4. GENERAL STABILITY
+    # 3. BUS STABILITY: Prevent sleep-induced timeouts (-110 errors)
     "pcie_aspm=off"
-    "pci=pcie_bus_perf" # Forces the bus to prioritize performance/stability
-    # "usb-storage.delay_use=10"
+    "pci=pcie_bus_perf"
     "usbcore.autosuspend=-1"
-    # "dwc_otg.lpm_enable=0"
+    "scsi_mod.scan=async" # Staggered spin-up for the 4-drive pool
+    
     "console=ttyS0,115200n8"
     "console=tty1"
   ];
 
   # --- UDEV RULES (Auto-Export PWM) ---
   services.udev.extraRules = ''
-    # 1. Export PWM0 (GPIO 12) and PWM1 (GPIO 13)
-    KERNEL=="pwmchip0", SUBSYSTEM=="pwm", ACTION=="add", PROGRAM="/bin/sh -c 'echo 0 > /sys/class/pwm/pwmchip0/export'"
-    KERNEL=="pwmchip0", SUBSYSTEM=="pwm", ACTION=="add", PROGRAM="/bin/sh -c 'echo 1 > /sys/class/pwm/pwmchip0/export'"
-
-    # 2. Set permissions so we can write to them without sudo
-    KERNEL=="pwmchip0", SUBSYSTEM=="pwm", ACTION=="add", RUN+="/bin/sh -c 'chown -R root:gpio /sys/class/pwm/pwmchip0/pwm0 && chmod -R g+w /sys/class/pwm/pwmchip0/pwm0'"
-    KERNEL=="pwmchip0", SUBSYSTEM=="pwm", ACTION=="add", RUN+="/bin/sh -c 'chown -R root:gpio /sys/class/pwm/pwmchip0/pwm1 && chmod -R g+w /sys/class/pwm/pwmchip0/pwm1'"
-
-    # Set the scheduler to mq-deadline for all rotating disks on the USB bus
+    # Global: Set mq-deadline for all USB rotating disks
     ACTION=="add|change", SUBSYSTEM=="block", ENV{ID_BUS}=="usb", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="mq-deadline"
-  
-    # Lower the 'nr_requests' to prevent the kernel from flooding the JMicron chip's tiny buffer
-    ACTION=="add|change", SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="1058", ATTR{queue/nr_requests}="16"
-  
-    # Keep your existing max_sectors limit
-    ACTION=="add", SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="152d", ENV{ID_MODEL_ID}=="0561", ATTR{device/max_sectors}="64"
-    ACTION=="add", SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="1058", ENV{ID_MODEL_ID}=="0a10", ATTR{device/max_sectors}="64"
-    
+
+    # OWC Adapters (7825): Cap sectors to 64KB to prevent -71 protocol errors
+    ACTION=="add|change", SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="7825", ATTR{device/max_sectors}="128", ATTR{queue/nr_requests}="16"
+
+    # JMicron/WD Adapters (152d, 1058): Same throttling logic
+    ACTION=="add|change", SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="152d", ATTR{device/max_sectors}="64", ATTR{queue/nr_requests}="16"
+    ACTION=="add|change", SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="1058", ATTR{device/max_sectors}="64", ATTR{queue/nr_requests}="16"
+
+    # Fan Control Exports (Existing Logic)
+    KERNEL=="pwmchip0", SUBSYSTEM=="pwm", ACTION=="add", PROGRAM="/bin/sh -c 'echo 0 > /sys/class/pwm/pwmchip0/export && echo 1 > /sys/class/pwm/pwmchip0/export'"
+    KERNEL=="pwmchip0", SUBSYSTEM=="pwm", ACTION=="add", RUN+="/bin/sh -c 'chown -R root:gpio /sys/class/pwm/pwmchip0/pwm* && chmod -R g+w /sys/class/pwm/pwmchip0/pwm*'"
   '';
 
   boot.supportedFilesystems = lib.mkForce [ "ext4" "vfat" "bcachefs" ];
