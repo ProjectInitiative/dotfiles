@@ -221,6 +221,15 @@ in
 
       services = {
 
+        health-reporter = {
+          enable = true;
+          telegramTokenPath = config.sops.secrets.health_reporter_bot_api_token.path;
+          telegramChatIdPath = config.sops.secrets.telegram_chat_id.path;
+          checkReadOnlyMounts = [ "/mnt/nvme/*" ];
+          runAtBoot = true;
+          reportTime = "08:00";
+        };
+
         monitoring.alloy.enable = mkForce false;
 
         k8s = {
