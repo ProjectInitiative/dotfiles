@@ -1,5 +1,53 @@
 {
   "nodes": {
+    "arduino-core-avr": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1765828323,
+        "narHash": "sha256-vsWYNIz/Nsm1jCBSZTZDmmXmPJpNGwtBL89fii8R0xg=",
+        "owner": "arduino",
+        "repo": "ArduinoCore-avr",
+        "rev": "7c38f34da561266e1e5cf7769f0e61b0aa5dda39",
+        "type": "github"
+      },
+      "original": {
+        "owner": "arduino",
+        "repo": "ArduinoCore-avr",
+        "type": "github"
+      }
+    },
+    "arduino-indexes": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1768435317,
+        "narHash": "sha256-Tun4O3pyPDw5ijdqW7lFfBf3rKXB0+rQkppknHmnVsM=",
+        "owner": "bouk",
+        "repo": "arduino-indexes",
+        "rev": "174657a32f9e865c04f10de92ba4f9b30dfb8b30",
+        "type": "github"
+      },
+      "original": {
+        "owner": "bouk",
+        "repo": "arduino-indexes",
+        "type": "github"
+      }
+    },
+    "arduino-nix": {
+      "locked": {
+        "lastModified": 1760702729,
+        "narHash": "sha256-wNtHhM2YyR+01mqNDCQjUscNOxkIbPbC8zsfpzFAeTg=",
+        "owner": "clerie",
+        "repo": "arduino-nix",
+        "rev": "2fe354b7eb0083ee76c8578446057eaffcbb2784",
+        "type": "github"
+      },
+      "original": {
+        "owner": "clerie",
+        "ref": "clerie/arduino-env",
+        "repo": "arduino-nix",
+        "type": "github"
+      }
+    },
     "attic": {
       "inputs": {
         "crane": "crane",
@@ -114,6 +162,23 @@
         "type": "github"
       }
     },
+    "commandstation-ex": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1754944318,
+        "narHash": "sha256-Qps2ehetVfI88EfwAvah2bR9GT/OSPZrhp++6ouAoLs=",
+        "owner": "DCC-EX",
+        "repo": "CommandStation-EX",
+        "rev": "cd6abb2df4bc70dec1ea2dcc648a031956232e28",
+        "type": "github"
+      },
+      "original": {
+        "owner": "DCC-EX",
+        "ref": "v5.4.15-Prod",
+        "repo": "CommandStation-EX",
+        "type": "github"
+      }
+    },
     "crane": {
       "locked": {
         "lastModified": 1751562746,
@@ -177,6 +242,31 @@
         "owner": "lnl7",
         "ref": "nix-darwin-24.11",
         "repo": "nix-darwin",
+        "type": "github"
+      }
+    },
+    "dcc-ex": {
+      "inputs": {
+        "arduino-core-avr": "arduino-core-avr",
+        "arduino-indexes": "arduino-indexes",
+        "arduino-nix": "arduino-nix",
+        "commandstation-ex": "commandstation-ex",
+        "jmri-src": "jmri-src",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1773063160,
+        "narHash": "sha256-Y2GVR3IYidt+7tBY88F4lDXWCkqttJ+0GDaY+TtJOuI=",
+        "owner": "projectinitiative",
+        "repo": "dcc-ex",
+        "rev": "335c313180387358c129de4965228860a6b9df17",
+        "type": "github"
+      },
+      "original": {
+        "owner": "projectinitiative",
+        "repo": "dcc-ex",
         "type": "github"
       }
     },
@@ -537,6 +627,23 @@
         "type": "github"
       }
     },
+    "jmri-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1765557915,
+        "narHash": "sha256-xYiZGO9SKl6tP5Y7lvLBNUOQJVk3xEJvFgieQ2wvW34=",
+        "owner": "JMRI",
+        "repo": "JMRI",
+        "rev": "dea51dcccf2951f4ad7be12d61c86a1eecf97ea3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "JMRI",
+        "ref": "v5.14",
+        "repo": "JMRI",
+        "type": "github"
+      }
+    },
     "loft": {
       "inputs": {
         "attic-flake": "attic-flake",
@@ -546,11 +653,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1772348040,
-        "narHash": "sha256-h7ko06g9WmbEW5trpfcfopmCtKmjGhI6JJ1sfZK3g4g=",
+        "lastModified": 1773204945,
+        "narHash": "sha256-QUxNseW4IGbEdXs5vl8NqFiknat3FDadKM04d+beFI4=",
         "owner": "projectinitiative",
         "repo": "loft",
-        "rev": "fba4643c12b30fbe922d5ab5463ffd6d30369b60",
+        "rev": "f9956cdeac64acf3d74936927de4518f024069a4",
         "type": "github"
       },
       "original": {
@@ -790,11 +897,11 @@
         "nixpkgs": "nixpkgs_5"
       },
       "locked": {
-        "lastModified": 1763351579,
-        "narHash": "sha256-jcTgLe7Jgy6+Kpy0kiZZ98gPUSB4UGwBQ2Sjj6V3fL0=",
+        "lastModified": 1773088055,
+        "narHash": "sha256-mWK5J2RX2Fsi9Zqoshvz4CF/oFbo9hT1r+wI2/JFTiM=",
         "owner": "projectinitiative",
         "repo": "nixos-on-arm",
-        "rev": "ec9fead423d229b83eae4e18efffe1f1ccfc6fd1",
+        "rev": "060cd37aef026c5ffee78421c91b5cd83d2d4f5c",
         "type": "github"
       },
       "original": {
@@ -1091,6 +1198,7 @@
         "comin": "comin",
         "comma": "comma",
         "darwin": "darwin",
+        "dcc-ex": "dcc-ex",
         "deploy-rs": "deploy-rs",
         "disko": "disko",
         "firefox-addons": "firefox-addons",

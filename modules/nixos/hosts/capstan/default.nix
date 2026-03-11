@@ -89,6 +89,7 @@ in
     k8sServerAddr =
       mkOpt types.str ""
         "Address of the server node to connect to (not needed for the first node).";
+    k3sDataDir = mkOpt types.path "/mnt/pool/k3s" "Directory to use for k3s data.";
     bondMembers =
       mkOpt (types.listOf types.str) [ ]
         "List of network interfaces to include in the bond";
@@ -405,6 +406,7 @@ in
           nodeIp = cfg.k8sNodeIp;
           nodeIface = cfg.k8sNodeIface;
           serverAddr = cfg.k8sServerAddr;
+          dataDir = cfg.k3sDataDir;
           networkType = "standard";
           role = "server";
           extraArgs = [

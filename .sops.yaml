@@ -13,6 +13,7 @@ keys:
     - &cargohold age1vv7x7cupsczqaducs2pxpn7t3mqj5e5jkyc70489fad05rvyga4s57hwan
     - &dinghy age1wfmdnez90tcqw4rzmehtjmhle8revyk9hlyxm03z6nlm77teg4cq7fmswu
     - &wharfmaster age14lyx3jvucynqqpdklza3j6j2wq7g3lhncgq0phkdpapg2yzh89uqrfy405
+    - &dcc_ex age1m6sddcgxrrms5yx7ues7u4czuj6mvuzqyawt0jzcdexheaa8yuusy7pehz
   - &capstans:
     - &ssh_capstan1 age1katkdmh05xy9n5pmrkaznw0e5j4p96js88dzxy4l0zt06pfa4qzs0gsua5
     - &ssh_capstan2 age1daxggyz58h525ww5clnwwuwxu7tf5mlz8as8n7cy8dhv74u4qcqq0jagrp
@@ -60,6 +61,7 @@ creation_rules:
           - *cargohold
           - *dinghy
           - *wharfmaster
+          - *dcc_ex
 
   - path_regex: attic-server/[^/]+\.yaml$
     key_groups:

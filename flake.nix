@@ -171,6 +171,11 @@
       inputs.home-manager.follows = "home-manager";
     };
 
+    dcc-ex = {
+      url = "github:projectinitiative/dcc-ex";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   outputs =
@@ -316,6 +321,9 @@
           stormjib = {
             system = "aarch64-linux";
           };
+          dcc-ex = {
+            system = "aarch64-linux";
+          };
         };
         modules =
           let
@@ -344,6 +352,7 @@
                 loft.nixosModules.loft
                 # agenix.nixosModules.age
                 attic.nixosModules.atticd
+                dcc-ex.nixosModules.jmri-server
                 # (import ./encrypted/sops.nix)
                 rockpi-quad.nixosModules.rockpi-quad
               ]

@@ -24,6 +24,11 @@ in
 
   config = mkIf cfg.enable {
     ${namespace} = {
+      system.logging = {
+        enable = true;
+        ramLogging = true;
+      };
+
       services = {
         monitoring = {
           enable = true;

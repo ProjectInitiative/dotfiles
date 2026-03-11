@@ -15,11 +15,13 @@ let
   # Create files in the nix store
   # hostSSHFile = pkgs.writeText "ssh_host_ed25519_key" config.sensitiveNotSecret.dinghy_private_ssh_key;
   # hostSSHPubFile = pkgs.writeText "ssh_host_ed25519_key.pub" config.sensitiveNotSecret.dinghy_public_ssh_key;
-  # 1. Define the serial number extraction script
+  # 1. Define the serial number extraction script (Updated for udev compatibility)
   serialScript = pkgs.writeShellScript "serial.sh" ''
     #!/bin/bash
-    # Read the full serial number from the drive identified by its kernel name ($1)
-    ${pkgs.hdparm}/sbin/hdparm -I /dev/"$1" | grep 'Serial Number' | awk '{print $3}'
+    SERIAL=$(${pkgs.hdparm}/sbin/hdparm -I /dev/"$1" 2>/dev/null | grep 'Serial Number' | awk '{print $3}')
+    if [ -n "$SERIAL" ]; then
+      echo "ID_SERIAL_REAL=$SERIAL"
+    fi
   '';
 in
 {
@@ -146,23 +148,31 @@ in
     "console=tty1"
   ];
 
-  # --- UDEV RULES (Auto-Export PWM) ---
-  services.udev.extraRules = ''
-    # Global: Set mq-deadline for all USB rotating disks
-    ACTION=="add|change", SUBSYSTEM=="block", ENV{ID_BUS}=="usb", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="mq-deadline"
+  # --- UDEV RULES (Storage Stability) ---
+  services.udev.extraRules = let
+    partprobe = "${pkgs.parted}/bin/partprobe";
+  in ''
+    # 1. Global: Set scheduler based on rotational status
+    ACTION=="add|change", SUBSYSTEM=="block", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="mq-deadline"
+    ACTION=="add|change", SUBSYSTEM=="block", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="none"
 
-    # OWC Adapters (7825): Cap sectors to 64KB to prevent -71 protocol errors
-    ACTION=="add|change", SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="7825", ATTR{device/max_sectors}="128", ATTR{queue/nr_requests}="16"
+    # 2. JMicron Bridge Fix (Radxa HAT)
+    # Throttling and quirks to prevent protocol errors under high load
+    ACTION=="add|change", SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="152d", ENV{ID_MODEL_ID}=="0561", \
+      ATTR{device/max_sectors}="128", \
+      ATTR{queue/nr_requests}="32"
 
-    # JMicron/WD Adapters (152d, 1058): Same throttling logic
-    ACTION=="add|change", SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="152d", ATTR{device/max_sectors}="64", ATTR{queue/nr_requests}="16"
-    ACTION=="add|change", SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="1058", ATTR{device/max_sectors}="64", ATTR{queue/nr_requests}="16"
+    # 3. Solve Duplicate Serials (Radxa HAT / JMicron)
+    # The JMS561 bridge clones serials. We append the kernel device name (%k)
+    # to the serial to ensure unique identifiers for lsblk, bcachefs, and udev symlinks.
+    # We match on the JMicron vendor ID to catch all drives on the HAT.
+    SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="152d", \
+      ENV{ID_SERIAL}="$env{ID_SERIAL}_%k", \
+      ENV{ID_SERIAL_SHORT}="$env{ID_SERIAL_SHORT}_%k"
 
-    # Fan Control Exports (Existing Logic)
-    KERNEL=="pwmchip0", SUBSYSTEM=="pwm", ACTION=="add", PROGRAM="/bin/sh -c 'echo 0 > /sys/class/pwm/pwmchip0/export && echo 1 > /sys/class/pwm/pwmchip0/export'"
-    KERNEL=="pwmchip0", SUBSYSTEM=="pwm", ACTION=="add", RUN+="/bin/sh -c 'chown -R root:gpio /sys/class/pwm/pwmchip0/pwm* && chmod -R g+w /sys/class/pwm/pwmchip0/pwm*'"
+    # 4. Trigger rescan for JMicron devices to ensure partition discovery
+    ACTION=="add", SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="152d", RUN+="${partprobe} /dev/%k"
   '';
-
   boot.supportedFilesystems = lib.mkForce [ "ext4" "vfat" "bcachefs" ];
   boot.kernelModules = [ "bcachefs" ];
 
@@ -416,55 +426,55 @@ in
   # --- Late-boot bcachefs Mount ---
 
   # This service runs late in the boot process to mount the bcachefs pool.
-  # systemd.services.storage-mount = {
-  #   description = "Mount the bcachefs storage pool";
+  systemd.services.storage-mount = {
+    description = "Mount the bcachefs storage pool";
 
-  #   # Run after the main system is up and running.
-  #   after = [ "rockpi-quad.service" ];
-  #   # Be part of the local filesystem setup target.
-  #   wantedBy = [ "local-fs.target" ];
+    # Run after the main system is up and running.
+    after = [ "rockpi-quad.service" ];
+    # Be part of the local filesystem setup target.
+    wantedBy = [ "local-fs.target" ];
 
-  #   serviceConfig = {
-  #     Type = "oneshot";
-  #     RemainAfterExit = true;
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
 
-  #     ExecStart = pkgs.writeShellScript "mount-storage" ''
-  #       set -e
-  #       echo "Waiting for storage devices to appear..."
-  #       DEVICES_TO_WAIT_FOR=("/dev/sda" "/dev/sdb" "/dev/sdc" "/dev/sdd")
-  #       TIMEOUT=30
-  #       for i in $(seq $TIMEOUT); do
-  #         # Check if all devices exist as block devices
-  #         if [ -b "''${DEVICES_TO_WAIT_FOR[0]}" ] && \
-  #            [ -b "''${DEVICES_TO_WAIT_FOR[1]}" ] && \
-  #            [ -b "''${DEVICES_TO_WAIT_FOR[2]}" ] && \
-  #            [ -b "''${DEVICES_TO_WAIT_FOR[3]}" ]; then
-  #           echo "All storage devices found."
-  #           break
-  #         fi
+      ExecStart = pkgs.writeShellScript "mount-storage" ''
+        set -e
+        echo "Waiting for storage devices to appear..."
+        DEVICES_TO_WAIT_FOR=("/dev/sda" "/dev/sdb" "/dev/sdc" "/dev/sdd")
+        TIMEOUT=30
+        for i in $(seq $TIMEOUT); do
+          # Check if all devices exist as block devices
+          if [ -b "''${DEVICES_TO_WAIT_FOR[0]}" ] && \
+             [ -b "''${DEVICES_TO_WAIT_FOR[1]}" ] && \
+             [ -b "''${DEVICES_TO_WAIT_FOR[2]}" ] && \
+             [ -b "''${DEVICES_TO_WAIT_FOR[3]}" ]; then
+            echo "All storage devices found."
+            break
+          fi
 
-  #         # If we hit the timeout, exit with an error
-  #         if [ $i -eq $TIMEOUT ]; then
-  #           echo "Error: Timed out waiting for storage devices." >&2
-  #           exit 1
-  #         fi
-  #         sleep 1
-  #       done
+          # If we hit the timeout, exit with an error
+          if [ $i -eq $TIMEOUT ]; then
+            echo "Error: Timed out waiting for storage devices." >&2
+            exit 1
+          fi
+          sleep 1
+        done
 
-  #       echo "Mounting bcachefs filesystem to ${storageMountPoint}..."
-  #       ${pkgs.coreutils}/bin/mkdir -p ${storageMountPoint}
-  #       ${pkgs.util-linux}/bin/mount -t bcachefs UUID=27cac550-3836-765c-d107-51d27ab4a6e1 ${storageMountPoint}
-  #       echo "Storage mounted."
-  #     '';
+        echo "Mounting bcachefs filesystem to ${storageMountPoint}..."
+        ${pkgs.coreutils}/bin/mkdir -p ${storageMountPoint}
+        ${pkgs.util-linux}/bin/mount -t bcachefs UUID=27cac550-3836-765c-d107-51d27ab4a6e1 ${storageMountPoint}
+        echo "Storage mounted."
+      '';
 
-  #     ExecStop = pkgs.writeShellScript "unmount-storage" ''
-  #       set -e
-  #       echo "Unmounting ${storageMountPoint}..."
-  #       ${pkgs.util-linux}/bin/umount -l ${storageMountPoint}
-  #       echo "Storage unmounted."
-  #     '';
-  #   };
-  # };
+      ExecStop = pkgs.writeShellScript "unmount-storage" ''
+        set -e
+        echo "Unmounting ${storageMountPoint}..."
+        ${pkgs.util-linux}/bin/umount -l ${storageMountPoint}
+        echo "Storage unmounted."
+      '';
+    };
+  };
 
   # --- Late-boot MDADM RAID Assembly and Mount ---
 
