@@ -96,7 +96,7 @@
 
   # NFS mount for frigate camera feed storage offloaded to dinghy's bcachefs pool
   fileSystems."/mnt/dinghy/frigate" = {
-    device = "100.119.112.42:/mnt/pool/frigate";
+    device = "100.119.112.42:/frigate";
     fsType = "nfs";
     options = [ 
       "x-systemd.automount" 

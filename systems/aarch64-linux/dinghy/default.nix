@@ -416,18 +416,41 @@ in
     enable = true;
     nproc = 8;
     exports = ''
-      /mnt/pool         100.94.162.76(rw,fsid=0,no_subtree_check,crossmnt)
-      /mnt/pool/frigate 100.94.162.76(rw,nohide,insecure,no_subtree_check,no_root_squash)
+      /export         100.94.162.76(rw,fsid=0,no_subtree_check,crossmnt)
+      /export/frigate 100.94.162.76(rw,nohide,insecure,no_subtree_check,no_root_squash)
     '';
   };
 
   # Delay NFS until storage is ready
-  systemd.services.nfs-server.after = lib.mkAfter [ "storage-mount.service" ];
-  systemd.services.nfs-server.requires = lib.mkAfter [ "storage-mount.service" ];
-  systemd.services.nfs-mountd.after = lib.mkAfter [ "storage-mount.service" ];
-  systemd.services.nfs-mountd.requires = lib.mkAfter [ "storage-mount.service" ];
-  systemd.services.rpc-statd.after = lib.mkAfter [ "storage-mount.service" ];
-  systemd.services.rpc-statd.requires = lib.mkAfter [ "storage-mount.service" ];
+  systemd.services.nfs-server = {
+    after = lib.mkForce [
+      "network-online.target"
+      "local-fs.target"
+      "proc-fs-nfsd.mount"
+      "rpcbind.socket"
+      "nfs-mountd.service"
+      "nfs-idmapd.service"
+      "rpc-statd.service"
+      "nfsdcld.service"
+      "storage-mount.service"
+    ];
+    requires = lib.mkForce [
+      "network.target"
+      "proc-fs-nfsd.mount"
+      "nfs-mountd.service"
+      "storage-mount.service"
+    ];
+  };
+
+  systemd.services.nfs-mountd = {
+    after = lib.mkForce [ "network.target" "storage-mount.service" ];
+    requires = lib.mkForce [ "network.target" "storage-mount.service" ];
+  };
+
+  systemd.services.rpc-statd = {
+    after = lib.mkForce [ "network.target" "storage-mount.service" ];
+    requires = lib.mkForce [ "network.target" "storage-mount.service" ];
+  };
 
   # boot.loader = {
   #   grub.enable = false;
@@ -500,11 +523,20 @@ in
         echo "Mounting bcachefs filesystem to ${storageMountPoint}..."
         ${pkgs.coreutils}/bin/mkdir -p ${storageMountPoint}
         ${pkgs.util-linux}/bin/mount -t bcachefs UUID=27cac550-3836-765c-d107-51d27ab4a6e1 ${storageMountPoint}
+        
+        echo "Setting up frigate media and export bind-mounts..."
+        ${pkgs.coreutils}/bin/mkdir -p ${storageMountPoint}/frigate
+        ${pkgs.coreutils}/bin/mkdir -p /export/frigate
+        # Bind mount the frigate directory into the export root
+        ${pkgs.util-linux}/bin/mount --bind ${storageMountPoint}/frigate /export/frigate
+        
         echo "Storage mounted."
       '';
 
       ExecStop = pkgs.writeShellScript "unmount-storage" ''
         set -e
+        echo "Unmounting /export/frigate..."
+        ${pkgs.util-linux}/bin/umount -l /export/frigate || true
         echo "Unmounting ${storageMountPoint}..."
         ${pkgs.util-linux}/bin/umount -l ${storageMountPoint}
         echo "Storage unmounted."
