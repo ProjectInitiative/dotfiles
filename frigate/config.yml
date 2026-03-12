@@ -1,0 +1,29 @@
+detectors:
+  rknn:
+    type: rknn
+
+# Hardware acceleration for RK3588
+ffmpeg:
+  hwaccel_args: preset-rk-h264 # or preset-rk-h265 depending on your Reolink settings
+
+cameras:
+  front_door: # Example Reolink Config
+    ffmpeg:
+      inputs:
+        # Main Stream (High Res) for Recording
+        - path: rtsp://admin:password@192.168.x.x:554/h264Preview_01_main
+          roles:
+            - record
+        # Sub Stream (Low Res) for Detection (Saves NPU/CPU)
+        - path: rtsp://admin:password@192.168.x.x:554/h264Preview_01_sub
+          roles:
+            - detect
+    detect:
+      enabled: True
+      width: 640  # Match your sub-stream resolution
+      height: 480
+    record:
+      enabled: True
+      retain:
+        days: 7 # Rolling history on Dinghy
+        mode: all

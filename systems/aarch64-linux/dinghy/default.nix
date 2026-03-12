@@ -411,22 +411,23 @@ in
     };
   };
 
-  # NFS Export Bind Mounts
-  fileSystems."/export/frigate" = {
-    device = "${storageMountPoint}/frigate";
-    options = [ "bind" ];
-  };
-
   # NFS Server configuration using the /export root strategy
   services.nfs.server = {
     enable = true;
     nproc = 8;
     exports = ''
-      /export         100.94.162.76(rw,fsid=0,no_subtree_check,crossmnt)
-      /export/frigate 100.94.162.76(rw,nohide,insecure,no_subtree_check,no_root_squash)
+      /mnt/pool         100.94.162.76(rw,fsid=0,no_subtree_check,crossmnt)
+      /mnt/pool/frigate 100.94.162.76(rw,nohide,insecure,no_subtree_check,no_root_squash)
     '';
   };
 
+  # Delay NFS until storage is ready
+  systemd.services.nfs-server.after = lib.mkAfter [ "storage-mount.service" ];
+  systemd.services.nfs-server.requires = lib.mkAfter [ "storage-mount.service" ];
+  systemd.services.nfs-mountd.after = lib.mkAfter [ "storage-mount.service" ];
+  systemd.services.nfs-mountd.requires = lib.mkAfter [ "storage-mount.service" ];
+  systemd.services.rpc-statd.after = lib.mkAfter [ "storage-mount.service" ];
+  systemd.services.rpc-statd.requires = lib.mkAfter [ "storage-mount.service" ];
 
   # boot.loader = {
   #   grub.enable = false;
@@ -454,6 +455,7 @@ in
     interfaces = { }; # Clear interfaces - managed by systemd-networkd
     useNetworkd = true;
 
+    firewall.allowedTCPPorts = [ 2049 ];
     # usePredictableInterfaceNames = false;
   };
 
@@ -497,7 +499,6 @@ in
 
         echo "Mounting bcachefs filesystem to ${storageMountPoint}..."
         ${pkgs.coreutils}/bin/mkdir -p ${storageMountPoint}
-        ${pkgs.coreutils}/bin/mkdir -p ${storageMountPoint}/frigate
         ${pkgs.util-linux}/bin/mount -t bcachefs UUID=27cac550-3836-765c-d107-51d27ab4a6e1 ${storageMountPoint}
         echo "Storage mounted."
       '';

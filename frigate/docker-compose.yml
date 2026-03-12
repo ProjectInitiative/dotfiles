@@ -1,0 +1,25 @@
+services:
+  frigate:
+    container_name: frigate
+    privileged: true # Required for direct access to the RK3588 NPU and GPU
+    restart: unless-stopped
+    image: ghcr.io/blakeblackshear/frigate:stable
+    shm_size: "128mb" # Increase if you have more than 4-5 high-res cameras
+    devices:
+      - /dev/rknpu:/dev/rknpu # The RK3588 NPU for object detection
+      - /dev/dri:/dev/dri     # Mali-G610 GPU for hardware video decoding
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./config.yml:/config/config.yml
+      - /mnt/dinghy/frigate:/media/frigate # Offload to your dinghy pool
+      - type: tmpfs # Highly recommended to reduce SD/NVMe wear
+        target: /tmp/cache
+        tmpfs:
+          size: 1000000000
+    ports:
+      - "5000:5000" # Internal Web UI
+      - "8554:8554" # RTSP Restream (for Home Assistant/VLC)
+      - "8555:8555/tcp" # WebRTC
+      - "8555:8555/udp" # WebRTC
+    environment:
+      FRIGATE_RTSP_PASSWORD: "your_secure_password"

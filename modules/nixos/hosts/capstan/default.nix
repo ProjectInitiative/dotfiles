@@ -264,7 +264,7 @@ in
       };
     in
     {
-      enable = true;
+      enable = false;
       remotes = [{
         name = "origin";
         url = "https://github.com/projectinitiative/dotfiles.git";

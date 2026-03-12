@@ -21,8 +21,11 @@
 
   home-manager.backupFileExtension = "backup";
 
+  boot.kernelPackages = lib.mkForce pkgs.linuxPackages_latest;
   boot.supportedFilesystems.zfs = lib.mkForce false;
   boot.supportedFilesystems.nfs = true;
+
+  hardware.deviceTree.kernelPackage = lib.mkForce config.boot.kernelPackages.kernel;
 
   environment.systemPackages = with pkgs; [
     pkgs.${namespace}.rknpu2
@@ -60,7 +63,7 @@
       };
     in
     {
-      enable = true;
+      enable = false;
       remotes = [{
         name = "origin";
         url = "https://github.com/projectinitiative/dotfiles.git";
@@ -93,7 +96,7 @@
 
   # NFS mount for frigate camera feed storage offloaded to dinghy's bcachefs pool
   fileSystems."/mnt/dinghy/frigate" = {
-    device = "100.119.112.42:/frigate";
+    device = "100.119.112.42:/mnt/pool/frigate";
     fsType = "nfs";
     options = [ 
       "x-systemd.automount" 
