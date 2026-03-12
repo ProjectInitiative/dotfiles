@@ -173,7 +173,10 @@ in
     # 4. Trigger rescan for JMicron devices to ensure partition discovery
     ACTION=="add", SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="152d", RUN+="${partprobe} /dev/%k"
   '';
-  boot.supportedFilesystems = lib.mkForce [ "ext4" "vfat" "bcachefs" ];
+
+  boot.supportedFilesystems = lib.mkForce [ "ext4" "vfat" "bcachefs" "nfs" ];
+  services.rpcbind.enable = true;
+
   boot.kernelModules = [ "bcachefs" ];
 
   hardware.rockpi-quad = {

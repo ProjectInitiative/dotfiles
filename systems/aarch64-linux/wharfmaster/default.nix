@@ -159,7 +159,7 @@
     };
 
     services = {
-
+        monitoring.alloy.enable = lib.mkForce false;
     };
 
   };
