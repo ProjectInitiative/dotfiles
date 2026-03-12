@@ -22,6 +22,7 @@
   home-manager.backupFileExtension = "backup";
 
   boot.supportedFilesystems.zfs = lib.mkForce false;
+  boot.supportedFilesystems.nfs = true;
 
   environment.systemPackages = with pkgs; [
     pkgs.${namespace}.rknpu2
@@ -88,6 +89,21 @@
       interface = "enP3p49s0";
     };
     interfaces.vlan21.useDHCP = true;
+  };
+
+  # NFS mount for frigate camera feed storage offloaded to dinghy's bcachefs pool
+  fileSystems."/mnt/dinghy/frigate" = {
+    device = "100.119.112.42:/frigate";
+    fsType = "nfs";
+    options = [ 
+      "x-systemd.automount" 
+      "noauto" 
+      "x-systemd.idle-timeout=600" # Disconnect after 10 mins of inactivity
+      "x-systemd.mount-timeout=30" 
+      "nfsvers=4.2"
+      "soft" # Use soft mount to prevent system freeze if dinghy is down
+      "_netdev" # Ensure systemd knows this is a network mount
+    ];
   };
 
   # setup funnel for home-assistant

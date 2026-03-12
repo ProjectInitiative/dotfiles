@@ -376,6 +376,22 @@ in
           smartctl.enable = true;
         };
       };
+
+      bcachefsFileOptions = {
+        enable = true;
+        jobs = {
+          frigate-media = {
+            path = "/mnt/pool/media/frigate";
+            onCalendar = "daily";
+            fileOptions = {
+              foreground_target = "hdd";
+              background_target = "hdd";
+              promote_target = "hdd";
+            };
+          };
+        };
+      };
+
     };
     networking = {
       tailscale = {
@@ -392,6 +408,21 @@ in
     };
   };
 
+  # NFS Export Bind Mounts
+  fileSystems."/export/frigate" = {
+    device = "${storageMountPoint}/frigate";
+    options = [ "bind" ];
+  };
+
+  # NFS Server configuration using the /export root strategy
+  services.nfs.server = {
+    enable = true;
+    nproc = 8;
+    exports = ''
+      /export         100.94.162.76(rw,fsid=0,no_subtree_check,crossmnt)
+      /export/frigate 100.94.162.76(rw,nohide,insecure,no_subtree_check,no_root_squash)
+    '';
+  };
 
 
   # boot.loader = {
@@ -463,6 +494,7 @@ in
 
         echo "Mounting bcachefs filesystem to ${storageMountPoint}..."
         ${pkgs.coreutils}/bin/mkdir -p ${storageMountPoint}
+        ${pkgs.coreutils}/bin/mkdir -p ${storageMountPoint}/frigate
         ${pkgs.util-linux}/bin/mount -t bcachefs UUID=27cac550-3836-765c-d107-51d27ab4a6e1 ${storageMountPoint}
         echo "Storage mounted."
       '';

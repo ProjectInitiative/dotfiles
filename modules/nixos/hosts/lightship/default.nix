@@ -54,6 +54,8 @@ in
       zfs = false;
     };
 
+    boot.kernelPackages = lib.mkForce pkgs.linuxPackages_latest;
+
     boot.kernelParams = [
       "nvme_core.default_ps_max_latency_us=0"
       "pcie_aspm=off"
@@ -226,7 +228,6 @@ in
           telegramTokenPath = config.sops.secrets.health_reporter_bot_api_token.path;
           telegramChatIdPath = config.sops.secrets.telegram_chat_id.path;
           checkReadOnlyMounts = [ "/mnt/nvme/*" ];
-          runAtBoot = true;
           reportTime = "08:00";
         };
 
