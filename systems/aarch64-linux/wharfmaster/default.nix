@@ -159,6 +159,10 @@
 
     system = {
       nix-config.enable = true;
+      logging = {
+        enable = true;
+        ramLogging = true;
+      };
     };
 
     services = {

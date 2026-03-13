@@ -378,6 +378,11 @@ in
           node.enable = true;
           smartctl.enable = true;
         };
+
+        alloy = {
+          enable = true;
+          lokiAddress = "127.0.0.1";
+        };
       };
 
       bcachefsFileOptions = {
@@ -408,6 +413,10 @@ in
     };
     system = {
       console-info.ip-display.enable = true;
+      logging = {
+        enable = true;
+        ramLogging = true;
+      };
     };
   };
 
