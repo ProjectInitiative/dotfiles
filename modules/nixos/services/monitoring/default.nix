@@ -267,7 +267,10 @@ in
 
         loki.source.journal "read" {
           max_age = "12h"
-          labels = { job = "systemd-journal" }
+          labels = { 
+            job = "systemd-journal",
+            host = constants.hostname,
+          }
           forward_to = [loki.relabel.journal.receiver]
         }
 
