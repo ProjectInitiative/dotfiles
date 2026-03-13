@@ -268,37 +268,35 @@ in
         loki.source.journal "read" {
           max_age = "12h"
           labels = { job = "systemd-journal" }
-          forward_to = [loki.process.process.receiver]
+          forward_to = [loki.relabel.journal.receiver]
         }
 
-        loki.process.process {
+        loki.relabel "journal" {
           forward_to = [loki.write.local.receiver]
 
-          stage.relabel {
-            rule {
-              source_labels = ["__journal__systemd_unit"]
-              target_label  = "unit"
-            }
-            rule {
-              source_labels = ["__journal__hostname"]
-              target_label  = "host"
-            }
-            rule {
-              source_labels = ["__journal__systemd_unit"]
-              regex = "nvme-debug-collector.service"
-              target_label = "job"
-              replacement = "nvme-debug"
-            }
-            ${concatStringsSep "\n" (map (rule: ''
-              rule {
-                ${optionalString (hasAttr "source_labels" rule) ("source_labels = " + builtins.toJSON rule.source_labels)}
-                ${optionalString (hasAttr "target_label" rule) ("target_label = " + builtins.toJSON rule.target_label)}
-                ${optionalString (hasAttr "regex" rule) ("regex = " + builtins.toJSON rule.regex)}
-                ${optionalString (hasAttr "action" rule) ("action = " + builtins.toJSON rule.action)}
-                ${optionalString (hasAttr "replacement" rule) ("replacement = " + builtins.toJSON rule.replacement)}
-              }
-            '') cfg.alloy.journalRelabelConfig)}
+          rule {
+            source_labels = ["__journal__systemd_unit"]
+            target_label  = "unit"
           }
+          rule {
+            source_labels = ["__journal__hostname"]
+            target_label  = "host"
+          }
+          rule {
+            source_labels = ["__journal__systemd_unit"]
+            regex = "nvme-debug-collector.service"
+            target_label = "job"
+            replacement = "nvme-debug"
+          }
+          ${concatStringsSep "\n" (map (rule: ''
+            rule {
+              ${optionalString (hasAttr "source_labels" rule) ("source_labels = " + builtins.toJSON rule.source_labels)}
+              ${optionalString (hasAttr "target_label" rule) ("target_label = " + builtins.toJSON rule.target_label)}
+              ${optionalString (hasAttr "regex" rule) ("regex = " + builtins.toJSON rule.regex)}
+              ${optionalString (hasAttr "action" rule) ("action = " + builtins.toJSON rule.action)}
+              ${optionalString (hasAttr "replacement" rule) ("replacement = " + builtins.toJSON rule.replacement)}
+            }
+          '') cfg.alloy.journalRelabelConfig)}
         }
 
         ${cfg.alloy.extraConfig}
