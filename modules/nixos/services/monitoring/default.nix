@@ -269,7 +269,7 @@ in
           max_age = "12h"
           labels = { 
             job = "systemd-journal",
-            host = constants.hostname,
+            host = "${config.networking.hostName}",
           }
           forward_to = [loki.relabel.journal.receiver]
         }
@@ -280,10 +280,6 @@ in
           rule {
             source_labels = ["__journal__systemd_unit"]
             target_label  = "unit"
-          }
-          rule {
-            source_labels = ["__journal__hostname"]
-            target_label  = "host"
           }
           rule {
             source_labels = ["__journal__systemd_unit"]
