@@ -121,6 +121,16 @@
     };
   };
 
+  home-manager = {
+
+    users.kylepzak.${namespace} = {
+      suites = {
+        development.enable = true;
+      };
+    };
+
+  };
+
   projectinitiative = {
 
     networking = {

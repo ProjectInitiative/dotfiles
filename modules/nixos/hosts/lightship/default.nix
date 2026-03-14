@@ -231,7 +231,7 @@ in
           reportTime = "08:00";
         };
 
-        monitoring.alloy.enable = mkForce false;
+        # monitoring.alloy.enable = mkForce false;
 
         k8s = {
           enable = true;

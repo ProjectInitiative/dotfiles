@@ -29,6 +29,7 @@ in
   imports = with inputs.nixos-hardware.nixosModules; [
     (modulesPath + "/installer/scan/not-detected.nix")
     (modulesPath + "/installer/sd-card/sd-image-aarch64.nix")
+    ./grafana-alerts.nix
   ];
 
   # ============================================================================
@@ -282,9 +283,13 @@ in
                 # "172.16.1.51:9633"
                 # "172.16.1.52:9633"
                 # "172.16.1.53:9633"
+                "lightship-atx:9633"
+                "lightship-dal:9633"
+                "lightship-dfw:9633"
                 "capstan1:9633"
                 "capstan2:9633"
                 "capstan3:9633"
+                "wharfmaster:9633"
                 "cargohold:9633"
               ];
             };

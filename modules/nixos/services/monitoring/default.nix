@@ -320,6 +320,9 @@ in
             Requires = [ "local-fs.target" ];
             Restart = "on-failure";
             RestartSec = "5s";
+            DynamicUser = lib.mkForce false;
+            User = lib.mkForce "root";
+            Group = lib.mkForce "root";
           };
         };
       })
@@ -349,6 +352,7 @@ in
       provision.datasources.settings.datasources =
         (optional cfg.prometheus.enable {
           name = "Prometheus (local)";
+          uid = "prometheus";
           type = "prometheus";
           access = "proxy";
           url = "http://${cfg.prometheus.listenAddress}:${toString cfg.prometheus.port}";
