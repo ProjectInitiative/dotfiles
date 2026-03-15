@@ -288,9 +288,9 @@
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    # Any state containing "rw" is considered healthy (e.g. "rw", "[rw] ro", etc.)
-                    # Only alert if the node is still up.
-                    expr = "node_bcachefs_device_info{state!~\".*rw.*\"} and on(instance) up{job=\"nodes\"} == 1";
+                    # A state is healthy ONLY if it is exactly "rw" or "ro".
+                    # States like "[rw] ro evacuating spare" or just "evacuating" will now trigger an alert.
+                    expr = "node_bcachefs_device_info{state!~\"^rw$|^ro$\"} and on(instance) up{job=\"nodes\"} == 1";
                     refId = "A";
                   };
                 }
