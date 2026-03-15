@@ -359,10 +359,52 @@
               ];
               for = "2m";
               labels.severity = "critical";
-              annotations.summary = "💾 <b>Bcachefs Device Missing</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nPool UUID: <code>{{ if $labels.uuid }}{{ $labels.uuid }}{{ else }}Unknown{{ end }}</code>\n<i>One or more drives have likely dropped from the OS.</i>";
-            }
-          ];
-        }
+              annotations.summary = "💾 <b>Bcachefs Device Missing</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nPool UUID: <code>{{ if $labels.uuid }}{{ if $labels.uuid }}{{ $labels.uuid }}{{ else }}Unknown{{ end }}{{ end }}</code>\n<i>One or more drives have likely dropped from the OS.</i>";
+              }
+              {
+              uid = "high_disk_io_saturation";
+              title = "High Disk IO Saturation";
+              condition = "C";
+              noDataState = "OK";
+              execErrState = "Error";
+              data = [
+                {
+                  refId = "A";
+                  datasourceUid = "prometheus_ds";
+                  relativeTimeRange = { from = 600; to = 0; };
+                  model = {
+                    # rate of io_time_seconds_total gives the fraction of time the disk was busy.
+                    # 0.9 = 90% saturation. We ignore loop and ram devices.
+                    expr = "rate(node_disk_io_time_seconds_total{device!~\"loop.*|ram.*\"}[5m]) > 0.9 and on(instance) up{job=\"nodes\"} == 1";
+                    refId = "A";
+                  };
+                }
+                {
+                  refId = "B";
+                  datasourceUid = "__expr__";
+                  model = {
+                    expression = "A";
+                    type = "reduce";
+                    reducer = "last";
+                    refId = "B";
+                  };
+                }
+                {
+                  refId = "C";
+                  datasourceUid = "__expr__";
+                  model = {
+                    expression = "$B > 0";
+                    type = "math";
+                    refId = "C";
+                  };
+                }
+              ];
+              for = "10m";
+              labels.severity = "warning";
+              annotations.summary = "💽 <b>High Disk IO Saturation</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nDevice: <b>{{ if $labels.device }}{{ $labels.device }}{{ else }}Unknown{{ end }}</b>\nSaturation: <b>{{ if $values.B }}{{ $values.B | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>\n<i>This disk is consistently saturated and may be causing system-wide latency.</i>";
+              }
+              ];
+              }
         {
           name = "Resource Pressure";
           folder = "Infrastructure";
