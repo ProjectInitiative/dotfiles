@@ -141,7 +141,7 @@
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    expr = "up";
+                    expr = "up{job!=\"self\", instance!~\"cargohold:.*\"}";
                     refId = "A";
                   };
                 }
@@ -208,6 +208,102 @@
               for = "2m";
               labels.severity = "critical";
               annotations.summary = "❌ *Systemd Service Failed*\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nService: {{ if $labels.name }}{{ $labels.name }}{{ else }}Unknown{{ end }}";
+            }
+          ];
+        }
+        {
+          name = "Storage Health";
+          folder = "Infrastructure";
+          interval = "1m";
+          rules = [
+            {
+              uid = "bcachefs_device_unhealthy";
+              title = "Bcachefs Device Unhealthy";
+              condition = "C";
+              noDataState = "OK";
+              execErrState = "Error";
+              data = [
+                {
+                  refId = "A";
+                  datasourceUid = "prometheus_ds";
+                  relativeTimeRange = { from = 600; to = 0; };
+                  model = {
+                    expr = "node_bcachefs_device_info{state!~\"rw|ro\"}";
+                    refId = "A";
+                  };
+                }
+                {
+                  refId = "B";
+                  datasourceUid = "__expr__";
+                  model = {
+                    expression = "A";
+                    type = "reduce";
+                    reducer = "last";
+                    refId = "B";
+                  };
+                }
+                {
+                  refId = "C";
+                  datasourceUid = "__expr__";
+                  model = {
+                    expression = "$B > 0";
+                    type = "math";
+                    refId = "C";
+                  };
+                }
+              ];
+              for = "1m";
+              labels.severity = "critical";
+              annotations.summary = "🗄️ *Bcachefs Device Unhealthy*\nNode: {{ $labels.instance }}\nDevice: {{ $labels.device }} ({{ $labels.label }})\nState: *{{ $labels.state }}*\nUUID: `{{ $labels.uuid }}`";
+            }
+            {
+              uid = "bcachefs_device_missing";
+              title = "Bcachefs Device Missing";
+              condition = "D";
+              noDataState = "OK";
+              execErrState = "Error";
+              data = [
+                {
+                  refId = "A";
+                  datasourceUid = "prometheus_ds";
+                  relativeTimeRange = { from = 600; to = 0; };
+                  model = {
+                    expr = "count by (instance, uuid) (node_bcachefs_device_info)";
+                    refId = "A";
+                  };
+                }
+                {
+                  refId = "B";
+                  datasourceUid = "prometheus_ds";
+                  relativeTimeRange = { from = 86400; to = 0; }; # Look back 24h
+                  model = {
+                    expr = "max_over_time(count by (instance, uuid) (node_bcachefs_device_info)[24h:1m])";
+                    refId = "B";
+                  };
+                }
+                {
+                  refId = "C";
+                  datasourceUid = "__expr__";
+                  model = {
+                    expression = "A";
+                    type = "reduce";
+                    reducer = "last";
+                    refId = "C";
+                  };
+                }
+                {
+                  refId = "D";
+                  datasourceUid = "__expr__";
+                  model = {
+                    expression = "$A < $B";
+                    type = "math";
+                    refId = "D";
+                  };
+                }
+              ];
+              for = "2m";
+              labels.severity = "critical";
+              annotations.summary = "💾 *Bcachefs Device Missing*\nNode: {{ $labels.instance }}\nPool UUID: `{{ $labels.uuid }}`\nDevices: {{ $values.C }} (expected {{ $values.B }})\n*A drive has likely dropped from the OS.*";
             }
           ];
         }
