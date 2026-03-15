@@ -27,7 +27,24 @@
           settings = {
             bottoken = "$__env{TELEGRAM_BOT_TOKEN}";
             chatid = "$__env{TELEGRAM_CHAT_ID}";
-            parseMode = "Markdown";
+            parseMode = "HTML";
+            message = ''
+              {{- range .Alerts -}}
+                {{- if eq .Status "firing" -}}
+                  {{- if eq .Labels.report "daily" -}}
+                    {{ .Annotations.summary }}
+                  {{- else -}}
+                    <b>🔥 FIRING</b>
+                    {{ .Annotations.summary }}
+                  {{- end -}}
+                {{- else -}}
+                  {{- if ne .Labels.report "daily" -}}
+                    <b>✅ RESOLVED</b>
+                    {{ .Annotations.summary }}
+                  {{- end -}}
+                {{- end -}}
+              {{- end -}}
+            '';
           };
         }];
       }];
@@ -93,7 +110,7 @@
               uid = "smart_drive_failure";
               title = "SMART Drive Failure";
               condition = "C";
-              noDataState = "Alerting";
+              noDataState = "OK";
               execErrState = "Error";
               data = [
                 {
@@ -101,7 +118,7 @@
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    expr = "smartctl_device_smart_status";
+                    expr = "smartmon_device_smart_healthy == 0 and on(instance) up{job=\"nodes\"} == 1";
                     refId = "A";
                   };
                 }
@@ -127,7 +144,7 @@
               ];
               for = "1m";
               labels.severity = "critical";
-              annotations.summary = "🚨 *SMART Drive Failure*\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nDevice: {{ if $labels.device }}{{ $labels.device }}{{ else }}Unknown{{ end }}\nStatus: *FAILING*";
+              annotations.summary = "🚨 <b>SMART Drive Failure</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nDevice: {{ if $labels.device }}{{ $labels.device }}{{ else }}Unknown{{ end }}\nStatus: <b>FAILING</b>";
             }
             {
               uid = "node_down";
@@ -141,7 +158,8 @@
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    expr = "up{job!=\"self\", instance!~\"cargohold:.*\"}";
+                    # This targets the primary node_exporter, which we use as the source of truth for "is the host up?"
+                    expr = "up{job=\"nodes\", instance!~\"cargohold:.*\"}";
                     refId = "A";
                   };
                 }
@@ -167,7 +185,49 @@
               ];
               for = "3m"; 
               labels.severity = "critical";
-              annotations.summary = "💀 *Node Offline*\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nStatus: *DOWN* for > 3 minutes";
+              annotations.summary = "💀 <b>Node Offline</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nStatus: <b>DOWN</b> for > 3 minutes";
+            }
+            {
+              uid = "exporter_scrape_failed";
+              title = "Exporter Scrape Failed";
+              condition = "C";
+              noDataState = "OK";
+              execErrState = "Error";
+              data = [
+                {
+                  refId = "A";
+                  datasourceUid = "prometheus_ds";
+                  relativeTimeRange = { from = 600; to = 0; };
+                  model = {
+                    # Targets secondary exporters (smart-devices, etc.)
+                    # We only alert if the main node is still online to avoid double-alerting during a full outage.
+                    expr = "up{job!~\"nodes|self\", instance!~\"cargohold:.*\"} == 0 and on(instance) up{job=\"nodes\"} == 1";
+                    refId = "A";
+                  };
+                }
+                {
+                  refId = "B";
+                  datasourceUid = "__expr__";
+                  model = {
+                    expression = "A";
+                    type = "reduce";
+                    reducer = "last";
+                    refId = "B";
+                  };
+                }
+                {
+                  refId = "C";
+                  datasourceUid = "__expr__";
+                  model = {
+                    expression = "$B > 0";
+                    type = "math";
+                    refId = "C";
+                  };
+                }
+              ];
+              for = "5m"; 
+              labels.severity = "warning";
+              annotations.summary = "⚠️ <b>Exporter Scrape Failed</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nJob: <b>{{ if $labels.job }}{{ $labels.job }}{{ else }}Unknown{{ end }}</b>\n<i>The exporter on this node is not responding, but the node itself is still online.</i>";
             }
             {
               uid = "systemd_service_failed";
@@ -207,7 +267,7 @@
               ];
               for = "2m";
               labels.severity = "critical";
-              annotations.summary = "❌ *Systemd Service Failed*\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nService: {{ if $labels.name }}{{ $labels.name }}{{ else }}Unknown{{ end }}";
+              annotations.summary = "❌ <b>Systemd Service Failed</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nService: {{ if $labels.name }}{{ $labels.name }}{{ else }}Unknown{{ end }}";
             }
           ];
         }
@@ -228,7 +288,9 @@
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    expr = "node_bcachefs_device_info{state!~\"rw|ro\"}";
+                    # Any state containing "rw" is considered healthy (e.g. "rw", "[rw] ro", etc.)
+                    # Only alert if the node is still up.
+                    expr = "node_bcachefs_device_info{state!~\".*rw.*\"} and on(instance) up{job=\"nodes\"} == 1";
                     refId = "A";
                   };
                 }
@@ -254,12 +316,12 @@
               ];
               for = "1m";
               labels.severity = "critical";
-              annotations.summary = "🗄️ *Bcachefs Device Unhealthy*\nNode: {{ $labels.instance }}\nDevice: {{ $labels.device }} ({{ $labels.label }})\nState: *{{ $labels.state }}*\nUUID: `{{ $labels.uuid }}`";
+              annotations.summary = "🗄️ <b>Bcachefs Device Unhealthy</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nDevice: {{ if $labels.device }}{{ $labels.device }}{{ else }}Unknown{{ end }} ({{ if $labels.label }}{{ $labels.label }}{{ else }}No Label{{ end }})\nState: <b>{{ if $labels.state }}{{ $labels.state }}{{ else }}Unknown{{ end }}</b>\nUUID: <code>{{ if $labels.uuid }}{{ $labels.uuid }}{{ else }}Unknown{{ end }}</code>";
             }
             {
               uid = "bcachefs_device_missing";
               title = "Bcachefs Device Missing";
-              condition = "D";
+              condition = "C";
               noDataState = "OK";
               execErrState = "Error";
               data = [
@@ -268,16 +330,20 @@
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    expr = "count by (instance, uuid) (node_bcachefs_device_info)";
+                    # Compare current count with the maximum count seen in the last 24h
+                    # This is more robust than doing the math in Grafana expressions.
+                    # Only alert if the node is still up to avoid false positives during node downtime.
+                    expr = "((count by (instance, uuid) (node_bcachefs_device_info)) < (max_over_time(count by (instance, uuid) (node_bcachefs_device_info)[24h:1m]))) and on(instance) up{job=\"nodes\"} == 1";
                     refId = "A";
                   };
                 }
                 {
                   refId = "B";
-                  datasourceUid = "prometheus_ds";
-                  relativeTimeRange = { from = 86400; to = 0; }; # Look back 24h
+                  datasourceUid = "__expr__";
                   model = {
-                    expr = "max_over_time(count by (instance, uuid) (node_bcachefs_device_info)[24h:1m])";
+                    expression = "A";
+                    type = "reduce";
+                    reducer = "last";
                     refId = "B";
                   };
                 }
@@ -285,25 +351,15 @@
                   refId = "C";
                   datasourceUid = "__expr__";
                   model = {
-                    expression = "A";
-                    type = "reduce";
-                    reducer = "last";
-                    refId = "C";
-                  };
-                }
-                {
-                  refId = "D";
-                  datasourceUid = "__expr__";
-                  model = {
-                    expression = "$A < $B";
+                    expression = "$B > 0";
                     type = "math";
-                    refId = "D";
+                    refId = "C";
                   };
                 }
               ];
               for = "2m";
               labels.severity = "critical";
-              annotations.summary = "💾 *Bcachefs Device Missing*\nNode: {{ $labels.instance }}\nPool UUID: `{{ $labels.uuid }}`\nDevices: {{ $values.C }} (expected {{ $values.B }})\n*A drive has likely dropped from the OS.*";
+              annotations.summary = "💾 <b>Bcachefs Device Missing</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nPool UUID: <code>{{ if $labels.uuid }}{{ $labels.uuid }}{{ else }}Unknown{{ end }}</code>\n<i>One or more drives have likely dropped from the OS.</i>";
             }
           ];
         }
@@ -350,7 +406,7 @@
               ];
               for = "5m";
               labels.severity = "warning";
-              annotations.summary = "🔥 *High CPU Usage*\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nLoad: *{{ if $values.B }}{{ $values.B | printf \"%.1f\" }}%{{ else }}N/A{{ end }}*";
+              annotations.summary = "🔥 <b>High CPU Usage</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nLoad: <b>{{ if $values.B }}{{ $values.B | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
             }
             {
               uid = "high_ram_usage";
@@ -390,7 +446,7 @@
               ];
               for = "5m";
               labels.severity = "warning";
-              annotations.summary = "🧠 *High RAM Usage*\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nUsage: *{{ if $values.B }}{{ $values.B | printf \"%.1f\" }}%{{ else }}N/A{{ end }}*";
+              annotations.summary = "🧠 <b>High RAM Usage</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nUsage: <b>{{ if $values.B }}{{ $values.B | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
             }
             {
               uid = "storage_near_capacity";
@@ -430,7 +486,7 @@
               ];
               for = "10m";
               labels.severity = "warning";
-              annotations.summary = "💾 *Storage Near Capacity*\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nMountpoint: {{ if $labels.mountpoint }}{{ $labels.mountpoint }}{{ else }}Unknown{{ end }}\nUsage: *{{ if $values.B }}{{ $values.B | printf \"%.1f\" }}%{{ else }}N/A{{ end }}*";
+              annotations.summary = "💾 <b>Storage Near Capacity</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nMountpoint: {{ if $labels.mountpoint }}{{ $labels.mountpoint }}{{ else }}Unknown{{ end }}\nUsage: <b>{{ if $values.B }}{{ $values.B | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
             }
           ];
         }
@@ -442,7 +498,7 @@
             {
               uid = "daily_infra_health_summary";
               title = "Daily Infrastructure Health Summary";
-              condition = "B";
+              condition = "A";
               noDataState = "OK";
               execErrState = "Error";
               data = [
@@ -451,24 +507,83 @@
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    expr = "vector(1)";
+                    # Trigger for 5 minutes every day at 08:00 UTC.
+                    # We use scalar math with 'bool' and wrap in 'vector()' to make it fire as an alert.
+                    expr = "vector(1) * ((time() % 86400 >= bool 28800) * (time() % 86400 < bool 29100)) > 0";
                     refId = "A";
                   };
                 }
                 {
                   refId = "B";
+                  datasourceUid = "prometheus_ds";
+                  relativeTimeRange = { from = 600; to = 0; };
+                  model = {
+                    expr = "count(up{job=\"nodes\"} == 0) or vector(0)";
+                    refId = "B";
+                  };
+                }
+                {
+                  refId = "B_red";
                   datasourceUid = "__expr__";
                   model = {
-                    expression = "A";
+                    expression = "B";
                     type = "reduce";
                     reducer = "last";
-                    refId = "B";
+                    refId = "B_red";
+                  };
+                }
+                {
+                  refId = "C";
+                  datasourceUid = "prometheus_ds";
+                  relativeTimeRange = { from = 600; to = 0; };
+                  model = {
+                    expr = "count(node_bcachefs_device_info{state!~\".*rw.*\"}) or vector(0)";
+                    refId = "C";
+                  };
+                }
+                {
+                  refId = "C_red";
+                  datasourceUid = "__expr__";
+                  model = {
+                    expression = "C";
+                    type = "reduce";
+                    reducer = "last";
+                    refId = "C_red";
+                  };
+                }
+                {
+                  refId = "D";
+                  datasourceUid = "prometheus_ds";
+                  relativeTimeRange = { from = 600; to = 0; };
+                  model = {
+                    expr = "count(smartmon_device_smart_healthy == 0) or vector(0)";
+                    refId = "D";
+                  };
+                }
+                {
+                  refId = "D_red";
+                  datasourceUid = "__expr__";
+                  model = {
+                    expression = "D";
+                    type = "reduce";
+                    reducer = "last";
+                    refId = "D_red";
                   };
                 }
               ];
               for = "0m"; 
               labels.report = "daily";
-              annotations.summary = "✅ *Daily All-Clear*\nInfrastructure is operating normally. All monitored SMART drives report passing health.";
+              annotations.summary = ''
+                {{- if and (eq $values.B_red.Value 0.0) (eq $values.C_red.Value 0.0) (eq $values.D_red.Value 0.0) -}}
+                ✅ <b>Daily All-Clear</b>
+                Infrastructure is operating normally. All systems are healthy.
+                {{- else -}}
+                ⚠️ <b>Daily Health Summary: Issues Found</b>
+                {{ if gt $values.B_red.Value 0.0 }}- Offline Nodes: <b>{{ $values.B_red.Value | printf "%.0f" }}</b>{{ end }}
+                {{ if gt $values.C_red.Value 0.0 }}- Unhealthy Bcachefs: <b>{{ $values.C_red.Value | printf "%.0f" }}</b>{{ end }}
+                {{ if gt $values.D_red.Value 0.0 }}- SMART Failures: <b>{{ $values.D_red.Value | printf "%.0f" }}</b>{{ end }}
+                {{- end -}}
+              '';
             }
           ];
         }
