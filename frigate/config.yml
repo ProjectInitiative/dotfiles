@@ -1,3 +1,9 @@
+mqtt:
+  enabled: False # Set to True once you have your broker details
+  # host: 192.168.21.1
+  # user: frigate
+  # password: password
+
 detectors:
   rknn:
     type: rknn

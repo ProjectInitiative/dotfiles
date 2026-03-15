@@ -343,27 +343,32 @@ in
     services.grafana = mkIf cfg.grafana.enable {
       enable = true;
       inherit (cfg.grafana) package dataDir;
+      provision.enable = true;
       settings = {
         server = {
           http_addr = cfg.grafana.listenAddress;
           http_port = cfg.grafana.port;
         };
       };
-      provision.datasources.settings.datasources =
-        (optional cfg.prometheus.enable {
-          name = "Prometheus (local)";
-          uid = "prometheus";
-          type = "prometheus";
-          access = "proxy";
-          url = "http://${cfg.prometheus.listenAddress}:${toString cfg.prometheus.port}";
-          isDefault = true;
-        })
-        ++ (optional cfg.loki.enable {
-          name = "Loki (local)";
-          type = "loki";
-          access = "proxy";
-          url = "http://${cfg.loki.listenAddress}:${toString cfg.loki.port}";
-        });
+      provision.datasources.settings = {
+        apiVersion = 1;
+        datasources =
+          (optional cfg.prometheus.enable {
+            name = "Prometheus";
+            uid = "prometheus_ds";
+            type = "prometheus";
+            access = "proxy";
+            url = "http://${cfg.prometheus.listenAddress}:${toString cfg.prometheus.port}";
+            isDefault = true;
+          })
+          ++ (optional cfg.loki.enable {
+            name = "Loki";
+            uid = "loki_ds";
+            type = "loki";
+            access = "proxy";
+            url = "http://${cfg.loki.listenAddress}:${toString cfg.loki.port}";
+          });
+      };
     };
 
     networking.firewall.allowedTCPPorts = mkIf cfg.openFirewall (
