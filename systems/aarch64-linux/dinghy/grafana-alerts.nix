@@ -34,13 +34,17 @@
                   {{- if eq .Labels.report "daily" -}}
                     {{ .Annotations.summary }}
                   {{- else -}}
-                    <b>🔥 FIRING</b>
+                    <b>🔥 ALARM 🔥: {{ .Labels.alertname }}</b>
+                    {{- if .Annotations.summary }}
                     {{ .Annotations.summary }}
+                    {{- end }}
                   {{- end -}}
                 {{- else -}}
                   {{- if ne .Labels.report "daily" -}}
-                    <b>✅ RESOLVED</b>
+                    <b>✅ RESOLVED: {{ .Labels.alertname }}</b>
+                    {{- if .Annotations.summary }}
                     {{ .Annotations.summary }}
+                    {{- end }}
                   {{- end -}}
                 {{- end -}}
               {{- end -}}
@@ -144,7 +148,7 @@
               ];
               for = "1m";
               labels.severity = "critical";
-              annotations.summary = "🚨 <b>SMART Drive Failure</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nDevice: {{ if $labels.device }}{{ $labels.device }}{{ else }}Unknown{{ end }}\nStatus: <b>FAILING</b>";
+              annotations.summary = "🚨 Node: {{ $labels.instance }}\nDevice: {{ $labels.device }}\nStatus: <b>FAILING</b>";
             }
             {
               uid = "node_down";
@@ -185,7 +189,7 @@
               ];
               for = "3m"; 
               labels.severity = "critical";
-              annotations.summary = "💀 <b>Node Offline</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nStatus: <b>DOWN</b> for > 3 minutes";
+              annotations.summary = "💀 Node: {{ $labels.instance }}\nStatus: <b>DOWN</b> for > 3 minutes";
             }
             {
               uid = "exporter_scrape_failed";
@@ -227,7 +231,7 @@
               ];
               for = "5m"; 
               labels.severity = "warning";
-              annotations.summary = "⚠️ <b>Exporter Scrape Failed</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nJob: <b>{{ if $labels.job }}{{ $labels.job }}{{ else }}Unknown{{ end }}</b>\n<i>The exporter on this node is not responding, but the node itself is still online.</i>";
+              annotations.summary = "⚠️ Node: {{ $labels.instance }}\nJob: <b>{{ $labels.job }}</b>\n<i>The exporter on this node is not responding, but the node itself is still online.</i>";
             }
             {
               uid = "systemd_service_failed";
@@ -267,7 +271,7 @@
               ];
               for = "2m";
               labels.severity = "critical";
-              annotations.summary = "❌ <b>Systemd Service Failed</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nService: {{ if $labels.name }}{{ $labels.name }}{{ else }}Unknown{{ end }}";
+              annotations.summary = "❌ Node: {{ $labels.instance }}\nService: {{ $labels.name }}";
             }
           ];
         }
@@ -288,9 +292,9 @@
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    # A state is healthy ONLY if it is exactly "rw".
-                    # States like "ro", "evacuating", or "[rw] ro" will now trigger an alert.
-                    expr = "node_bcachefs_device_info{state!=\"rw\"} and on(instance) up{job=\"nodes\"} == 1";
+                    # A state is healthy if 'rw' is the active state (in brackets) or if it is exactly 'rw'.
+                    # This allows transitional states like '[rw] ro evacuating spare' but alerts on 'rw ro [evacuating] spare'.
+                    expr = "node_bcachefs_device_info{state!~\".*\\\\[rw\\\\].*|^rw$\"} and on(instance) up{job=\"nodes\"} == 1";
                     refId = "A";
                   };
                 }
@@ -316,7 +320,7 @@
               ];
               for = "1m";
               labels.severity = "critical";
-              annotations.summary = "🗄️ <b>Bcachefs Device Unhealthy</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nDevice: {{ if $labels.device }}{{ $labels.device }}{{ else }}Unknown{{ end }} ({{ if $labels.label }}{{ $labels.label }}{{ else }}No Label{{ end }})\nState: <b>{{ if $labels.state }}{{ $labels.state }}{{ else }}Unknown{{ end }}</b>\nUUID: <code>{{ if $labels.uuid }}{{ $labels.uuid }}{{ else }}Unknown{{ end }}</code>";
+              annotations.summary = "🗄️ Node: {{ $labels.instance }}\nDevice: {{ $labels.device }} ({{ $labels.label }})\nState: <b>{{ $labels.state }}</b>\nUUID: <code>{{ $labels.uuid }}</code>";
             }
             {
               uid = "bcachefs_device_missing";
@@ -359,9 +363,9 @@
               ];
               for = "2m";
               labels.severity = "critical";
-              annotations.summary = "💾 <b>Bcachefs Device Missing</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nPool UUID: <code>{{ if $labels.uuid }}{{ if $labels.uuid }}{{ $labels.uuid }}{{ else }}Unknown{{ end }}{{ end }}</code>\n<i>One or more drives have likely dropped from the OS.</i>";
-              }
-              {
+              annotations.summary = "💾 Node: {{ $labels.instance }}\nPool UUID: <code>{{ $labels.uuid }}</code>\n<i>One or more drives have likely dropped from the OS.</i>";
+            }
+            {
               uid = "high_disk_io_saturation";
               title = "High Disk IO Saturation";
               condition = "C";
@@ -401,7 +405,7 @@
               ];
               for = "10m";
               labels.severity = "warning";
-              annotations.summary = "💽 <b>High Disk IO Saturation</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nDevice: <b>{{ if $labels.device }}{{ $labels.device }}{{ else }}Unknown{{ end }}</b>\nSaturation: <b>{{ if $values.B }}{{ $values.B | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>\n<i>This disk is consistently saturated and may be causing system-wide latency.</i>";
+              annotations.summary = "💽 Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nDevice: <b>{{ if $labels.device }}{{ $labels.device }}{{ else }}Unknown{{ end }}</b>\nSaturation: <b>{{ if $values.B }}{{ $values.B.Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>\n<i>This disk is consistently saturated and may be causing system-wide latency.</i>";
               }
               ];
               }
@@ -448,7 +452,7 @@
               ];
               for = "5m";
               labels.severity = "warning";
-              annotations.summary = "🔥 <b>High CPU Usage</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nLoad: <b>{{ if $values.B }}{{ $values.B | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
+              annotations.summary = "🔥 Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nLoad: <b>{{ if $values.B }}{{ $values.B.Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
             }
             {
               uid = "high_ram_usage";
@@ -488,7 +492,7 @@
               ];
               for = "5m";
               labels.severity = "warning";
-              annotations.summary = "🧠 <b>High RAM Usage</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nUsage: <b>{{ if $values.B }}{{ $values.B | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
+              annotations.summary = "🧠 Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nUsage: <b>{{ if $values.B }}{{ $values.B.Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
             }
             {
               uid = "storage_near_capacity";
@@ -528,7 +532,7 @@
               ];
               for = "10m";
               labels.severity = "warning";
-              annotations.summary = "💾 <b>Storage Near Capacity</b>\nNode: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nMountpoint: {{ if $labels.mountpoint }}{{ $labels.mountpoint }}{{ else }}Unknown{{ end }}\nUsage: <b>{{ if $values.B }}{{ $values.B | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
+              annotations.summary = "💾 Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nMountpoint: {{ if $labels.mountpoint }}{{ $labels.mountpoint }}{{ else }}Unknown{{ end }}\nUsage: <b>{{ if $values.B }}{{ $values.B.Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
             }
           ];
         }
