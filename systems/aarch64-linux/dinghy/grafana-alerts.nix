@@ -377,9 +377,10 @@
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    # rate of io_time_seconds_total gives the fraction of time the disk was busy.
-                    # 0.9 = 90% saturation. We ignore loop and ram devices.
-                    expr = "rate(node_disk_io_time_seconds_total{device!~\"loop.*|ram.*\"}[5m]) > 0.9 and on(instance) up{job=\"nodes\"} == 1";
+                    # rate of io_time_seconds_total gives the fraction of time the disk was busy (0-1).
+                    # We multiply by 100 to get percentage and alert > 90%.
+                    # We exclude loop, ram, and dm (device mapper) to avoid noise and duplication.
+                    expr = "rate(node_disk_io_time_seconds_total{device!~\"loop.*|ram.*|dm-.*\"}[5m]) * 100 > 90 and on(instance) up{job=\"nodes\"} == 1";
                     refId = "A";
                   };
                 }
@@ -406,9 +407,9 @@
               for = "10m";
               labels.severity = "warning";
               annotations.summary = "💽 Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nDevice: <b>{{ if $labels.device }}{{ $labels.device }}{{ else }}Unknown{{ end }}</b>\nSaturation: <b>{{ if $values.B }}{{ $values.B.Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>\n<i>This disk is consistently saturated and may be causing system-wide latency.</i>";
-              }
-              ];
-              }
+            }
+          ];
+        }
         {
           name = "Resource Pressure";
           folder = "Infrastructure";
