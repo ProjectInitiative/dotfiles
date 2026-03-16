@@ -700,7 +700,7 @@ in {
       policies = [{
         orgId = 1;
         receiver = "Telegram-Critical-And-Reports";
-        group_by = [ "alertname" "instance" ];
+        group_by = [ "alertname" "instance" "device" "name" ];
         routes = [
           {
             receiver = "Telegram-Critical-And-Reports";
@@ -724,7 +724,7 @@ in {
       policies = [{
         orgId = 1;
         receiver = "Telegram-Critical-And-Reports-Manual";
-        group_by = [ "alertname" "instance" ];
+        group_by = [ "alertname" "instance" "device" "name" ];
         routes = [
           {
             receiver = "Telegram-Critical-And-Reports-Manual";
