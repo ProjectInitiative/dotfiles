@@ -233,6 +233,8 @@ in
           node = mkIf cfg.exporters.node.enable {
             enable = true;
             inherit (cfg.exporters.node) listenAddress port;
+            enabledCollectors = [ "textfile" ];
+            extraFlags = [ "--collector.textfile.directory=/var/lib/prometheus-node-exporter" ];
           };
           smartctl = mkIf cfg.exporters.smartctl.enable {
             enable = true;
@@ -310,6 +312,8 @@ in
             Requires = [ "network-online.target" ];
             Restart = "on-failure";
             RestartSec = "5s";
+            StateDirectory = "prometheus-node-exporter";
+            StateDirectoryMode = "0755";
           };
         };
       })
@@ -370,6 +374,21 @@ in
           });
       };
     };
+
+    # Generate the scenarios.json for alert-test
+    environment.etc."infra-test/scenarios.json" = mkIf cfg.grafana.enable {
+      text = builtins.toJSON (
+        lib.foldl' (acc: rule:
+          if rule ? testScenarios
+          then acc // rule.testScenarios
+          else acc
+        ) {} (lib.flatten (map (group: group.rules) config.services.grafana.provision.alerting.rules.settings.groups))
+      );
+    };
+
+    environment.systemPackages = mkIf cfg.exporters.node.enable [
+      (pkgs.callPackage ../../../../packages/alert-test {})
+    ];
 
     networking.firewall.allowedTCPPorts = mkIf cfg.openFirewall (
       (optional cfg.prometheus.enable cfg.prometheus.port)
