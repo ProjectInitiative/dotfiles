@@ -230,7 +230,8 @@ let
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
                     # A state is healthy if 'rw' is the active state (in brackets) or if it is exactly 'rw'.
-                    expr = "max by (instance, device, label, state, uuid) (node_bcachefs_device_info{state!~\".*\\\\[rw\\\\].*|^rw$\"}) and on(instance) up{job=\"nodes\"} == 1";
+                    # This allows transitional states like '[rw] ro evacuating spare' but alerts on 'rw ro [evacuating] spare'.
+                    expr = "node_bcachefs_device_info{state!~\".*\\\\[rw\\\\].*|^rw$\"} and on(instance) up{job=\"nodes\"} == 1";
                     refId = "A";
                   };
                 }
@@ -282,6 +283,9 @@ let
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
+                    # Compare current count with the maximum count seen in the last 24h
+                    # This is more robust than doing the math in Grafana expressions.
+                    # Only alert if the node is still up to avoid false positives during node downtime.
                     expr = "((count by (instance, uuid) (node_bcachefs_device_info)) < (max_over_time(count by (instance, uuid) (node_bcachefs_device_info)[24h:1m]))) and on(instance) up{job=\"nodes\"} == 1";
                     refId = "A";
                   };
@@ -308,14 +312,13 @@ let
               ];
               for = "2m";
               labels.severity = "critical";
-              annotations.summary = "💾 Node: {{ $labels.instance }}\nPool UUID: <code>{{ $labels.uuid }}</code>\n<i>One or more drives have likely dropped from the OS.</i>";
+              annotations.summary = "💾 Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Resolved{{ end }}\nPool UUID: <code>{{ if $labels.uuid }}{{ $labels.uuid }}{{ else }}N/A{{ end }}</code>\n<i>One or more drives have likely dropped from the OS.</i>";
               testScenarios = {
                 "bcachefs_device_missing" = {
                    metric = "node_bcachefs_device_info";
                    labels = {
                      uuid = "missing-pool-uuid";
                      device = "1";
-                     state = "rw"; # Adding 'rw' state so this test doesn't ALSO trigger 'bcachefs_device_unhealthy'
                    };
                    value = 1;
                 };
