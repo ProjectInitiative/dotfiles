@@ -21,7 +21,6 @@ let
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    # Aggregating by instance and device to prevent duplicates from multiple scrape jobs
                     expr = "max by (instance, device) (smartmon_device_smart_healthy) == 0 and on(instance) up{job=\"nodes\"} == 1";
                     refId = "A";
                   };
@@ -71,7 +70,6 @@ let
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    # This targets the primary node_exporter. We filter out the 'self' job to prevent double-alerts.
                     expr = "up{job=\"nodes\", instance!~\"cargohold:.*\"}";
                     refId = "A";
                   };
@@ -121,7 +119,6 @@ let
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    # Aggregate by instance and job to collapse any multi-scrape duplicates
                     expr = "max by (instance, job) (up{job!~\"nodes|self\", instance!~\"cargohold:.*\"}) == 0 and on(instance) up{job=\"nodes\"} == 1";
                     refId = "A";
                   };
@@ -171,7 +168,6 @@ let
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    # Aggregating by instance and name (service name) to collapse 'nodes' vs 'self' job duplicates
                     expr = "max by (instance, name) (node_systemd_unit_state{state=\"failed\"})";
                     refId = "A";
                   };
@@ -229,8 +225,6 @@ let
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    # A state is healthy if 'rw' is the active state (in brackets) or if it is exactly 'rw'.
-                    # This allows transitional states like '[rw] ro evacuating spare' but alerts on 'rw ro [evacuating] spare'.
                     expr = "node_bcachefs_device_info{state!~\".*\\\\[rw\\\\].*|^rw$\"} and on(instance) up{job=\"nodes\"} == 1";
                     refId = "A";
                   };
@@ -283,9 +277,6 @@ let
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    # Compare current count with the maximum count seen in the last 24h
-                    # This is more robust than doing the math in Grafana expressions.
-                    # Only alert if the node is still up to avoid false positives during node downtime.
                     expr = "((count by (instance, uuid) (node_bcachefs_device_info)) < (max_over_time(count by (instance, uuid) (node_bcachefs_device_info)[24h:1m]))) and on(instance) up{job=\"nodes\"} == 1";
                     refId = "A";
                   };
@@ -337,10 +328,12 @@ let
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    # rate of io_time_seconds_total gives the fraction of time the disk was busy (0-1).
-                    # We multiply by 100 to get percentage and alert > 90%.
-                    # We exclude loop, ram, and dm (device mapper) to avoid noise and duplication.
-                    expr = "rate(node_disk_io_time_seconds_total{device!~\"loop.*|ram.*|dm-.*\"}[5m]) * 100 > 90 and on(instance) up{job=\"nodes\"} == 1";
+                    # Join with filesystem info to find the 'root' device and filter out non-boot drives
+                    expr = ''
+                      rate(node_disk_io_time_seconds_total{device!~"loop.*|ram.*|dm-.*"}[5m]) * 100 > 90
+                      and on(device) group_left()
+                      label_replace(node_filesystem_info{mountpoint="/"}, "device", "$1", "device", "/dev/(.*)")
+                    '';
                     refId = "A";
                   };
                 }
@@ -366,7 +359,7 @@ let
               ];
               for = "10m";
               labels.severity = "warning";
-              annotations.summary = "💽 Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nDevice: <b>{{ if $labels.device }}{{ $labels.device }}{{ else }}Unknown{{ end }}</b>\nSaturation: <b>{{ if $values.B }}{{ $values.B.Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>\n<i>This disk is consistently saturated and may be causing system-wide latency.</i>";
+              annotations.summary = "💽 Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nDevice: <b>{{ if $labels.device }}{{ $labels.device }}{{ else }}Unknown{{ end }}</b>\nSaturation: <b>{{ if $values.B }}{{ $values.B.Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>\n<i>The boot disk is saturated. This can cause significant system latency.</i>";
               testScenarios = {
                 "disk_saturation" = {
                   metric = "node_disk_io_time_seconds_total";
@@ -544,7 +537,6 @@ let
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    # Trigger for 5 minutes every day at 08:00 UTC.
                     expr = "vector(1) * ((time() % 86400 >= bool 28800) * (time() % 86400 < bool 29100)) > 0";
                     refId = "A";
                   };
@@ -609,17 +601,15 @@ let
               ];
               for = "0m"; 
               labels.report = "daily";
-              annotations.summary = ''
-                {{- if and (eq $values.B_red.Value 0.0) (eq $values.C_red.Value 0.0) (eq $values.D_red.Value 0.0) -}}
-                ✅ <b>Daily All-Clear</b>
-                Infrastructure is operating normally. All systems are healthy.
-                {{- else -}}
-                ⚠️ <b>Daily Health Summary: Issues Found</b>
-                {{ if gt $values.B_red.Value 0.0 }}- Offline Nodes: <b>{{ $values.B_red.Value | printf "%.0f" }}</b>{{ end }}
-                {{ if gt $values.C_red.Value 0.0 }}- Unhealthy Bcachefs: <b>{{ $values.C_red.Value | printf "%.0f" }}</b>{{ end }}
-                {{ if gt $values.D_red.Value 0.0 }}- SMART Failures: <b>{{ $values.D_red.Value | printf "%.0f" }}</b>{{ end }}
-                {{- end -}}
-              '';
+              annotations.summary = 
+                "{{ if and (eq $values.B_red.Value 0.0) (eq $values.C_red.Value 0.0) (eq $values.D_red.Value 0.0) }}" +
+                "✅ <b>Daily All-Clear</b>\nInfrastructure is operating normally. All systems are healthy." +
+                "{{ else }}" +
+                "⚠️ <b>Daily Health Summary: Issues Found</b>\n" +
+                "{{ if gt $values.B_red.Value 0.0 }}- Offline Nodes: <b>{{ $values.B_red.Value | printf \"%.0f\" }}</b>\n{{ end }}" +
+                "{{ if gt $values.C_red.Value 0.0 }}- Unhealthy Bcachefs: <b>{{ $values.C_red.Value | printf \"%.0f\" }}</b>\n{{ end }}" +
+                "{{ if gt $values.D_red.Value 0.0 }}- SMART Failures: <b>{{ $values.D_red.Value | printf \"%.0f\" }}</b>\n{{ end }}" +
+                "{{ end }}";
               testScenarios = {
                 "daily_report_trigger" = {
                    metric = "up";
@@ -670,21 +660,26 @@ in {
             chatid = "$__env{TELEGRAM_CHAT_ID}";
             parseMode = "HTML";
             message = ''
-              {{- range .Alerts -}}
+              {{- range $index, $alert := .Alerts -}}
+                {{- if gt $index 0 }}
+
+---------------------------------------
+
+{{ end -}}
                 {{- if eq .Status "firing" -}}
                   {{- if eq .Labels.report "daily" -}}
                     {{ .Annotations.summary }}
                   {{- else -}}
                     <b>🔥 ALARM 🔥: {{ .Labels.alertname }}</b>
                     {{- if .Annotations.summary }}
-                    {{ .Annotations.summary }}
+{{ .Annotations.summary }}
                     {{- end }}
                   {{- end -}}
                 {{- else -}}
                   {{- if ne .Labels.report "daily" -}}
                     <b>✅ RESOLVED: {{ .Labels.alertname }}</b>
                     {{- if .Annotations.summary }}
-                    {{ .Annotations.summary }}
+{{ .Annotations.summary }}
                     {{- end }}
                   {{- end -}}
                 {{- end -}}
