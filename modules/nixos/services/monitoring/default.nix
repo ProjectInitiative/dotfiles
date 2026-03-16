@@ -233,7 +233,6 @@ in
           node = mkIf cfg.exporters.node.enable {
             enable = true;
             inherit (cfg.exporters.node) listenAddress port;
-            enabledCollectors = [ "textfile" ];
             extraFlags = [ "--collector.textfile.directory=/var/lib/prometheus-node-exporter" ];
           };
           smartctl = mkIf cfg.exporters.smartctl.enable {
@@ -373,17 +372,6 @@ in
             url = "http://${cfg.loki.listenAddress}:${toString cfg.loki.port}";
           });
       };
-    };
-
-    # Generate the scenarios.json for alert-test
-    environment.etc."infra-test/scenarios.json" = mkIf cfg.grafana.enable {
-      text = builtins.toJSON (
-        lib.foldl' (acc: rule:
-          if rule ? testScenarios
-          then acc // rule.testScenarios
-          else acc
-        ) {} (lib.flatten (map (group: group.rules) config.services.grafana.provision.alerting.rules.settings.groups))
-      );
     };
 
     environment.systemPackages = mkIf cfg.exporters.node.enable [

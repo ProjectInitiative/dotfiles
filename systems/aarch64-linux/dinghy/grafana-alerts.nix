@@ -1,110 +1,9 @@
 { config, lib, pkgs, ... }:
 
-{
-  # 1. Point Grafana to the SOPS Secret as an EnvironmentFile
-  sops.secrets.grafana_telegram_env.owner = "grafana";
+let
 
-  systemd.services.grafana.serviceConfig.EnvironmentFile = [
-    config.sops.secrets.grafana_telegram_env.path
-  ];
-
-  # 2. Enable Grafana Provisioning
-  services.grafana.provision.enable = true;
-
-  # 3. Grafana Alerting Provisioning
-  services.grafana.provision.alerting = {
-# FIXME: this needs to be removed after grafana bug is fixed for contactPoints 
-    # Commented out due to numeric Chat ID bug in Telegram integration
-    /*
-    contactPoints.settings = {
-      apiVersion = 1;
-      contactPoints = [{
-        orgId = 1;
-        name = "Telegram-Critical-And-Reports";
-        receivers = [{
-          uid = "telegram_1";
-          type = "telegram";
-          settings = {
-            bottoken = "$__env{TELEGRAM_BOT_TOKEN}";
-            chatid = "$__env{TELEGRAM_CHAT_ID}";
-            parseMode = "HTML";
-            message = ''
-              {{- range .Alerts -}}
-                {{- if eq .Status "firing" -}}
-                  {{- if eq .Labels.report "daily" -}}
-                    {{ .Annotations.summary }}
-                  {{- else -}}
-                    <b>🔥 ALARM 🔥: {{ .Labels.alertname }}</b>
-                    {{- if .Annotations.summary }}
-                    {{ .Annotations.summary }}
-                    {{- end }}
-                  {{- end -}}
-                {{- else -}}
-                  {{- if ne .Labels.report "daily" -}}
-                    <b>✅ RESOLVED: {{ .Labels.alertname }}</b>
-                    {{- if .Annotations.summary }}
-                    {{ .Annotations.summary }}
-                    {{- end }}
-                  {{- end -}}
-                {{- end -}}
-              {{- end -}}
-            '';
-          };
-        }];
-      }];
-    };
-
-    policies.settings = {
-      apiVersion = 1;
-      policies = [{
-        orgId = 1;
-        receiver = "Telegram-Critical-And-Reports";
-        group_by = [ "alertname" "instance" ];
-        routes = [
-          {
-            receiver = "Telegram-Critical-And-Reports";
-            object_matchers = [ ["severity" "=" "critical"] ];
-            group_wait = "0s";
-            repeat_interval = "1h";
-          }
-          {
-            receiver = "Telegram-Critical-And-Reports";
-            object_matchers = [ ["report" "=" "daily"] ];
-            group_wait = "0s";
-            repeat_interval = "24h";
-          }
-        ];
-      }];
-    };
-*/
-# FIXME: this needs to be removed after grafana bug is fixed for contactPoints 
-    policies.settings = {
-      apiVersion = 1;
-      policies = [{
-        orgId = 1;
-        receiver = "Telegram-Critical-And-Reports-Manual";
-        group_by = [ "alertname" "instance" ];
-        routes = [
-          {
-            receiver = "Telegram-Critical-And-Reports-Manual";
-            object_matchers = [ ["severity" "=" "critical"] ];
-            group_wait = "0s";
-            repeat_interval = "1h";
-          }
-          {
-            receiver = "Telegram-Critical-And-Reports-Manual";
-            object_matchers = [ ["report" "=" "daily"] ];
-            group_wait = "0s";
-            repeat_interval = "24h";
-          }
-        ];
-      }];
-    };
-    
-
-    rules.settings = {
-      apiVersion = 1;
-      groups = [
+  # Define groups with testScenarios separately to avoid Grafana schema errors
+  myGroups = [
         {
           name = "Hardware and Node Failures";
           folder = "Infrastructure";
@@ -148,7 +47,18 @@
               ];
               for = "1m";
               labels.severity = "critical";
-              annotations.summary = "🚨 Node: {{ $labels.instance }}\nDevice: {{ $labels.device }}\nStatus: <b>FAILING</b>";
+              annotations.summary = "🚨 Node: {{ $labels.instance }}
+Device: {{ $labels.device }}
+Status: <b>FAILING</b>";
+              testScenarios = {
+                "smart_drive_failure" = {
+                  metric = "smartmon_device_smart_healthy";
+                  labels = {
+                    device = "/dev/test-nvme";
+                  };
+                  value = 0;
+                };
+              };
             }
             {
               uid = "node_down";
@@ -320,7 +230,22 @@
               ];
               for = "1m";
               labels.severity = "critical";
-              annotations.summary = "🗄️ Node: {{ $labels.instance }}\nDevice: {{ $labels.device }} ({{ $labels.label }})\nState: <b>{{ $labels.state }}</b>\nUUID: <code>{{ $labels.uuid }}</code>";
+              annotations.summary = "🗄️ Node: {{ $labels.instance }}
+Device: {{ $labels.device }} ({{ $labels.label }})
+State: <b>{{ $labels.state }}</b>
+UUID: <code>{{ $labels.uuid }}</code>";
+              testScenarios = {
+                "evacuating_drive" = {
+                  metric = "node_bcachefs_device_info";
+                  labels = {
+                    device = "99";
+                    label = "test-hdd";
+                    state = "evacuating";
+                    uuid = "test-uuid";
+                  };
+                  value = 1;
+                };
+              };
             }
             {
               uid = "bcachefs_device_missing";
@@ -634,6 +559,61 @@
           ];
         }
       ];
+
+  # Strip testScenarios for Grafana provisioning
+  grafanaGroups = map (group: group // {
+    rules = map (rule: builtins.removeAttrs rule [ "testScenarios" ]) group.rules;
+  }) myGroups;
+
+  # Extract testScenarios for alert-test JSON
+  allRules = lib.flatten (map (group: group.rules) myGroups);
+  scenarios = lib.foldl' (acc: rule: if rule ? testScenarios then acc // rule.testScenarios else acc) {} allRules;
+
+in {
+  # 1. Point Grafana to the SOPS Secret as an EnvironmentFile
+  sops.secrets.grafana_telegram_env.owner = "grafana";
+
+  systemd.services.grafana.serviceConfig.EnvironmentFile = [
+    config.sops.secrets.grafana_telegram_env.path
+  ];
+
+  # 2. Enable Grafana Provisioning
+  services.grafana.provision.enable = true;
+
+  # 3. Grafana Alerting Provisioning
+  services.grafana.provision.alerting = {
+# FIXME: this needs to be removed after grafana bug is fixed for contactPoints
+    policies.settings = {
+      apiVersion = 1;
+      policies = [{
+        orgId = 1;
+        receiver = "Telegram-Critical-And-Reports-Manual";
+        group_by = [ "alertname" "instance" ];
+        routes = [
+          {
+            receiver = "Telegram-Critical-And-Reports-Manual";
+            object_matchers = [ ["severity" "=" "critical"] ];
+            group_wait = "0s";
+            repeat_interval = "1h";
+          }
+          {
+            receiver = "Telegram-Critical-And-Reports-Manual";
+            object_matchers = [ ["report" "=" "daily"] ];
+            group_wait = "0s";
+            repeat_interval = "24h";
+          }
+        ];
+      }];
     };
+
+    rules.settings = {
+      apiVersion = 1;
+      groups = grafanaGroups;
+    };
+  };
+
+  # 4. Generate the scenarios.json for alert-test
+  environment.etc."infra-test/scenarios.json" = lib.mkIf config.services.grafana.enable {
+    text = builtins.toJSON scenarios;
   };
 }

@@ -62,10 +62,13 @@ def clear_scenarios():
         print("No mock metrics to clear.")
         return
 
+    scenarios = load_scenarios()
+    valid_files = [f"{name}.prom" for name in scenarios.keys()]
+
     cleared = 0
     try:
         for file in os.listdir(METRICS_DIR):
-            if file.endswith('.prom'):
+            if file in valid_files:
                 os.remove(os.path.join(METRICS_DIR, file))
                 cleared += 1
         print(f"Cleared {cleared} mock metric files.")
