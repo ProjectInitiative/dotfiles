@@ -257,7 +257,7 @@ let
               ];
               for = "1m";
               labels.severity = "critical";
-              annotations.summary = "🗄️ Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Resolved{{ end }}\nDevice: {{ if $labels.device }}{{ $labels.device }}{{ else }}Clean{{ end }} ({{ if $labels.label }}{{ $labels.label }}{{ else }}N/A{{ end }})\nState: <b>{{ if $labels.state }}{{ $labels.state }}{{ else }}OK{{ end }}</b>\nUUID: <code>{{ if $labels.uuid }}{{ $labels.uuid }}{{ else }}N/A{{ end }}</code>";
+              annotations.summary = "🗄️ Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Resolved{{ end }}\nDevice: {{ if $labels.device }}{{ $labels.device }}{{ else }}Clean{{ end }} ({{ if $labels.label }}{{ $labels.label }}{{ else }}N/A{{ end }})\nState: <b>{{ if $labels.state }}{{ $labels.state }}{{ else }}N/A{{ end }}</b>\nUUID: <code>{{ if $labels.uuid }}{{ $labels.uuid }}{{ else }}N/A{{ end }}</code>";
               testScenarios = {
                 "evacuating_drive" = {
                   metric = "node_bcachefs_device_info";
@@ -319,6 +319,7 @@ let
                    labels = {
                      uuid = "missing-pool-uuid";
                      device = "1";
+                     state = "missing";
                    };
                    value = 1;
                 };
