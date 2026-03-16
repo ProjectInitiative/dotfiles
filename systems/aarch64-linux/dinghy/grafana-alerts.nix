@@ -331,9 +331,9 @@ let
                     # Join with filesystem info to find the 'root' device and filter out non-boot drives
                     # Regex handles both /dev/sda1 -> sda and /dev/nvme0n1p3 -> nvme0n1
                     expr = ''
-                      rate(node_disk_io_time_seconds_total{device!~"loop.*|ram.*|dm-.*"}[5m]) * 100 > 90
-                      and on(device) group_left()
-                      label_replace(node_filesystem_size_bytes{mountpoint="/"}, "device", "$1", "device", "/dev/([a-z]+[0-9]*[a-z]*)[0-9]*p*[0-9]*")
+                      (rate(node_disk_io_time_seconds_total{device!~"loop.*|ram.*|dm-.*"}[5m]) * 100 > 90)
+                      and on(instance, device)
+                      label_replace(node_filesystem_size_bytes{mountpoint="/"}, "device", "$1", "device", "/dev/([a-z]+[0-9]*[a-z]*[0-9]*).*")
                     '';
                     refId = "A";
                   };
