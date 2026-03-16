@@ -393,8 +393,8 @@ in
       bcachefsFileOptions = {
         enable = true;
         jobs = {
-          frigate-media = {
-            path = "/mnt/pool/media/frigate";
+          frigate = {
+            path = "/mnt/pool/frigate";
             onCalendar = "daily";
             fileOptions = {
               foreground_target = "hdd";
