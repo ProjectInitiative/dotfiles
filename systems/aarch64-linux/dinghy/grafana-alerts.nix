@@ -583,6 +583,70 @@ in {
   # 3. Grafana Alerting Provisioning
   services.grafana.provision.alerting = {
 # FIXME: this needs to be removed after grafana bug is fixed for contactPoints
+    # Commented out due to numeric Chat ID bug in Telegram integration
+    /*
+    contactPoints.settings = {
+      apiVersion = 1;
+      contactPoints = [{
+        orgId = 1;
+        name = "Telegram-Critical-And-Reports";
+        receivers = [{
+          uid = "telegram_1";
+          type = "telegram";
+          settings = {
+            bottoken = "$__env{TELEGRAM_BOT_TOKEN}";
+            chatid = "$__env{TELEGRAM_CHAT_ID}";
+            parseMode = "HTML";
+            message = ''
+              {{- range .Alerts -}}
+                {{- if eq .Status "firing" -}}
+                  {{- if eq .Labels.report "daily" -}}
+                    {{ .Annotations.summary }}
+                  {{- else -}}
+                    <b>🔥 ALARM 🔥: {{ .Labels.alertname }}</b>
+                    {{- if .Annotations.summary }}
+                    {{ .Annotations.summary }}
+                    {{- end }}
+                  {{- end -}}
+                {{- else -}}
+                  {{- if ne .Labels.report "daily" -}}
+                    <b>✅ RESOLVED: {{ .Labels.alertname }}</b>
+                    {{- if .Annotations.summary }}
+                    {{ .Annotations.summary }}
+                    {{- end }}
+                  {{- end -}}
+                {{- end -}}
+              {{- end -}}
+            '';
+          };
+        }];
+      }];
+    };
+
+    policies.settings = {
+      apiVersion = 1;
+      policies = [{
+        orgId = 1;
+        receiver = "Telegram-Critical-And-Reports";
+        group_by = [ "alertname" "instance" ];
+        routes = [
+          {
+            receiver = "Telegram-Critical-And-Reports";
+            object_matchers = [ ["severity" "=" "critical"] ];
+            group_wait = "0s";
+            repeat_interval = "1h";
+          }
+          {
+            receiver = "Telegram-Critical-And-Reports";
+            object_matchers = [ ["report" "=" "daily"] ];
+            group_wait = "0s";
+            repeat_interval = "24h";
+          }
+        ];
+      }];
+    };
+*/
+# FIXME: this needs to be removed after grafana bug is fixed for contactPoints
     policies.settings = {
       apiVersion = 1;
       policies = [{
