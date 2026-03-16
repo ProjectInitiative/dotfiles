@@ -48,9 +48,7 @@ let
               ];
               for = "1m";
               labels.severity = "critical";
-              annotations.summary = "🚨 Node: {{ $labels.instance }}
-Device: {{ $labels.device }}
-Status: <b>FAILING</b>";
+              annotations.summary = "🚨 Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Resolved{{ end }}\nDevice: {{ if $labels.device }}{{ $labels.device }}{{ else }}Clean{{ end }}\nStatus: <b>{{ if $labels.instance }}FAILING{{ else }}OK{{ end }}</b>";
               testScenarios = {
                 "smart_drive_failure" = {
                   metric = "smartmon_device_smart_healthy";
@@ -100,7 +98,7 @@ Status: <b>FAILING</b>";
               ];
               for = "3m"; 
               labels.severity = "critical";
-              annotations.summary = "💀 Node: {{ $labels.instance }}\nStatus: <b>DOWN</b> for > 3 minutes";
+              annotations.summary = "💀 Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Resolved{{ end }}\nStatus: <b>{{ if $labels.instance }}DOWN{{ else }}UP{{ end }}</b>";
               testScenarios = {
                 "node_down" = {
                   metric = "up";
@@ -200,7 +198,7 @@ Status: <b>FAILING</b>";
               ];
               for = "2m";
               labels.severity = "critical";
-              annotations.summary = "❌ Node: {{ $labels.instance }}\nService: {{ $labels.name }}";
+              annotations.summary = "❌ Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Resolved{{ end }}\nService: {{ if $labels.name }}{{ $labels.name }}{{ else }}Clean{{ end }}";
               testScenarios = {
                 "systemd_service_failed" = {
                   metric = "node_systemd_unit_state";
@@ -258,10 +256,7 @@ Status: <b>FAILING</b>";
               ];
               for = "1m";
               labels.severity = "critical";
-              annotations.summary = "🗄️ Node: {{ $labels.instance }}
-Device: {{ $labels.device }} ({{ $labels.label }})
-State: <b>{{ $labels.state }}</b>
-UUID: <code>{{ $labels.uuid }}</code>";
+              annotations.summary = "🗄️ Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Resolved{{ end }}\nDevice: {{ if $labels.device }}{{ $labels.device }}{{ else }}Clean{{ end }} ({{ if $labels.label }}{{ $labels.label }}{{ else }}N/A{{ end }})\nState: <b>{{ if $labels.state }}{{ $labels.state }}{{ else }}OK{{ end }}</b>\nUUID: <code>{{ if $labels.uuid }}{{ $labels.uuid }}{{ else }}N/A{{ end }}</code>";
               testScenarios = {
                 "evacuating_drive" = {
                   metric = "node_bcachefs_device_info";
@@ -517,7 +512,7 @@ UUID: <code>{{ $labels.uuid }}</code>";
               ];
               for = "10m";
               labels.severity = "warning";
-              annotations.summary = "💾 Node: {{ if $labels.instance }}{{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}{{ else }}Unknown{{ end }}\nMountpoint: {{ if $labels.mountpoint }}{{ $labels.mountpoint }}{{ else }}Unknown{{ end }}\nUsage: <b>{{ if $values.B }}{{ $values.B.Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
+              annotations.summary = "💾 Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Resolved{{ end }}\nMountpoint: {{ if $labels.mountpoint }}{{ $labels.mountpoint }}{{ else }}Unknown{{ end }}\nUsage: <b>{{ if $values.B }}{{ $values.B.Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
               testScenarios = {
                 "storage_full" = {
                   metric = "node_filesystem_free_bytes";
