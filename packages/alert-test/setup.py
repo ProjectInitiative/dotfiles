@@ -3,6 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name='alert-test',
     version='1.0.0',
+    py_modules=['alert_test'],
     packages=find_packages(),
     entry_points={
         'console_scripts': [

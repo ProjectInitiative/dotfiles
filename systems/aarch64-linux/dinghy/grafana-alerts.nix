@@ -21,7 +21,8 @@ let
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    expr = "smartmon_device_smart_healthy == 0 and on(instance) up{job=\"nodes\"} == 1";
+                    # Aggregating by instance and device to prevent duplicates from multiple scrape jobs
+                    expr = "max by (instance, device) (smartmon_device_smart_healthy) == 0 and on(instance) up{job=\"nodes\"} == 1";
                     refId = "A";
                   };
                 }
@@ -72,7 +73,7 @@ Status: <b>FAILING</b>";
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    # This targets the primary node_exporter, which we use as the source of truth for "is the host up?"
+                    # This targets the primary node_exporter. We filter out the 'self' job to prevent double-alerts.
                     expr = "up{job=\"nodes\", instance!~\"cargohold:.*\"}";
                     refId = "A";
                   };
@@ -100,6 +101,15 @@ Status: <b>FAILING</b>";
               for = "3m"; 
               labels.severity = "critical";
               annotations.summary = "💀 Node: {{ $labels.instance }}\nStatus: <b>DOWN</b> for > 3 minutes";
+              testScenarios = {
+                "node_down" = {
+                  metric = "up";
+                  labels = {
+                    job = "nodes";
+                  };
+                  value = 0;
+                };
+              };
             }
             {
               uid = "exporter_scrape_failed";
@@ -113,9 +123,8 @@ Status: <b>FAILING</b>";
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    # Targets secondary exporters (smart-devices, etc.)
-                    # We only alert if the main node is still online to avoid double-alerting during a full outage.
-                    expr = "up{job!~\"nodes|self\", instance!~\"cargohold:.*\"} == 0 and on(instance) up{job=\"nodes\"} == 1";
+                    # Aggregate by instance and job to collapse any multi-scrape duplicates
+                    expr = "max by (instance, job) (up{job!~\"nodes|self\", instance!~\"cargohold:.*\"}) == 0 and on(instance) up{job=\"nodes\"} == 1";
                     refId = "A";
                   };
                 }
@@ -142,6 +151,15 @@ Status: <b>FAILING</b>";
               for = "5m"; 
               labels.severity = "warning";
               annotations.summary = "⚠️ Node: {{ $labels.instance }}\nJob: <b>{{ $labels.job }}</b>\n<i>The exporter on this node is not responding, but the node itself is still online.</i>";
+              testScenarios = {
+                "exporter_scrape_failed" = {
+                  metric = "up";
+                  labels = {
+                    job = "test-exporter";
+                  };
+                  value = 0;
+                };
+              };
             }
             {
               uid = "systemd_service_failed";
@@ -155,7 +173,8 @@ Status: <b>FAILING</b>";
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    expr = "node_systemd_unit_state{state=\"failed\"}";
+                    # Aggregating by instance and name (service name) to collapse 'nodes' vs 'self' job duplicates
+                    expr = "max by (instance, name) (node_systemd_unit_state{state=\"failed\"})";
                     refId = "A";
                   };
                 }
@@ -182,6 +201,16 @@ Status: <b>FAILING</b>";
               for = "2m";
               labels.severity = "critical";
               annotations.summary = "❌ Node: {{ $labels.instance }}\nService: {{ $labels.name }}";
+              testScenarios = {
+                "systemd_service_failed" = {
+                  metric = "node_systemd_unit_state";
+                  labels = {
+                    name = "test-service.service";
+                    state = "failed";
+                  };
+                  value = 1;
+                };
+              };
             }
           ];
         }
@@ -203,8 +232,7 @@ Status: <b>FAILING</b>";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
                     # A state is healthy if 'rw' is the active state (in brackets) or if it is exactly 'rw'.
-                    # This allows transitional states like '[rw] ro evacuating spare' but alerts on 'rw ro [evacuating] spare'.
-                    expr = "node_bcachefs_device_info{state!~\".*\\\\[rw\\\\].*|^rw$\"} and on(instance) up{job=\"nodes\"} == 1";
+                    expr = "max by (instance, device, label, state, uuid) (node_bcachefs_device_info{state!~\".*\\\\[rw\\\\].*|^rw$\"}) and on(instance) up{job=\"nodes\"} == 1";
                     refId = "A";
                   };
                 }
@@ -259,9 +287,6 @@ UUID: <code>{{ $labels.uuid }}</code>";
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    # Compare current count with the maximum count seen in the last 24h
-                    # This is more robust than doing the math in Grafana expressions.
-                    # Only alert if the node is still up to avoid false positives during node downtime.
                     expr = "((count by (instance, uuid) (node_bcachefs_device_info)) < (max_over_time(count by (instance, uuid) (node_bcachefs_device_info)[24h:1m]))) and on(instance) up{job=\"nodes\"} == 1";
                     refId = "A";
                   };
@@ -289,6 +314,17 @@ UUID: <code>{{ $labels.uuid }}</code>";
               for = "2m";
               labels.severity = "critical";
               annotations.summary = "💾 Node: {{ $labels.instance }}\nPool UUID: <code>{{ $labels.uuid }}</code>\n<i>One or more drives have likely dropped from the OS.</i>";
+              testScenarios = {
+                "bcachefs_device_missing" = {
+                   metric = "node_bcachefs_device_info";
+                   labels = {
+                     uuid = "missing-pool-uuid";
+                     device = "1";
+                     state = "rw"; # Adding 'rw' state so this test doesn't ALSO trigger 'bcachefs_device_unhealthy'
+                   };
+                   value = 1;
+                };
+              };
             }
             {
               uid = "high_disk_io_saturation";
@@ -302,8 +338,6 @@ UUID: <code>{{ $labels.uuid }}</code>";
                   datasourceUid = "prometheus_ds";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
-                    # rate of io_time_seconds_total gives the fraction of time the disk was busy.
-                    # 0.9 = 90% saturation. We ignore loop and ram devices.
                     expr = "rate(node_disk_io_time_seconds_total{device!~\"loop.*|ram.*\"}[5m]) > 0.9 and on(instance) up{job=\"nodes\"} == 1";
                     refId = "A";
                   };
@@ -331,9 +365,18 @@ UUID: <code>{{ $labels.uuid }}</code>";
               for = "10m";
               labels.severity = "warning";
               annotations.summary = "💽 Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nDevice: <b>{{ if $labels.device }}{{ $labels.device }}{{ else }}Unknown{{ end }}</b>\nSaturation: <b>{{ if $values.B }}{{ $values.B.Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>\n<i>This disk is consistently saturated and may be causing system-wide latency.</i>";
-              }
-              ];
-              }
+              testScenarios = {
+                "disk_saturation" = {
+                  metric = "node_disk_io_time_seconds_total";
+                  labels = {
+                    device = "sda";
+                  };
+                  value = 1000;
+                };
+              };
+            }
+          ];
+        }
         {
           name = "Resource Pressure";
           folder = "Infrastructure";
@@ -378,6 +421,13 @@ UUID: <code>{{ $labels.uuid }}</code>";
               for = "5m";
               labels.severity = "warning";
               annotations.summary = "🔥 Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nLoad: <b>{{ if $values.B }}{{ $values.B.Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
+              testScenarios = {
+                "high_cpu" = {
+                  metric = "node_cpu_seconds_total";
+                  labels = { mode = "user"; cpu = "0"; };
+                  value = 5000;
+                };
+              };
             }
             {
               uid = "high_ram_usage";
@@ -418,6 +468,13 @@ UUID: <code>{{ $labels.uuid }}</code>";
               for = "5m";
               labels.severity = "warning";
               annotations.summary = "🧠 Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nUsage: <b>{{ if $values.B }}{{ $values.B.Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
+              testScenarios = {
+                "high_ram" = {
+                  metric = "node_memory_MemAvailable_bytes";
+                  labels = {};
+                  value = 0;
+                };
+              };
             }
             {
               uid = "storage_near_capacity";
@@ -458,6 +515,13 @@ UUID: <code>{{ $labels.uuid }}</code>";
               for = "10m";
               labels.severity = "warning";
               annotations.summary = "💾 Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nMountpoint: {{ if $labels.mountpoint }}{{ $labels.mountpoint }}{{ else }}Unknown{{ end }}\nUsage: <b>{{ if $values.B }}{{ $values.B.Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
+              testScenarios = {
+                "storage_full" = {
+                  metric = "node_filesystem_free_bytes";
+                  labels = { mountpoint = "/"; fstype = "ext4"; };
+                  value = 0;
+                };
+              };
             }
           ];
         }
@@ -479,7 +543,6 @@ UUID: <code>{{ $labels.uuid }}</code>";
                   relativeTimeRange = { from = 600; to = 0; };
                   model = {
                     # Trigger for 5 minutes every day at 08:00 UTC.
-                    # We use scalar math with 'bool' and wrap in 'vector()' to make it fire as an alert.
                     expr = "vector(1) * ((time() % 86400 >= bool 28800) * (time() % 86400 < bool 29100)) > 0";
                     refId = "A";
                   };
@@ -555,6 +618,13 @@ UUID: <code>{{ $labels.uuid }}</code>";
                 {{ if gt $values.D_red.Value 0.0 }}- SMART Failures: <b>{{ $values.D_red.Value | printf "%.0f" }}</b>{{ end }}
                 {{- end -}}
               '';
+              testScenarios = {
+                "daily_report_trigger" = {
+                   metric = "up";
+                   labels = { job = "nodes"; instance = "offline-node"; };
+                   value = 0;
+                };
+              };
             }
           ];
         }

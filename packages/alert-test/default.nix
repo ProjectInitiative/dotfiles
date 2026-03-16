@@ -9,11 +9,8 @@ python3Packages.buildPythonApplication {
 
   src = ./.;
 
-  format = "other";
-
-  installPhase = ''
-    install -Dm755 alert_test.py $out/bin/alert-test
-  '';
+  pyproject = true;
+  build-system = [ python3Packages.setuptools ];
 
   meta = with lib; {
     description = "Infra-Alert-Tester framework to trigger monitoring alerts";
