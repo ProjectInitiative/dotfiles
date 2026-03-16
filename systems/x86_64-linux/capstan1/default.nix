@@ -159,6 +159,17 @@ lib.recursiveUpdate commonSystemConfig {
   # --- Full System Configuration ---
   disko = lib.recursiveUpdate coreDiskoConfig bcachefsDiskoConfig;
 
+  
+  home-manager = {
+
+    users.kylepzak.${namespace} = {
+      suites = {
+        development.enable = true;
+      };
+    };
+
+  };
+
   ${namespace} =
   {
     suites = {
