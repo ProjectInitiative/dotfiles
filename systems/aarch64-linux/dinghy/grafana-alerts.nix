@@ -317,6 +317,55 @@ let
               };
             }
             {
+              uid = "bcachefs_data_corruption";
+              title = "Bcachefs Data Corruption";
+              condition = "C";
+              noDataState = "OK";
+              execErrState = "Error";
+              data = [
+                {
+                  refId = "A";
+                  datasourceUid = "prometheus_ds";
+                  relativeTimeRange = { from = 600; to = 0; };
+                  model = {
+                    expr = "rate(node_bcachefs_checksum_error_total[5m]) > 0 and on(instance) up{job=\"nodes\"} == 1";
+                    refId = "A";
+                  };
+                }
+                {
+                  refId = "B";
+                  datasourceUid = "__expr__";
+                  model = {
+                    expression = "A";
+                    type = "reduce";
+                    reducer = "last";
+                    refId = "B";
+                  };
+                }
+                {
+                  refId = "C";
+                  datasourceUid = "__expr__";
+                  model = {
+                    expression = "$B > 0";
+                    type = "math";
+                    refId = "C";
+                  };
+                }
+              ];
+              for = "0m";
+              labels.severity = "critical";
+              annotations.summary = "🧬 Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Resolved{{ end }}\nUUID: <code>{{ if $labels.uuid }}{{ $labels.uuid }}{{ else }}N/A{{ end }}</code>\n<i>Checksum errors are increasing. Data corruption has been detected!</i>";
+              testScenarios = {
+                "bcachefs_corruption" = {
+                  metric = "node_bcachefs_checksum_error_total";
+                  labels = {
+                    uuid = "test-fs-uuid";
+                  };
+                  value = 100;
+                };
+              };
+            }
+            {
               uid = "high_disk_io_saturation";
               title = "High Disk IO Saturation";
               condition = "C";
