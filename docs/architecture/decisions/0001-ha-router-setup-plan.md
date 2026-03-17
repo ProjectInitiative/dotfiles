@@ -71,9 +71,9 @@ To ensure efficient, conflict-free parallel development, tasks are divided into 
       - (b) Intentionally crash the Primary Router, verify the Backup assumes the VIP, Spoofed MAC, and restores client connectivity to active ISPs within expected time constraints.
 
 ### Group 7 (Stretch Goal): NPU AI Network Analysis
-**Focus:** Leverage the Rockchip RK3588 NPU for local traffic analysis.
+**Focus:** Leverage the Rockchip RK3588 NPU for local traffic analysis using mainline Linux kernel features.
 **Tasks:**
-1. Package and integrate RKNN toolkit and necessary NPU drivers within the NixOS environment.
+1. Configure NixOS to use the recently upstreamed open-source `rocket` driver and `mesa` for NPU support (avoiding the proprietary RKNN toolkit as we run mainline kernels).
 2. Configure a port mirror or NFLOG target to forward traffic headers to a local analysis service.
 3. Deploy a lightweight, locally run AI model (e.g., anomaly detection or Deep Packet Inspection) utilizing the NPU, feeding identified events into the centralized monitoring stack.
 
