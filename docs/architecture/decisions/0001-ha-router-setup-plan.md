@@ -14,6 +14,7 @@ We need to build a High Availability (HA) NixOS router setup utilizing two rockc
 - Develop an agent to migrate existing `/etc/config/*` settings from OpenWrt to NixOS.
 - Establish an isolated NixOS VM testing framework (`nixosTest`) for the HA and multi-WAN logic.
 - **Stretch:** Leverage onboard NPUs (rk3588) for AI-driven network analysis and anomaly detection.
+- **Stretch:** Implement dynamic Quality of Service (QoS) and Traffic Shaping to prioritize specific hosts or subnets (e.g., a "work" VLAN) and aggressively throttle non-essential traffic (e.g., servers) when failed over to a metered WAN connection (like Starlink).
 
 ## Sub-Agent Groupings and Task Breakdown
 
@@ -77,8 +78,16 @@ To ensure efficient, conflict-free parallel development, tasks are divided into 
 2. Configure a port mirror or NFLOG target to forward traffic headers to a local analysis service.
 3. Deploy a lightweight, locally run AI model (e.g., anomaly detection or Deep Packet Inspection) utilizing the NPU, feeding identified events into the centralized monitoring stack.
 
+### Group 8 (Stretch Goal): Dynamic QoS & Metered WAN Traffic Shaping
+**Focus:** Implement priority balancing and throttling based on the active WAN interface's link properties.
+**Tasks:**
+1. Design a configuration schema mapping specific subnets/MACs to priority tiers (e.g., `Critical`, `Standard`, `Throttled`, `Blocked`).
+2. Create `tc` (Traffic Control) or `nftables` QoS rules to enforce these tiers.
+3. Develop a script or daemon that dynamically updates these QoS rules based on the currently active WAN. When failing over to a metered connection (e.g., Starlink), automatically clamp bandwidth for non-essential subnets (like homelab servers) and prioritize the critical "work" subnet.
+4. Integrate testing for these QoS tiers into the `tests/router-ha/` framework, simulating a metered failover and verifying bandwidth limits between test clients.
+
 ## Proposed File Structure
-- `modules/nixos/hosts/masthead/` -> Core router configurations, VRRP definitions, Multi-WAN logic, role logic.
+- `modules/nixos/hosts/masthead/` -> Core router configurations, VRRP definitions, Multi-WAN logic, QoS logic, role logic.
 - `modules/nixos/services/router-failsafe/` -> Configuration and scripts for auto-rollback.
 - `packages/openwrt-migrator/` -> Python scripts for OpenWrt config translation.
-- `tests/router-ha/` -> NixOS VM Tests for routing, Multi-WAN, and failover verification.
+- `tests/router-ha/` -> NixOS VM Tests for routing, Multi-WAN, QoS, and failover verification.
