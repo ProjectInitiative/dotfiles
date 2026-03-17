@@ -1,11 +1,19 @@
-
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
 let
   cfg = config.projectinitiative.services.s3-sync;
-  namespace = [ "projectinitiative" "services" "s3-sync" ];
+  namespace = [
+    "projectinitiative"
+    "services"
+    "s3-sync"
+  ];
 in
 {
   options.${namespace} = {

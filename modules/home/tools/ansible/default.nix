@@ -22,11 +22,12 @@ in
   config = mkIf cfg.enable {
 
     home = {
-      packages = with pkgs; [
-        ansible
-      ] ++ (
-        if cfg.lint.enable then [ ansible-lint ] else [ ]
-      );
+      packages =
+        with pkgs;
+        [
+          ansible
+        ]
+        ++ (if cfg.lint.enable then [ ansible-lint ] else [ ]);
 
       shellAliases = {
         ap = "ansible-playbook";

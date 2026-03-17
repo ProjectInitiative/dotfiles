@@ -137,7 +137,6 @@ The best practice is to have the recovery system install its own boot entry into
 Add a manual entry to your main system's `configuration.nix`.
 
 1.  **Find the UUID and store paths** for the recovery LV.
-
     - Mount the recovery LV: `sudo mount /dev/your-vg-name/recovery /mnt`
     - Get the UUID: `lsblk -no UUID /dev/your-vg-name/recovery`
     - Get the kernel/initrd paths: `ls -1 /mnt/nix/store | grep 'linux\|initrd'`

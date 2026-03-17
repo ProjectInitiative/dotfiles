@@ -30,8 +30,8 @@ let
 
     zramSwap = {
       enable = true;
-      algorithm = "zstd";   # Best compression ratio for servers
-      memoryPercent = 15;  # Allow zram to use up to half your RAM if needed
+      algorithm = "zstd"; # Best compression ratio for servers
+      memoryPercent = 15; # Allow zram to use up to half your RAM if needed
     };
 
     # swapDevices = [
@@ -146,13 +146,12 @@ lib.recursiveUpdate commonSystemConfig {
         bcachefsMountpoint = lib.mkForce null; # Disable bcachefs mountpoint in core mode
       };
 
-
       services.sync-host = {
         enable = mkForce false;
       };
 
       # Ensure bcachefs services are disabled in core specialization
-      projectinitiative.services.bcachefs-fs-options.settings = mkForce {};
+      projectinitiative.services.bcachefs-fs-options.settings = mkForce { };
       projectinitiative.services.bcachefsScrubAuto.enable = mkForce false;
       projectinitiative.services.bcachefsRereplicateAuto.enable = mkForce false;
     };
@@ -167,7 +166,7 @@ lib.recursiveUpdate commonSystemConfig {
         # Keep the same bcachefs mountpoint as the main configuration
         bcachefsMountpoint = mountpoint;
       };
-      
+
       # Disable RTC wake functionality for debugging
       services.sync-host = {
         disableRTCWake = mkForce true; # This will prevent automatic shutdown

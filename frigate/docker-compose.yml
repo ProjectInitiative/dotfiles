@@ -7,7 +7,7 @@ services:
     shm_size: "128mb" # Increase if you have more than 4-5 high-res cameras
     devices:
       - /dev/rknpu:/dev/rknpu # The RK3588 NPU for object detection
-      - /dev/dri:/dev/dri     # Mali-G610 GPU for hardware video decoding
+      - /dev/dri:/dev/dri # Mali-G610 GPU for hardware video decoding
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ./config.yml:/config/config.yml

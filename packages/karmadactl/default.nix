@@ -1,8 +1,9 @@
-{ lib
-, buildGoModule
-, fetchFromGitHub
-, installShellFiles
-}: 
+{
+  lib,
+  buildGoModule,
+  fetchFromGitHub,
+  installShellFiles,
+}:
 
 buildGoModule rec {
   pname = "karmadactl";
@@ -22,7 +23,8 @@ buildGoModule rec {
   nativeBuildInputs = [ installShellFiles ];
 
   ldflags = [
-    "-s" "-w"
+    "-s"
+    "-w"
     "-X github.com/karmada-io/karmada/pkg/version.gitVersion=v${version}"
     "-X github.com/karmada-io/karmada/pkg/version.gitTreeState=clean"
     "-X github.com/karmada-io/karmada/pkg/version.buildDate=1970-01-01T00:00:00Z"
@@ -32,7 +34,7 @@ buildGoModule rec {
 
   postInstall = ''
     export HOME=$(mktemp -d)
-    
+
     # Generate completion files
     $out/bin/karmadactl completion bash > karmadactl.bash
     $out/bin/karmadactl completion zsh > karmadactl.zsh
@@ -45,12 +47,10 @@ buildGoModule rec {
       --fish karmadactl.fish
   '';
 
-  meta = with lib;
-    {
-      description = "CLI tool for Karmada";
-      homepage = "https://github.com/karmada-io/karmada";
-      license = licenses.asl20;
-      maintainers = with maintainers;
-        [ ];
-    };
+  meta = with lib; {
+    description = "CLI tool for Karmada";
+    homepage = "https://github.com/karmada-io/karmada";
+    license = licenses.asl20;
+    maintainers = with maintainers; [ ];
+  };
 }

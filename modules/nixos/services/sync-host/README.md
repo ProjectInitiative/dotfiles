@@ -6,7 +6,7 @@ The sync-host module provides automated backup functionality for the cargohold h
 
 - Automated synchronization of rclone remotes (S3 buckets, etc.)
 - Power management with RTC wake functionality
-- bcachefs snapshot integration 
+- bcachefs snapshot integration
 - Service dependency checking before shutdown
 - Concurrent sync operations for efficiency
 
@@ -43,80 +43,96 @@ services.sync-host = {
 ### Options
 
 #### `enable`
+
 - **Type**: `bool`
 - **Default**: `false`
 - **Description**: Enable the sync-host service
 
 #### `rcloneRemotes`
+
 - **Type**: `list of strings`
 - **Default**: `[]`
 - **Description**: List of rclone remotes to sync from (format: `"remote-name:remote-path"`)
 
 #### `rcloneConfig`
+
 - **Type**: `string`
 - **Default**: `""`
 - **Description**: Rclone configuration content
 
 #### `powerOff`
+
 - **Type**: `bool`
 - **Default**: `true`
 - **Description**: Whether to power off the machine after sync completion
 
 #### `disableRTCWake`
+
 - **Type**: `bool`
 - **Default**: `false`
 - **Description**: Disable RTC wake functionality for manual debugging
 
 #### `wakeUpTime`
+
 - **Type**: `string`
 - **Default**: `"*-*-* 02:00:00"`
 - **Description**: Time to wake up the machine in systemd calendar format (only used if powerOff is false)
 
 #### `wakeUpDelay`
+
 - **Type**: `string`
 - **Default**: `"24h"`
 - **Description**: Delay before next wake-up (e.g., '24h', '7d')
 
 #### `localTargetPath`
+
 - **Type**: `string`
 - **Default**: `"/mnt/storage/backups"`
 - **Description**: Local target path for sync operations
 
 #### `maxWorkers`
+
 - **Type**: `int`
 - **Default**: `4`
 - **Description**: Maximum number of concurrent sync operations
 
 #### `bcachefsMountpoint`
+
 - **Type**: `string`
 - **Default**: `"/mnt/storage"`
 - **Description**: Mount point for bcachefs filesystem where snapshots will be taken
 
 #### `preSyncScripts`
+
 - **Type**: `list of strings`
 - **Default**: `[]`
 - **Description**: List of scripts to run before the sync
 
 #### `postSyncScripts`
+
 - **Type**: `list of strings`
 - **Default**: `[]`
 - **Description**: List of scripts to run after the sync
 
 #### `backupTasks`
+
 - **Type**: `list of attrs`
 - **Default**: `[]`
 - **Description**: List of additional backup tasks to run
 
 #### `telegram.enable`
+
 - **Type**: `bool`
 - **Default**: `false`
 - **Description**: Enable Telegram notifications for sync-host.
 
 #### `telegram.tokenPath`
+
 - **Type**: `path`
 - **Description**: Path to the file containing the Telegram bot token.
 
 #### `telegram.chatIdPath`
+
 - **Type**: `path`
 - **Description**: Path to the file containing the Telegram chat ID.
 
@@ -148,6 +164,7 @@ A specialization called `manual-debug` has been added to the cargohold hardware 
 - This prevents automatic shutdown, allowing manual access for debugging
 
 To boot into the manual-debug specialization:
+
 1. At boot time, select the "manual-debug" option from the boot menu
 2. The system will run the sync operations without powering off
 3. You'll have full access to the system for debugging and maintenance

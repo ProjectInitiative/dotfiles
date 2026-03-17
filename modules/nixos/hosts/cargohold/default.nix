@@ -194,8 +194,8 @@ in
     {
       sops = {
         secrets = {
-          readonly_backup_access_key_id = {};
-          readonly_backup_secret_access_key = {};
+          readonly_backup_access_key_id = { };
+          readonly_backup_secret_access_key = { };
         };
         templates."rclone.conf" = {
           mode = "0400";
@@ -388,7 +388,7 @@ in
         # Add other services like Samba, NFS configuration here
         # services.samba = { enable = true; /* ... */ };
       };
-      
+
       # Enable the sync-host service for automated backup tasks
       services.sync-host = {
         enable = true;

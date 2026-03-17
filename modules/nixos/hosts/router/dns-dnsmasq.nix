@@ -40,7 +40,8 @@ in
               "${cfg.lanInterface}.${toString cfg.managementVlan.id}";
           interfaces = [
             mgmtInterfaceName
-          ] ++ (map (vlan: "${cfg.lanInterface}.${toString vlan.id}") cfg.vlans);
+          ]
+          ++ (map (vlan: "${cfg.lanInterface}.${toString vlan.id}") cfg.vlans);
           # Listen on physical IPs *and* virtual IPs
           listenAddresses =
             let

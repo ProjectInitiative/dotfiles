@@ -38,18 +38,20 @@ in
   sdImage = {
     compressImage = false;
     imageBaseName = "dinghy-rpi4-pure";
-    
-    # We still provide a basic config.txt to boot U-Boot, 
+
+    # We still provide a basic config.txt to boot U-Boot,
     # but we assume the detailed overlays might be ignored by the EEPROM.
-    populateFirmwareCommands = let
-      configTxt = pkgs.writeText "config.txt" ''
-        [pi4]
-        kernel=u-boot-rpi4.bin
-        enable_uart=1
-        arm_64bit=1
-        avoid_warnings=1
-      '';
-      in lib.mkForce ''
+    populateFirmwareCommands =
+      let
+        configTxt = pkgs.writeText "config.txt" ''
+          [pi4]
+          kernel=u-boot-rpi4.bin
+          enable_uart=1
+          arm_64bit=1
+          avoid_warnings=1
+        '';
+      in
+      lib.mkForce ''
         cp ${pkgs.raspberrypi-armstubs}/armstub8-gic.bin firmware/
         cp ${pkgs.raspberrypifw}/share/raspberrypi/boot/bcm2711-rpi-4-b.dtb firmware/
         cp ${pkgs.raspberrypifw}/share/raspberrypi/boot/bootcode.bin firmware/
@@ -71,9 +73,9 @@ in
   hardware.deviceTree = {
     enable = true;
     # name = "broadcom/bcm2711-rpi-4-b.dtb";
-    
+
     # --- FAN CONTROL (NixOS-Managed Overlay) ---
-    # Since config.txt is unreliable, we compile a custom overlay to enable 
+    # Since config.txt is unreliable, we compile a custom overlay to enable
     # the PWM fan on Pin 13 (PWM1) and apply it at OS boot time.
     overlays = [
       {
@@ -120,9 +122,13 @@ in
   # --- KERNEL PARAMETERS & BLACKLISTS ---
   # This is where we kill the interfering hardware without needing config.txt
   hardware.bluetooth.enable = false;
-  boot.blacklistedKernelModules = [ 
-    "btusb" "btrtl" "btbcm" "btintel" "bluetooth" # Kill BT
-    "snd_bcm2835"                                 # Kill Audio (Free up PWM pins)
+  boot.blacklistedKernelModules = [
+    "btusb"
+    "btrtl"
+    "btbcm"
+    "btintel"
+    "bluetooth" # Kill BT
+    "snd_bcm2835" # Kill Audio (Free up PWM pins)
     "uas"
   ];
 
@@ -144,38 +150,45 @@ in
     "pci=pcie_bus_perf"
     "usbcore.autosuspend=-1"
     "scsi_mod.scan=async" # Staggered spin-up for the 4-drive pool
-    
+
     "console=ttyS0,115200n8"
     "console=tty1"
   ];
 
   # --- UDEV RULES (Storage Stability) ---
-  services.udev.extraRules = let
-    partprobe = "${pkgs.parted}/bin/partprobe";
-  in ''
-    # 1. Global: Set scheduler based on rotational status
-    ACTION=="add|change", SUBSYSTEM=="block", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="mq-deadline"
-    ACTION=="add|change", SUBSYSTEM=="block", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="none"
+  services.udev.extraRules =
+    let
+      partprobe = "${pkgs.parted}/bin/partprobe";
+    in
+    ''
+      # 1. Global: Set scheduler based on rotational status
+      ACTION=="add|change", SUBSYSTEM=="block", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="mq-deadline"
+      ACTION=="add|change", SUBSYSTEM=="block", ATTR{queue/rotational}=="0", ATTR{queue/scheduler}="none"
 
-    # 2. JMicron Bridge Fix (Radxa HAT)
-    # Throttling and quirks to prevent protocol errors under high load
-    ACTION=="add|change", SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="152d", ENV{ID_MODEL_ID}=="0561", \
-      ATTR{device/max_sectors}="128", \
-      ATTR{queue/nr_requests}="32"
+      # 2. JMicron Bridge Fix (Radxa HAT)
+      # Throttling and quirks to prevent protocol errors under high load
+      ACTION=="add|change", SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="152d", ENV{ID_MODEL_ID}=="0561", \
+        ATTR{device/max_sectors}="128", \
+        ATTR{queue/nr_requests}="32"
 
-    # 3. Solve Duplicate Serials (Radxa HAT / JMicron)
-    # The JMS561 bridge clones serials. We append the kernel device name (%k)
-    # to the serial to ensure unique identifiers for lsblk, bcachefs, and udev symlinks.
-    # We match on the JMicron vendor ID to catch all drives on the HAT.
-    SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="152d", \
-      ENV{ID_SERIAL}="$env{ID_SERIAL}_%k", \
-      ENV{ID_SERIAL_SHORT}="$env{ID_SERIAL_SHORT}_%k"
+      # 3. Solve Duplicate Serials (Radxa HAT / JMicron)
+      # The JMS561 bridge clones serials. We append the kernel device name (%k)
+      # to the serial to ensure unique identifiers for lsblk, bcachefs, and udev symlinks.
+      # We match on the JMicron vendor ID to catch all drives on the HAT.
+      SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="152d", \
+        ENV{ID_SERIAL}="$env{ID_SERIAL}_%k", \
+        ENV{ID_SERIAL_SHORT}="$env{ID_SERIAL_SHORT}_%k"
 
-    # 4. Trigger rescan for JMicron devices to ensure partition discovery
-    ACTION=="add", SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="152d", RUN+="${partprobe} /dev/%k"
-  '';
+      # 4. Trigger rescan for JMicron devices to ensure partition discovery
+      ACTION=="add", SUBSYSTEM=="block", ENV{ID_VENDOR_ID}=="152d", RUN+="${partprobe} /dev/%k"
+    '';
 
-  boot.supportedFilesystems = lib.mkForce [ "ext4" "vfat" "bcachefs" "nfs" ];
+  boot.supportedFilesystems = lib.mkForce [
+    "ext4"
+    "vfat"
+    "bcachefs"
+    "nfs"
+  ];
   services.rpcbind.enable = true;
 
   boot.kernelModules = [ "bcachefs" ];
@@ -205,8 +218,7 @@ in
   #   };
   # };
 
-  
-  # doesn't support -E 
+  # doesn't support -E
   security.sudo-rs.enable = lib.mkForce false;
 
   # Explicitly call development module
@@ -457,13 +469,25 @@ in
   };
 
   systemd.services.nfs-mountd = {
-    after = lib.mkForce [ "network.target" "storage-mount.service" ];
-    requires = lib.mkForce [ "network.target" "storage-mount.service" ];
+    after = lib.mkForce [
+      "network.target"
+      "storage-mount.service"
+    ];
+    requires = lib.mkForce [
+      "network.target"
+      "storage-mount.service"
+    ];
   };
 
   systemd.services.rpc-statd = {
-    after = lib.mkForce [ "network.target" "storage-mount.service" ];
-    requires = lib.mkForce [ "network.target" "storage-mount.service" ];
+    after = lib.mkForce [
+      "network.target"
+      "storage-mount.service"
+    ];
+    requires = lib.mkForce [
+      "network.target"
+      "storage-mount.service"
+    ];
   };
 
   # boot.loader = {
@@ -537,13 +561,13 @@ in
         echo "Mounting bcachefs filesystem to ${storageMountPoint}..."
         ${pkgs.coreutils}/bin/mkdir -p ${storageMountPoint}
         ${pkgs.util-linux}/bin/mount -t bcachefs UUID=27cac550-3836-765c-d107-51d27ab4a6e1 ${storageMountPoint}
-        
+
         echo "Setting up frigate media and export bind-mounts..."
         ${pkgs.coreutils}/bin/mkdir -p ${storageMountPoint}/frigate
         ${pkgs.coreutils}/bin/mkdir -p /export/frigate
         # Bind mount the frigate directory into the export root
         ${pkgs.util-linux}/bin/mount --bind ${storageMountPoint}/frigate /export/frigate
-        
+
         echo "Storage mounted."
       '';
 

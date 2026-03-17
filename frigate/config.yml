@@ -26,7 +26,7 @@ cameras:
             - detect
     detect:
       enabled: True
-      width: 640  # Match your sub-stream resolution
+      width: 640 # Match your sub-stream resolution
       height: 480
     record:
       enabled: True

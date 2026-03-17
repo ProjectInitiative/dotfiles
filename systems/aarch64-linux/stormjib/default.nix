@@ -109,8 +109,6 @@
           enable = true;
         };
 
-
-
         # Also enable exporters on this monitoring server itself.
         # The server will automatically pick these up under the 'self' job.
         exporters = {

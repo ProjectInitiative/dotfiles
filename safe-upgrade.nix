@@ -11,14 +11,19 @@
   # verifying its success, and rolling back if it fails.
   systemd.services.custom-safe-upgrade = {
     description = "Custom Safe NixOS Upgrade with Health Check";
-    
+
     # This service runs as a one-off task.
     serviceConfig = {
       Type = "oneshot";
     };
 
     # The full path to necessary command-line tools.
-    path = with pkgs; [ coreutils iputils systemd nix ];
+    path = with pkgs; [
+      coreutils
+      iputils
+      systemd
+      nix
+    ];
 
     # This is the main script that orchestrates the upgrade process.
     script = ''
@@ -95,11 +100,10 @@
       # When to run the upgrade. "daily" runs at midnight.
       # "*-*-* 04:00:00" would run at 4 AM every day.
       OnCalendar = "daily";
-      
+
       # If the machine was off when the timer was supposed to run,
       # run it as soon as the machine boots up.
       Persistent = true;
     };
   };
 }
-

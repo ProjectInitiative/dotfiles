@@ -90,11 +90,11 @@ in
 
     zramSwap = {
       enable = true;
-      algorithm = "zstd";   # Best compression ratio for servers
-      memoryPercent = 25;  # Allow zram to use up to half your RAM if needed
+      algorithm = "zstd"; # Best compression ratio for servers
+      memoryPercent = 25; # Allow zram to use up to half your RAM if needed
     };
 
-    # Increase swappiness to encourage compressing idle/useless pages 
+    # Increase swappiness to encourage compressing idle/useless pages
     # into zram earlier, keeping your actual RAM fresh for active workloads.
     boot.kernel.sysctl."vm.swappiness" = 180;
 
@@ -110,38 +110,37 @@ in
         #   iptables -A FORWARD -j LOG --log-prefix "FIREWALL_DROP_FORWARD: "
         #   iptables -A OUTPUT -j LOG --log-prefix "FIREWALL_DROP_OUTPUT: "
         # '';
-        allowedTCPPorts =
-          [
-            53 # k8s DNS access
-            80 # http
-            443 # https
-            8080 # reserved http
-            6443 # k3s: required so that pods can reach the API server (running on port 6443 by default)
-            2379 # k3s, etcd clients: required if using a "High Availability Embedded etcd" configuration
-            2380 # k3s, etcd peers: required if using a "High Availability Embedded etcd" configuration
-            9153 # backup k8s dns
+        allowedTCPPorts = [
+          53 # k8s DNS access
+          80 # http
+          443 # https
+          8080 # reserved http
+          6443 # k3s: required so that pods can reach the API server (running on port 6443 by default)
+          2379 # k3s, etcd clients: required if using a "High Availability Embedded etcd" configuration
+          2380 # k3s, etcd peers: required if using a "High Availability Embedded etcd" configuration
+          9153 # backup k8s dns
 
-            # 10250 # k3s metrics port
-          ]
-          ++ lib.optionals (cfg.networkType == "cilium") [
-            4240 # cluster health checks (cilium-health)
-            4244 # Hubble server
-            4245 # Hubble Relay
-            4250 # Mutual Authentication port
-            4251 # Spire Agent health check port (listening on 127.0.0.1 or ::1)
-            6060 # cilium-agent pprof server (listening on 127.0.0.1)
-            6061 # cilium-operator pprof server (listening on 127.0.0.1)
-            6062 # Hubble Relay pprof server (listening on 127.0.0.1)
-            9878 # cilium-envoy health listener (listening on 127.0.0.1)
-            9879 # cilium-agent health status API (listening on 127.0.0.1 and/or ::1)
-            9890 # cilium-agent gops server (listening on 127.0.0.1)
-            9891 # operator gops server (listening on 127.0.0.1)
-            9893 # Hubble Relay gops server (listening on 127.0.0.1)
-            9901 # cilium-envoy Admin API (listening on 127.0.0.1)
-            9962 # cilium-agent Prometheus metrics
-            9963 # cilium-operator Prometheus metrics
-            9964 # cilium envoy
-          ];
+          # 10250 # k3s metrics port
+        ]
+        ++ lib.optionals (cfg.networkType == "cilium") [
+          4240 # cluster health checks (cilium-health)
+          4244 # Hubble server
+          4245 # Hubble Relay
+          4250 # Mutual Authentication port
+          4251 # Spire Agent health check port (listening on 127.0.0.1 or ::1)
+          6060 # cilium-agent pprof server (listening on 127.0.0.1)
+          6061 # cilium-operator pprof server (listening on 127.0.0.1)
+          6062 # Hubble Relay pprof server (listening on 127.0.0.1)
+          9878 # cilium-envoy health listener (listening on 127.0.0.1)
+          9879 # cilium-agent health status API (listening on 127.0.0.1 and/or ::1)
+          9890 # cilium-agent gops server (listening on 127.0.0.1)
+          9891 # operator gops server (listening on 127.0.0.1)
+          9893 # Hubble Relay gops server (listening on 127.0.0.1)
+          9901 # cilium-envoy Admin API (listening on 127.0.0.1)
+          9962 # cilium-agent Prometheus metrics
+          9963 # cilium-operator Prometheus metrics
+          9964 # cilium envoy
+        ];
         allowedTCPPortRanges = [
           {
             from = 10250;
@@ -152,14 +151,13 @@ in
             to = 32767;
           } # NodePort range
         ];
-        allowedUDPPorts =
-          [
-            53 # k8s DNS access
-            8472 # k3s VXLAN overlay: required if using multi-node for inter-node networking
-          ]
-          ++ lib.optionals (cfg.networkType == "cilium") [
-            51871 # WireGuard encryption tunnel endpoint
-          ];
+        allowedUDPPorts = [
+          53 # k8s DNS access
+          8472 # k3s VXLAN overlay: required if using multi-node for inter-node networking
+        ]
+        ++ lib.optionals (cfg.networkType == "cilium") [
+          51871 # WireGuard encryption tunnel endpoint
+        ];
 
       };
     };
@@ -250,19 +248,18 @@ in
       };
       script =
         let
-          kubevipFlags =
-            [
-              "--interface ${cfg.kubeVip.interface}"
-              "--address ${cfg.kubeVip.vip}"
-              "--inCluster"
-              "--taint"
-            ]
-            ++ optionals cfg.kubeVip.controlPlane [ "--controlplane" ]
-            ++ optionals cfg.kubeVip.services [ "--services" ]
-            ++ optionals (cfg.kubeVip.mode == "arp") [ "--arp" ]
-            ++ optionals (cfg.kubeVip.mode == "bgp") [ "--bgp" ]
-            ++ optionals (cfg.kubeVip.mode == "layer2") [ "--layer2" ]
-            ++ optionals cfg.kubeVip.leaderElection [ "--leaderElection" ];
+          kubevipFlags = [
+            "--interface ${cfg.kubeVip.interface}"
+            "--address ${cfg.kubeVip.vip}"
+            "--inCluster"
+            "--taint"
+          ]
+          ++ optionals cfg.kubeVip.controlPlane [ "--controlplane" ]
+          ++ optionals cfg.kubeVip.services [ "--services" ]
+          ++ optionals (cfg.kubeVip.mode == "arp") [ "--arp" ]
+          ++ optionals (cfg.kubeVip.mode == "bgp") [ "--bgp" ]
+          ++ optionals (cfg.kubeVip.mode == "layer2") [ "--layer2" ]
+          ++ optionals cfg.kubeVip.leaderElection [ "--leaderElection" ];
 
           # Join the flags with spaces for the manifest command
           kubevipFlagsStr = concatStringsSep " " kubevipFlags;
@@ -354,17 +351,15 @@ in
         # use custom version, not provided in nixpkgs
         k3s = {
 
-
           #####################
           #
-          # TODO: 
+          # TODO:
           # REMOVE ONCE STABLE CATCHES UP
           #
-          # 
+          #
           # ##################
           package = inputs.nixpkgs-catch-up.legacyPackages.${pkgs.stdenv.hostPlatform.system}.k3s;
 
-          
           enable = true;
           role = cfg.role;
           tokenFile = cfg.tokenFile;

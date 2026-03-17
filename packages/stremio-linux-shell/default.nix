@@ -1,9 +1,11 @@
-{ lib,
+{
+  lib,
   stdenv,
   rustPlatform,
   pkgs ? stdenv.pkgs,
   ...
-}: rustPlatform.buildRustPackage {
+}:
+rustPlatform.buildRustPackage {
   pname = "stremio-linux-shell";
   version = "1.0.0-beta.12";
 
@@ -16,24 +18,22 @@
 
   cargoHash = "sha256-f4TpTqejR55KPSGUi47UGtHgQESUC4tnwCruy7ZfdrY=";
 
-  buildInputs = with pkgs;
-    [
-      openssl
-      gtk4
-      libadwaita
-      webkitgtk_6_0
-      libepoxy
-      mpv
-      libappindicator
-      nodejs
-    ];
+  buildInputs = with pkgs; [
+    openssl
+    gtk4
+    libadwaita
+    webkitgtk_6_0
+    libepoxy
+    mpv
+    libappindicator
+    nodejs
+  ];
 
-  nativeBuildInputs = with pkgs;
-    [
-      makeWrapper
-      pkg-config
-      gettext
-    ];
+  nativeBuildInputs = with pkgs; [
+    makeWrapper
+    pkg-config
+    gettext
+  ];
 
   postInstall = ''
     mkdir -p $out/share/applications

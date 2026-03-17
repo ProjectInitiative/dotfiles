@@ -118,8 +118,9 @@ in
                   --send-to-telegram \
                   --telegram-token-path ${config.sops.secrets.health_reporter_bot_api_token.path} \
                   --telegram-chat-id-path ${config.sops.secrets.telegram_chat_id.path} ${
-                    lib.optionalString (cfg.checkReadOnlyMounts != []) ''\
-                  --check-read-only-mounts ${lib.concatStringsSep "," cfg.checkReadOnlyMounts}''
+                    lib.optionalString (cfg.checkReadOnlyMounts != [ ]) ''
+                      \
+                                        --check-read-only-mounts ${lib.concatStringsSep "," cfg.checkReadOnlyMounts}''
                   }
         '';
       };
@@ -129,14 +130,18 @@ in
     systemd.timers.server-health-monitor = {
       description = "Timer for Server Health Monitor";
       wantedBy = [ "timers.target" ];
-      timerConfig = if cfg.runAtBoot then {
-        OnBootSec = "5min";
-        Unit = "server-health-monitor.service";
-      } else {
-        OnCalendar = "*-*-* ${cfg.reportTime}:00";
-        Unit = "server-health-monitor.service";
-        Persistent = true;
-      };
+      timerConfig =
+        if cfg.runAtBoot then
+          {
+            OnBootSec = "5min";
+            Unit = "server-health-monitor.service";
+          }
+        else
+          {
+            OnCalendar = "*-*-* ${cfg.reportTime}:00";
+            Unit = "server-health-monitor.service";
+            Persistent = true;
+          };
     };
 
   };

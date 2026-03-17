@@ -88,7 +88,11 @@ let
             type = "filesystem";
             format = "ext4";
             mountpoint = "/";
-            mountOptions = [ "noatime" "nodiratime" "discard" ];
+            mountOptions = [
+              "noatime"
+              "nodiratime"
+              "discard"
+            ];
           };
         };
       };
@@ -159,7 +163,6 @@ lib.recursiveUpdate commonSystemConfig {
   # --- Full System Configuration ---
   disko = lib.recursiveUpdate coreDiskoConfig bcachefsDiskoConfig;
 
-  
   home-manager = {
 
     users.kylepzak.${namespace} = {
@@ -170,12 +173,11 @@ lib.recursiveUpdate commonSystemConfig {
 
   };
 
-  ${namespace} =
-  {
+  ${namespace} = {
     suites = {
-        loft = {
-          enableServer = true;
-        };
+      loft = {
+        enableServer = true;
+      };
     };
 
     hosts.capstan = {

@@ -1,4 +1,6 @@
-{ pkgs ? import <nixpkgs> { } }:
+{
+  pkgs ? import <nixpkgs> { },
+}:
 
 let
   # The user-provided fetchFromGitHub expression for the rknpu2 SDK
@@ -68,4 +70,3 @@ pkgs.stdenv.mkDerivation rec {
     maintainers = [ maintainers.projectinitiative ]; # Feel free to change this
   };
 }
-

@@ -72,39 +72,54 @@ let
       '';
 
   # trying to filter out config options as we tend to move faster than nixpkgs
-  validSymbols = pkgs.runCommand "valid-kconfig-symbols"
-    { src = kernelSrc; nativeBuildInputs = [ pkgs.gnugrep pkgs.findutils pkgs.coreutils ]; }
-    ''
-      cd $src
-      grep -hPo '^\s*config\s+\K[A-Z0-9_]+' $(find . -name Kconfig) | sort -u > $out
-    '';
+  validSymbols =
+    pkgs.runCommand "valid-kconfig-symbols"
+      {
+        src = kernelSrc;
+        nativeBuildInputs = [
+          pkgs.gnugrep
+          pkgs.findutils
+          pkgs.coreutils
+        ];
+      }
+      ''
+        cd $src
+        grep -hPo '^\s*config\s+\K[A-Z0-9_]+' $(find . -name Kconfig) | sort -u > $out
+      '';
 
   linux_bcachefs =
     { buildLinux, ... }@args:
-    buildLinux (args // {
-      version = builtins.readFile (versionInfo + "/version");
-      modDirVersion = builtins.readFile (versionInfo + "/modDirVersion");
+    buildLinux (
+      args
+      // {
+        version = builtins.readFile (versionInfo + "/version");
+        modDirVersion = builtins.readFile (versionInfo + "/modDirVersion");
 
-      src = kernelSrc;
-      hardeningEnable = [ "fortify" ];
+        src = kernelSrc;
+        hardeningEnable = [ "fortify" ];
 
-      ignoreConfigErrors = true; # still allow forward progress
+        ignoreConfigErrors = true; # still allow forward progress
 
-      structuredExtraConfig =
-        let
-          allValid = builtins.readFile validSymbols;
-          hasSymbol = name: builtins.match (".*" + name + ".*") allValid != null;
-          onlyIfValid = attrs: lib.filterAttrs (n: _: hasSymbol n) attrs;
-        in
-          onlyIfValid (with lib.kernel; {
-            BCACHEFS_FS = yes;
-            BCACHEFS_QUOTA = yes;
-            BCACHEFS_POSIX_ACL = yes;
-          } // lib.optionalAttrs cfg.debug {
-            BCACHEFS_DEBUG = yes;
-            BCACHEFS_TESTS = yes;
-          });
-  });
+        structuredExtraConfig =
+          let
+            allValid = builtins.readFile validSymbols;
+            hasSymbol = name: builtins.match (".*" + name + ".*") allValid != null;
+            onlyIfValid = attrs: lib.filterAttrs (n: _: hasSymbol n) attrs;
+          in
+          onlyIfValid (
+            with lib.kernel;
+            {
+              BCACHEFS_FS = yes;
+              BCACHEFS_QUOTA = yes;
+              BCACHEFS_POSIX_ACL = yes;
+            }
+            // lib.optionalAttrs cfg.debug {
+              BCACHEFS_DEBUG = yes;
+              BCACHEFS_TESTS = yes;
+            }
+          );
+      }
+    );
 
   customKernel = pkgs.callPackage linux_bcachefs {
     # If the rustfmt warning persists and you want to try addressing it:

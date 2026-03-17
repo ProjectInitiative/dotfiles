@@ -250,7 +250,8 @@ in
           http_listen_address = cfg.loki.listenAddress;
           http_listen_port = cfg.loki.port;
         };
-      } // cfg.loki.config;
+      }
+      // cfg.loki.config;
     };
 
     services.alloy = mkIf cfg.alloy.enable {
@@ -288,15 +289,23 @@ in
             target_label = "job"
             replacement = "nvme-debug"
           }
-          ${concatStringsSep "\n" (map (rule: ''
-            rule {
-              ${optionalString (hasAttr "source_labels" rule) ("source_labels = " + builtins.toJSON rule.source_labels)}
-              ${optionalString (hasAttr "target_label" rule) ("target_label = " + builtins.toJSON rule.target_label)}
-              ${optionalString (hasAttr "regex" rule) ("regex = " + builtins.toJSON rule.regex)}
-              ${optionalString (hasAttr "action" rule) ("action = " + builtins.toJSON rule.action)}
-              ${optionalString (hasAttr "replacement" rule) ("replacement = " + builtins.toJSON rule.replacement)}
-            }
-          '') cfg.alloy.journalRelabelConfig)}
+          ${concatStringsSep "\n" (
+            map (rule: ''
+              rule {
+                ${optionalString (hasAttr "source_labels" rule) (
+                  "source_labels = " + builtins.toJSON rule.source_labels
+                )}
+                ${optionalString (hasAttr "target_label" rule) (
+                  "target_label = " + builtins.toJSON rule.target_label
+                )}
+                ${optionalString (hasAttr "regex" rule) ("regex = " + builtins.toJSON rule.regex)}
+                ${optionalString (hasAttr "action" rule) ("action = " + builtins.toJSON rule.action)}
+                ${optionalString (hasAttr "replacement" rule) (
+                  "replacement = " + builtins.toJSON rule.replacement
+                )}
+              }
+            '') cfg.alloy.journalRelabelConfig
+          )}
         }
 
         ${cfg.alloy.extraConfig}
@@ -375,7 +384,7 @@ in
     };
 
     environment.systemPackages = mkIf cfg.exporters.node.enable [
-      (pkgs.callPackage ../../../../packages/alert-test {})
+      (pkgs.callPackage ../../../../packages/alert-test { })
     ];
 
     networking.firewall.allowedTCPPorts = mkIf cfg.openFirewall (

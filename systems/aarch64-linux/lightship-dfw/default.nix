@@ -36,9 +36,9 @@ in
     "/mnt/nvme/${nvme}" = {
       device = "/dev/disk/by-id/${nvme}";
       fsType = "ext4";
-      options = [ 
+      options = [
         "rw"
-        "noatime" 
+        "noatime"
         "nodiratime"
         "nofail"
       ];
@@ -48,7 +48,7 @@ in
     "/mnt/local-provisioner" = {
       device = "/mnt/nvme/${nvme}";
       fsType = "none";
-      options = [ 
+      options = [
         "bind"
         "nofail"
       ];

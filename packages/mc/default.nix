@@ -40,24 +40,23 @@ stdenv.mkDerivation rec {
     gettext
   ];
 
-  buildInputs =
-    [
-      glib
-      gpm
-      file
-      e2fsprogs
-      perl
-      zip
-      unzip
-      slang
-      libssh2
-      openssl
-      aspell
-    ]
-    ++ lib.optionals (xorg != null) [
-      xorg.libX11
-      xorg.libICE
-    ];
+  buildInputs = [
+    glib
+    gpm
+    file
+    e2fsprogs
+    perl
+    zip
+    unzip
+    slang
+    libssh2
+    openssl
+    aspell
+  ]
+  ++ lib.optionals (xorg != null) [
+    xorg.libX11
+    xorg.libICE
+  ];
 
   enableParallelBuilding = true;
 
@@ -66,7 +65,8 @@ stdenv.mkDerivation rec {
     "--enable-aspell"
     "--enable-charset"
     "--enable-vfs-sftp"
-  ] ++ lib.optional (xorg != null) "--with-x";
+  ]
+  ++ lib.optional (xorg != null) "--with-x";
 
   preConfigure = ''
     ./autogen.sh

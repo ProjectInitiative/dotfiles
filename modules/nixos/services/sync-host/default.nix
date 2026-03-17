@@ -1,4 +1,10 @@
-{ config, lib, pkgs, namespace, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  namespace,
+  ...
+}:
 
 with lib;
 
@@ -14,7 +20,7 @@ in
 
     rcloneRemotes = mkOption {
       type = types.listOf types.str;
-      default = [];
+      default = [ ];
       description = "List of rclone remotes to sync.";
     };
 
@@ -23,7 +29,7 @@ in
       default = "";
       description = "Path to rclone configuration file. Use this for SOPS secrets instead of embedding in nix store.";
     };
-   
+
     disableRTCWake = mkOption {
       type = types.bool;
       default = false;
@@ -35,7 +41,7 @@ in
       default = "*-*-* 02:00:00";
       description = "Time to wake up the machine in the format supported by systemd.time(7).";
     };
-    
+
     wakeUpDelay = mkOption {
       type = types.str;
       default = "24h"; # Default to 24 hours
@@ -74,7 +80,7 @@ in
 
     backupTasks = mkOption {
       type = types.listOf types.attrs;
-      default = [];
+      default = [ ];
       description = "List of additional backup tasks to run";
     };
 
@@ -93,7 +99,6 @@ in
 
   config = mkIf cfg.enable {
 
-    
     systemd.services."sync-host" = {
       description = "Sync rclone remotes and schedule next wake";
       requires = [ "network-online.target" ];
@@ -110,32 +115,43 @@ in
             ${optionalString cfg.debug "--debug"} \
             ${optionalString cfg.dryRun "--dry-run"} \
             ${optionalString cfg.telegram.enable "--send-to-telegram"} \
-            ${optionalString (cfg.telegram.tokenPath != null) ''--telegram-token-path "${cfg.telegram.tokenPath}"''} \
-            ${optionalString (cfg.telegram.chatIdPath != null) ''--telegram-chat-id-path "${cfg.telegram.chatIdPath}"''} \
-            ${optionalString (cfg.rcloneRemotes != []) "--remotes ${concatMapStrings (r: "'${r}' ") cfg.rcloneRemotes}"}
+            ${
+              optionalString (
+                cfg.telegram.tokenPath != null
+              ) ''--telegram-token-path "${cfg.telegram.tokenPath}"''
+            } \
+            ${
+              optionalString (
+                cfg.telegram.chatIdPath != null
+              ) ''--telegram-chat-id-path "${cfg.telegram.chatIdPath}"''
+            } \
+            ${optionalString (cfg.rcloneRemotes != [ ])
+              "--remotes ${concatMapStrings (r: "'${r}' ") cfg.rcloneRemotes}"
+            }
       '';
 
-        serviceConfig = {
-            Type = "simple";           # 👈 Run in background (doesn't block boot)
-            User = "root";
-            Restart = "on-failure";    # 🔁 Retry if the script fails
-            RestartSec = "60s";        # Wait 60 seconds before retry
-            StartLimitIntervalSec = 600; # 10-minute failure window
-            StartLimitBurst = 3;       # Max 3 retries in that window
-            StandardOutput = "journal";
-            StandardError = "journal";
-        };
+      serviceConfig = {
+        Type = "simple"; # 👈 Run in background (doesn't block boot)
+        User = "root";
+        Restart = "on-failure"; # 🔁 Retry if the script fails
+        RestartSec = "60s"; # Wait 60 seconds before retry
+        StartLimitIntervalSec = 600; # 10-minute failure window
+        StartLimitBurst = 3; # Max 3 retries in that window
+        StandardOutput = "journal";
+        StandardError = "journal";
+      };
 
       # Run once automatically after boot (non-blocking)
       wantedBy = [ "multi-user.target" ];
     };
 
     # Timer to trigger the sync service periodically (when not using RTC wake)
-    systemd.timers."sync-host" = mkIf (cfg.disableRTCWake) {  # Only create timer if not powering off
+    systemd.timers."sync-host" = mkIf (cfg.disableRTCWake) {
+      # Only create timer if not powering off
       description = "Timer for sync-host service";
       wantedBy = [ "timers.target" ];
       timerConfig = {
-        OnCalendar = cfg.wakeUpTime;  # Use the configured wake time
+        OnCalendar = cfg.wakeUpTime; # Use the configured wake time
         Persistent = true;
       };
     };
