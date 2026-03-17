@@ -11,6 +11,9 @@
 
   imports = inputs.nixos-on-arm.bootModules.orangepi5ultra;
 
+  nixpkgs.localSystem = "x86_64-linux";
+  nixpkgs.crossSystem = "aarch64-linux";
+
   # hardware.deviceTree.overlays = [
   #   {
   #     name = "rk3588-npu";
@@ -20,7 +23,6 @@
 
   home-manager.backupFileExtension = "backup";
 
-  boot.kernelPackages = lib.mkForce pkgs.linuxPackages_latest;
   boot.supportedFilesystems.zfs = lib.mkForce false;
   boot.supportedFilesystems.nfs = true;
 
@@ -28,6 +30,7 @@
 
   environment.systemPackages = with pkgs; [
     pkgs.${namespace}.rknpu2
+    pkgs.${namespace}.mpp-rockchip
   ];
 
   programs.zsh.enable = true;
@@ -172,6 +175,7 @@
     };
 
     system = {
+      rk3588-kernel.enable = true;
       nix-config.enable = true;
       logging = {
         enable = true;

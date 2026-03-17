@@ -1286,18 +1286,14 @@
         ]
       },
       "locked": {
-        "lastModified": 1767545729,
-        "narHash": "sha256-bWo1f07W3O1DEkiHff/YgYRnbLyAcGXk8+2mrxRTIhg=",
-        "owner": "projectinitiative",
-        "repo": "snowfall-lib",
-        "rev": "08ab6de89473c55ee1441d783a52c002b8073100",
-        "type": "github"
+        "lastModified": 1773722782,
+        "narHash": "sha256-GIPYifblWhBf5klVC1W/Km832dj8KcGh6A/N1z5Yhug=",
+        "path": "/home/kylepzak/snowfall-lib",
+        "type": "path"
       },
       "original": {
-        "owner": "projectinitiative",
-        "ref": "pi-lib",
-        "repo": "snowfall-lib",
-        "type": "github"
+        "path": "/home/kylepzak/snowfall-lib",
+        "type": "path"
       }
     },
     "sops-nix": {

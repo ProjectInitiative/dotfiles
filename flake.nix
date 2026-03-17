@@ -62,8 +62,8 @@
     # agenix.url = "github:ryantm/agenix";
 
     # Snowfall Lib
-    # snowfall-lib.url = "path:/home/kylepzak/dotfiles/vendor/snowfall-lib";
-    snowfall-lib.url = "github:projectinitiative/snowfall-lib/pi-lib";
+    snowfall-lib.url = "path:/home/kylepzak/snowfall-lib";
+    # snowfall-lib.url = "github:projectinitiative/snowfall-lib/pi-lib";
     # snowfall-lib.url = "github:snowfallorg/lib?ref=v3.0.3";
     # snowfall-lib.url = "path:/home/short/work/@snowfallorg/lib";
     snowfall-lib.inputs.nixpkgs.follows = "nixpkgs";
@@ -316,6 +316,9 @@
           "aarch64-linux"
         ];
         hosts = {
+          wharfmaster = {
+            system = "x86_64-linux";
+          };
           stormjib = {
             system = "aarch64-linux";
           };
