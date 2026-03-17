@@ -1,5 +1,12 @@
 # /modules/nixos/suites/loft/default.nix
-{ config, lib, pkgs, namespace, inputs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  namespace,
+  inputs,
+  ...
+}:
 
 with lib;
 with lib.${namespace};
@@ -24,22 +31,37 @@ in
         endpoint = mkOpt types.str "http://172.16.1.50:31292" "The S3 endpoint URL.";
       };
 
-      publicKey = mkOpt types.str "nix-cache:S7lSpN8xTtMELxw2cBl9nq4hEv2nCSShIe1re3P/q/s=" "The public key for the binary cache.";
+      publicKey =
+        mkOpt types.str "nix-cache:S7lSpN8xTtMELxw2cBl9nq4hEv2nCSShIe1re3P/q/s="
+          "The public key for the binary cache.";
       signingKeyName = mkOpt types.str "nix-cache" "The name of the signing key.";
 
       # Secrets defined as placeholder paths, to be filled by sops
-      pullerAccessKeyFile = mkOpt types.path "/run/secrets/loft-puller-access-key" "Path to the S3 access key for pulling.";
-      pullerSecretKeyFile = mkOpt types.path "/run/secrets/loft-puller-secret-key" "Path to the S3 secret key for pulling.";
-      pusherAccessKeyFile = mkOpt types.path "/run/secrets/loft-pusher-access-key" "Path to the S3 access key for pushing.";
-      pusherSecretKeyFile = mkOpt types.path "/run/secrets/loft-pusher-secret-key" "Path to the S3 secret key for pushing.";
-      signingKeyFile = mkOpt types.path "/run/secrets/loft-signing-key" "Path to the Nix private signing key.";
+      pullerAccessKeyFile =
+        mkOpt types.path "/run/secrets/loft-puller-access-key"
+          "Path to the S3 access key for pulling.";
+      pullerSecretKeyFile =
+        mkOpt types.path "/run/secrets/loft-puller-secret-key"
+          "Path to the S3 secret key for pulling.";
+      pusherAccessKeyFile =
+        mkOpt types.path "/run/secrets/loft-pusher-access-key"
+          "Path to the S3 access key for pushing.";
+      pusherSecretKeyFile =
+        mkOpt types.path "/run/secrets/loft-pusher-secret-key"
+          "Path to the S3 secret key for pushing.";
+      signingKeyFile =
+        mkOpt types.path "/run/secrets/loft-signing-key"
+          "Path to the Nix private signing key.";
     };
 
     server = {
       debug = mkBoolOpt false "Enable debug logging for the Loft service.";
       uploadThreads = mkOpt types.int 4 "Number of parallel upload threads.";
       scanOnStartup = mkBoolOpt true "Scan existing store paths on startup.";
-      compression = mkOpt (types.enum [ "zstd" "xz" ]) "zstd" "Compression algorithm to use.";
+      compression = mkOpt (types.enum [
+        "zstd"
+        "xz"
+      ]) "zstd" "Compression algorithm to use.";
       skipSignedByKeys = mkOpt (types.listOf types.str) [
         "cache.nixos.org-1"
         "nix-community.cachix.org-1"
@@ -58,8 +80,12 @@ in
     # === Client Configuration ===
     (mkIf cfg.enableClient {
       sops.secrets = {
-        loft-puller-access-key = { sopsFile = ../../../common/encrypted/secrets/secrets.enc.yaml; };
-        loft-puller-secret-key = { sopsFile = ../../../common/encrypted/secrets/secrets.enc.yaml; };
+        loft-puller-access-key = {
+          sopsFile = ../../../common/encrypted/secrets/secrets.enc.yaml;
+        };
+        loft-puller-secret-key = {
+          sopsFile = ../../../common/encrypted/secrets/secrets.enc.yaml;
+        };
       };
       # Generate the AWS credentials file from sops secrets
       # TODO: make this optional only if keys are provided. Otherwise don't create
@@ -100,9 +126,15 @@ in
     (mkIf cfg.enableServer {
 
       sops.secrets = {
-        loft-pusher-access-key = { sopsFile = ../../../common/encrypted/secrets/secrets.enc.yaml; };
-        loft-pusher-secret-key = { sopsFile = ../../../common/encrypted/secrets/secrets.enc.yaml; };
-        loft-signing-key = { sopsFile = ../../../common/encrypted/secrets/secrets.enc.yaml; };
+        loft-pusher-access-key = {
+          sopsFile = ../../../common/encrypted/secrets/secrets.enc.yaml;
+        };
+        loft-pusher-secret-key = {
+          sopsFile = ../../../common/encrypted/secrets/secrets.enc.yaml;
+        };
+        loft-signing-key = {
+          sopsFile = ../../../common/encrypted/secrets/secrets.enc.yaml;
+        };
       };
 
       # Configure the Loft service using the suite's options

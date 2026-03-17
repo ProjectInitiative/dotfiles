@@ -12,7 +12,6 @@
     # switch
     nixpkgs-catch-up.url = "github:nixos/nixpkgs/nixos-unstable";
 
-    
     # NixPkgs Unstable
     unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     # NixPkgs Master
@@ -68,7 +67,6 @@
     # snowfall-lib.url = "github:snowfallorg/lib?ref=v3.0.3";
     # snowfall-lib.url = "path:/home/short/work/@snowfallorg/lib";
     snowfall-lib.inputs.nixpkgs.follows = "nixpkgs";
-
 
     # Snowfall Flake
     # flake.url = "github:snowfallorg/flake?ref=v1.4.1";

@@ -6,7 +6,8 @@ let
     # Pass configuration from the main nixpkgs to keep it consistent
     config = prev.config;
   };
-in {
+in
+{
   # # Override kernelPackages to use upstream
   # linuxPackages_latest = upstreamPkgs.linuxPackages_latest;
   # linuxPackages_6_16   = upstreamPkgs.linuxPackages_6_16;

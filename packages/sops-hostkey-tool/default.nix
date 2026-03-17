@@ -2,7 +2,7 @@
   pkgs ? import <nixpkgs> { },
 }:
 let
-  pythonDeps =  pkgs.python3.withPackages (ps: [
+  pythonDeps = pkgs.python3.withPackages (ps: [
     ps.pyyaml
   ]);
 in

@@ -16,7 +16,8 @@ in
     armTrustedFirmwareRK3588
     buildUBoot
     rkbin
-    ubootTools;
+    ubootTools
+    ;
 
   # --- U-Boot Packages ---
   # These are the actual board-specific U-Boot packages defined in the
@@ -25,5 +26,6 @@ in
   inherit (unstablePkgs)
     uboot-rk3582-generic
     ubootRock5ModelA
-    ubootOrangePi5Ultra;
+    ubootOrangePi5Ultra
+    ;
 }

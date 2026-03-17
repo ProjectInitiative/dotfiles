@@ -45,19 +45,18 @@ in
   # The config block defines the actual system configuration based on the options.
   config = mkIf cfg.enable {
     # Assertions to ensure valid configuration.
-    assertions =
-      [
-        {
-          assertion = cfg.enable -> (builtins.length cfg.targetMountPoints > 0);
-          message = "${namespace}.services.bcachefsRereplicateAuto is enabled but no targetMountPoints are specified.";
-        }
-      ]
-      ++ map (mountPoint: {
-        assertion = builtins.any (fs: fs.fsType == "bcachefs" && fs.mountPoint == mountPoint) (
-          lib.attrValues config.fileSystems
-        );
-        message = "${namespace}.services.bcachefsRereplicateAuto: Target mount point \"${mountPoint}\" is not a configured bcachefs filesystem in `fileSystems`.";
-      }) cfg.targetMountPoints;
+    assertions = [
+      {
+        assertion = cfg.enable -> (builtins.length cfg.targetMountPoints > 0);
+        message = "${namespace}.services.bcachefsRereplicateAuto is enabled but no targetMountPoints are specified.";
+      }
+    ]
+    ++ map (mountPoint: {
+      assertion = builtins.any (fs: fs.fsType == "bcachefs" && fs.mountPoint == mountPoint) (
+        lib.attrValues config.fileSystems
+      );
+      message = "${namespace}.services.bcachefsRereplicateAuto: Target mount point \"${mountPoint}\" is not a configured bcachefs filesystem in `fileSystems`.";
+    }) cfg.targetMountPoints;
 
     # Define all systemd services as a single attribute set.
     systemd.services = lib.listToAttrs (

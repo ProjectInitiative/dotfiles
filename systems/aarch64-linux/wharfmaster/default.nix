@@ -11,7 +11,6 @@
 
   imports = inputs.nixos-on-arm.bootModules.orangepi5ultra;
 
-  
   # hardware.deviceTree.overlays = [
   #   {
   #     name = "rk3588-npu";
@@ -48,7 +47,10 @@
     let
       livelinessCheck = pkgs.writeShellApplication {
         name = "comin-liveliness-check";
-        runtimeInputs = [ pkgs.iputils pkgs.systemd ];
+        runtimeInputs = [
+          pkgs.iputils
+          pkgs.systemd
+        ];
         text = ''
           echo "--- Starting Health Checks ---"
 
@@ -64,11 +66,13 @@
     in
     {
       enable = false;
-      remotes = [{
-        name = "origin";
-        url = "https://github.com/projectinitiative/dotfiles.git";
-        branches.main.name = "main";
-      }];
+      remotes = [
+        {
+          name = "origin";
+          url = "https://github.com/projectinitiative/dotfiles.git";
+          branches.main.name = "main";
+        }
+      ];
       livelinessCheckCommand = "${livelinessCheck}/bin/comin-liveliness-check";
     };
 
@@ -84,7 +88,7 @@
       # ];
     };
     useDHCP = false;
-    
+
     # VLAN configuration for vlan21
     interfaces.enP3p49s0.useDHCP = false;
     vlans."vlan21" = {
@@ -98,11 +102,11 @@
   fileSystems."/mnt/dinghy/frigate" = {
     device = "100.119.112.42:/frigate";
     fsType = "nfs";
-    options = [ 
-      "x-systemd.automount" 
-      "noauto" 
+    options = [
+      "x-systemd.automount"
+      "noauto"
       "x-systemd.idle-timeout=600" # Disconnect after 10 mins of inactivity
-      "x-systemd.mount-timeout=30" 
+      "x-systemd.mount-timeout=30"
       "nfsvers=4.2"
       "soft" # Use soft mount to prevent system freeze if dinghy is down
       "_netdev" # Ensure systemd knows this is a network mount
@@ -176,7 +180,7 @@
     };
 
     services = {
-        # monitoring.alloy.enable = lib.mkForce false;
+      # monitoring.alloy.enable = lib.mkForce false;
     };
 
   };

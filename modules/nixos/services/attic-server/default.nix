@@ -195,22 +195,21 @@ in
         };
 
         # Map GC config (assuming official module structure)
-        garbage-collection =
-          {
-            # These are likely always required or have valid TOML defaults (bool/string)
-            enable = cfg.garbageCollection.enable;
-            schedule = cfg.garbageCollection.schedule;
-          }
-          # Conditionally add keep-since if it's not null
-          // lib.mkIf (cfg.garbageCollection.keepSince != null) {
-            # Use the TOML key name expected by atticd (likely kebab-case)
-            keep-since = cfg.garbageCollection.keepSince;
-          }
-          # Conditionally add keep-generations if it's not null
-          // lib.mkIf (cfg.garbageCollection.keepGenerations != null) {
-            # Use the TOML key name expected by atticd (likely kebab-case)
-            keep-generations = cfg.garbageCollection.keepGenerations;
-          };
+        garbage-collection = {
+          # These are likely always required or have valid TOML defaults (bool/string)
+          enable = cfg.garbageCollection.enable;
+          schedule = cfg.garbageCollection.schedule;
+        }
+        # Conditionally add keep-since if it's not null
+        // lib.mkIf (cfg.garbageCollection.keepSince != null) {
+          # Use the TOML key name expected by atticd (likely kebab-case)
+          keep-since = cfg.garbageCollection.keepSince;
+        }
+        # Conditionally add keep-generations if it's not null
+        // lib.mkIf (cfg.garbageCollection.keepGenerations != null) {
+          # Use the TOML key name expected by atticd (likely kebab-case)
+          keep-generations = cfg.garbageCollection.keepGenerations;
+        };
 
         # Map storage config (assuming official module structure)
         storage = {

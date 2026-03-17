@@ -55,7 +55,8 @@ rec {
                 // lib.optionalAttrs (host.config.${namespace}.security.doas.enable or false) { sudo = "doas -u"; };
             };
           };
-        } // result
+        }
+        // result
       ) { } names;
     in
     {

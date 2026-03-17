@@ -28,7 +28,7 @@ in
   avf.defaultUser = "kylepzak";
 
   projectinitiative = {
-    
+
     settings = {
       stateVersion = "25.05";
     };
@@ -37,13 +37,12 @@ in
       nix-config = enabled;
     };
 
-    
     suites = {
-        loft = {
-          enable = true;
-          enableClient = true;
-          enableServer = true;
-        };
+      loft = {
+        enable = true;
+        enableClient = true;
+        enableServer = true;
+      };
       development = enabled;
     };
   };

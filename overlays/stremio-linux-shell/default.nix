@@ -5,7 +5,8 @@ let
     system = prev.stdenv.hostPlatform.system;
     config = prev.config;
   };
-in {
+in
+{
   stremio-linux-shell = unstablePkgs.rustPlatform.buildRustPackage {
     pname = "stremio-linux-shell";
     version = "1.0.0-beta.12";

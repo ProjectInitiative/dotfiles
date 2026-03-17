@@ -23,7 +23,7 @@ in
   # system.nixos-init.enable = true;
   # system.etc.overlay.enable = true;
   # services.userborn.enable = true;
-  # 
+  #
   boot.initrd.systemd.enable = true;
   boot.initrd.systemd.fido2.enable = true;
 
@@ -55,87 +55,92 @@ in
         mode = "0400";
       };
 
-      
-      /* # TODO: remove this and add to suite
-      aws-nix-cache-push-id = {
-        sopsFile = ../../../modules/common/encrypted/secrets/secrets.enc.yaml;
-      };
-      aws-nix-cache-push-key = {
-        sopsFile = ../../../modules/common/encrypted/secrets/secrets.enc.yaml;
-      };
-      aws-nix-cache-pull-id = {
-        sopsFile = ../../../modules/common/encrypted/secrets/secrets.enc.yaml;
-      };
-      aws-nix-cache-pull-key = {
-        sopsFile = ../../../modules/common/encrypted/secrets/secrets.enc.yaml;
-      };
+      /*
+        # TODO: remove this and add to suite
+        aws-nix-cache-push-id = {
+          sopsFile = ../../../modules/common/encrypted/secrets/secrets.enc.yaml;
+        };
+        aws-nix-cache-push-key = {
+          sopsFile = ../../../modules/common/encrypted/secrets/secrets.enc.yaml;
+        };
+        aws-nix-cache-pull-id = {
+          sopsFile = ../../../modules/common/encrypted/secrets/secrets.enc.yaml;
+        };
+        aws-nix-cache-pull-key = {
+          sopsFile = ../../../modules/common/encrypted/secrets/secrets.enc.yaml;
+        };
 
-
-      nix-cache-signing-key = {
-        sopsFile = ../../../modules/common/encrypted/secrets/secrets.enc.yaml;
-      }; */
+        nix-cache-signing-key = {
+          sopsFile = ../../../modules/common/encrypted/secrets/secrets.enc.yaml;
+        };
+      */
     }
   ];
 
-  /* systemd.tmpfiles.rules = [
-  "L+ /root/.aws/credentials - - - - ${config.sops.templates.aws-creds.path}"
-]; */
+  /*
+    systemd.tmpfiles.rules = [
+      "L+ /root/.aws/credentials - - - - ${config.sops.templates.aws-creds.path}"
+    ];
+  */
 
-
-  /* sops.templates."aws-credentials.ini" = {
-    mode = "0444"; 
-    content = ''
-      [nix-cache-puller]
-      aws_access_key_id=${config.sops.placeholder.aws-nix-cache-pull-id}
-      aws_secret_access_key=${config.sops.placeholder.aws-nix-cache-pull-key}
-      [nix-cache-pusher]
-      aws_access_key_id=${config.sops.placeholder.aws-nix-cache-push-id}
-      aws_secret_access_key=${config.sops.placeholder.aws-nix-cache-push-key}
-    '';
-  }; */
-
-  /* sops.templates.aws-creds = {
-    mode = "0444"; 
-    content = ''
-      [nix-cache-puller]
-      aws_access_key_id=${config.sops.placeholder.aws-nix-cache-pull-id}
-      aws_secret_access_key=${config.sops.placeholder.aws-nix-cache-pull-key}
-      [nix-cache-pusher]
-      aws_access_key_id=${config.sops.placeholder.aws-nix-cache-push-id}
-      aws_secret_access_key=${config.sops.placeholder.aws-nix-cache-push-key}
-    '';
-  }; */
-
-  /* nix = {
-    envVars = {
-      AWS_SHARED_CREDENTIALS_FILE = config.sops.templates."aws-credentials.ini".path;
+  /*
+    sops.templates."aws-credentials.ini" = {
+      mode = "0444";
+      content = ''
+        [nix-cache-puller]
+        aws_access_key_id=${config.sops.placeholder.aws-nix-cache-pull-id}
+        aws_secret_access_key=${config.sops.placeholder.aws-nix-cache-pull-key}
+        [nix-cache-pusher]
+        aws_access_key_id=${config.sops.placeholder.aws-nix-cache-push-id}
+        aws_secret_access_key=${config.sops.placeholder.aws-nix-cache-push-key}
+      '';
     };
+  */
 
-
-    # extraOptions = ''
-    #   access-tokens = s3-nix-cache-test:file://${config.sops.templates."aws-credentials.ini".path}
-    # '';
-    settings = {
-
-      substituters = [
-        # Pusher
-        # "s3://nix-cache-test?region=us-east-1&endpoint=http://172.16.1.50:31292&profile=nix-cache-pusher"
-        # "s3://nix-cache?region=us-east-1&endpoint=http://172.16.1.50:31292&profile=nix-cache-pusher"
-
-        # Puller
-        "s3://nix-cache?region=us-east-1&endpoint=http://172.16.1.50:31292&profile=nix-cache-puller"
-        # "s3://nix-cache-test?region=us-east-1&endpoint=http://172.16.1.50:31292&profile=nix-cache-puller"
-
-        # "s3://nix-cache-test?region=us-east-1&endpoint=http://172.16.1.50:31292&profile=nix-cache-puller&readonly=1"
-        # "s3://nix-cache-test?region=us-east-1&profile=nix-cache-puller&endpoint=http://172.16.1.50:31292"
-        # "s3://nix-cache-test?endpoint=http://172.16.1.50:31292"
-      ];
-      trusted-public-keys = [
-        "nix-cache:S7lSpN8xTtMELxw2cBl9nq4hEv2nCSShIe1re3P/q/s="
-      ];
+  /*
+    sops.templates.aws-creds = {
+      mode = "0444";
+      content = ''
+        [nix-cache-puller]
+        aws_access_key_id=${config.sops.placeholder.aws-nix-cache-pull-id}
+        aws_secret_access_key=${config.sops.placeholder.aws-nix-cache-pull-key}
+        [nix-cache-pusher]
+        aws_access_key_id=${config.sops.placeholder.aws-nix-cache-push-id}
+        aws_secret_access_key=${config.sops.placeholder.aws-nix-cache-push-key}
+      '';
     };
-  }; */
+  */
 
+  /*
+    nix = {
+      envVars = {
+        AWS_SHARED_CREDENTIALS_FILE = config.sops.templates."aws-credentials.ini".path;
+      };
+
+      # extraOptions = ''
+      #   access-tokens = s3-nix-cache-test:file://${config.sops.templates."aws-credentials.ini".path}
+      # '';
+      settings = {
+
+        substituters = [
+          # Pusher
+          # "s3://nix-cache-test?region=us-east-1&endpoint=http://172.16.1.50:31292&profile=nix-cache-pusher"
+          # "s3://nix-cache?region=us-east-1&endpoint=http://172.16.1.50:31292&profile=nix-cache-pusher"
+
+          # Puller
+          "s3://nix-cache?region=us-east-1&endpoint=http://172.16.1.50:31292&profile=nix-cache-puller"
+          # "s3://nix-cache-test?region=us-east-1&endpoint=http://172.16.1.50:31292&profile=nix-cache-puller"
+
+          # "s3://nix-cache-test?region=us-east-1&endpoint=http://172.16.1.50:31292&profile=nix-cache-puller&readonly=1"
+          # "s3://nix-cache-test?region=us-east-1&profile=nix-cache-puller&endpoint=http://172.16.1.50:31292"
+          # "s3://nix-cache-test?endpoint=http://172.16.1.50:31292"
+        ];
+        trusted-public-keys = [
+          "nix-cache:S7lSpN8xTtMELxw2cBl9nq4hEv2nCSShIe1re3P/q/s="
+        ];
+      };
+    };
+  */
 
   # nixpkgs.overlays = [
   #   (final: prev: {
@@ -225,7 +230,7 @@ in
     ${lib.getBin pkgs.xorg.xrandr}/bin/xrandr --setprovideroutputsource 2 0
   '';
 
-  virtualisation.docker.extraOptions="--insecure-registry 172.16.1.50:31872";
+  virtualisation.docker.extraOptions = "--insecure-registry 172.16.1.50:31872";
 
   home-manager = {
 
@@ -250,19 +255,19 @@ in
       displaylink.enable = false;
       nix-config = enabled;
 
-    #   bcachefs-kernel = {
-    #     enable = true;
-    #     # rev = "09e0711c260f1d14dd439315465c495003e02b4f";
-    #     # hash = "sha256-jSN8o7XxbSY/o3gyVsDtYPWGnsQedeLAI8ZzgjNJuuE=";
+      #   bcachefs-kernel = {
+      #     enable = true;
+      #     # rev = "09e0711c260f1d14dd439315465c495003e02b4f";
+      #     # hash = "sha256-jSN8o7XxbSY/o3gyVsDtYPWGnsQedeLAI8ZzgjNJuuE=";
 
-    #     # TODO: fix pinning kernel for evdi compat
-    #     rev = "63ea3cf07639ec8ef5bd2c3f457eb54b6cd33198";
-    #     hash = "sha256-dY0yb0ZO0L5zOdloasqyEU80bitr1VNdmoyvxJv/sYE=";
+      #     # TODO: fix pinning kernel for evdi compat
+      #     rev = "63ea3cf07639ec8ef5bd2c3f457eb54b6cd33198";
+      #     hash = "sha256-dY0yb0ZO0L5zOdloasqyEU80bitr1VNdmoyvxJv/sYE=";
 
-    #     # rev = "";
-    #     # hash = "";
-    #     debug = true;
-    #   };
+      #     # rev = "";
+      #     # hash = "";
+      #     debug = true;
+      #   };
     };
 
     gui = {
@@ -295,14 +300,14 @@ in
     };
 
     suites = {
-        loft = {
-          enable = true;
-          enableClient = true;
-          enableServer = true;
-        };
-        attic = {
-          enableClient = mkForce false;
-        };
+      loft = {
+        enable = true;
+        enableClient = true;
+        enableServer = true;
+      };
+      attic = {
+        enableClient = mkForce false;
+      };
       development = enabled;
       bcachefs-utils = {
         enable = true;
@@ -476,8 +481,10 @@ in
   services.printing.enable = true;
 
   programs.adb.enable = true;
-  users.users.kylepzak.extraGroups = [ "tss" "adbusers" ]; # tss group has access to TPM devices
-
+  users.users.kylepzak.extraGroups = [
+    "tss"
+    "adbusers"
+  ]; # tss group has access to TPM devices
 
   # rtkit is optional but recommended
   security.rtkit.enable = true;
@@ -487,10 +494,10 @@ in
     alsa.support32Bit = true;
     pulse.enable = true;
     wireplumber.package = pkgs.wireplumber.overrideAttrs (prev: {
-        version = "0.5.12";
-        src = prev.src.override {
-          rev = "0.5.12";
-          hash = "sha256-3LdERBiPXal+OF7tgguJcVXrqycBSmD3psFzn4z5krY=";
+      version = "0.5.12";
+      src = prev.src.override {
+        rev = "0.5.12";
+        hash = "sha256-3LdERBiPXal+OF7tgguJcVXrqycBSmD3psFzn4z5krY=";
       };
     });
     wireplumber.extraConfig.bluetoothEnhancements = {
@@ -499,7 +506,14 @@ in
         "bluez5.enable-sbc-xq" = true;
         "bluez5.enable-msbc" = true;
         "bluez5.enable-hw-volume" = true;
-        "bluez5.roles" = [ "hsp_hs" "hsp_ag" "hfp_hf" "hfp_ag" "a2dp_sink" "a2dp_source" ];
+        "bluez5.roles" = [
+          "hsp_hs"
+          "hsp_ag"
+          "hfp_hf"
+          "hfp_ag"
+          "a2dp_sink"
+          "a2dp_source"
+        ];
       };
     };
   };
@@ -540,7 +554,10 @@ in
         };
         "/home/kylepzak" = {
           fsType = "tmpfs";
-          options = [ "defaults" "size=2g" ];
+          options = [
+            "defaults"
+            "size=2g"
+          ];
         };
       };
     };

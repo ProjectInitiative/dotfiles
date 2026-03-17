@@ -222,35 +222,34 @@ in
         vlans = vlansParsed;
       };
 
-    assertions =
-      [
-        {
-          assertion =
-            builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})/([0-9]{1,2})$" cfg.managementVlan.network
-            != null;
-          message = "Management network must be in valid CIDR notation (e.g., 172.16.1.0/24)";
-        }
-        {
-          assertion = cfg.managementVlan.id != 1 -> !(cfg.managementVlan.enableDhcp);
-          message = "DHCP can only be enabled on the management VLAN if its ID is 1 (untagged LAN)";
-        }
-        {
-          assertion =
-            !(cfg.managementVlan.enableDhcp)
-            || (cfg.managementVlan.dhcpRangeStart != null && cfg.managementVlan.dhcpRangeEnd != null);
-          message = "Management VLAN DHCP requires dhcpRangeStart and dhcpRangeEnd to be set.";
-        }
-      ]
-      ++ (map (vlan: {
+    assertions = [
+      {
         assertion =
-          builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})/([0-9]{1,2})$" vlan.network
+          builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})/([0-9]{1,2})$" cfg.managementVlan.network
           != null;
-        message = "VLAN network ${vlan.name} must be in valid CIDR notation";
-      }) cfg.vlans)
-      ++ (map (vlan: {
-        assertion = !(vlan.enableDhcp) || (vlan.dhcpRangeStart != null && vlan.dhcpRangeEnd != null);
-        message = "VLAN ${vlan.name} DHCP requires dhcpRangeStart and dhcpRangeEnd to be set.";
-      }) (filter (v: v.enableDhcp) cfg.vlans));
+        message = "Management network must be in valid CIDR notation (e.g., 172.16.1.0/24)";
+      }
+      {
+        assertion = cfg.managementVlan.id != 1 -> !(cfg.managementVlan.enableDhcp);
+        message = "DHCP can only be enabled on the management VLAN if its ID is 1 (untagged LAN)";
+      }
+      {
+        assertion =
+          !(cfg.managementVlan.enableDhcp)
+          || (cfg.managementVlan.dhcpRangeStart != null && cfg.managementVlan.dhcpRangeEnd != null);
+        message = "Management VLAN DHCP requires dhcpRangeStart and dhcpRangeEnd to be set.";
+      }
+    ]
+    ++ (map (vlan: {
+      assertion =
+        builtins.match "^([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})/([0-9]{1,2})$" vlan.network
+        != null;
+      message = "VLAN network ${vlan.name} must be in valid CIDR notation";
+    }) cfg.vlans)
+    ++ (map (vlan: {
+      assertion = !(vlan.enableDhcp) || (vlan.dhcpRangeStart != null && vlan.dhcpRangeEnd != null);
+      message = "VLAN ${vlan.name} DHCP requires dhcpRangeStart and dhcpRangeEnd to be set.";
+    }) (filter (v: v.enableDhcp) cfg.vlans));
 
   };
 }

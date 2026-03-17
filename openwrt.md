@@ -20,7 +20,6 @@ This guide documents the troubleshooting steps taken to get an ASIX AX88179B USB
 Since the device had no internet, `opkg` couldn't download packages. `lsusb` (provided by `usbutils`) was needed for diagnostics.
 
 1.  **Determine OpenWrt Version & Architecture:**
-
     - On the Rock 5B, check:
       ```bash
       cat /etc/openwrt_release | grep DISTRIB_RELEASE
@@ -32,14 +31,12 @@ Since the device had no internet, `opkg` couldn't download packages. `lsusb` (pr
 
 2.  **Locate Package Files:**
     For development builds like 24.10.0, the most reliable source for compatible packages is often the **target-specific package directory**.
-
     - **Primary Package Source Used:** `https://mirror-03.infra.openwrt.org/releases/24.10.0/targets/rockchip/armv8/packages/`
     - (Generic architecture paths like `.../packages/aarch64_generic/base/` and `.../packages/aarch64_generic/packages/` were also explored but the target-specific path is preferred for core compatibility.)
     - The kmods specific to the exact kernel build were found at: `https://mirror-03.infra.openwrt.org/releases/24.10.0/targets/rockchip/armv8/kmods/6.6.73-1-f35e93bc2c89b98d107e57cdea041972/`
 
 3.  **Download Necessary Packages (for `usbutils` and general USB support):**
     The following packages were manually downloaded to a separate computer:
-
     - `libusb-1.0-0_*.ipk` (essential dependency)
     - `libatomic1_*.ipk` (dependency for libusb on this platform)
     - `libudev-zero_*.ipk` (dependency for usbutils)
@@ -70,7 +67,6 @@ Since the device had no internet, `opkg` couldn't download packages. `lsusb` (pr
 
 4.  **Transfer Packages to Rock 5B:**
     Files were transferred to the `/tmp/` directory on the Rock 5B. Since `scp` might not have been available initially, methods like this can be used:
-
     - From your computer (if `ssh` server is running on OpenWrt):
       ```bash
       # To send a file:
@@ -123,7 +119,6 @@ Since the device had no internet, `opkg` couldn't download packages. `lsusb` (pr
     opkg update
     ```
 2.  **Identify and Install Packages:**
-
     - Kernel Modules:
       - `kmod-rtw89-pci` (for the PCIe bus)
       - `kmod-rtw89-8852be` (specific to the RTL8852BE chip)

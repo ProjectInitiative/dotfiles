@@ -144,19 +144,18 @@ in
   # It's wrapped in mkIf cfg.enable so it only applies if the service is enabled.
   config = mkIf cfg.enable {
     # Assertions are evaluated to ensure valid configuration.
-    assertions =
-      [
-        {
-          assertion = cfg.enable -> (builtins.length cfg.targetMountPoints > 0);
-          message = "${namespace}.services.bcachefsScrubAuto is enabled but no targetMountPoints are specified.";
-        }
-      ]
-      ++ map (mountPoint: {
-        assertion = builtins.any (fs: fs.fsType == "bcachefs" && fs.mountPoint == mountPoint) (
-          lib.attrValues config.fileSystems
-        );
-        message = "${namespace}.services.bcachefsScrubAuto: Target mount point \"${mountPoint}\" is not a configured bcachefs filesystem in `fileSystems`.";
-      }) cfg.targetMountPoints;
+    assertions = [
+      {
+        assertion = cfg.enable -> (builtins.length cfg.targetMountPoints > 0);
+        message = "${namespace}.services.bcachefsScrubAuto is enabled but no targetMountPoints are specified.";
+      }
+    ]
+    ++ map (mountPoint: {
+      assertion = builtins.any (fs: fs.fsType == "bcachefs" && fs.mountPoint == mountPoint) (
+        lib.attrValues config.fileSystems
+      );
+      message = "${namespace}.services.bcachefsScrubAuto: Target mount point \"${mountPoint}\" is not a configured bcachefs filesystem in `fileSystems`.";
+    }) cfg.targetMountPoints;
 
     # Define all systemd services as a single attribute set.
     systemd.services =

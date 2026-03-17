@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   system.stateVersion = "24.05";
@@ -11,16 +16,18 @@
   ];
 
   # Configure home-manager
-  home-manager.config = { pkgs, ... }: {
-    home.stateVersion = "24.05";
-    
-    # Simple default configuration
-    home.packages = with pkgs; [
+  home-manager.config =
+    { pkgs, ... }:
+    {
+      home.stateVersion = "24.05";
+
+      # Simple default configuration
+      home.packages = with pkgs; [
         htop
         ripgrep
         jq
         curl
         wget
-    ];
-  };
+      ];
+    };
 }

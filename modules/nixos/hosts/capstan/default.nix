@@ -148,7 +148,6 @@ in
         "armv6l-linux"
       ];
     };
-    
 
     # Late-mounting service
     # systemd.services.mount-bcachefs = {
@@ -236,46 +235,52 @@ in
     #     fsType = "bcachefs";
     #   };
 
-  services.comin =
-    let
-      livelinessCheck = pkgs.writeShellApplication {
-        name = "comin-liveliness-check";
-        runtimeInputs = [ pkgs.iputils pkgs.dnsutils pkgs.coreutils ];
-        text = ''
-          echo "--- Starting Health Checks ---"
+    services.comin =
+      let
+        livelinessCheck = pkgs.writeShellApplication {
+          name = "comin-liveliness-check";
+          runtimeInputs = [
+            pkgs.iputils
+            pkgs.dnsutils
+            pkgs.coreutils
+          ];
+          text = ''
+            echo "--- Starting Health Checks ---"
 
-          echo "Pinging DNS server 1.1.1.1..."
-          ping -c 5 1.1.1.1
+            echo "Pinging DNS server 1.1.1.1..."
+            ping -c 5 1.1.1.1
 
-          echo "Pinging gateway 172.16.1.1..."
-          ping -c 5 172.16.1.1
+            echo "Pinging gateway 172.16.1.1..."
+            ping -c 5 172.16.1.1
 
-          echo "Checking DNS resolution for google.com..."
-          dig +short google.com
+            echo "Checking DNS resolution for google.com..."
+            dig +short google.com
 
-          echo "Checking sshd service status..."
-          systemctl is-active --quiet sshd
+            echo "Checking sshd service status..."
+            systemctl is-active --quiet sshd
 
-          echo "Checking disk space usage..."
-          df -h /
+            echo "Checking disk space usage..."
+            df -h /
 
-          echo "--- Health Checks Complete ---"
-        '';
-      };
-    in
-    {
-      enable = false;
-      remotes = [{
-        name = "origin";
-        url = "https://github.com/projectinitiative/dotfiles.git";
-        branches.main.name = "main";
-        poller = {
-          random_delay = cfg.cominPollerRandomDelay;
+            echo "--- Health Checks Complete ---"
+          '';
         };
+      in
+      {
+        enable = false;
+        remotes = [
+          {
+            name = "origin";
+            url = "https://github.com/projectinitiative/dotfiles.git";
+            branches.main.name = "main";
+            poller = {
+              random_delay = cfg.cominPollerRandomDelay;
+            };
 
-      }];
-      livelinessCheckCommand = "${livelinessCheck}/bin/comin-liveliness-check";
-    };
+          }
+        ];
+        livelinessCheckCommand = "${livelinessCheck}/bin/comin-liveliness-check";
+      };
 
     services.openssh = {
       enable = true;
@@ -444,7 +449,8 @@ in
                 # "enp5s0"
                 # "enp5s0d1"
                 # "vmbr4"
-              ] ++ cfg.bonding.members;
+              ]
+              ++ cfg.bonding.members;
               mlnxPorts = [
                 "1"
                 "2"

@@ -13,7 +13,6 @@ let
   cfg = config.${namespace}.hosts.lightship;
   sops = config.sops;
 
-
   # This reads your local file and writes it to a new, independent
   # file in the Nix store. The `k3sEnvFile` variable will hold the
   # resulting store path (e.g., /nix/store/<hash>-k3s-lighthouse-env).
@@ -49,7 +48,7 @@ in
     #######################################################
     # CUSTOM FIRMWARE
     #######################################################
-    
+
     boot.supportedFilesystems = {
       zfs = false;
     };
@@ -80,7 +79,7 @@ in
     #     };
     #   '';
     # }];
-    # 
+    #
     hardware.deviceTree.overlays = [
       # {
       #   name = "rock-5a-leds";
@@ -127,50 +126,51 @@ in
       wantedBy = [ "multi-user.target" ];
     };
 
+    systemd.services.pwm-fan-control = {
+      description = "Set PWM Fan to Reasonable Speed";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "sys-devices-platform-pwm\\x2dfan.device" ];
+      path = with pkgs; [
+        coreutils
+        findutils
+        gnugrep
+      ];
+      script = ''
+        sleep 3  # Wait for hwmon to be ready
 
-  systemd.services.pwm-fan-control = {
-    description = "Set PWM Fan to Reasonable Speed";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "sys-devices-platform-pwm\\x2dfan.device" ];
-    path = with pkgs; [ coreutils findutils gnugrep ];
-    script = ''
-      sleep 3  # Wait for hwmon to be ready
-    
-      # Find the actual hwmon device (not the parent directory)
-      HWMON_PATH=$(find /sys/devices/platform/pwm-fan/hwmon -name "hwmon*" -type d | grep -v "hwmon$" | head -1)
-    
-      if [ -n "$HWMON_PATH" ]; then
-        echo "Setting PWM fan to manual mode and 30% speed"
-        echo 1 > "$HWMON_PATH/pwm1_enable"
-        echo 77 > "$HWMON_PATH/pwm1"  # 30% speed
-        echo "PWM fan set to 30% speed at $HWMON_PATH"
-      else
-        echo "Could not find hwmon device"
-      fi
-    '';
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
+        # Find the actual hwmon device (not the parent directory)
+        HWMON_PATH=$(find /sys/devices/platform/pwm-fan/hwmon -name "hwmon*" -type d | grep -v "hwmon$" | head -1)
+
+        if [ -n "$HWMON_PATH" ]; then
+          echo "Setting PWM fan to manual mode and 30% speed"
+          echo 1 > "$HWMON_PATH/pwm1_enable"
+          echo 77 > "$HWMON_PATH/pwm1"  # 30% speed
+          echo "PWM fan set to 30% speed at $HWMON_PATH"
+        else
+          echo "Could not find hwmon device"
+        fi
+      '';
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
     };
-  };
-    
-  # Load the watchdog kernel module
-  # boot.kernelModules = [ "rockchip_wdt" ];
 
-  # # Configure and enable the watchdog service
-  # hardware.watchdog = {
-  #   enable = true;
-  #   device = "/dev/watchdog";
-  #   interval = 10;
-  #   interfaces = [ "tailscale0" ];
-  #   # The original Ansible script used 'ansible_host' (the machine's own IP).
-  #   # Pinging the machine itself can be a basic check that the network stack is up.
-  #   # I am using the IP from k8sServerAddr as a placeholder.
-  #   ping = [ "100.94.107.39" ];
-  # };
+    # Load the watchdog kernel module
+    # boot.kernelModules = [ "rockchip_wdt" ];
+
+    # # Configure and enable the watchdog service
+    # hardware.watchdog = {
+    #   enable = true;
+    #   device = "/dev/watchdog";
+    #   interval = 10;
+    #   interfaces = [ "tailscale0" ];
+    #   # The original Ansible script used 'ansible_host' (the machine's own IP).
+    #   # Pinging the machine itself can be a basic check that the network stack is up.
+    #   # I am using the IP from k8sServerAddr as a placeholder.
+    #   ping = [ "100.94.107.39" ];
+    # };
     #######################################################
-
-    
 
     programs.zsh.enable = true;
 

@@ -76,7 +76,7 @@ in
         pkgs.${namespace}.remote-drive-info
         pkgs.${namespace}.health-report
         pkgs.${namespace}.interactive-mv
-        pkgs.${namespace}.hdd-burnin        
+        pkgs.${namespace}.hdd-burnin
         pkgs.${namespace}.img-key-injector
         # pkgs.${namespace}.mc
       ];

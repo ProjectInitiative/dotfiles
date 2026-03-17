@@ -40,7 +40,8 @@ in
         "nf_reject_ipv6" # For REJECT target (if using ip6tables)
         "ip_tables" # Core iptables module
         "8021q" # VLAN support
-      ] ++ moduleCfg.extraModules;
+      ]
+      ++ moduleCfg.extraModules;
 
       # Kernel sysctl settings beyond basic forwarding (already in default.nix)
       kernel.sysctl = {
@@ -63,7 +64,8 @@ in
         # "net.ipv6.conf.${cfg.wanInterface}.autoconf" = mkIf cfg.enableIPv6 1;
 
         # Add custom settings from config
-      } // moduleCfg.extraSysctl;
+      }
+      // moduleCfg.extraSysctl;
     };
   };
 }
