@@ -50,6 +50,6 @@ stdenv.mkDerivation rec {
     description = "Rockchip Media Process Platform (MPP) userspace library";
     homepage = "https://github.com/tsukumijima/mpp-rockchip";
     license = licenses.unfree;
-    platforms = [ "aarch64-linux" ];
+    platforms = [ "aarch64-linux" "x86_64-linux" ];
   };
 }

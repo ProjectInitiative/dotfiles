@@ -1,96 +1,76 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 /*
  * DTS overlay for Rockchip RK3588 Video Hardware (Encoder & Decoder)
- * Enables: Encoder (VEPU580), Decoders (RKVDEC, VDPU, AV1) via MPP framework
  */
 
 /dts-v1/;
 /plugin/;
 
-&{/} {
-    /* MPP service */
-    mpp_srv: mpp-srv {
-        compatible = "rockchip,mpp-service";
-        rockchip,taskqueue-count = <12>;
-        rockchip,resetgroup-count = <1>;
-        status = "okay";
+/ {
+    /* Fragment 0: Add new MPP service nodes to the root */
+    fragment@0 {
+        target-path = "/";
+        __overlay__ {
+            mpp_srv: mpp-srv {
+                compatible = "rockchip,mpp-service";
+                rockchip,taskqueue-count = <12>;
+                rockchip,resetgroup-count = <1>;
+                status = "okay";
+            };
+
+            rkvenc_ccu: rkvenc-ccu {
+                compatible = "rockchip,rkv-encoder-v2-ccu";
+                status = "okay";
+            };
+        };
     };
 
-    /* CCU — dual-core coordination unit */
-    rkvenc_ccu: rkvenc-ccu {
-        compatible = "rockchip,rkv-encoder-v2-ccu";
-        status = "okay";
+    /* Fragment 1: Enable Encoder Core 0 */
+    fragment@1 {
+        target-path = "/rkvenc-core@fdbd0000";
+        __overlay__ {
+            status = "okay";
+            rockchip,srv = <&mpp_srv>;
+            rockchip,ccu = <&rkvenc_ccu>;
+            rockchip,taskqueue-node = <7>;
+            rockchip,resetgroup-node = <0>;
+        };
     };
 
-    /* Encoder core 0 */
-    rkvenc0: rkvenc-core@fdbd0000 {
-        compatible = "rockchip,rkv-encoder-v2-core";
-        reg = <0x0 0xfdbd0000 0x0 0x6000>;
-        interrupts = <0 101 4 0>;
-        interrupt-names = "irq_rkvenc0";
-        clocks = <&cru 438>, <&cru 437>, <&cru 439>;
-        clock-names = "aclk_vcodec", "hclk_vcodec", "clk_core";
-        rockchip,srv = <&mpp_srv>;
-        rockchip,ccu = <&rkvenc_ccu>;
-        rockchip,taskqueue-node = <7>;
-        rockchip,resetgroup-node = <0>;
-        status = "okay";
+    /* Fragment 2: Enable Encoder Core 1 */
+    fragment@2 {
+        target-path = "/rkvenc-core@fdbe0000";
+        __overlay__ {
+            status = "okay";
+            rockchip,srv = <&mpp_srv>;
+            rockchip,ccu = <&rkvenc_ccu>;
+            rockchip,taskqueue-node = <7>;
+            rockchip,resetgroup-node = <0>;
+        };
     };
 
-    /* Encoder core 1 */
-    rkvenc1: rkvenc-core@fdbe0000 {
-        compatible = "rockchip,rkv-encoder-v2-core";
-        reg = <0x0 0xfdbe0000 0x0 0x6000>;
-        interrupts = <0 104 4 0>;
-        interrupt-names = "irq_rkvenc1";
-        clocks = <&cru 443>, <&cru 442>, <&cru 444>;
-        clock-names = "aclk_vcodec", "hclk_vcodec", "clk_core";
-        rockchip,srv = <&mpp_srv>;
-        rockchip,ccu = <&rkvenc_ccu>;
-        rockchip,taskqueue-node = <7>;
-        rockchip,resetgroup-node = <0>;
-        status = "okay";
+    /* Fragment 3: Enable VPU Decoder */
+    fragment@3 {
+        target-path = "/video-codec@fdb50000";
+        __overlay__ {
+            status = "okay";
+            rockchip,srv = <&mpp_srv>;
+            rockchip,taskqueue-node = <1>;
+        };
     };
-};
 
-/* Use fragments to target existing nodes by path */
+    /* Fragment 4: Enable AV1 Decoder */
+    fragment@4 {
+        target-path = "/video-codec@fdc70000";
+        __overlay__ {
+            status = "okay";
+            rockchip,srv = <&mpp_srv>;
+            rockchip,taskqueue-node = <4>;
+        };
+    };
 
-/* VPU Decoder (VDPU) - client 1 (JPEG/VP8) */
-&{/video-codec@fdb50000} {
-    status = "okay";
-    rockchip,srv = <&mpp_srv>;
-    rockchip,taskqueue-node = <1>;
-};
-
-&{/iommu@fdb50800} {
-    status = "okay";
-};
-
-/* Decoder Core 0 (RKVDEC) - client 9 */
-&{/video-codec@fdc38000} {
-    status = "okay";
-    rockchip,srv = <&mpp_srv>;
-    rockchip,taskqueue-node = <9>;
-};
-
-&{/iommu@fdc38700} {
-    status = "okay";
-};
-
-/* Decoder Core 1 (RKVDEC) - client 9 */
-&{/video-codec@fdc40000} {
-    status = "okay";
-    rockchip,srv = <&mpp_srv>;
-    rockchip,taskqueue-node = <9>;
-};
-
-&{/iommu@fdc40700} {
-    status = "okay";
-};
-
-/* AV1 Decoder - client 4 */
-&{/video-codec@fdc70000} {
-    status = "okay";
-    rockchip,srv = <&mpp_srv>;
-    rockchip,taskqueue-node = <4>;
+    /* Fragments 5-7: Enable IOMMUs */
+    fragment@5 { target-path = "/iommu@fdb50800"; __overlay__ { status = "okay"; }; };
+    fragment@6 { target-path = "/iommu@fdbdf000"; __overlay__ { status = "okay"; }; };
+    fragment@7 { target-path = "/iommu@fdbef000"; __overlay__ { status = "okay"; }; };
 };
