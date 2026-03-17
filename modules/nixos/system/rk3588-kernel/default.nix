@@ -20,52 +20,34 @@ let
   customKernel = baseKernel.overrideAttrs (oldAttrs: {
     # Apply patches and append DTS nodes directly
     postPatch = (oldAttrs.postPatch or "") + ''
-      # Append MPP nodes to Orange Pi 5 Ultra DTS
+      # Enable video nodes in Orange Pi 5 Ultra DTS
       cat >> arch/arm64/boot/dts/rockchip/rk3588-orangepi-5-ultra.dts <<EOF
-
-&{/} {
-	mpp_srv: mpp-srv {
-		compatible = "rockchip,mpp-service";
-		rockchip,taskqueue-count = <12>;
-		rockchip,resetgroup-count = <1>;
-		status = "okay";
-	};
-
-	rkvenc_ccu: rkvenc-ccu {
-		compatible = "rockchip,rkv-encoder-v2-ccu";
-		status = "okay";
-	};
-};
-
-&rkvenc0 {
-	status = "okay";
-	rockchip,srv = <&mpp_srv>;
-	rockchip,ccu = <&rkvenc_ccu>;
-	rockchip,taskqueue-node = <7>;
-	rockchip,resetgroup-node = <0>;
-};
-
-&rkvenc1 {
-	status = "okay";
-	rockchip,srv = <&mpp_srv>;
-	rockchip,ccu = <&rkvenc_ccu>;
-	rockchip,taskqueue-node = <7>;
-	rockchip,resetgroup-node = <0>;
-};
 
 &vpu121 {
 	status = "okay";
-	rockchip,srv = <&mpp_srv>;
-	rockchip,taskqueue-node = <1>;
-};
-
-&av1d {
-	status = "okay";
-	rockchip,srv = <&mpp_srv>;
-	rockchip,taskqueue-node = <4>;
 };
 
 &vpu121_mmu {
+	status = "okay";
+};
+
+&vdec0 {
+	status = "okay";
+};
+
+&vdec0_mmu {
+	status = "okay";
+};
+
+&vdec1 {
+	status = "okay";
+};
+
+&vdec1_mmu {
+	status = "okay";
+};
+
+&rkvenc0 {
 	status = "okay";
 };
 
@@ -73,7 +55,19 @@ let
 	status = "okay";
 };
 
+&rkvenc1 {
+	status = "okay";
+};
+
 &rkvenc1_mmu {
+	status = "okay";
+};
+
+&av1d {
+	status = "okay";
+};
+
+&av1d_mmu {
 	status = "okay";
 };
 EOF
@@ -100,11 +94,17 @@ EOF
       # Core dependencies
       ARCH_ROCKCHIP = yes;
 
-      # Specific hardware drivers
-      VIDEO_ROCKCHIP_RKVENC = module;
-      VIDEO_ROCKCHIP_VDEC = module;
-      VIDEO_HANTRO = module;
+      # MPP (Media Process Platform) drivers via patches
+      VIDEO_ROCKCHIP_RKVENC = yes;
+
+      # Mainline V4L2 Stateless Decoders
+      VIDEO_ROCKCHIP_VDEC = yes;
+      VIDEO_HANTRO = yes;
       VIDEO_HANTRO_ROCKCHIP = yes;
+      
+      # Media Framework for stateless decoders
+      MEDIA_CONTROLLER_REQUEST_API = yes;
+      VIDEO_MEM2MEM_DECODE_CONFIG = yes;
 
       # Builtin storage to satisfy initrd
       MMC_DW_ROCKCHIP = yes;
