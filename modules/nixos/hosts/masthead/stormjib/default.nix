@@ -27,6 +27,7 @@ in
 
     projectinitiative = {
       hosts.masthead.enable = true;
+      hosts.masthead.role = "backup";
     };
 
   };
