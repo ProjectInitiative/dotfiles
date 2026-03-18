@@ -23,8 +23,10 @@ def list_scenarios():
     for name, data in scenarios.items():
         print(f"  - {name}")
 
-def trigger_scenario(name):
-    scenarios = load_scenarios()
+def trigger_scenario(name, scenarios=None):
+    if scenarios is None:
+        scenarios = load_scenarios()
+        
     if name not in scenarios:
         print(f"Error: Scenario '{name}' not found.", file=sys.stderr)
         sys.exit(1)
@@ -53,7 +55,7 @@ def trigger_scenario(name):
             f.write(f"# TYPE {metric_name} gauge\n")
             f.write(metric_line)
         print(f"Successfully triggered scenario '{name}'.")
-        print(f"Wrote to {prom_file}:\n{metric_line}")
+        # print(f"Wrote to {prom_file}:\n{metric_line}") # Reduced verbosity for 'all'
     except PermissionError:
         print(f"Error: Permission denied. You may need root privileges to write to {METRICS_DIR}.", file=sys.stderr)
         sys.exit(1)
@@ -85,8 +87,8 @@ def main():
     subparsers.add_parser('list', help='List available test scenarios')
 
     # Trigger command
-    trigger_parser = subparsers.add_parser('trigger', help='Trigger a test scenario')
-    trigger_parser.add_argument('scenario', help='Name of the scenario to trigger')
+    trigger_parser = subparsers.add_parser('trigger', help='Trigger a test scenario (or "all")')
+    trigger_parser.add_argument('scenario', help='Name of the scenario to trigger, or "all"')
 
     # Clear command
     subparsers.add_parser('clear', help='Clear all triggered scenarios')
@@ -96,7 +98,13 @@ def main():
     if args.command == 'list':
         list_scenarios()
     elif args.command == 'trigger':
-        trigger_scenario(args.scenario)
+        if args.scenario == 'all':
+            scenarios = load_scenarios()
+            print(f"Triggering all {len(scenarios)} scenarios...")
+            for name in scenarios.keys():
+                trigger_scenario(name, scenarios)
+        else:
+            trigger_scenario(args.scenario)
     elif args.command == 'clear':
         clear_scenarios()
     else:
