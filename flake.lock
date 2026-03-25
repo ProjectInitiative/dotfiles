@@ -320,11 +320,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1762276996,
-        "narHash": "sha256-TtcPgPmp2f0FAnc+DMEw4ardEgv1SGNR3/WFGH0N19M=",
+        "lastModified": 1773889306,
+        "narHash": "sha256-PAqwnsBSI9SVC2QugvQ3xeYCB0otOwCacB1ueQj2tgw=",
         "owner": "nix-community",
         "repo": "disko",
-        "rev": "af087d076d3860760b3323f6b583f4d828c1ac17",
+        "rev": "5ad85c82cc52264f4beddc934ba57f3789f28347",
         "type": "github"
       },
       "original": {
@@ -897,15 +897,15 @@
         "nixpkgs": "nixpkgs_5"
       },
       "locked": {
-        "lastModified": 1773088055,
-        "narHash": "sha256-mWK5J2RX2Fsi9Zqoshvz4CF/oFbo9hT1r+wI2/JFTiM=",
-        "owner": "projectinitiative",
+        "lastModified": 1774377348,
+        "narHash": "sha256-gDQAeMiP7NQcmId0bSQzGxLmO9AIREcY8p4OBbslBW8=",
+        "owner": "ProjectInitiative",
         "repo": "nixos-on-arm",
-        "rev": "060cd37aef026c5ffee78421c91b5cd83d2d4f5c",
+        "rev": "cf749aad05e3891dcb61935f73617f26d08aca76",
         "type": "github"
       },
       "original": {
-        "owner": "projectinitiative",
+        "owner": "ProjectInitiative",
         "repo": "nixos-on-arm",
         "type": "github"
       }
@@ -1055,11 +1055,11 @@
     },
     "nixpkgs_5": {
       "locked": {
-        "lastModified": 1762977756,
-        "narHash": "sha256-4PqRErxfe+2toFJFgcRKZ0UI9NSIOJa+7RXVtBhy4KE=",
+        "lastModified": 1774106199,
+        "narHash": "sha256-US5Tda2sKmjrg2lNHQL3jRQ6p96cgfWh3J1QBliQ8Ws=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "c5ae371f1a6a7fd27823bc500d9390b38c05fa55",
+        "rev": "6c9a78c09ff4d6c21d0319114873508a6ec01655",
         "type": "github"
       },
       "original": {

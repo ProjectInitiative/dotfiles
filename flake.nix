@@ -35,7 +35,8 @@
 
     # pull in base image builder
     nixos-on-arm = {
-      url = "github:projectinitiative/nixos-on-arm";
+      url = "github:ProjectInitiative/nixos-on-arm";
+      # url = "path:/home/kylepzak/dotfiles/vendor/nixos-on-arm";
     };
 
     wrappers.url = "github:lassulus/wrappers";
@@ -286,6 +287,7 @@
 
       channels-config = {
         allowUnfree = true;
+        allowUnsupportedSystem = true;
         permittedInsecurePackages = [
           # Add any insecure packages you need
         ];
@@ -342,10 +344,13 @@
               [
                 # <<< Add an inline module HERE to disable the nixpkgs one early >>>
                 (
-                  { config, pkgs, ... }:
+                  { config, pkgs, lib, ... }:
                   {
                     # Disable the atticd module provided by the nixpkgs input
                     disabledModules = [ "services/networking/atticd.nix" ];
+
+                    # Provide hostPkgs for modules that expect it (like nixos-on-arm)
+                    _module.args.hostPkgs = lib.mkDefault pkgs.buildPackages;
                   }
                 )
                 disko.nixosModules.disko
