@@ -240,7 +240,10 @@ let
             {
               refId = "A";
               datasourceUid = "prometheus_ds";
-              relativeTimeRange = { from = 600; to = 0; };
+              relativeTimeRange = {
+                from = 600;
+                to = 0;
+              };
               model = {
                 expr = "node_bcachefs_device_info{state!~\".*\\\\[rw\\\\].*|^rw$\"} and on(instance) up{job=\"nodes\"} == 1";
                 refId = "A";
@@ -616,124 +619,124 @@ let
       folder = "Reports";
       interval = "1m";
       rules = [
+        {
+          uid = "daily_infra_health_summary";
+          title = "Daily Infrastructure Health Summary";
+          condition = "A_red";
+          noDataState = "OK";
+          execErrState = "Error";
+          data = [
             {
-              uid = "daily_infra_health_summary";
-              title = "Daily Infrastructure Health Summary";
-              condition = "A_red";
-              noDataState = "OK";
-              execErrState = "Error";
-              data = [
-                {
-                  refId = "A";
-                  datasourceUid = "prometheus_ds";
-                  relativeTimeRange = {
-                    from = 600;
-                    to = 0;
-                  };
-                  model = {
-                    # Fires at 8:00 AM UTC OR when test_daily_report is 1
-                    expr = "(vector(1) * ((time() % 86400 >= bool 28800) * (time() % 86400 < bool 29100))) or (test_daily_report == 1)";
-                    refId = "A";
-                  };
-                }
-                {
-                  refId = "A_red";
-                  datasourceUid = "__expr__";
-                  model = {
-                    expression = "A";
-                    type = "reduce";
-                    reducer = "last";
-                    refId = "A_red";
-                  };
-                }
-                {
-                  refId = "B";
-                  datasourceUid = "prometheus_ds";
-                  relativeTimeRange = {
-                    from = 600;
-                    to = 0;
-                  };
-                  model = {
-                    expr = "count(up{job=\"nodes\"} == 0) or vector(0)";
-                    refId = "B";
-                  };
-                }
-                {
-                  refId = "B_red";
-                  datasourceUid = "__expr__";
-                  model = {
-                    expression = "B";
-                    type = "reduce";
-                    reducer = "last";
-                    refId = "B_red";
-                  };
-                }
-                {
-                  refId = "C";
-                  datasourceUid = "prometheus_ds";
-                  relativeTimeRange = {
-                    from = 600;
-                    to = 0;
-                  };
-                  model = {
-                    expr = "count(node_bcachefs_device_info{state!~\".*rw.*\"}) or vector(0)";
-                    refId = "C";
-                  };
-                }
-                {
-                  refId = "C_red";
-                  datasourceUid = "__expr__";
-                  model = {
-                    expression = "C";
-                    type = "reduce";
-                    reducer = "last";
-                    refId = "C_red";
-                  };
-                }
-                {
-                  refId = "D";
-                  datasourceUid = "prometheus_ds";
-                  relativeTimeRange = {
-                    from = 600;
-                    to = 0;
-                  };
-                  model = {
-                    expr = "count(smartmon_device_smart_healthy == 0) or vector(0)";
-                    refId = "D";
-                  };
-                }
-                {
-                  refId = "D_red";
-                  datasourceUid = "__expr__";
-                  model = {
-                    expression = "D";
-                    type = "reduce";
-                    reducer = "last";
-                    refId = "D_red";
-                  };
-                }
-              ];
-              for = "0m";
-              labels.report = "daily";
-              annotations.summary = ''
-{{ if and (eq $values.B_red.Value 0.0) (eq $values.C_red.Value 0.0) (eq $values.D_red.Value 0.0) -}}
-✅ <b>Daily All-Clear</b>
-Infrastructure is operating normally. All systems are healthy.
-{{- else -}}
-⚠️ <b>Daily Health Summary: Issues Found</b>
-{{ if gt $values.B_red.Value 0.0 }}- Offline Nodes: <b>{{ $values.B_red.Value | printf "%.0f" }}</b>{{ end }}
-{{ if gt $values.C_red.Value 0.0 }}- Unhealthy Bcachefs: <b>{{ $values.C_red.Value | printf "%.0f" }}</b>{{ end }}
-{{ if gt $values.D_red.Value 0.0 }}- SMART Failures: <b>{{ $values.D_red.Value | printf "%.0f" }}</b>{{ end }}
-{{- end -}}
-'';
-              testScenarios = {
-                "daily_report_trigger" = {
-                  metric = "test_daily_report";
-                  labels = {};
-                  value = 1;
-                };
+              refId = "A";
+              datasourceUid = "prometheus_ds";
+              relativeTimeRange = {
+                from = 600;
+                to = 0;
+              };
+              model = {
+                # Fires at 8:00 AM UTC OR when test_daily_report is 1
+                expr = "(vector(1) * ((time() % 86400 >= bool 28800) * (time() % 86400 < bool 29100))) or (test_daily_report == 1)";
+                refId = "A";
               };
             }
+            {
+              refId = "A_red";
+              datasourceUid = "__expr__";
+              model = {
+                expression = "A";
+                type = "reduce";
+                reducer = "last";
+                refId = "A_red";
+              };
+            }
+            {
+              refId = "B";
+              datasourceUid = "prometheus_ds";
+              relativeTimeRange = {
+                from = 600;
+                to = 0;
+              };
+              model = {
+                expr = "count(up{job=\"nodes\"} == 0) or vector(0)";
+                refId = "B";
+              };
+            }
+            {
+              refId = "B_red";
+              datasourceUid = "__expr__";
+              model = {
+                expression = "B";
+                type = "reduce";
+                reducer = "last";
+                refId = "B_red";
+              };
+            }
+            {
+              refId = "C";
+              datasourceUid = "prometheus_ds";
+              relativeTimeRange = {
+                from = 600;
+                to = 0;
+              };
+              model = {
+                expr = "count(node_bcachefs_device_info{state!~\".*rw.*\"}) or vector(0)";
+                refId = "C";
+              };
+            }
+            {
+              refId = "C_red";
+              datasourceUid = "__expr__";
+              model = {
+                expression = "C";
+                type = "reduce";
+                reducer = "last";
+                refId = "C_red";
+              };
+            }
+            {
+              refId = "D";
+              datasourceUid = "prometheus_ds";
+              relativeTimeRange = {
+                from = 600;
+                to = 0;
+              };
+              model = {
+                expr = "count(smartmon_device_smart_healthy == 0) or vector(0)";
+                refId = "D";
+              };
+            }
+            {
+              refId = "D_red";
+              datasourceUid = "__expr__";
+              model = {
+                expression = "D";
+                type = "reduce";
+                reducer = "last";
+                refId = "D_red";
+              };
+            }
+          ];
+          for = "0m";
+          labels.report = "daily";
+          annotations.summary = ''
+            {{ if and (eq $values.B_red.Value 0.0) (eq $values.C_red.Value 0.0) (eq $values.D_red.Value 0.0) -}}
+            ✅ <b>Daily All-Clear</b>
+            Infrastructure is operating normally. All systems are healthy.
+            {{- else -}}
+            ⚠️ <b>Daily Health Summary: Issues Found</b>
+            {{ if gt $values.B_red.Value 0.0 }}- Offline Nodes: <b>{{ $values.B_red.Value | printf "%.0f" }}</b>{{ end }}
+            {{ if gt $values.C_red.Value 0.0 }}- Unhealthy Bcachefs: <b>{{ $values.C_red.Value | printf "%.0f" }}</b>{{ end }}
+            {{ if gt $values.D_red.Value 0.0 }}- SMART Failures: <b>{{ $values.D_red.Value | printf "%.0f" }}</b>{{ end }}
+            {{- end -}}
+          '';
+          testScenarios = {
+            "daily_report_trigger" = {
+              metric = "test_daily_report";
+              labels = { };
+              value = 1;
+            };
+          };
+        }
       ];
     }
   ];

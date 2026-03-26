@@ -20,57 +20,57 @@ let
   customKernel = baseKernel.overrideAttrs (oldAttrs: {
     # Apply patches and append DTS nodes directly
     postPatch = (oldAttrs.postPatch or "") + ''
-      # Enable video nodes in Orange Pi 5 Ultra DTS
-      cat >> arch/arm64/boot/dts/rockchip/rk3588-orangepi-5-ultra.dts <<EOF
+            # Enable video nodes in Orange Pi 5 Ultra DTS
+            cat >> arch/arm64/boot/dts/rockchip/rk3588-orangepi-5-ultra.dts <<EOF
 
-&vpu121 {
+      &vpu121 {
 	status = "okay";
-};
+      };
 
-&vpu121_mmu {
+      &vpu121_mmu {
 	status = "okay";
-};
+      };
 
-&vdec0 {
+      &vdec0 {
 	status = "okay";
-};
+      };
 
-&vdec0_mmu {
+      &vdec0_mmu {
 	status = "okay";
-};
+      };
 
-&vdec1 {
+      &vdec1 {
 	status = "okay";
-};
+      };
 
-&vdec1_mmu {
+      &vdec1_mmu {
 	status = "okay";
-};
+      };
 
-&rkvenc0 {
+      &rkvenc0 {
 	status = "okay";
-};
+      };
 
-&rkvenc0_mmu {
+      &rkvenc0_mmu {
 	status = "okay";
-};
+      };
 
-&rkvenc1 {
+      &rkvenc1 {
 	status = "okay";
-};
+      };
 
-&rkvenc1_mmu {
+      &rkvenc1_mmu {
 	status = "okay";
-};
+      };
 
-&av1d {
+      &av1d {
 	status = "okay";
-};
+      };
 
-&av1d_mmu {
+      &av1d_mmu {
 	status = "okay";
-};
-EOF
+      };
+      EOF
     '';
   });
 
@@ -101,7 +101,7 @@ EOF
       VIDEO_ROCKCHIP_VDEC = yes;
       VIDEO_HANTRO = yes;
       VIDEO_HANTRO_ROCKCHIP = yes;
-      
+
       # Media Framework for stateless decoders
       MEDIA_CONTROLLER_REQUEST_API = yes;
       VIDEO_MEM2MEM_DECODE_CONFIG = yes;

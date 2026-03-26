@@ -34,7 +34,7 @@ stdenv.mkDerivation rec {
   postPatch = ''
     sed -i '/# build static library/,/add_subdirectory(legacy)/ { /add_subdirectory(legacy)/!d }' mpp/CMakeLists.txt
     sed -i '/install(TARGETS ''${MPP_STATIC}/d' mpp/CMakeLists.txt
-    
+
     # Fix double slashes in .pc files by removing ''${prefix}/ before absolute paths
     sed -i 's|=''${prefix}/@|=@|g' pkgconfig/*.pc.cmake
   '';
@@ -50,6 +50,9 @@ stdenv.mkDerivation rec {
     description = "Rockchip Media Process Platform (MPP) userspace library";
     homepage = "https://github.com/tsukumijima/mpp-rockchip";
     license = licenses.unfree;
-    platforms = [ "aarch64-linux" "x86_64-linux" ];
+    platforms = [
+      "aarch64-linux"
+      "x86_64-linux"
+    ];
   };
 }
