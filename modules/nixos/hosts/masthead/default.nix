@@ -17,6 +17,7 @@ in
     ./vrrp
     ./multi-wan
     ./conntrack
+    ./npu
   ];
 
   options.${namespace}.hosts.masthead = with types; {
