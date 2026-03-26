@@ -49,6 +49,9 @@ stdenv.mkDerivation rec {
     homepage = "https://github.com/rockchip-linux/rknpu2";
     license = licenses.bsd3;
     # Allow x86_64-linux so this is visible when cross-compiling FROM x86_64 to aarch64
-    platforms = [ "aarch64-linux" "x86_64-linux" ];
+    platforms = [
+      "aarch64-linux"
+      "x86_64-linux"
+    ];
   };
 }
