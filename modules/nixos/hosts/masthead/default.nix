@@ -13,12 +13,26 @@ let
   cfg = config.${namespace}.hosts.masthead;
 in
 {
+  imports = [
+    ./vrrp
+    ./multi-wan
+    ./conntrack
+  ];
+
   options.${namespace}.hosts.masthead = with types; {
     enable = mkBoolOpt false "Whether or not to enable the masthead router base config.";
     role = mkOpt (types.enum [
       "primary"
       "backup"
     ]) "primary" "The role of the masthead router.";
+    wanMac = mkOpt types.str "00:00:00:00:00:00" "MAC address for WAN spoofing.";
+    wanVip = mkOpt types.str "203.0.113.100" "Virtual IP for WAN interface.";
+    lanVip = mkOpt types.str "172.16.1.1" "Virtual IP for LAN interface.";
+    vlan10Vip = mkOpt types.str "192.168.10.1" "Virtual IP for VLAN 10.";
+    vlan21Vip = mkOpt types.str "192.168.21.1" "Virtual IP for VLAN 21.";
+    vlan22Vip = mkOpt types.str "192.168.22.1" "Virtual IP for VLAN 22.";
+    vlan30Vip = mkOpt types.str "192.168.30.1" "Virtual IP for VLAN 30.";
+    healthCheckIp = mkOpt types.str "8.8.8.8" "IP address for Multi-WAN health check.";
   };
 
   config = mkIf cfg.enable {
@@ -27,6 +41,60 @@ in
       lan0 = {
         interfaces = [ ];
       };
+    };
+
+    networking.interfaces.lan0 = {
+      ipv4.addresses = [
+        {
+          address = if cfg.role == "primary" then "172.16.1.2" else "172.16.1.3";
+          prefixLength = 24;
+        }
+      ];
+    };
+
+    networking.interfaces.vlan10 = {
+      ipv4.addresses = [
+        {
+          address = if cfg.role == "primary" then "192.168.10.2" else "192.168.10.3";
+          prefixLength = 24;
+        }
+      ];
+    };
+
+    networking.interfaces.vlan21 = {
+      ipv4.addresses = [
+        {
+          address = if cfg.role == "primary" then "192.168.21.2" else "192.168.21.3";
+          prefixLength = 24;
+        }
+      ];
+    };
+
+    networking.interfaces.vlan22 = {
+      ipv4.addresses = [
+        {
+          address = if cfg.role == "primary" then "192.168.22.2" else "192.168.22.3";
+          prefixLength = 24;
+        }
+      ];
+    };
+
+    networking.interfaces.vlan30 = {
+      ipv4.addresses = [
+        {
+          address = if cfg.role == "primary" then "192.168.30.2" else "192.168.30.3";
+          prefixLength = 24;
+        }
+      ];
+    };
+
+    networking.interfaces.vlan40 = {
+      ipv4.addresses = [
+        {
+          address = if cfg.role == "primary" then "169.254.255.1" else "169.254.255.2";
+          prefixLength = 24;
+        }
+      ];
     };
 
     networking.vlans = {
@@ -48,6 +116,10 @@ in
       };
       vlan30 = {
         id = 30;
+        interface = "lan0";
+      };
+      vlan40 = {
+        id = 40;
         interface = "lan0";
       };
     };
