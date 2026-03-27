@@ -85,6 +85,7 @@ in
           rustup
           gemini-cli
           qwen-code
+          claude-code
           # pkgs.${namespace}.gemini-cli
           # pkgs.${namespace}.qwen-code
         ];

@@ -18,6 +18,7 @@ keys:
     - &ssh_capstan1 age1katkdmh05xy9n5pmrkaznw0e5j4p96js88dzxy4l0zt06pfa4qzs0gsua5
     - &ssh_capstan2 age1daxggyz58h525ww5clnwwuwxu7tf5mlz8as8n7cy8dhv74u4qcqq0jagrp
     - &ssh_capstan3 age1wwtevxuhkfh6nyl23axkx0s3pnywrw95tj85qrg03fhh6jkmf5nsfknx09
+  - &ssh_astrolabe age15p00q78suah3sfrnw7duxwsdslcmlcl57e7f5a9e320gncxc54rqg3fl0w
   - &lightships:
     - &ssh_lightship_atx age1csp7a8m4d8gfpeq86wje2ttxw9f66phehlacsuqckrft46s6s4csfjzrsl
     - &ssh_lightship_dfw age132gpza62jw8hehnz8yy9yrwepe0rl5hmhdnzf3zpr33vrrh02edqdxn4lu
@@ -54,6 +55,7 @@ creation_rules:
           - *ssh_capstan1
           - *ssh_capstan2
           - *ssh_capstan3
+          - *ssh_astrolabe
           - *ssh_lightship_atx
           - *ssh_lightship_dfw
           - *ssh_lightship_dal
@@ -89,6 +91,14 @@ creation_rules:
           - *ssh_capstan2
           - *ssh_capstan3
           - *test_vm
+
+  - path_regex: astrolabe/[^/]+\.yaml$
+    # - path: capstan/secrets.enc.yaml
+    key_groups:
+      - age:
+          - *ssh_kylepzak
+          - *ssh_thinkpad
+          - *ssh_astrolabe
 
   - path_regex: thinkpad/[^/]+\.yaml$
     # - path: thinkpad/secrets.enc.yaml

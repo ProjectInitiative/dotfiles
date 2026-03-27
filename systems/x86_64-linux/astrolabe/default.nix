@@ -19,37 +19,13 @@ let
   #############################################################################
   # --- Common System & Bootloader Config ---
   commonSystemConfig = {
-    hardware.cpu.amd.updateMicrocode = true;
-
     boot.loader = {
       systemd-boot.enable = true;
       efi.canTouchEfiVariables = true;
     };
 
-    # Ensure kernel is 6.18+ (currently using latest)
-    # The requirement says `set the kernel to 6.18+`
-    # You can set it to `linuxPackages_latest` to get the latest stable, which should be >=6.18
-    # Or explicitly pin if 6.18 is available.
-    # boot.kernelPackages = pkgs.linuxPackages_latest;
-
-    boot.kernelPackages = pkgs.linuxPackages_6_18; # Will verify if this exists or just use latest
-
-    # VRAM Unlock
-    boot.kernelParams = [ "amdgpu.gttsize=-1" ];
-
-    hardware.graphics = {
-      enable = true;
-      # ROCm and VA-API
-      extraPackages = with pkgs; [
-        rocmPackages.clr
-        rocmPackages.clr.icd
-        # VA-API
-        libvdpau-va-gl
-      ];
-    };
-
-    # KFD driver initialization is part of amdgpu kernel module
-    boot.initrd.kernelModules = [ "amdgpu" ];
+    # Ensure kernel is 6.18+
+    boot.kernelPackages = pkgs.linuxPackages_latest;
 
     services.journald.extraConfig = "Storage=volatile\n";
 
@@ -108,7 +84,8 @@ let
           name = "data";
           size = "100%FREE";
           content = {
-            type = "bcachefs";
+            type = "filesystem";
+            format = "bcachefs";
             mountpoint = bcachefsMountpoint;
           };
         };
@@ -146,11 +123,11 @@ lib.recursiveUpdate commonSystemConfig {
       enable = true;
       allFeatures = true;
 
-      ipAddress = "${config.sensitiveNotSecret.default_subnet}52/24";
-      interfaceMac = "11:22:33:44:55:66";
+      ipAddress = "${config.sensitiveNotSecret.default_subnet}54/24";
+      interfaceMac = "84:47:09:75:04:61";
 
       k8sServerAddr = "https://172.16.1.50:6443";
-      k8sNodeIp = "172.16.4.52";
+      k8sNodeIp = "172.16.1.54";
       k8sNodeIface = "mgmnt";
     };
   };

@@ -23,13 +23,13 @@ in
         rocmPackages.clr
         rocmPackages.clr.icd
         # VA-API
-        # We don't have libvdpau-va-gl but we can use libva, libvdpau, libva-utils
-        # Or standard amdgpu packages
+        libvdpau-va-gl
       ];
     };
 
     boot.initrd.kernelModules = [ "amdgpu" ];
 
-    # We apply boot parameter amdgpu.gttsize=-1 in the host or system level
+    # We apply boot parameter amdgpu.gttsize=-1 if requested or by default for some
+    boot.kernelParams = [ "amdgpu.gttsize=-1" ];
   };
 }

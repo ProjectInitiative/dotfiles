@@ -28,6 +28,20 @@ in
     # System dependencies
     # Boot config handled in system file
 
+    # enable custom secrets
+    sops.secrets = mkMerge [
+      {
+        k8s_token = {
+          sopsFile = ./secrets.enc.yaml;
+        };
+      }
+    ];
+
+    # enable GPU drivers and firmware
+    hardware.enableRedistributableFirmware = true;
+    hardware.firmware = [ pkgs.linux-firmware ];
+    hardware.cpu.amd.updateMicrocode = true;
+
     ${namespace} = {
 
       system = {
@@ -56,14 +70,14 @@ in
             "--node-label=tier=compute"
           ];
         };
+      };
 
-        # Container Runtime
+      virtualization = {
         docker = mkIf cfg.allFeatures { enable = true; };
       };
 
-      virtualization.containerd = mkIf cfg.allFeatures { enable = true; };
-
       hardware = {
+        amdgpu = enabled;
         # Assuming AMD GPU Device Plugin for Kubernetes
         amdgpu-plugin = mkIf cfg.allFeatures { enable = true; };
       };
