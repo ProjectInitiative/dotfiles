@@ -42,6 +42,16 @@ in
     hardware.firmware = [ pkgs.linux-firmware ];
     hardware.cpu.amd.updateMicrocode = true;
 
+    services.openssh = {
+      enable = true;
+      # Disable password-based authentication for security.
+      settings = {
+        PasswordAuthentication = false;
+        KbdInteractiveAuthentication = false; # Disables keyboard-interactive auth, often a fallback for passwords.
+        PermitRootLogin = "prohibit-password"; # Allows root login with a key, but not a password.
+      };
+    };
+
     ${namespace} = {
 
       system = {
