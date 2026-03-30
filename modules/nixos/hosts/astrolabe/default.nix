@@ -52,6 +52,12 @@ in
       };
     };
 
+    environment.systemPackages = with pkgs; [
+      python313Packages.huggingface-hub
+    ];
+
+    virtualisation.docker.daemon.settings.data-root = "/mnt/pool/docker-data";
+
     ${namespace} = {
 
       system = {
@@ -66,6 +72,7 @@ in
       };
 
       services = {
+        eternal-terminal = mkIf cfg.allFeatures enabled;
         k8s = mkIf cfg.allFeatures {
           enable = true;
           tokenFile = sops.secrets.k8s_token.path;

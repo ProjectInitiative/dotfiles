@@ -318,6 +318,13 @@
           "aarch64-linux"
         ];
         hosts = {
+          astrolabe = {
+            system = "x86_64-linux";
+            # This explicitly passes 'unstable' into the modules for THIS host
+            specialArgs = {
+              unstable = inputs.unstable.legacyPackages."x86_64-linux";
+            };
+          };
           wharfmaster = {
             system = "x86_64-linux";
           };

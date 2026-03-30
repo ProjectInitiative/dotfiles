@@ -86,6 +86,7 @@ in
           gemini-cli
           qwen-code
           claude-code
+          opencode
           # pkgs.${namespace}.gemini-cli
           # pkgs.${namespace}.qwen-code
         ];

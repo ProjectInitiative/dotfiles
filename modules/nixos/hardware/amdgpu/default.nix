@@ -1,35 +1,47 @@
-{
-  options,
-  config,
-  pkgs,
-  lib,
-  namespace,
-  ...
-}:
+# modules/nixos/hardware/amdgpu/default.nix
+{ config, lib, pkgs, namespace, unstable ? pkgs, ... }:
 with lib;
-with lib.${namespace};
 let
   cfg = config.${namespace}.hardware.amdgpu;
 in
 {
-  options.${namespace}.hardware.amdgpu = with types; {
-    enable = mkBoolOpt false "Whether or not to enable AMD GPU support.";
-  };
+  options.${namespace}.hardware.amdgpu.enable = mkEnableOption "AMD GPU support";
 
   config = mkIf cfg.enable {
     hardware.graphics = {
       enable = true;
-      extraPackages = with pkgs; [
+      # 'unstable' now comes from your host's specialArgs
+      extraPackages = with unstable; [
         rocmPackages.clr
         rocmPackages.clr.icd
-        # VA-API
         libvdpau-va-gl
+        libva-vdpau-driver
       ];
     };
 
+    # Memory optimizations for the 128GB unified RAM
+    boot.kernelParams = [
+      "amdgpu.gttsize=102400"
+      "ttm.pages_limit=26214400"
+      "amdgpu.vis_vram_limit=102400"
+      "amdgpu.svm_max_mapping_size=131072"  # 128GB in MB
+      "amd_iommu=on"
+      "iommu=pt"
+    ];
+
     boot.initrd.kernelModules = [ "amdgpu" ];
 
-    # We apply boot parameter amdgpu.gttsize=-1 if requested or by default for some
-    boot.kernelParams = [ "amdgpu.gttsize=-1" ];
+    swapDevices = [];
+    
+
+    environment.variables = {
+      HSA_OVERRIDE_GFX_VERSION = "11.5.1";
+      HSA_ENABLE_SDMA = "0"; 
+    };
+
+    environment.systemPackages = with unstable; [
+      rocmPackages.rocm-smi
+      rocmPackages.rocminfo
+    ];
   };
 }
