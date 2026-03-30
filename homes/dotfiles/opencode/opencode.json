@@ -3,9 +3,9 @@
   "provider": {
     "llama-cpp": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "LLama.cpp (local - ROCm Strix Halo)",
+      "name": "LLama.cpp (ROCm Strix Halo)",
       "options": {
-        "baseURL": "http://localhost:8000/v1"
+        "baseURL": "http://astrolabe:8000/v1"
       },
       "models": {
         "qwen3.5-122b-ud-q4_k_xl": {
