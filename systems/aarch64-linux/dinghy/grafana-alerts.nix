@@ -467,11 +467,11 @@ let
               refId = "A";
               datasourceUid = "prometheus_ds";
               relativeTimeRange = {
-                from = 600;
+                from = 900;
                 to = 0;
               };
               model = {
-                expr = "(1 - avg by(instance)(rate(node_cpu_seconds_total{mode=\"idle\"}[5m]))) * 100";
+                expr = "(1 - avg by(instance)(rate(node_cpu_seconds_total{mode=\"idle\",instance!=\"dinghy\"}[15m]))) * 100";
                 refId = "A";
               };
             }
@@ -495,7 +495,7 @@ let
               };
             }
           ];
-          for = "5m";
+          for = "15m";
           labels.severity = "warning";
           annotations.summary = "🔥 Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nLoad: <b>{{ if $values.B }}{{ $values.B.Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
           testScenarios = {
