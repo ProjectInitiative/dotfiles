@@ -18,6 +18,7 @@ in
     ./multi-wan
     ./conntrack
     ./qos
+    ./npu
   ];
 
   options.${namespace}.hosts.masthead = with types; {

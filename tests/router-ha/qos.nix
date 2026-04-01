@@ -1,4 +1,6 @@
-{ pkgs ? import <nixpkgs> {} }:
+{
+  pkgs ? import <nixpkgs> { },
+}:
 
 let
   eval = pkgs.lib.evalModules {
@@ -7,7 +9,9 @@ let
       {
         options.projectinitiative.hosts.masthead.enable = pkgs.lib.mkEnableOption "";
         options.projectinitiative.hosts.masthead.role = pkgs.lib.mkOption { type = pkgs.lib.types.str; };
-        options.environment.systemPackages = pkgs.lib.mkOption { type = pkgs.lib.types.listOf pkgs.lib.types.package; };
+        options.environment.systemPackages = pkgs.lib.mkOption {
+          type = pkgs.lib.types.listOf pkgs.lib.types.package;
+        };
         config.projectinitiative.hosts.masthead.enable = true;
         config.projectinitiative.hosts.masthead.role = "backup";
         config.projectinitiative.hosts.masthead.qos.enable = true;
@@ -18,11 +22,18 @@ let
       pkgs = pkgs;
       lib = pkgs.lib // {
         projectinitiative = {
-          mkOpt = type: default: description: pkgs.lib.mkOption { inherit type default description; };
-          mkBoolOpt = default: description: pkgs.lib.mkOption { type = pkgs.lib.types.bool; inherit default description; };
+          mkOpt =
+            type: default: description:
+            pkgs.lib.mkOption { inherit type default description; };
+          mkBoolOpt =
+            default: description:
+            pkgs.lib.mkOption {
+              type = pkgs.lib.types.bool;
+              inherit default description;
+            };
         };
       };
     };
   };
 in
-  eval.config.projectinitiative.hosts.masthead.qos.applyScript.outPath
+eval.config.projectinitiative.hosts.masthead.qos.applyScript.outPath
