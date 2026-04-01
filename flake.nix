@@ -406,19 +406,9 @@
         ];
       };
 
-      checks =
-        inputs.nixpkgs.lib.recursiveUpdate
-          (builtins.mapAttrs (
-            system: deploy-lib: deploy-lib.deployChecks inputs.self.deploy
-          ) inputs.deploy-rs.lib)
-          {
-            "x86_64-linux" = {
-              ha-router-test = import ./tests/router-ha/default.nix {
-                pkgs = inputs.nixpkgs.legacyPackages."x86_64-linux";
-                lib = inputs.nixpkgs.lib;
-              };
-            };
-          };
+      checks = builtins.mapAttrs (
+        system: deploy-lib: deploy-lib.deployChecks inputs.self.deploy
+      ) inputs.deploy-rs.lib;
 
       outputs-builder = channels: {
         # formatter = channels.nixpkgs.nixfmt-rfc-style;

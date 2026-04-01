@@ -8,7 +8,6 @@
 with lib;
 let
   cfg = config.${namespace}.hosts.masthead;
-  npu-analysis = pkgs.callPackage ../../../../../packages/npu-analysis { };
 in
 {
   config = mkIf cfg.enable {
@@ -34,7 +33,7 @@ in
       after = [ "network.target" ];
 
       serviceConfig = {
-        ExecStart = "${npu-analysis}/bin/npu-analysis";
+        ExecStart = "${pkgs.${namespace}.npu-analysis}/bin/npu-analysis";
         Restart = "always";
         RestartSec = "10s";
         # Need root permissions to open NETLINK socket and write to prometheus dir
@@ -44,6 +43,6 @@ in
     };
 
     # Make the package available in the system
-    environment.systemPackages = [ npu-analysis ];
+    environment.systemPackages = [ pkgs.${namespace}.npu-analysis ];
   };
 }

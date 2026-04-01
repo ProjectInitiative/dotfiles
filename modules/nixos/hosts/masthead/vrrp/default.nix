@@ -29,11 +29,9 @@ in
         notifyMaster = "${pkgs.writeShellScript "notify-master-lan0" ''
           ${pkgs.iproute2}/bin/ip link set dev wan0 address ${cfg.wanMac}
           ${pkgs.iproute2}/bin/ip link set dev wan0 up
-          ${lib.optionalString cfg.qos.enable "${cfg.qos.applyScript} ${cfg.role}"}
         ''}";
         notifyBackup = "${pkgs.writeShellScript "notify-backup-lan0" ''
           ${pkgs.iproute2}/bin/ip link set dev wan0 down
-          ${lib.optionalString cfg.qos.enable "${cfg.qos.removeScript}"}
         ''}";
       };
       vlan10 = {
