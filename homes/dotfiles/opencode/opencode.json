@@ -21,11 +21,18 @@
   "permission": {
     "edit": "ask",
     "bash": "ask",
-    "read": "allow"
+    "read": "allow",
+    "webfetch": "allow",
+    "websearch": "allow",
+    "question": "allow",
   },
+  "plugin": ["@tarquinen/opencode-dcp@latest"],
   "compaction": {
     "auto": true,
     "prune": true,
+    "strategy": "summarize",
+    "threshold": 0.7,
+    "preserveRecentMessages": 20,
     "reserved": 20000
   }
 }
