@@ -320,9 +320,15 @@
         hosts = {
           astrolabe = {
             system = "x86_64-linux";
-            # This explicitly passes 'unstable' into the modules for THIS host
             specialArgs = {
-              upstream = inputs.upstream.legacyPackages."x86_64-linux";
+              # ✅ CORRECT: 'config' is safely contained inside the upstream import
+              upstream = import inputs.upstream {
+                system = "x86_64-linux";
+                config = {
+                  allowUnfree = true;
+                  allowBroken = true;
+                };
+              };
             };
           };
           wharfmaster = {

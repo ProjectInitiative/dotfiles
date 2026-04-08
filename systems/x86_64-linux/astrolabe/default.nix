@@ -3,7 +3,8 @@
   lib,
   namespace,
   options,
-  pkgs,
+  upstream,
+  inputs,
   ...
 }:
 let
@@ -24,8 +25,18 @@ let
       efi.canTouchEfiVariables = true;
     };
 
-    # Ensure kernel is 6.18+
-    boot.kernelPackages = pkgs.linuxPackages_latest;
+    # Ensure kernel is 7 rc
+    boot.kernelPackages = upstream.linuxPackages_testing;
+
+    # Pull bleeding-edge Mesa (Vulkan) drivers from master for the Strix Halo
+    hardware.graphics = {
+      enable = true;
+      package = upstream.mesa.drivers;
+      package32 = upstream.pkgsi686Linux.mesa.drivers;
+    };
+
+    # Pull bleeding-edge linux-firmware (optional, but highly recommended for new APUs)
+    hardware.firmware = [ upstream.linux-firmware ];
 
     services.journald.extraConfig = "Storage=volatile\n";
 

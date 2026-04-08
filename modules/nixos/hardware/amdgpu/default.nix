@@ -21,8 +21,10 @@ in
 
     # Memory optimizations for the 128GB unified RAM
     boot.kernelParams = [
-      "amdgpu.gttsize=102400"
-      "ttm.pages_limit=26214400"
+      # "amdgpu.gttsize=102400"
+      # "ttm.pages_limit=26214400"
+      "amdgpu.gttsize=126976"    
+      "ttm.pages_limit=32505856"
       "amdgpu.vis_vram_limit=102400"
       "amdgpu.svm_max_mapping_size=131072"  # 128GB in MB
       "amd_iommu=on"

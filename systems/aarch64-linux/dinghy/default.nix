@@ -233,6 +233,11 @@ in
   };
 
   projectinitiative = {
+
+    system = {
+      nix-config.enable = true;
+    };
+
     suites = {
       # TODO: fix this
       development.enable = true;

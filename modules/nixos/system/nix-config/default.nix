@@ -20,7 +20,8 @@ in
   config = mkIf cfg.enable {
     nix = {
 
-      # package = pkgs.nixVersions.nix_2_25;
+      package = pkgs.lixPackageSets.stable.lix;
+      # package = pkgs.nixVersions.nix_2_34.7;
       gc = {
         automatic = true;
         dates = "weekly";
