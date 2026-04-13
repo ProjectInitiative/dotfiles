@@ -16,10 +16,6 @@ services:
         target: /tmp/cache
         tmpfs:
           size: 1000000000
-    ports:
-      - "5000:5000" # Internal Web UI
-      - "8554:8554" # RTSP Restream (for Home Assistant/VLC)
-      - "8555:8555/tcp" # WebRTC
-      - "8555:8555/udp" # WebRTC
+    network_mode: host
     environment:
       FRIGATE_RTSP_PASSWORD: "your_secure_password"

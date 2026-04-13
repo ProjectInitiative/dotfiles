@@ -370,7 +370,11 @@ in
             uid = "prometheus_ds";
             type = "prometheus";
             access = "proxy";
-            url = "http://${cfg.prometheus.listenAddress}:${toString cfg.prometheus.port}";
+            url =
+              let
+                addr = if cfg.prometheus.listenAddress == "0.0.0.0" then "127.0.0.1" else cfg.prometheus.listenAddress;
+              in
+              "http://${addr}:${toString cfg.prometheus.port}";
             isDefault = true;
           })
           ++ (optional cfg.loki.enable {
@@ -378,7 +382,11 @@ in
             uid = "loki_ds";
             type = "loki";
             access = "proxy";
-            url = "http://${cfg.loki.listenAddress}:${toString cfg.loki.port}";
+            url =
+              let
+                addr = if cfg.loki.listenAddress == "0.0.0.0" then "127.0.0.1" else cfg.loki.listenAddress;
+              in
+              "http://${addr}:${toString cfg.loki.port}";
           });
       };
     };

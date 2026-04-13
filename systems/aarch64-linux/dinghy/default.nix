@@ -266,7 +266,6 @@ in
             # A job named 'nodes' to scrape all your other servers
             nodes = {
               targets = [
-                "127.0.0.1:9100"
                 # "172.16.1.51:9100"
                 # "172.16.1.52:9100"
                 # "172.16.1.53:9100"
@@ -284,20 +283,17 @@ in
                 "lighthouse-den-1:9100"
               ];
             };
-            # garage = {
-            #   targets = [
-            #     # "172.16.1.51:31630"
-            #     # "172.16.1.52:31630"
-            #     # "172.16.1.53:31630"
-            #     "capstan1:31630"
-            #     "capstan2:31630"
-            #     "capstan3:31630"
-            #   ];
-            # };
+            garage = {
+              targets = [
+                "172.16.4.50:31630" # vip
+                # "172.16.4.51:31630" # capstan1
+                # "172.16.4.52:31630" # capstan2
+                # "172.16.4.53:31630" # capstan3
+              ];
+            };
             # A job for scraping smartctl data if it's on a different port/host
             smart-devices = {
               targets = [
-                "127.0.0.1:9633"
                 # "172.16.1.51:9633"
                 # "172.16.1.52:9633"
                 # "172.16.1.53:9633"

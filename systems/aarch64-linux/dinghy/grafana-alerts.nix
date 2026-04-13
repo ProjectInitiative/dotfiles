@@ -471,7 +471,7 @@ let
                 to = 0;
               };
               model = {
-                expr = "(1 - avg by(instance)(rate(node_cpu_seconds_total{mode=\"idle\",instance!=\"dinghy\"}[15m]))) * 100";
+                expr = ''100 - (avg by(instance)(rate(node_cpu_seconds_total{mode="idle",instance!~".*dinghy.*|0\\.0\\.0\\.0.*|127\\.0\\.0\\.1.*"}[15m])) * 100)'';
                 refId = "A";
               };
             }
@@ -497,7 +497,7 @@ let
           ];
           for = "15m";
           labels.severity = "warning";
-          annotations.summary = "🔥 Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nLoad: <b>{{ if $values.B }}{{ $values.B.Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
+          annotations.summary = "🔥 Node: {{ or .Labels.instance \"Unknown\" }}\nLoad: <b>{{ with $values.B }}{{ .Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
           testScenarios = {
             "high_cpu" = {
               metric = "node_cpu_seconds_total";
@@ -524,7 +524,7 @@ let
                 to = 0;
               };
               model = {
-                expr = "((node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes) * 100";
+                expr = ''((node_memory_MemTotal_bytes{instance!~".*astrolabe.*"} - node_memory_MemAvailable_bytes{instance!~".*astrolabe.*"}) / node_memory_MemTotal_bytes{instance!~".*astrolabe.*"}) * 100'';
                 refId = "A";
               };
             }
@@ -550,7 +550,7 @@ let
           ];
           for = "5m";
           labels.severity = "warning";
-          annotations.summary = "🧠 Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Unknown{{ end }}\nUsage: <b>{{ if $values.B }}{{ $values.B.Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
+          annotations.summary = "🧠 Node: {{ or .Labels.instance \"Unknown\" }}\nUsage: <b>{{ with $values.B }}{{ .Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
           testScenarios = {
             "high_ram" = {
               metric = "node_memory_MemAvailable_bytes";
@@ -600,7 +600,7 @@ let
           ];
           for = "10m";
           labels.severity = "warning";
-          annotations.summary = "💾 Node: {{ if $labels.instance }}{{ $labels.instance }}{{ else }}Resolved{{ end }}\nMountpoint: {{ if $labels.mountpoint }}{{ $labels.mountpoint }}{{ else }}Unknown{{ end }}\nUsage: <b>{{ if $values.B }}{{ $values.B.Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
+          annotations.summary = "💾 Node: {{ or .Labels.instance \"Unknown\" }}\nMountpoint: {{ or .Labels.mountpoint \"Unknown\" }}\nUsage: <b>{{ with $values.B }}{{ .Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
           testScenarios = {
             "storage_full" = {
               metric = "node_filesystem_free_bytes";
@@ -609,6 +609,203 @@ let
                 fstype = "ext4";
               };
               value = 0;
+            };
+          };
+        }
+      ];
+    }
+    {
+      name = "Garage Storage";
+      folder = "Infrastructure";
+      interval = "1m";
+      rules = [
+        {
+          uid = "garage_cluster_unavailable";
+          title = "Garage Cluster Unavailable";
+          condition = "C";
+          noDataState = "OK";
+          execErrState = "Error";
+          data = [
+            {
+              refId = "A";
+              datasourceUid = "prometheus_ds";
+              relativeTimeRange = { from = 300; to = 0; };
+              model = {
+                expr = "max by(job) (garage_cluster_available) == 0";
+                refId = "A";
+              };
+            }
+            {
+              refId = "B";
+              datasourceUid = "__expr__";
+              model = { expression = "A"; type = "reduce"; reducer = "last"; refId = "B"; };
+            }
+            {
+              refId = "C";
+              datasourceUid = "__expr__";
+              model = { expression = "$B == 0"; type = "math"; refId = "C"; };
+            }
+          ];
+          for = "1m";
+          labels.severity = "critical";
+          annotations.summary = "🚨 <b>Garage Cluster Unavailable</b>\nGarage cannot serve requests. The cluster is completely down or isolated.";
+          testScenarios = {
+            "garage_unavailable" = {
+              metric = "garage_cluster_available";
+              labels = { job = "garage" ; };
+              value = 0;
+            };
+          };
+        }
+        {
+          uid = "garage_quorum_lost";
+          title = "Garage Quorum Lost";
+          condition = "C";
+          noDataState = "OK";
+          execErrState = "Error";
+          data = [
+            {
+              refId = "A";
+              datasourceUid = "prometheus_ds";
+              relativeTimeRange = { from = 300; to = 0; };
+              model = {
+                expr = "min by(job) (garage_cluster_partitions_quorum) < 256";
+                refId = "A";
+              };
+            }
+            {
+              refId = "B";
+              datasourceUid = "__expr__";
+              model = { expression = "A"; type = "reduce"; reducer = "last"; refId = "B"; };
+            }
+            {
+              refId = "C";
+              datasourceUid = "__expr__";
+              model = { expression = "$B < 256"; type = "math"; refId = "C"; };
+            }
+          ];
+          for = "2m";
+          labels.severity = "critical";
+          annotations.summary = "📉 <b>Garage Quorum Lost</b>\nSome partitions have lost quorum ({{ with $values.B }}{{ .Value | printf \"%.0f\" }}{{ else }}?{{ end }}/256). Data in these partitions is currently inaccessible.";
+          testScenarios = {
+            "garage_quorum_lost" = {
+              metric = "garage_cluster_partitions_quorum";
+              labels = { job = "garage" ; };
+              value = 128;
+            };
+          };
+        }
+        {
+          uid = "garage_sync_errors";
+          title = "Garage Sync Errors";
+          condition = "C";
+          noDataState = "OK";
+          execErrState = "Error";
+          data = [
+            {
+              refId = "A";
+              datasourceUid = "prometheus_ds";
+              relativeTimeRange = { from = 300; to = 0; };
+              model = {
+                expr = "sum by(instance) (garage_block_resync_errored_blocks) > 0";
+                refId = "A";
+              };
+            }
+            {
+              refId = "B";
+              datasourceUid = "__expr__";
+              model = { expression = "A"; type = "reduce"; reducer = "last"; refId = "B"; };
+            }
+            {
+              refId = "C";
+              datasourceUid = "__expr__";
+              model = { expression = "$B > 0"; type = "math"; refId = "C"; };
+            }
+          ];
+          for = "5m";
+          labels.severity = "critical";
+          annotations.summary = "⚠️ <b>Garage Sync Errors</b>\nNode: {{ or .Labels.instance \"Unknown\" }}\nGarage is failing to resync <b>{{ with $values.B }}{{ .Value | printf \"%.0f\" }}{{ else }}?{{ end }}</b> blocks. This may indicate data loss if persistent.";
+          testScenarios = {
+            "garage_sync_error" = {
+              metric = "garage_block_resync_errored_blocks";
+              labels = { instance = "garage-0"; };
+              value = 5;
+            };
+          };
+        }
+        {
+          uid = "garage_node_disconnected";
+          title = "Garage Node Disconnected";
+          condition = "C";
+          noDataState = "OK";
+          execErrState = "Error";
+          data = [
+            {
+              refId = "A";
+              datasourceUid = "prometheus_ds";
+              relativeTimeRange = { from = 300; to = 0; };
+              model = {
+                expr = "garage_cluster_healthy == 0";
+                refId = "A";
+              };
+            }
+            {
+              refId = "B";
+              datasourceUid = "__expr__";
+              model = { expression = "A"; type = "reduce"; reducer = "last"; refId = "B"; };
+            }
+            {
+              refId = "C";
+              datasourceUid = "__expr__";
+              model = { expression = "$B == 0"; type = "math"; refId = "C"; };
+            }
+          ];
+          for = "3m";
+          labels.severity = "warning";
+          annotations.summary = "🔌 <b>Garage Node Disconnected</b>\nOne or more nodes are disconnected from the Garage cluster. Redundancy may be reduced.";
+          testScenarios = {
+            "garage_node_down" = {
+              metric = "garage_cluster_healthy";
+              labels = { job = "garage" ; };
+              value = 0;
+            };
+          };
+        }
+        {
+          uid = "garage_storage_low";
+          title = "Garage Storage Low";
+          condition = "C";
+          noDataState = "OK";
+          execErrState = "Error";
+          data = [
+            {
+              refId = "A";
+              datasourceUid = "prometheus_ds";
+              relativeTimeRange = { from = 300; to = 0; };
+              model = {
+                expr = "(garage_local_disk_avail{volume=\"data\"} / garage_local_disk_total{volume=\"data\"}) * 100";
+                refId = "A";
+              };
+            }
+            {
+              refId = "B";
+              datasourceUid = "__expr__";
+              model = { expression = "A"; type = "reduce"; reducer = "last"; refId = "B"; };
+            }
+            {
+              refId = "C";
+              datasourceUid = "__expr__";
+              model = { expression = "$B < 15"; type = "math"; refId = "C"; };
+            }
+          ];
+          for = "10m";
+          labels.severity = "warning";
+          annotations.summary = "💽 <b>Garage Storage Low</b>\nNode: {{ or .Labels.instance \"Unknown\" }}\nFree Space: <b>{{ with $values.B }}{{ .Value | printf \"%.1f\" }}{{ else }}?{{ end }}%</b>";
+          testScenarios = {
+            "garage_disk_low" = {
+              metric = "garage_local_disk_avail";
+              labels = { instance = "garage-1"; volume = "data"; };
+              value = 10;
             };
           };
         }

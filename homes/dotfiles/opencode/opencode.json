@@ -3,14 +3,14 @@
   "provider": {
     "vllm": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "vLLM (ROCm Strix Halo)",
+      "name": "vLLM (Gemma 4)",
       "options": {
         "baseURL": "http://astrolabe:8000/v1",
         "apiKey": "dummy"
       },
       "models": {
-        "qwen3.5-122b-ud-q4_k_xl": {
-          "name": "Qwen3.5 122B (128K context)",
+        "gemma-4-moe": {
+          "name": "Gemma 4 (128K context)",
           "limit": {
             "context": 128000,
             "output": 4096
@@ -25,7 +25,7 @@
     "read": "allow",
     "webfetch": "allow",
     "websearch": "allow",
-    "question": "allow",
+    "question": "allow"
   },
   "compaction": {
     "auto": true,
