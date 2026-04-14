@@ -20,6 +20,26 @@ let
   #############################################################################
   # --- Common System & Bootloader Config ---
   commonSystemConfig = {
+
+    boot.initrd.systemd.enable = true;
+
+      # 2. Ensure bcachefs is explicitly supported in the early ramdisk.
+      boot.initrd.supportedFilesystems = [ "bcachefs" ];
+      boot.initrd.kernelModules = [ "bcachefs" ];
+
+      # 3. Update the /nix mount entry.
+      fileSystems."/nix" = {
+        # UUID is generally more stable than mapper paths in a systemd-initrd.
+        device = "UUID=205123cd-4af7-4f23-85d8-44e0fa2f1774";
+        fsType = "bcachefs";
+        # Use the working community standard for subvolumes.
+        options = [ "X-mount.subdir=nix" "noatime" "discard" ];
+        neededForBoot = true;
+      };
+
+    # Force LVM to settle before bcachefs attempts to mount
+    boot.initrd.services.lvm.enable = true;
+
     boot.loader = {
       systemd-boot.enable = true;
       efi.canTouchEfiVariables = true;
@@ -97,6 +117,7 @@ let
           content = {
             type = "filesystem";
             format = "bcachefs";
+            # REMOVE the mountpoint here for now to avoid Stage 1 conflicts
             mountpoint = bcachefsMountpoint;
           };
         };
@@ -112,18 +133,6 @@ lib.recursiveUpdate commonSystemConfig {
 
   # --- Full System Configuration ---
   disko = coreDiskoConfig;
-
-  fileSystems."/nix" = {
-    device = "UUID=205123cd-4af7-4f23-85d8-44e0fa2f1774";
-    fsType = "bcachefs";
-    options = [ 
-      "subvol=nix"        # Mounts your specific subvolume
-      "compression=zstd"  # High-performance compression
-      "noatime"           # Saves on flash wear/latency
-      "discard"
-    ];
-    neededForBoot = true; # CRITICAL: Tells initrd to mount this early
-  };
 
   home-manager = {
 
