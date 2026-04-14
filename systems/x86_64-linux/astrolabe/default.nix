@@ -113,6 +113,18 @@ lib.recursiveUpdate commonSystemConfig {
   # --- Full System Configuration ---
   disko = coreDiskoConfig;
 
+  fileSystems."/nix" = {
+    device = "UUID=205123cd-4af7-4f23-85d8-44e0fa2f1774";
+    fsType = "bcachefs";
+    options = [ 
+      "subvol=nix"        # Mounts your specific subvolume
+      "compression=zstd"  # High-performance compression
+      "noatime"           # Saves on flash wear/latency
+      "discard"
+    ];
+    neededForBoot = true; # CRITICAL: Tells initrd to mount this early
+  };
+
   home-manager = {
 
     users.kylepzak.${namespace} = {
