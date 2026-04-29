@@ -14,6 +14,7 @@ in
       extraPackages = with upstream; [
         rocmPackages.clr
         rocmPackages.clr.icd
+        rocmPackages.hipfort
         libvdpau-va-gl
         libva-vdpau-driver
       ];

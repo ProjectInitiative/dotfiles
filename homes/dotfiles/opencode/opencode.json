@@ -3,19 +3,35 @@
   "provider": {
     "vllm": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "vLLM (Gemma 4)",
+      "name": "vLLM (Astrolabe)",
       "options": {
         "baseURL": "http://astrolabe:8000/v1",
         "apiKey": "dummy"
       },
       "models": {
-        "gemma-4-moe": {
-          "name": "Gemma 4 (128K context)",
+        "astrolabe": {
+          "name": "astrolabe (256k context)",
           "limit": {
-            "context": 128000,
-            "output": 4096
+            "context": 256000,
+            "output": 16384
+          },
+          "parameters": {
+            "repetition_penalty": 1.02
           }
         }
+      }
+    }
+  },
+  "agent": {
+    "yolo": {
+      "description": "Dangerously skip permissions for local homelab automation",
+      "instructions": "You are an expert NixOS and Systems Engineer. You have full permission to modify files, run shell commands within your directory. Prioritize concise, correct solutions.",
+      "permission": {
+        "*": {
+          "*": "allow"
+        },
+        "bash": "allow",
+        "edit": "allow" 
       }
     }
   },
@@ -28,9 +44,9 @@
     "question": "allow"
   },
   "compaction": {
-    "auto": true,
-    "prune": true,
-    "strategy": "summarize",
+    "auto": false,
+    "prune": false,
+    "strategy": "truncate",
     "threshold": 0.7,
     "preserveRecentMessages": 20,
     "reserved": 20000

@@ -42,6 +42,7 @@ let
 
     boot.loader = {
       systemd-boot.enable = true;
+      systemd-boot.configurationLimit = 4;
       efi.canTouchEfiVariables = true;
     };
 
@@ -51,8 +52,8 @@ let
     # Pull bleeding-edge Mesa (Vulkan) drivers from master for the Strix Halo
     hardware.graphics = {
       enable = true;
-      package = upstream.mesa.drivers;
-      package32 = upstream.pkgsi686Linux.mesa.drivers;
+      package = upstream.mesa;
+      package32 = upstream.pkgsi686Linux.mesa;
     };
 
     # Pull bleeding-edge linux-firmware (optional, but highly recommended for new APUs)

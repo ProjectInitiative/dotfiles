@@ -16,6 +16,8 @@
     unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     # NixPkgs Master
     upstream.url = "github:nixos/nixpkgs/master";
+    # NixPkgs Master
+    ai-tools.url = "github:nixos/nixpkgs/master";
 
     # Home Manager
     home-manager.url = "github:nix-community/home-manager/release-25.11";
