@@ -1,6 +1,6 @@
 # Topsail (Primary): Agile sail for fair-weather speed (primary performance).
 #
-# nix build .\#nixosConfigurations.topsail.config.system.build.sdImage
+# nix build .\#nixosConfigurations.topsail.config.system.build.rockchipImages
 
 {
   config,
@@ -12,28 +12,6 @@
 }:
 {
   imports = inputs.nixos-on-arm.bootModules.e52c;
-
-  boot.initrd.availableKernelModules = [
-    "dw_mmc_rockchip"
-    "usbnet"
-    "cdc_ether"
-    "rndis_host"
-  ];
-
-  rockchip = {
-    enable = true;
-    uboot.package = pkgs.uboot-rk3582-generic;
-    deviceTree = "rockchip/rk3582-radxa-e52c.dtb";
-    console = {
-      earlycon = "uart8250,mmio32,0xfeb50000";
-      console = "ttyS4,1500000";
-    };
-    image.buildVariants = {
-      full = true;
-      sdcard = true;
-      ubootOnly = true;
-    };
-  };
 
   projectinitiative = {
     services.monitoring = {
