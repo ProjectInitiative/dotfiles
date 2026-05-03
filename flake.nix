@@ -174,6 +174,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    faucet-nix = {
+      url = "github:ProjectInitiative/faucet-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   outputs =
@@ -316,6 +321,9 @@
           "aarch64-linux"
         ];
         hosts = {
+          topsail = {
+            system = "aarch64-linux";
+          };
           stormjib = {
             system = "aarch64-linux";
           };
@@ -353,6 +361,7 @@
                 dcc-ex.nixosModules.jmri-server
                 # (import ./encrypted/sops.nix)
                 rockpi-quad.nixosModules.rockpi-quad
+                faucet-nix.nixosModules.default
               ]
               ++ common-modules;
 

@@ -16,7 +16,6 @@ with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.hosts.masthead.stormjib;
-  sops = config.sops;
 in
 {
   options.${namespace}.hosts.masthead.stormjib = with types; {
@@ -24,10 +23,9 @@ in
   };
 
   config = mkIf cfg.enable {
-
-    projectinitiative = {
-      hosts.masthead.enable = true;
+    ${namespace}.hosts.masthead = {
+      enable = true;
+      routerRole = "backup";
     };
-
   };
 }
