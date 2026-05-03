@@ -119,10 +119,10 @@ in
           virtualIp = mkOption { type = types.str; };
           primaryIp = mkOption { type = types.str; };
           backupIp = mkOption { type = types.str; };
-          enableDhcp = mkBoolOpt true;
+          enableDhcp = mkBoolOpt true "Enable DHCP on this VLAN";
           dhcpRangeStart = mkOption { type = types.str; };
           dhcpRangeEnd = mkOption { type = types.str; };
-          isolated = mkBoolOpt false;
+          isolated = mkBoolOpt false "Isolate this VLAN from others";
         };
       });
       default = [ ];
@@ -162,7 +162,7 @@ in
       default = [ "1.1.1.1" "9.9.9.9" ];
     };
 
-    enableIPv6 = mkBoolOpt true;
+    enableIPv6 = mkBoolOpt true "Enable IPv6 support";
   };
 
   config = mkIf cfg.enable {

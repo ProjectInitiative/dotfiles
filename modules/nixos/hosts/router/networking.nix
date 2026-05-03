@@ -97,9 +97,7 @@ in
           };
           # Basic IPv6 WAN setup (assuming SLAAC/DHCPv6 from ISP)
           ipv6 = mkIf cfg.enableIPv6 {
-            addresses = [ ]; # Let RA handle it
-            acceptRA = true;
-            # useDHCP = true; # If your ISP uses DHCPv6 for addresses
+            addresses = [ ];
           };
         };
 

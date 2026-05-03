@@ -14,9 +14,7 @@
   ...
 }:
 {
-  imports = [
-    "${inputs.self}/lib/arm-tools/rockchip-image.nix"
-  ];
+  imports = inputs.nixos-on-arm.bootModules.e52c;
 
   # Platform configuration
   # nixpkgs.buildPlatform = "x86_64-linux";
@@ -117,7 +115,15 @@
         };
       };
     };
-    hosts.masthead.stormjib.enable = true;
+    hosts.masthead = {
+      stormjib.enable = true;
+      interfaces = {
+        wan = "enP3p49s0";
+        lan = "enP4p65s0";
+        sync = "enP5p81s0";
+      };
+      wanSpoofMac = "02:00:00:00:00:01";
+    };
     networking = {
       tailscale = {
         enable = true;

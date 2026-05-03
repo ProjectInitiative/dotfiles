@@ -46,32 +46,23 @@ in
   config = mkIf (cfg.enable && cfg.vrrp.enable) {
     networking.vrrp = {
       enable = true;
-
       globalDefs.routerId = config.networking.hostName;
 
-      vrrpInstances =
-        let
-          vlanInstances = listToAttrs (imap1 (idx: vlan: mkVlanVrrpInstance vlan idx) cfg.vlans);
-        in
-        {
-          VI_MGMT = {
-            virtualRouterId = cfg.vrrp.virtualRouterIdBase;
-            priority = if isPrimary then cfg.vrrp.priority.primary else cfg.vrrp.priority.backup;
-            interface = mgmtInterfaceName;
-            useVmac = false;
-            advertisementInterval = 1;
-            authPassFile = cfg.vrrp.authPassFile;
-            virtualIPs = [{
+      vrrpInstances = {
+        VI_MGMT = {
+          virtualRouterId = cfg.vrrp.virtualRouterIdBase;
+          priority = if isPrimary then cfg.vrrp.priority.primary else cfg.vrrp.priority.backup;
+          interface = mgmtInterfaceName;
+          useVmac = false;
+          advertisementInterval = 1;
+          virtualIPs = [
+            {
               address = cfg.management.virtualIp;
               prefixLength = parsePrefix cfg.management.network;
-            }];
-            trackInterfaces = [ cfg.interfaces.sync cfg.interfaces.wan ];
-            notifyMaster = "/etc/masthead/openflow-master.sh";
-            notifyBackup = "/etc/masthead/openflow-backup.sh";
-            notifyFault = "/etc/masthead/openflow-fault.sh";
-          };
-        }
-        // vlanInstances;
+            }
+          ];
+        };
+      };
     };
 
     # ── Notify Scripts ────────────────────────────────────────────

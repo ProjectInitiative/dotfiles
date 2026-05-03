@@ -11,9 +11,7 @@
   ...
 }:
 {
-  imports = [
-    "${inputs.self}/lib/arm-tools/rockchip-image.nix"
-  ];
+  imports = inputs.nixos-on-arm.bootModules.e52c;
 
   boot.initrd.availableKernelModules = [
     "dw_mmc_rockchip"
@@ -69,7 +67,15 @@
         smartctl.enable = true;
       };
     };
-    hosts.masthead.topsail.enable = true;
+    hosts.masthead = {
+      topsail.enable = true;
+      interfaces = {
+        wan = "enP3p49s0";
+        lan = "enP4p65s0";
+        sync = "enP5p81s0";
+      };
+      wanSpoofMac = "02:00:00:00:00:01";
+    };
     networking.tailscale = {
       enable = true;
       ephemeral = false;

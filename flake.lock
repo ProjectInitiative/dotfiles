@@ -333,6 +333,28 @@
         "type": "github"
       }
     },
+    "faucet-nix": {
+      "inputs": {
+        "flake-utils": "flake-utils_2",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "upstream-src": "upstream-src"
+      },
+      "locked": {
+        "lastModified": 1777784328,
+        "narHash": "sha256-WZSE5ZJl0t98glfCaJMPuUuvCSCvoO6KrFFk27ulQi4=",
+        "owner": "ProjectInitiative",
+        "repo": "faucet-nix",
+        "rev": "e9bbb8e72bb72a87930eaf689f69922186d641b1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ProjectInitiative",
+        "repo": "faucet-nix",
+        "type": "github"
+      }
+    },
     "fenix": {
       "inputs": {
         "nixpkgs": [
@@ -537,7 +559,7 @@
     },
     "flake-utils-plus": {
       "inputs": {
-        "flake-utils": "flake-utils_3"
+        "flake-utils": "flake-utils_4"
       },
       "locked": {
         "lastModified": 1715533576,
@@ -575,6 +597,24 @@
     "flake-utils_3": {
       "inputs": {
         "systems": "systems_5"
+      },
+      "locked": {
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "flake-utils_4": {
+      "inputs": {
+        "systems": "systems_6"
       },
       "locked": {
         "lastModified": 1694529238,
@@ -648,7 +688,7 @@
       "inputs": {
         "attic-flake": "attic-flake",
         "crane": "crane_3",
-        "flake-utils": "flake-utils_2",
+        "flake-utils": "flake-utils_3",
         "nixpkgs": "nixpkgs_3",
         "rust-overlay": "rust-overlay"
       },
@@ -1201,6 +1241,7 @@
         "dcc-ex": "dcc-ex",
         "deploy-rs": "deploy-rs",
         "disko": "disko",
+        "faucet-nix": "faucet-nix",
         "firefox-addons": "firefox-addons",
         "flake-compat": "flake-compat_4",
         "gpg-base-conf": "gpg-base-conf",
@@ -1405,6 +1446,21 @@
         "type": "github"
       }
     },
+    "systems_6": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
     "treefmt-nix": {
       "inputs": {
         "nixpkgs": [
@@ -1454,6 +1510,23 @@
         "owner": "nixos",
         "ref": "master",
         "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "upstream-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1772673182,
+        "narHash": "sha256-HJIxQi96KiExNr8wqiOPKoYlnB1SDS8jFFG40qlv378=",
+        "owner": "faucetsdn",
+        "repo": "faucet",
+        "rev": "29b167bd92b35431ff678e1e3677823405de7636",
+        "type": "github"
+      },
+      "original": {
+        "owner": "faucetsdn",
+        "ref": "1.10.12",
+        "repo": "faucet",
         "type": "github"
       }
     },
