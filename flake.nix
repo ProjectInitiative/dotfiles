@@ -16,6 +16,7 @@
     unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     # NixPkgs Master
     upstream.url = "github:nixos/nixpkgs/master";
+    rocm-upstream.url = "github:nixos/nixpkgs/master";
     # NixPkgs Master
     ai-tools.url = "github:nixos/nixpkgs/master";
 
@@ -325,6 +326,13 @@
             specialArgs = {
               # ✅ CORRECT: 'config' is safely contained inside the upstream import
               upstream = import inputs.upstream {
+                system = "x86_64-linux";
+                config = {
+                  allowUnfree = true;
+                  allowBroken = true;
+                };
+              };
+              rocm-upstream = import inputs.rocm-upstream {
                 system = "x86_64-linux";
                 config = {
                   allowUnfree = true;

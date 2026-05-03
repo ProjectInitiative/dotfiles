@@ -1,5 +1,5 @@
 # modules/nixos/hardware/amdgpu/default.nix
-{ config, lib, pkgs, namespace, upstream ? pkgs, ... }:
+{ config, lib, pkgs, namespace, rocm-upstream ? pkgs, ... }:
 with lib;
 let
   cfg = config.${namespace}.hardware.amdgpu;
@@ -11,7 +11,7 @@ in
     hardware.graphics = {
       enable = true;
       # 'unstable' now comes from your host's specialArgs
-      extraPackages = with upstream; [
+      extraPackages = with rocm-upstream; [
         rocmPackages.clr
         rocmPackages.clr.icd
         rocmPackages.hipfort
@@ -42,7 +42,7 @@ in
       HSA_ENABLE_SDMA = "0"; 
     };
 
-    environment.systemPackages = with upstream; [
+    environment.systemPackages = with rocm-upstream; [
       rocmPackages.rocm-smi
       rocmPackages.rocminfo
     ];

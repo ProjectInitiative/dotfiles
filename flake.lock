@@ -1207,6 +1207,22 @@
         "type": "github"
       }
     },
+    "rocm-upstream": {
+      "locked": {
+        "lastModified": 1777753460,
+        "narHash": "sha256-1hBkBQ7IXkIGUL5HNL4AFEb8PMiFvqAVcyc8ngZZooI=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "291a2a05ce17b4c7b04a07af85a9d27430012227",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "master",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "ai-tools": "ai-tools",
@@ -1233,6 +1249,7 @@
         "nixpkgs-bambu": "nixpkgs-bambu",
         "nixpkgs-catch-up": "nixpkgs-catch-up",
         "rockpi-quad": "rockpi-quad",
+        "rocm-upstream": "rocm-upstream",
         "snowfall-lib": "snowfall-lib",
         "sops-nix": "sops-nix",
         "ssh-pub-keys": "ssh-pub-keys",
