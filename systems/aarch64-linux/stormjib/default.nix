@@ -16,6 +16,10 @@
 {
   imports = inputs.nixos-on-arm.bootModules.e52c;
 
+  boot.kernelPackages = lib.mkForce pkgs.linuxPackages_latest;
+  boot.supportedFilesystems.zfs = lib.mkForce false;
+  hardware.deviceTree.kernelPackage = lib.mkForce config.boot.kernelPackages.kernel;
+
   projectinitiative = {
     services = {
       monitoring = {
