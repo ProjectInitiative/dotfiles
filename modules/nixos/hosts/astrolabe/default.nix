@@ -64,8 +64,14 @@ in
         console-info.ip-display = enabled;
         nix-config = enabled;
       };
+      encrypted.nix-signing = enabled;
 
       suites = {
+        loft = {
+          enable = true;
+          enableClient = true;
+          enableServer = true;
+        };
         monitoring = mkIf cfg.allFeatures {
           enable = true;
         };
