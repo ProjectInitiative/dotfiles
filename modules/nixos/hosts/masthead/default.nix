@@ -173,6 +173,26 @@ in
       cfg.interfaces.sync
     ];
 
+    # ── Read-Only Friendly (SD card protection) ─────────────────────
+    services.journald.extraConfig = ''
+      Storage=volatile
+      RuntimeMaxUse=64M
+    '';
+
+    fileSystems."/tmp" = {
+      device = "tmpfs";
+      fsType = "tmpfs";
+      options = [ "nosuid" "nodev" "noexec" "size=256M" ];
+    };
+
+    boot.kernel.sysctl."vm.vfs_cache_pressure" = 200;
+
+    # ── Forward logs to dinghy's Loki via Alloy ─────────────────────
+    ${namespace}.services.monitoring.alloy = {
+      enable = true;
+      lokiAddress = "100.119.112.42";
+    };
+
     environment.systemPackages = [ pkgs.conntrack-tools ];
   };
 }

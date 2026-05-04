@@ -197,11 +197,8 @@ in
       ethtool # Useful for interface diagnostics
     ];
 
-    # Recommended: journald settings for a router
-    services.journald = {
-      rateLimitBurst = 0;
-      extraConfig = "SystemMaxUse=50M";
-    };
+    # Prevent log rate limiting on routers
+    services.journald.rateLimitBurst = 0;
 
     # Parse networks for convenience (can be used by submodules)
     _module.args.parsedNetworks =

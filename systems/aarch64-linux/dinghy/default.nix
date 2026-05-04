@@ -266,16 +266,14 @@ in
             # A job named 'nodes' to scrape all your other servers
             nodes = {
               targets = [
-                # "172.16.1.51:9100"
-                # "172.16.1.52:9100"
-                # "172.16.1.53:9100"
                 "astrolabe:9100"
                 "capstan1:9100"
                 "capstan2:9100"
                 "capstan3:9100"
                 "172.16.1.1:9100"
                 "wharfmaster:9100"
-                # "stormjib:9100"
+                "stormjib:9100"
+                "topsail:9100"
                 "lightship-atx:9100"
                 "lightship-dal:9100"
                 "lightship-dfw:9100"
@@ -294,9 +292,6 @@ in
             # A job for scraping smartctl data if it's on a different port/host
             smart-devices = {
               targets = [
-                # "172.16.1.51:9633"
-                # "172.16.1.52:9633"
-                # "172.16.1.53:9633"
                 "lightship-atx:9633"
                 "lightship-dal:9633"
                 "lightship-dfw:9633"
@@ -306,6 +301,8 @@ in
                 "capstan3:9633"
                 "wharfmaster:9633"
                 "cargohold:9633"
+                "stormjib:9633"
+                "topsail:9633"
               ];
             };
             speedtest = {
