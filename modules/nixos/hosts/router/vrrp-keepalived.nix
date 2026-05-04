@@ -55,20 +55,11 @@ let
       ''}
 
       # Track scripts for state changes based on script exit status
-      ${optionalString (instance.trackScripts != { }) (
-        concatMapStringsSep "\n"
-          (name: script: ''
-            track_script {
-              ${name}
-            }
-          '')
-          (
-            mapAttrsToList (name: script: {
-              inherit name;
-              value = script;
-            }) instance.trackScripts
-          )
-      )}
+      ${optionalString (instance.trackScripts != [ ]) ''
+        track_script {
+          ${concatStringsSep "\n" (map (name: "${name}") instance.trackScripts)}
+        }
+      ''}
     '';
   };
 
@@ -473,22 +464,22 @@ in
 
         # VRRP script definitions
         ${concatMapStringsSep "\n\n" (
-          name: script:
+          { name, script, ... }:
           let
             generated = generateVrrpScript name script;
           in
           "vrrp_script ${generated.name} {\n${generated.content}\n}"
-        ) (mapAttrsToList (n: v: v) cfg.vrrpScripts)}
+        ) (mapAttrsToList (n: v: { inherit n v; name = n; script = v; }) cfg.vrrpScripts)}
 
 
         # VRRP instance definitions
         ${concatMapStringsSep "\n\n" (
-          name: instance:
+          { name, instance, ... }:
           let
             generated = generateVrrpInstance name instance;
           in
           "vrrp_instance ${generated.name} {\n${generated.content}\n}"
-        ) (mapAttrsToList (n: v: v) cfg.vrrpInstances)}
+        ) (mapAttrsToList (n: v: { inherit n v; name = n; instance = v; }) cfg.vrrpInstances)}
 
         # TODO: Add virtual_server configuration generation if needed
       '';

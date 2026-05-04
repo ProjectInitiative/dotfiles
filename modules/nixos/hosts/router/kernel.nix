@@ -53,17 +53,13 @@ in
         "net.ipv4.conf.default.log_martians" = 1;
 
         # IPv6 settings beyond basic forwarding/RA (already in default.nix)
-        "net.ipv6.conf.all.accept_ra" = 0; # Don't accept RAs on internal interfaces by default
+        "net.ipv6.conf.all.accept_ra" = 0;
         "net.ipv6.conf.default.accept_ra" = 0;
-        "net.ipv6.conf.all.autoconf" = 0; # Don't autoconfigure addresses internally
-        "net.ipv6.conf.default.autoconf" = 0;
-        "net.ipv6.conf.all.use_tempaddr" = 0; # Routers typically don't need temporary addresses
-
-        # Adjust WAN interface specifically if needed (done in networking.nix now)
-        # "net.ipv6.conf.${cfg.wanInterface}.accept_ra" = mkIf cfg.enableIPv6 2; # Accept even if forwarding
-        # "net.ipv6.conf.${cfg.wanInterface}.autoconf" = mkIf cfg.enableIPv6 1;
 
         # Add custom settings from config
+      }
+      // optionalAttrs cfg.enableIPv6 {
+        "net.ipv6.conf.${cfg.wanInterface}.accept_ra" = 2;
       }
       // moduleCfg.extraSysctl;
     };

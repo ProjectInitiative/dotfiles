@@ -178,6 +178,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    faucet-nix = {
+      url = "github:ProjectInitiative/faucet-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   outputs =
@@ -384,6 +389,7 @@
                 dcc-ex.nixosModules.jmri-server
                 # (import ./encrypted/sops.nix)
                 rockpi-quad.nixosModules.rockpi-quad
+                faucet-nix.nixosModules.default
               ]
               ++ common-modules;
 
