@@ -163,7 +163,7 @@
     };
 
     nixos-avf = {
-      url = "github:nix-community/nixos-avf";
+      url = "github:projectinitiative/nixos-avf";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

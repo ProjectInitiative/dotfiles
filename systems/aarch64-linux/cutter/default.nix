@@ -17,6 +17,7 @@ let
 in
 {
   imports = [
+    inputs.nixos-avf.nixosModules.avfInitial
     inputs.nixos-avf.nixosModules.avf
   ];
 

@@ -31,6 +31,10 @@ in
 
     // optionalAttrs (!isHomeManager) {
 
+      environment.systemPackages = with pkgs; [
+        pkgs.${namespace}.gen-host-key
+      ];
+
       ${namespace} = {
         networking = {
           tailscale = enabled;
