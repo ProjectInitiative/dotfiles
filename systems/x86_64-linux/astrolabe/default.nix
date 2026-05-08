@@ -56,6 +56,9 @@ let
       package32 = upstream.pkgsi686Linux.mesa;
     };
 
+    boot.extraModulePackages = [ config.boot.kernelPackages.r8125 ];
+    boot.blacklistedKernelModules = [ "r8169" ];
+
     # Pull bleeding-edge linux-firmware (optional, but highly recommended for new APUs)
     hardware.firmware = [ upstream.linux-firmware ];
 

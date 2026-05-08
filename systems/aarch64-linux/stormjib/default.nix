@@ -20,6 +20,9 @@
   boot.supportedFilesystems.zfs = lib.mkForce false;
   hardware.deviceTree.kernelPackage = lib.mkForce config.boot.kernelPackages.kernel;
 
+  boot.extraModulePackages = [ config.boot.kernelPackages.r8125 ];
+  boot.blacklistedKernelModules = [ "r8169" ];
+
   projectinitiative = {
     services = {
       monitoring = {
