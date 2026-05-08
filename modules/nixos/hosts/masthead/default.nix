@@ -194,5 +194,11 @@ in
     };
 
     environment.systemPackages = [ pkgs.conntrack-tools ];
+
+    # ── ro/rw aliases for SD card nodes (remount rootfs) ───────────
+    environment.interactiveShellInit = ''
+      rw() { sudo mount -o remount,rw / && echo rw; }
+      ro() { sync && sudo mount -o remount,ro / && echo ro; }
+    '';
   };
 }
