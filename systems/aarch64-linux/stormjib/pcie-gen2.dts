@@ -1,0 +1,10 @@
+/dts-v1/;
+/plugin/;
+
+&pcie3x2 {
+    max-link-speed = <2>;
+};
+
+&pcie3x4 {
+    max-link-speed = <2>;
+};

@@ -16,12 +16,20 @@
 {
   imports = inputs.nixos-on-arm.bootModules.e52c;
 
-  boot.kernelPackages = lib.mkForce pkgs.linuxPackages_latest;
+  # Match astrolabe's kernel to rule out PCIe/NIC driver differences
+  boot.kernelPackages = lib.mkForce inputs.upstream.legacyPackages.aarch64-linux.linuxPackages_testing;
   boot.supportedFilesystems.zfs = lib.mkForce false;
   hardware.deviceTree.kernelPackage = lib.mkForce config.boot.kernelPackages.kernel;
 
-  boot.extraModulePackages = [ config.boot.kernelPackages.r8125 ];
-  boot.blacklistedKernelModules = [ "r8169" ];
+  boot.kernelParams = [ "pcie_aspm=off" ];
+
+  hardware.deviceTree.enable = true;
+  hardware.deviceTree.overlays = [
+    {
+      name = "pcie-gen2-fix";
+      dtsFile = ./pcie-gen2.dts;
+    }
+  ];
 
   projectinitiative = {
     services = {
@@ -70,7 +78,8 @@
         lan = "enP4p65s0";
         sync = "enP5p81s0";
       };
-      wanSpoofMac = "02:00:00:00:00:01";
+      # Use native MAC to rule out spoofing-related PHY issues
+      wanSpoofMac = "00:48:54:20:12:0e";
     };
     networking = {
       tailscale = {
