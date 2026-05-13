@@ -16,20 +16,45 @@
 {
   imports = inputs.nixos-on-arm.bootModules.e52c;
 
-  # Match astrolabe's kernel to rule out PCIe/NIC driver differences
-  boot.kernelPackages = lib.mkForce inputs.upstream.legacyPackages.aarch64-linux.linuxPackages_testing;
   boot.supportedFilesystems.zfs = lib.mkForce false;
   hardware.deviceTree.kernelPackage = lib.mkForce config.boot.kernelPackages.kernel;
 
-  boot.kernelParams = [ "pcie_aspm=off" ];
+  # Use r8125 driver — vendor driver handles PHY init differently
+  boot.extraModulePackages = [ config.boot.kernelPackages.r8125 ];
+  boot.blacklistedKernelModules = [ "r8169" ];
 
+  boot.extraModprobeConfig = ''
+    options r8125 eee_enable=0 aspm=0 eee_giga_lite=0
+  '';
+
+  boot.kernelParams = [
+    "pcie_aspm=off"
+    "pcie_aspm.policy=performance"
+  ];
+
+  # Disable EEE only — let autoneg negotiate the best speed (including 2.5G)
+  services.udev.extraRules = ''
+    ACTION=="add", SUBSYSTEM=="net", NAME=="enP*", RUN+="${pkgs.ethtool}/bin/ethtool --set-eee $name eee off"
+  '';
+
+  systemd.services.disable-eee = {
+    description = "Disable EEE on all network interfaces";
+    after = [ "network.target" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.bash}/bin/bash -c 'for iface in /sys/class/net/enP*; do ${pkgs.ethtool}/bin/ethtool --set-eee $(basename $iface) eee off || true; done'";
+      RemainAfterExit = true;
+    };
+  };
+
+  # Try without PCIe overlay - default link training may work better
   hardware.deviceTree.enable = true;
   hardware.deviceTree.overlays = [
-    {
-      name = "pcie-gen2-fix";
-      dtsFile = ./pcie-gen2.dts;
-    }
   ];
+
+  # Limit boot entries to prevent ESP overflow (253M partition)
+  boot.loader.systemd-boot.configurationLimit = 4;
 
   projectinitiative = {
     services = {
@@ -72,7 +97,7 @@
       };
     };
     hosts.masthead = {
-      stormjib.enable = true;
+      stormjib.enable = false;
       interfaces = {
         wan = "enP3p49s0";
         lan = "enP4p65s0";
@@ -103,11 +128,30 @@
     settings.PermitRootLogin = "yes";
   };
 
-  # Enable NetworkManager for easier network setup
+  environment.systemPackages = with pkgs; [
+    ethtool
+    pciutils
+    iperf3
+  ];
+
+  # Enable static networking for testing while masthead is disabled
   networking = {
-    networkmanager = {
-      enable = true;
+    networkmanager.enable = false;
+    useDHCP = false;
+    interfaces = {
+      enP4p65s0 = {
+        useDHCP = false;
+        ipv4.addresses = [{
+          address = "172.16.1.3";
+          prefixLength = 24;
+        }];
+      };
+      # Disable WAN for diagnostic to rule out loops/conflicts
+      enP3p49s0 = {
+        useDHCP = false;
+      };
     };
-    useDHCP = lib.mkForce true;
+    defaultGateway = "172.16.1.1";
+    nameservers = [ "172.16.1.1" "1.1.1.1" ];
   };
 }
