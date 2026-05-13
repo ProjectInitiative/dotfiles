@@ -351,6 +351,12 @@
           };
           stormjib = {
             system = "aarch64-linux";
+            modules = with inputs; [
+              ({ pkgs, lib, ... }: {
+                # Cross-compiled kernel (x86_64 → aarch64), rest from cache
+                boot.kernelPackages = lib.mkForce nixos-on-arm.linuxPackagesCross.x86_64-linux;
+              })
+            ];
           };
           dcc-ex = {
             system = "aarch64-linux";
