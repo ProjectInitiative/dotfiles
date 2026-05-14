@@ -19,34 +19,23 @@
   boot.supportedFilesystems.zfs = lib.mkForce false;
   hardware.deviceTree.kernelPackage = lib.mkForce config.boot.kernelPackages.kernel;
 
-  # Use r8125 driver — vendor driver handles PHY init differently
-  boot.extraModulePackages = [ config.boot.kernelPackages.r8125 ];
-  boot.blacklistedKernelModules = [ "r8169" ];
-
-  boot.extraModprobeConfig = ''
-    options r8125 eee_enable=0 aspm=0 eee_giga_lite=0
-  '';
+  # Use in-tree r8169 driver — out-of-tree r8125 negotiates at 100Mbps only.
+  # RTL8125B needs firmware (rtl_nic/rtl8125b-2.fw) for stable 2.5G operation.
+  boot.blacklistedKernelModules = [ "r8125" ];
+  hardware.firmware = [ pkgs.linux-firmware ];
 
   boot.kernelParams = [
     "pcie_aspm=off"
-    "pcie_aspm.policy=performance"
   ];
 
-  # Disable EEE only — let autoneg negotiate the best speed (including 2.5G)
   services.udev.extraRules = ''
     ACTION=="add", SUBSYSTEM=="net", NAME=="enP*", RUN+="${pkgs.ethtool}/bin/ethtool --set-eee $name eee off"
   '';
 
-  systemd.services.disable-eee = {
-    description = "Disable EEE on all network interfaces";
-    after = [ "network.target" ];
-    wantedBy = [ "multi-user.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "${pkgs.bash}/bin/bash -c 'for iface in /sys/class/net/enP*; do ${pkgs.ethtool}/bin/ethtool --set-eee $(basename $iface) eee off || true; done'";
-      RemainAfterExit = true;
-    };
-  };
+  # Keep as reference — may not be needed if firmware resolves the issue
+  # systemd.services.fix-r8169-link = {
+  #   ...
+  # };
 
   # Try without PCIe overlay - default link training may work better
   hardware.deviceTree.enable = true;

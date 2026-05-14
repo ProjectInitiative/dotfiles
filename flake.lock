@@ -953,11 +953,11 @@
         "nixpkgs": "nixpkgs_5"
       },
       "locked": {
-        "lastModified": 1778714703,
-        "narHash": "sha256-NxPKAJyYXyfLBzEOeP1BItWtvLZ8ajhg9cD0H5eqPb8=",
+        "lastModified": 1778728372,
+        "narHash": "sha256-wqq18bmFzUJDuDFIrm+LIj2mrHBVCl/MVMQB7sdXIaE=",
         "owner": "ProjectInitiative",
         "repo": "nixos-on-arm",
-        "rev": "18f8630d23bc4c191855c661b8cb161f2a4e9905",
+        "rev": "5843913f4a3c765355f303e34b9cd0956c34087c",
         "type": "github"
       },
       "original": {
