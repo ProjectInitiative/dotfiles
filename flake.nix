@@ -39,7 +39,7 @@
     # pull in base image builder
     nixos-on-arm = {
       url = "github:ProjectInitiative/nixos-on-arm";
-      # url = "path:/home/kylepzak/dotfiles/vendor/nixos-on-arm";
+      # url = "path:/home/kylepzak/development/nixos-on-arm";
     };
 
     wrappers.url = "github:lassulus/wrappers";

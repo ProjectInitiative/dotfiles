@@ -19,10 +19,14 @@
   boot.supportedFilesystems.zfs = lib.mkForce false;
   hardware.deviceTree.kernelPackage = lib.mkForce config.boot.kernelPackages.kernel;
 
-  # Use in-tree r8169 driver — out-of-tree r8125 negotiates at 100Mbps only.
-  # RTL8125B needs firmware (rtl_nic/rtl8125b-2.fw) for stable 2.5G operation.
-  boot.blacklistedKernelModules = [ "r8125" ];
+  # Use out-of-tree r8125 driver — in-tree r8169 has 2.5G link flapping issue.
+  # r8125 v9.016.01 from Debian, built against the patched kernel.
+  boot.blacklistedKernelModules = [ "r8169" ];
+  boot.extraModulePackages = [ config.boot.kernelPackages.r8125 ];
+  boot.kernelModules = [ "r8125" ];
   hardware.firmware = [ pkgs.linux-firmware ];
+
+  rockchip.image.bootPartitionSize = "1G";
 
   boot.kernelParams = [
     "pcie_aspm=off"
@@ -43,7 +47,7 @@
   ];
 
   # Limit boot entries to prevent ESP overflow (253M partition)
-  boot.loader.systemd-boot.configurationLimit = 4;
+  boot.loader.systemd-boot.configurationLimit = 10;
 
   projectinitiative = {
     services = {
@@ -97,7 +101,7 @@
     };
     networking = {
       tailscale = {
-        enable = true;
+        enable = false;
         ephemeral = false;
         extraArgs = [
           "--accept-dns=false"
