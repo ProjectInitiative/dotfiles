@@ -179,6 +179,7 @@ in
           address = [
             "${cfg.ipAddress}"
           ];
+          vlan = mkIf (cfg.vlanIpAddress != "") [ "mgmnt.${toString cfg.vlanId}" ];
           routes = [
             {
               Gateway = "172.16.1.1";
