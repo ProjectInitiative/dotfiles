@@ -47,6 +47,8 @@ in
       ];
     };
 
+    boot.kernelModules = [ "8021q" ];
+
     # enable GPU drivers and firmware
     hardware.enableRedistributableFirmware = true;
     hardware.firmware = [ pkgs.linux-firmware ];
@@ -145,19 +147,6 @@ in
       networkmanager.enable = false;
     };
 
-    # Tagged VLAN on mgmnt interface (e.g. mgmnt.1024)
-    networking.vlans."mgmnt.${toString cfg.vlanId}" = mkIf (cfg.vlanIpAddress != "") {
-      id = cfg.vlanId;
-      interface = "mgmnt";
-    };
-    networking.interfaces."mgmnt.${toString cfg.vlanId}" = mkIf (cfg.vlanIpAddress != "") {
-      useDHCP = false;
-      ipv4.addresses = [{
-        address = head (splitString "/" cfg.vlanIpAddress);
-        prefixLength = toInt (last (splitString "/" cfg.vlanIpAddress));
-      }];
-    };
-
     # systemd-networkd configuration
     systemd.network = {
       enable = true;
@@ -165,6 +154,16 @@ in
       links."10-mgmnt" = {
         matchConfig.PermanentMACAddress = cfg.interfaceMac;
         linkConfig.Name = "mgmnt";
+      };
+
+      netdevs."20-mgmnt-vlan" = mkIf (cfg.vlanIpAddress != "") {
+        netdevConfig = {
+          Name = "mgmnt.${toString cfg.vlanId}";
+          Kind = "vlan";
+        };
+        vlanConfig = {
+          Id = cfg.vlanId;
+        };
       };
 
       networks = {
@@ -186,6 +185,14 @@ in
               Destination = "0.0.0.0/0";
             }
           ];
+        };
+        "21-mgmnt-vlan" = mkIf (cfg.vlanIpAddress != "") {
+          matchConfig.Name = "mgmnt.${toString cfg.vlanId}";
+          networkConfig = {
+            DHCP = "no";
+            IPv6AcceptRA = "no";
+          };
+          address = [ "${cfg.vlanIpAddress}" ];
         };
       };
     };
