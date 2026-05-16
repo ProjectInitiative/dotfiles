@@ -36,6 +36,14 @@ let
         options = [ "X-mount.subdir=nix" "noatime" "discard" ];
         neededForBoot = true;
       };
+      fileSystems."/home/kylepzak" = {
+        # UUID is generally more stable than mapper paths in a systemd-initrd.
+        device = "UUID=205123cd-4af7-4f23-85d8-44e0fa2f1774";
+        fsType = "bcachefs";
+        # Use the working community standard for subvolumes.
+        options = [ "X-mount.subdir=home/kylepzak" "noatime" "discard" ];
+        neededForBoot = true;
+      };
 
     # Force LVM to settle before bcachefs attempts to mount
     boot.initrd.services.lvm.enable = true;
@@ -153,6 +161,26 @@ lib.recursiveUpdate commonSystemConfig {
       loft = {
         enableServer = true;
       };
+    };
+    services = {
+     bcachefsSnapshots = {
+        targets = {
+
+          void = {
+            parentSubvolume = "/mnt/pool/home"; # MANDATORY: Set path for this new target
+            readOnlySnapshots = true; # Optional: default is true
+
+            retention = {
+              # Define retention for this new target
+              hourly = 6;
+              daily = 7;
+              weekly = 4;
+              monthly = 6;
+              yearly = 2;
+            };
+          };
+        };
+      }; 
     };
 
     hosts.astrolabe = {
