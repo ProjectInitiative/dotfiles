@@ -78,6 +78,7 @@ in
         pkgs.${namespace}.interactive-mv
         pkgs.${namespace}.hdd-burnin
         pkgs.${namespace}.img-key-injector
+        pkgs.${namespace}.nixos-image-mount
         # pkgs.${namespace}.mc
       ];
     };
