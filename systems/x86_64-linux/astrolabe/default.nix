@@ -42,7 +42,6 @@ let
         fsType = "bcachefs";
         # Use the working community standard for subvolumes.
         options = [ "X-mount.subdir=home/kylepzak" "noatime" "discard" ];
-        neededForBoot = true;
       };
 
     # Force LVM to settle before bcachefs attempts to mount

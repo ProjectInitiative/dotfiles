@@ -47,7 +47,11 @@
   ];
 
   # Limit boot entries to prevent ESP overflow (253M partition)
-  boot.loader.systemd-boot.configurationLimit = 10;
+  boot.loader = {
+    systemd-boot.enable = true;
+    systemd-boot.configurationLimit = 4;
+    efi.canTouchEfiVariables = true;
+  };
 
   projectinitiative = {
     services = {
