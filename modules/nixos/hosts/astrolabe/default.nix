@@ -16,6 +16,8 @@ in
     enable = mkBoolOpt false "Whether to enable base astrolabe server configuration";
     allFeatures = mkBoolOpt true "Whether to enable all features. Set to false for safe boot mode with minimal services.";
     ipAddress = mkOpt types.str "" "Main Static management IP address with CIDR";
+    vlanIpAddress = mkOpt types.str "" "Additional IP with CIDR for tagged VLAN on mgmnt interface";
+    vlanId = mkOpt types.int 1024 "VLAN ID for the tagged VLAN";
     interfaceMac = mkOpt types.str "" "Static IP Interface mac address";
     k8sNodeIp = mkOpt types.str "" "IP address for custom k8s node IP";
     k8sNodeIface = mkOpt types.str "" "Iface for k8s";
@@ -44,6 +46,8 @@ in
         "armv6l-linux"
       ];
     };
+
+    boot.kernelModules = [ "8021q" ];
 
     # enable GPU drivers and firmware
     hardware.enableRedistributableFirmware = true;
@@ -152,6 +156,16 @@ in
         linkConfig.Name = "mgmnt";
       };
 
+      netdevs."20-mgmnt-vlan" = mkIf (cfg.vlanIpAddress != "") {
+        netdevConfig = {
+          Name = "mgmnt.${toString cfg.vlanId}";
+          Kind = "vlan";
+        };
+        vlanConfig = {
+          Id = cfg.vlanId;
+        };
+      };
+
       networks = {
         "11-mgmnt" = {
           matchConfig = {
@@ -171,6 +185,14 @@ in
               Destination = "0.0.0.0/0";
             }
           ];
+        };
+        "21-mgmnt-vlan" = mkIf (cfg.vlanIpAddress != "") {
+          matchConfig.Name = "mgmnt.${toString cfg.vlanId}";
+          networkConfig = {
+            DHCP = "no";
+            IPv6AcceptRA = "no";
+          };
+          address = [ "${cfg.vlanIpAddress}" ];
         };
       };
     };
