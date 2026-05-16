@@ -17,7 +17,7 @@ in
     allFeatures = mkBoolOpt true "Whether to enable all features. Set to false for safe boot mode with minimal services.";
     ipAddress = mkOpt types.str "" "Main Static management IP address with CIDR";
     vlanIpAddress = mkOpt types.str "" "Additional IP with CIDR for tagged VLAN on mgmnt interface";
-    vlanId = mkOpt types.int 1024 "VLAN ID for the tagged VLAN";
+    vlanId = mkOpt types.int 1 "VLAN ID for the tagged VLAN";
     interfaceMac = mkOpt types.str "" "Static IP Interface mac address";
     k8sNodeIp = mkOpt types.str "" "IP address for custom k8s node IP";
     k8sNodeIface = mkOpt types.str "" "Iface for k8s";

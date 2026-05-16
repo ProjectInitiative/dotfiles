@@ -188,6 +188,7 @@ lib.recursiveUpdate commonSystemConfig {
 
       ipAddress = "${config.sensitiveNotSecret.default_subnet}54/24";
       vlanIpAddress = "172.16.4.54/24";
+      vlanId = 10;
       interfaceMac = "84:47:09:75:04:61";
 
       k8sServerAddr = "https://172.16.1.50:6443";
