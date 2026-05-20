@@ -192,8 +192,8 @@ lib.recursiveUpdate commonSystemConfig {
       interfaceMac = "84:47:09:75:04:61";
 
       k8sServerAddr = "https://172.16.1.50:6443";
-      k8sNodeIp = "172.16.1.54";
-      k8sNodeIface = "mgmnt";
+      k8sNodeIp = "172.16.4.54";
+      k8sNodeIface = "mgmnt.10";
     };
   };
 }

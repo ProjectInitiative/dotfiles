@@ -1,4 +1,5 @@
 {
+  "autoupdate": false,
   "$schema": "https://opencode.ai/config.json",
   "provider": {
     "vllm": {
