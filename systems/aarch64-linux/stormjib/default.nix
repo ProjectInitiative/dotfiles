@@ -94,18 +94,17 @@
       };
     };
     hosts.masthead = {
-      stormjib.enable = false;
+      stormjib.enable = true;
       interfaces = {
         wan = "enP3p49s0";
         lan = "enP4p65s0";
         sync = "enP5p81s0";
       };
-      # Use native MAC to rule out spoofing-related PHY issues
       wanSpoofMac = "00:48:54:20:12:0e";
     };
     networking = {
       tailscale = {
-        enable = false;
+        enable = true;
         ephemeral = false;
         extraArgs = [
           "--accept-dns=false"
@@ -131,24 +130,5 @@
     iperf3
   ];
 
-  # Enable static networking for testing while masthead is disabled
-  networking = {
-    networkmanager.enable = false;
-    useDHCP = false;
-    interfaces = {
-      enP4p65s0 = {
-        useDHCP = false;
-        ipv4.addresses = [{
-          address = "172.16.1.3";
-          prefixLength = 24;
-        }];
-      };
-      # Disable WAN for diagnostic to rule out loops/conflicts
-      enP3p49s0 = {
-        useDHCP = false;
-      };
-    };
-    defaultGateway = "172.16.1.1";
-    nameservers = [ "172.16.1.1" "1.1.1.1" ];
-  };
+
 }

@@ -306,6 +306,13 @@ in
         bcachefs-utils = mkIf cfg.allFeatures {
           enable = true;
           parentSubvolume = "/mnt/pool";
+          retention = {
+            hourly = 6;
+            daily = 7;
+            weekly = 4;
+            monthly = 1;
+            yearly = 0;
+          };
         };
       };
 

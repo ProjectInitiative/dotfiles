@@ -88,6 +88,24 @@ in
         example = "172.16.1.250";
         default = null;
       };
+      reservations = mkOption {
+        type = types.listOf (types.submodule {
+          options = {
+            hwAddress = mkOption {
+              type = types.str;
+              description = "MAC address of the reserved client";
+              example = "aa:bb:cc:dd:ee:ff";
+            };
+            ipAddress = mkOption {
+              type = types.str;
+              description = "IP address to reserve";
+              example = "172.16.1.250";
+            };
+          };
+        });
+        default = [ ];
+        description = "DHCP reservations for the management VLAN";
+      };
     };
 
     vlans = mkOption {

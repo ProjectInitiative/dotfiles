@@ -29,6 +29,11 @@ let
           data = concatStringsSep "," cfg.dnsServers;
         }
       ];
+    } // optionalAttrs (vlanCfg ? reservations && length vlanCfg.reservations > 0) {
+      reservations = map (r: {
+        hw-address = r.hwAddress;
+        ip-address = r.ipAddress;
+      }) vlanCfg.reservations;
     };
 
   peerIp =

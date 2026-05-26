@@ -29,6 +29,7 @@ in
         enableDhcp = cfg.management.enableDhcp;
         dhcpRangeStart = cfg.management.dhcpRangeStart;
         dhcpRangeEnd = cfg.management.dhcpRangeEnd;
+        reservations = cfg.management.reservations;
       };
 
       vlans = cfg.vlans;

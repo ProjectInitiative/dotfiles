@@ -17,6 +17,7 @@ in
     ./router-config.nix
     ./conntrackd.nix
     ./faucet.nix
+    ./freeradius.nix
     ./keepalived.nix
     ./stormjib.nix
     ./topsail.nix
@@ -99,14 +100,25 @@ in
         default = "172.16.1.1";
         description = "Virtual IP for the active router on management network";
       };
-      enableDhcp = mkBoolOpt false "Enable DHCP on the management VLAN (only valid if vlanId == 1)";
+      enableDhcp = mkBoolOpt true "Enable DHCP on the management VLAN (only valid if vlanId == 1)";
       dhcpRangeStart = mkOption {
         type = types.nullOr types.str;
-        default = null;
+        default = "172.16.1.100";
       };
       dhcpRangeEnd = mkOption {
         type = types.nullOr types.str;
-        default = null;
+        default = "172.16.1.250";
+      };
+      reservations = mkOption {
+        type = types.listOf (types.submodule {
+          options = {
+            hwAddress = mkOption { type = types.str; };
+            ipAddress = mkOption { type = types.str; };
+          };
+        });
+        default = [
+          { hwAddress = "2E:06:B9:A0:AC:9B"; ipAddress = "172.16.1.250"; }
+        ];
       };
     };
 
@@ -125,7 +137,11 @@ in
           isolated = mkBoolOpt false "Isolate this VLAN from others";
         };
       });
-      default = [ ];
+      default = [
+        { id = 18; name = "vlan18";  network = "172.16.18.0/24";  virtualIp = "172.16.18.1";  primaryIp = "172.16.18.2";  backupIp = "172.16.18.3";  dhcpRangeStart = "172.16.18.100"; dhcpRangeEnd = "172.16.18.250"; isolated = true; }
+        # { id = 20; name = "homenet"; network = "192.168.20.0/24";  virtualIp = "192.168.20.1";  primaryIp = "192.168.20.2";  backupIp = "192.168.20.3";  dhcpRangeStart = "192.168.20.100"; dhcpRangeEnd = "192.168.20.250"; }
+        # { id = 21; name = "iot";     network = "192.168.21.0/24";  virtualIp = "192.168.21.1";  primaryIp = "192.168.21.2";  backupIp = "192.168.21.3";  dhcpRangeStart = "192.168.21.100"; dhcpRangeEnd = "192.168.21.250"; }
+      ];
     };
 
     vrrp = {

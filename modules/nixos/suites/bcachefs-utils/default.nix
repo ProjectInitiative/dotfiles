@@ -20,6 +20,20 @@ in
       example = "/mnt/mybcachefs/data";
       description = mdDoc "Absolute path to the bcachefs parent subvolume for this target.";
     };
+
+    retention = mkOption {
+      type = submodule {
+        options = {
+          hourly = mkOption { type = int; default = 12; };
+          daily = mkOption { type = int; default = 14; };
+          weekly = mkOption { type = int; default = 8; };
+          monthly = mkOption { type = int; default = 12; };
+          yearly = mkOption { type = int; default = 5; };
+        };
+      };
+      default = { };
+      description = mdDoc "Retention policy for snapshots. Each period's value indicates how many snapshots to keep.";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -63,13 +77,7 @@ in
               parentSubvolume = cfg.parentSubvolume; # MANDATORY: Set your actual subvolume path
               readOnlySnapshots = true; # Optional: default is true
 
-              retention = {
-                hourly = 12;
-                daily = 14;
-                weekly = 8;
-                monthly = 12;
-                yearly = 5;
-              };
+              retention = cfg.retention;
             };
 
           };

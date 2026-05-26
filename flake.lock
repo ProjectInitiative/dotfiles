@@ -1249,11 +1249,11 @@
     },
     "rocm-upstream": {
       "locked": {
-        "lastModified": 1777753460,
-        "narHash": "sha256-1hBkBQ7IXkIGUL5HNL4AFEb8PMiFvqAVcyc8ngZZooI=",
+        "lastModified": 1779553709,
+        "narHash": "sha256-Q9ngkHIC5G5BhOkyTf0G8jZMVMjioEf4kf8rS9yjtSU=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "291a2a05ce17b4c7b04a07af85a9d27430012227",
+        "rev": "c4cec08fe483bfb31d9c358322384cb31553b3da",
         "type": "github"
       },
       "original": {
