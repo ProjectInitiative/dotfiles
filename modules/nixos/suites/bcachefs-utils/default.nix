@@ -50,8 +50,9 @@ in
           randomizedDelaySec = "1w";
         };
 
+        # this is handled automatically now
         bcachefsRereplicateAuto = {
-          enable = true;
+          enable = false;
           targetMountPoints = [
             cfg.parentSubvolume # MANDATORY: Set your actual subvolume path
           ];
