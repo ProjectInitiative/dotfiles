@@ -953,17 +953,14 @@
         "nixpkgs": "nixpkgs_5"
       },
       "locked": {
-        "lastModified": 1778868779,
-        "narHash": "sha256-LPrnHSsY1ce37zkauLhLrTnWna1BKh1UE8bE1f4UysE=",
-        "owner": "ProjectInitiative",
-        "repo": "nixos-on-arm",
-        "rev": "388e75a18f7a5aa39b52919e7c5bec82337f34fc",
-        "type": "github"
+        "lastModified": 1779901843,
+        "narHash": "sha256-g8FvD9P1q00/a3O4gV7CPX6KlxzNLOI92GJ8xmIXJbY=",
+        "path": "/home/kylepzak/development/nixos-on-arm",
+        "type": "path"
       },
       "original": {
-        "owner": "ProjectInitiative",
-        "repo": "nixos-on-arm",
-        "type": "github"
+        "path": "/home/kylepzak/development/nixos-on-arm",
+        "type": "path"
       }
     },
     "nixpkgs": {

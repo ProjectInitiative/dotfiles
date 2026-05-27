@@ -347,7 +347,13 @@
             };
           };
           wharfmaster = {
-            system = "x86_64-linux";
+            system = "aarch64-linux";
+            modules = with inputs; [
+              ({ pkgs, lib, ... }: {
+                # Cross-compiled RK3588 kernel (x86_64 → aarch64), rest from cache
+                boot.kernelPackages = lib.mkOverride 40 nixos-on-arm.linuxPackagesRK3588Cross.x86_64-linux;
+              })
+            ];
           };
           stormjib = {
             system = "aarch64-linux";
