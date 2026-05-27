@@ -177,7 +177,6 @@
     };
 
     system = {
-      rk3588-kernel.enable = true;
       nix-config.enable = true;
       logging = {
         enable = true;
