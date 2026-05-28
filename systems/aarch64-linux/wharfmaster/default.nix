@@ -11,9 +11,6 @@
 
   imports = inputs.nixos-on-arm.bootModules.orangepi5ultra;
 
-  nixpkgs.localSystem = "x86_64-linux";
-  nixpkgs.crossSystem = "aarch64-linux";
-
   # hardware.deviceTree.overlays = [
   #   {
   #     name = "rk3588-npu";
@@ -26,7 +23,11 @@
   boot.supportedFilesystems.zfs = lib.mkForce false;
   boot.supportedFilesystems.nfs = true;
 
-  boot.initrd.availableKernelModules = lib.mkForce [ ];
+  boot.initrd.availableKernelModules = with lib; mkForce [
+    "dw_mmc_rockchip"
+    "nvme"
+    "pcie_rockchip_host"
+  ];
 
   hardware.deviceTree.kernelPackage = lib.mkForce config.boot.kernelPackages.kernel;
 
