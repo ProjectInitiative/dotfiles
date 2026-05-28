@@ -442,8 +442,8 @@ in
     enable = true;
     nproc = 8;
     exports = ''
-      /export         100.94.162.76(rw,fsid=0,no_subtree_check,crossmnt)
-      /export/frigate 100.94.162.76(rw,nohide,insecure,no_subtree_check,no_root_squash)
+      /export         100.110.21.30(rw,fsid=0,no_subtree_check,crossmnt)
+      /export/frigate 100.110.21.30(rw,nohide,insecure,no_subtree_check,no_root_squash)
     '';
   };
 
