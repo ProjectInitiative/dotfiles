@@ -24,7 +24,7 @@ in
 
   config = mkIf cfg.enable {
     ${namespace}.hosts.masthead = {
-      enable = true;
+      enable = false;
       routerRole = "backup";
     };
   };
