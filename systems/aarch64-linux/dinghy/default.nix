@@ -35,9 +35,10 @@ in
   # ============================================================================
   # 1. Image Generation (Minimal)
   # ============================================================================
+  image.baseName = "dinghy-rpi4-pure";
+
   sdImage = {
     compressImage = false;
-    imageBaseName = "dinghy-rpi4-pure";
 
     # We still provide a basic config.txt to boot U-Boot,
     # but we assume the detailed overlays might be ignored by the EEPROM.
@@ -272,8 +273,8 @@ in
                 "capstan3:9100"
                 "172.16.1.1:9100"
                 "wharfmaster:9100"
-                "stormjib:9100"
-                "topsail:9100"
+                # "stormjib:9100"
+                # "topsail:9100"
                 "lightship-atx:9100"
                 "lightship-dal:9100"
                 "lightship-dfw:9100"
@@ -301,8 +302,8 @@ in
                 "capstan3:9633"
                 "wharfmaster:9633"
                 "cargohold:9633"
-                "stormjib:9633"
-                "topsail:9633"
+                # "stormjib:9633"
+                # "topsail:9633"
               ];
             };
             speedtest = {
@@ -449,6 +450,7 @@ in
 
   # Delay NFS until storage is ready
   systemd.services.nfs-server = {
+    wants = [ "network-online.target" ];
     after = lib.mkForce [
       "network-online.target"
       "local-fs.target"

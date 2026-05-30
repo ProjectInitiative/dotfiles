@@ -79,6 +79,7 @@ in
       };
       home = {
         packages = with pkgs; [
+          devenv
           go
           juicefs
           # packer
