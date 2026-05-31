@@ -91,6 +91,11 @@ in
 
       services = {
         eternal-terminal = mkIf cfg.allFeatures enabled;
+        opencode-web = mkIf cfg.allFeatures {
+          enable = true;
+          openFirewall = true;
+          passwordFile = sops.secrets.user_password.path;
+        };
         k8s = mkIf cfg.allFeatures {
           enable = true;
           tokenFile = sops.secrets.k8s_token.path;
