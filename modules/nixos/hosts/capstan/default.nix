@@ -220,15 +220,16 @@ in
       ];
     };
 
-    fileSystems = optionalAttrs cfg.allFeatures {
-      "/mnt/local-provisioner" = {
-        device = "/mnt/pool/k8s";
-        options = [ "bind" ];
-      };
-      "/mnt/local-provisioner/host" = {
-        device = "/opt/local-provisioner";
-        options = [ "bind" ];
-      };
+    fileSystems."/mnt/local-provisioner" = mkIf cfg.allFeatures {
+      device = "/mnt/pool/k8s";
+      fsType = "none";
+      options = [ "bind" ];
+    };
+
+    fileSystems."/mnt/local-provisioner/host" = mkIf cfg.allFeatures {
+      device = "/opt/local-provisioner";
+      fsType = "none";
+      options = [ "bind" ];
     };
 
     # fileSystems."/mnt/pool" =
