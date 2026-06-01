@@ -36,6 +36,9 @@ in
         k8s_token = {
           sopsFile = ./secrets.enc.yaml;
         };
+        opencode_password = {
+          sopsFile = ./secrets.enc.yaml;
+        };
       }
     ];
 
