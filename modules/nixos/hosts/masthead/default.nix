@@ -27,7 +27,10 @@ in
     enable = mkBoolOpt false "Whether or not to enable the masthead HA router base config.";
 
     routerRole = mkOption {
-      type = types.enum [ "primary" "backup" ];
+      type = types.enum [
+        "primary"
+        "backup"
+      ];
       description = "Role of this router (primary=topsail, backup=stormjib)";
       default = "backup";
     };
@@ -110,35 +113,52 @@ in
         default = "172.16.1.250";
       };
       reservations = mkOption {
-        type = types.listOf (types.submodule {
-          options = {
-            hwAddress = mkOption { type = types.str; };
-            ipAddress = mkOption { type = types.str; };
-          };
-        });
+        type = types.listOf (
+          types.submodule {
+            options = {
+              hwAddress = mkOption { type = types.str; };
+              ipAddress = mkOption { type = types.str; };
+            };
+          }
+        );
         default = [
-          { hwAddress = "2E:06:B9:A0:AC:9B"; ipAddress = "172.16.1.250"; }
+          {
+            hwAddress = "2E:06:B9:A0:AC:9B";
+            ipAddress = "172.16.1.250";
+          }
         ];
       };
     };
 
     vlans = mkOption {
-      type = types.listOf (types.submodule {
-        options = {
-          id = mkOption { type = types.int; };
-          name = mkOption { type = types.str; };
-          network = mkOption { type = types.str; };
-          virtualIp = mkOption { type = types.str; };
-          primaryIp = mkOption { type = types.str; };
-          backupIp = mkOption { type = types.str; };
-          enableDhcp = mkBoolOpt true "Enable DHCP on this VLAN";
-          dhcpRangeStart = mkOption { type = types.str; };
-          dhcpRangeEnd = mkOption { type = types.str; };
-          isolated = mkBoolOpt false "Isolate this VLAN from others";
-        };
-      });
+      type = types.listOf (
+        types.submodule {
+          options = {
+            id = mkOption { type = types.int; };
+            name = mkOption { type = types.str; };
+            network = mkOption { type = types.str; };
+            virtualIp = mkOption { type = types.str; };
+            primaryIp = mkOption { type = types.str; };
+            backupIp = mkOption { type = types.str; };
+            enableDhcp = mkBoolOpt true "Enable DHCP on this VLAN";
+            dhcpRangeStart = mkOption { type = types.str; };
+            dhcpRangeEnd = mkOption { type = types.str; };
+            isolated = mkBoolOpt false "Isolate this VLAN from others";
+          };
+        }
+      );
       default = [
-        { id = 18; name = "vlan18";  network = "172.16.18.0/24";  virtualIp = "172.16.18.1";  primaryIp = "172.16.18.2";  backupIp = "172.16.18.3";  dhcpRangeStart = "172.16.18.100"; dhcpRangeEnd = "172.16.18.250"; isolated = true; }
+        {
+          id = 18;
+          name = "vlan18";
+          network = "172.16.18.0/24";
+          virtualIp = "172.16.18.1";
+          primaryIp = "172.16.18.2";
+          backupIp = "172.16.18.3";
+          dhcpRangeStart = "172.16.18.100";
+          dhcpRangeEnd = "172.16.18.250";
+          isolated = true;
+        }
         # { id = 20; name = "homenet"; network = "192.168.20.0/24";  virtualIp = "192.168.20.1";  primaryIp = "192.168.20.2";  backupIp = "192.168.20.3";  dhcpRangeStart = "192.168.20.100"; dhcpRangeEnd = "192.168.20.250"; }
         # { id = 21; name = "iot";     network = "192.168.21.0/24";  virtualIp = "192.168.21.1";  primaryIp = "192.168.21.2";  backupIp = "192.168.21.3";  dhcpRangeStart = "192.168.21.100"; dhcpRangeEnd = "192.168.21.250"; }
       ];
@@ -175,7 +195,10 @@ in
 
     dnsServers = mkOption {
       type = types.listOf types.str;
-      default = [ "1.1.1.1" "9.9.9.9" ];
+      default = [
+        "1.1.1.1"
+        "9.9.9.9"
+      ];
     };
 
     enableIPv6 = mkBoolOpt true "Enable IPv6 support";
@@ -198,7 +221,12 @@ in
     fileSystems."/tmp" = {
       device = "tmpfs";
       fsType = "tmpfs";
-      options = [ "nosuid" "nodev" "noexec" "size=256M" ];
+      options = [
+        "nosuid"
+        "nodev"
+        "noexec"
+        "size=256M"
+      ];
     };
 
     boot.kernel.sysctl."vm.vfs_cache_pressure" = 200;

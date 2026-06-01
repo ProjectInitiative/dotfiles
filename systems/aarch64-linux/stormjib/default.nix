@@ -85,7 +85,7 @@
           };
         };
 
-        grafana.enable = true;
+        grafana.enable = false;
 
         exporters = {
           node.enable = true;
@@ -129,6 +129,5 @@
     pciutils
     iperf3
   ];
-
 
 }

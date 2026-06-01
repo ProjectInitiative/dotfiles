@@ -23,26 +23,34 @@ let
 
     boot.initrd.systemd.enable = true;
 
-      # 2. Ensure bcachefs is explicitly supported in the early ramdisk.
-      boot.initrd.supportedFilesystems = [ "bcachefs" ];
-      boot.initrd.kernelModules = [ "bcachefs" ];
+    # 2. Ensure bcachefs is explicitly supported in the early ramdisk.
+    boot.initrd.supportedFilesystems = [ "bcachefs" ];
+    boot.initrd.kernelModules = [ "bcachefs" ];
 
-      # 3. Update the /nix mount entry.
-      fileSystems."/nix" = {
-        # UUID is generally more stable than mapper paths in a systemd-initrd.
-        device = "UUID=205123cd-4af7-4f23-85d8-44e0fa2f1774";
-        fsType = "bcachefs";
-        # Use the working community standard for subvolumes.
-        options = [ "X-mount.subdir=nix" "noatime" "discard" ];
-        neededForBoot = true;
-      };
-      fileSystems."/home/kylepzak" = {
-        # UUID is generally more stable than mapper paths in a systemd-initrd.
-        device = "UUID=205123cd-4af7-4f23-85d8-44e0fa2f1774";
-        fsType = "bcachefs";
-        # Use the working community standard for subvolumes.
-        options = [ "X-mount.subdir=home/kylepzak" "noatime" "discard" ];
-      };
+    # 3. Update the /nix mount entry.
+    fileSystems."/nix" = {
+      # UUID is generally more stable than mapper paths in a systemd-initrd.
+      device = "UUID=205123cd-4af7-4f23-85d8-44e0fa2f1774";
+      fsType = "bcachefs";
+      # Use the working community standard for subvolumes.
+      options = [
+        "X-mount.subdir=nix"
+        "noatime"
+        "discard"
+      ];
+      neededForBoot = true;
+    };
+    fileSystems."/home/kylepzak" = {
+      # UUID is generally more stable than mapper paths in a systemd-initrd.
+      device = "UUID=205123cd-4af7-4f23-85d8-44e0fa2f1774";
+      fsType = "bcachefs";
+      # Use the working community standard for subvolumes.
+      options = [
+        "X-mount.subdir=home/kylepzak"
+        "noatime"
+        "discard"
+      ];
+    };
 
     # Force LVM to settle before bcachefs attempts to mount
     boot.initrd.services.lvm.enable = true;
@@ -162,7 +170,7 @@ lib.recursiveUpdate commonSystemConfig {
       };
     };
     services = {
-     bcachefsSnapshots = {
+      bcachefsSnapshots = {
         targets = {
 
           void = {
@@ -179,7 +187,7 @@ lib.recursiveUpdate commonSystemConfig {
             };
           };
         };
-      }; 
+      };
     };
 
     hosts.astrolabe = {

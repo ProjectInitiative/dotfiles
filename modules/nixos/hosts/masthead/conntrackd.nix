@@ -67,8 +67,14 @@ in
         ExecStop = "${pkgs.conntrack-tools}/sbin/conntrackd -k";
         PIDFile = "/var/run/conntrackd.pid";
         Restart = "on-failure";
-        CapabilityBoundingSet = [ "CAP_NET_ADMIN" "CAP_NET_RAW" ];
-        AmbientCapabilities = [ "CAP_NET_ADMIN" "CAP_NET_RAW" ];
+        CapabilityBoundingSet = [
+          "CAP_NET_ADMIN"
+          "CAP_NET_RAW"
+        ];
+        AmbientCapabilities = [
+          "CAP_NET_ADMIN"
+          "CAP_NET_RAW"
+        ];
       };
     };
 

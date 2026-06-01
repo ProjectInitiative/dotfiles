@@ -46,10 +46,12 @@ in
     # Sync interface: static IP on management network
     networking.interfaces."${cfg.interfaces.sync}" = {
       useDHCP = false;
-      ipv4.addresses = [{
-        address = if cfg.routerRole == "primary" then cfg.management.primaryIp else cfg.management.backupIp;
-        prefixLength = toInt (builtins.elemAt (builtins.split "/" cfg.management.network) 2);
-      }];
+      ipv4.addresses = [
+        {
+          address = if cfg.routerRole == "primary" then cfg.management.primaryIp else cfg.management.backupIp;
+          prefixLength = toInt (builtins.elemAt (builtins.split "/" cfg.management.network) 2);
+        }
+      ];
     };
   };
 }

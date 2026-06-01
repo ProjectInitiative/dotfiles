@@ -53,7 +53,7 @@ in
       zfs = false;
     };
 
-    boot.kernelPackages = lib.mkForce pkgs.linuxPackages_latest;
+    boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
 
     boot.kernelParams = [
       "nvme_core.default_ps_max_latency_us=0"

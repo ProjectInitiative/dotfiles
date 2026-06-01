@@ -1,5 +1,12 @@
 # modules/nixos/hardware/amdgpu/default.nix
-{ config, lib, pkgs, namespace, rocm-upstream ? pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  namespace,
+  rocm-upstream ? pkgs,
+  ...
+}:
 with lib;
 let
   cfg = config.${namespace}.hardware.amdgpu;
@@ -24,22 +31,21 @@ in
     boot.kernelParams = [
       # "amdgpu.gttsize=102400"
       # "ttm.pages_limit=26214400"
-      "amdgpu.gttsize=126976"    
+      "amdgpu.gttsize=126976"
       "ttm.pages_limit=32505856"
       "amdgpu.vis_vram_limit=102400"
-      "amdgpu.svm_max_mapping_size=131072"  # 128GB in MB
+      "amdgpu.svm_max_mapping_size=131072" # 128GB in MB
       "amd_iommu=on"
       "iommu=pt"
     ];
 
     boot.initrd.kernelModules = [ "amdgpu" ];
 
-    swapDevices = [];
-    
+    swapDevices = [ ];
 
     environment.variables = {
       HSA_OVERRIDE_GFX_VERSION = "11.5.1";
-      HSA_ENABLE_SDMA = "0"; 
+      HSA_ENABLE_SDMA = "0";
     };
 
     environment.systemPackages = with rocm-upstream; [

@@ -32,6 +32,7 @@ It doesn't verify the **source** file exists before attempting the copy.
 When generating/updating boot entries, the builder scans **every generation** in the system profile (`/nix/var/nix/profiles/system`). If an old generation's `boot.json` references a device tree from a kernel that has since been garbage-collected, the builder crashes trying to copy the missing dtb file to the ESP.
 
 This is most likely to happen when you switch the kernel package used by a host (e.g., from native `linuxPackagesRK3588` to cross-compiled `linuxPackagesCross`), because:
+
 - Old boot entries still reference the previous kernel's store path
 - `nix-collect-garbage` removes the old kernel
 - The next `nixos-rebuild switch` fails because the old dtb source is gone

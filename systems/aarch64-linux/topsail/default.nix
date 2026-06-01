@@ -13,7 +13,7 @@
 {
   imports = inputs.nixos-on-arm.bootModules.e52c;
 
-  boot.kernelPackages = lib.mkForce pkgs.linuxPackages_latest;
+  boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
   boot.supportedFilesystems.zfs = lib.mkForce false;
   hardware.deviceTree.kernelPackage = lib.mkForce config.boot.kernelPackages.kernel;
 
@@ -61,7 +61,10 @@
     networking.tailscale = {
       enable = true;
       ephemeral = false;
-      extraArgs = [ "--accept-dns=false" "--accept-routes" ];
+      extraArgs = [
+        "--accept-dns=false"
+        "--accept-routes"
+      ];
     };
     system.console-info.ip-display.enable = true;
   };

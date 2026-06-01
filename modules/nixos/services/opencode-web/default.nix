@@ -61,7 +61,8 @@ in
         RestartSec = "5s";
         StateDirectory = "opencode";
         User = mkIf (cfg.user != null) cfg.user;
-      } // optionalAttrs (cfg.passwordFile != null) {
+      }
+      // optionalAttrs (cfg.passwordFile != null) {
         LoadCredential = "opencode-password:${cfg.passwordFile}";
       };
 

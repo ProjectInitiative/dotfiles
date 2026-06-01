@@ -130,6 +130,7 @@ in
             health_reporter_bot_api_token = { };
             telegram_chat_id = { };
             grafana_telegram_env = { };
+            grafana_secret_key = { };
             attic_client_api_file = { };
           };
         };

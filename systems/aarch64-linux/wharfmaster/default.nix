@@ -23,11 +23,13 @@
   boot.supportedFilesystems.zfs = lib.mkForce false;
   boot.supportedFilesystems.nfs = true;
 
-  boot.initrd.availableKernelModules = with lib; mkForce [
-    "dw_mmc_rockchip"
-    "nvme"
-    "pcie_rockchip_host"
-  ];
+  boot.initrd.availableKernelModules =
+    with lib;
+    mkForce [
+      "dw_mmc_rockchip"
+      "nvme"
+      "pcie_rockchip_host"
+    ];
 
   hardware.deviceTree.kernelPackage = lib.mkForce config.boot.kernelPackages.kernel;
 

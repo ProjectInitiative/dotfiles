@@ -32,7 +32,7 @@
           "*": "allow"
         },
         "bash": "allow",
-        "edit": "allow" 
+        "edit": "allow"
       }
     }
   },

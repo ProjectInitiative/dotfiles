@@ -31,11 +31,16 @@ let
       useVmac = false;
       advertisementInterval = 1;
       authPassFile = cfg.vrrp.authPassFile;
-      virtualIPs = [{
-        address = vlan.virtualIp;
-        prefixLength = parsePrefix vlan.network;
-      }];
-      trackInterfaces = [ cfg.interfaces.sync cfg.interfaces.wan ];
+      virtualIPs = [
+        {
+          address = vlan.virtualIp;
+          prefixLength = parsePrefix vlan.network;
+        }
+      ];
+      trackInterfaces = [
+        cfg.interfaces.sync
+        cfg.interfaces.wan
+      ];
       notifyMaster = "/etc/masthead/openflow-master.sh";
       notifyBackup = "/etc/masthead/openflow-backup.sh";
       notifyFault = "/etc/masthead/openflow-fault.sh";

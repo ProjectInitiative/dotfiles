@@ -59,8 +59,7 @@ in
     ${namespace}.tools.aider = mkIf cfg.agent.aider.enable enabled;
 
     home.file = {
-      ".config/opencode/opencode.json".source =
-        "${inputs.self}/homes/dotfiles/opencode/opencode.json";
+      ".config/opencode/opencode.json".source = "${inputs.self}/homes/dotfiles/opencode/opencode.json";
     };
   };
 }

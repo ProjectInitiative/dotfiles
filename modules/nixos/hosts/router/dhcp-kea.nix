@@ -29,7 +29,8 @@ let
           data = concatStringsSep "," cfg.dnsServers;
         }
       ];
-    } // optionalAttrs (vlanCfg ? reservations && length vlanCfg.reservations > 0) {
+    }
+    // optionalAttrs (vlanCfg ? reservations && length vlanCfg.reservations > 0) {
       reservations = map (r: {
         hw-address = r.hwAddress;
         ip-address = r.ipAddress;
@@ -37,15 +38,10 @@ let
     };
 
   peerIp =
-    if cfg.routerRole == "primary" then
-      cfg.managementVlan.backupIp
-    else
-      cfg.managementVlan.primaryIp;
+    if cfg.routerRole == "primary" then cfg.managementVlan.backupIp else cfg.managementVlan.primaryIp;
 
-  thisServerName =
-    if cfg.routerRole == "primary" then "kea-router1" else "kea-router2";
-  partnerServerName =
-    if cfg.routerRole == "primary" then "kea-router2" else "kea-router1";
+  thisServerName = if cfg.routerRole == "primary" then "kea-router1" else "kea-router2";
+  partnerServerName = if cfg.routerRole == "primary" then "kea-router2" else "kea-router1";
 in
 {
   options.${namespace}.router.dhcp = with types; {
@@ -89,11 +85,19 @@ in
         enable = true;
         settings = {
           interfaces-config = {
-            interfaces = let
-              mgmtInterfaceName = if cfg.managementVlan.id == 1 then cfg.lanInterface else "${cfg.lanInterface}.${toString cfg.managementVlan.id}";
-              mgmtIf = optional (cfg.managementVlan.id == 1 && cfg.managementVlan.enableDhcp) mgmtInterfaceName;
-              vlanIfs = map (vlan: "${cfg.lanInterface}.${toString vlan.id}") (filter (v: v.enableDhcp) cfg.vlans);
-            in mgmtIf ++ vlanIfs;
+            interfaces =
+              let
+                mgmtInterfaceName =
+                  if cfg.managementVlan.id == 1 then
+                    cfg.lanInterface
+                  else
+                    "${cfg.lanInterface}.${toString cfg.managementVlan.id}";
+                mgmtIf = optional (cfg.managementVlan.id == 1 && cfg.managementVlan.enableDhcp) mgmtInterfaceName;
+                vlanIfs = map (vlan: "${cfg.lanInterface}.${toString vlan.id}") (
+                  filter (v: v.enableDhcp) cfg.vlans
+                );
+              in
+              mgmtIf ++ vlanIfs;
           };
 
           lease-database = {
@@ -101,24 +105,28 @@ in
             lfc-interval = 3600;
           };
 
-          subnet4 = let
-            mgmtSubnet = optional (cfg.managementVlan.id == 1 && cfg.managementVlan.enableDhcp)
-              (mkSubnetConfig {
-                networkInfo = parsedNetworks.management;
-                vlanCfg = cfg.managementVlan;
-              });
-            vlanSubnets = map (vlan:
-              mkSubnetConfig {
-                networkInfo = findFirst (pn: pn.id == vlan.id) null parsedNetworks.vlans;
-                vlanCfg = vlan;
-              }
-            ) (filter (v: v.enableDhcp) cfg.vlans);
-          in mgmtSubnet ++ vlanSubnets;
+          subnet4 =
+            let
+              mgmtSubnet =
+                optional (cfg.managementVlan.id == 1 && cfg.managementVlan.enableDhcp)
+                  (mkSubnetConfig {
+                    networkInfo = parsedNetworks.management;
+                    vlanCfg = cfg.managementVlan;
+                  });
+              vlanSubnets = map (
+                vlan:
+                mkSubnetConfig {
+                  networkInfo = findFirst (pn: pn.id == vlan.id) null parsedNetworks.vlans;
+                  vlanCfg = vlan;
+                }
+              ) (filter (v: v.enableDhcp) cfg.vlans);
+            in
+            mgmtSubnet ++ vlanSubnets;
 
           loggers = [
             {
               name = "kea-dhcp4";
-              output_options = [{ output = "stdout"; }];
+              output_options = [ { output = "stdout"; } ];
               severity = "INFO";
             }
           ];
@@ -144,8 +152,7 @@ in
                 {
                   name = partnerServerName;
                   url = "http://${peerIp}:${toString moduleCfg.kea.failover.failoverPort}/";
-                  role =
-                    if cfg.routerRole == "primary" then "primary" else "secondary";
+                  role = if cfg.routerRole == "primary" then "primary" else "secondary";
                 }
               ];
             }

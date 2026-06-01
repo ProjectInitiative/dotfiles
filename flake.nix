@@ -13,7 +13,6 @@
     # NixPkgs Master
     ai-tools.url = "github:nixos/nixpkgs/master";
 
-    
     k3s-pinned.url = "github:nixos/nixpkgs/nixos-26.05";
 
     # Home Manager
@@ -204,264 +203,281 @@
 
       mySrc = sourcePath;
 
-    in
-    lib.mkFlake {
-      # export for debugging
-      inherit lib;
-      inherit inputs;
-      debuglib = inputs.snowfall-lib.snowfall.internal-lib;
-      debugFunctions =
-        let
-          debuglib = inputs.snowfall-lib.snowfall.internal-lib;
-        in
-        {
-          # List all directories in your systems folder
-          listSystemsDirectories =
-            let
-              systemsPath = "${toString mySrc}/systems";
-            in
-            builtins.attrNames (builtins.readDir systemsPath);
+      flake = lib.mkFlake {
+        # export for debugging
+        inherit lib;
+        inherit inputs;
+        debuglib = inputs.snowfall-lib.snowfall.internal-lib;
+        debugFunctions =
+          let
+            debuglib = inputs.snowfall-lib.snowfall.internal-lib;
+          in
+          {
+            # List all directories in your systems folder
+            listSystemsDirectories =
+              let
+                systemsPath = "${toString mySrc}/systems";
+              in
+              builtins.attrNames (builtins.readDir systemsPath);
 
-          # Get target directories for each architecture
-          getArchitectureSystems =
-            arch:
-            let
-              systemsPath = "${toString mySrc}/systems/${arch}";
-              exists = builtins.pathExists systemsPath;
-            in
-            if exists then builtins.attrNames (builtins.readDir systemsPath) else [ ];
+            # Get target directories for each architecture
+            getArchitectureSystems =
+              arch:
+              let
+                systemsPath = "${toString mySrc}/systems/${arch}";
+                exists = builtins.pathExists systemsPath;
+              in
+              if exists then builtins.attrNames (builtins.readDir systemsPath) else [ ];
 
-          # Check if targets have default.nix files
-          checkDefaultNix =
-            arch: target:
-            let
-              targetPath = "${toString mySrc}/systems/${arch}/${target}";
-              defaultNixPath = "${targetPath}/default.nix";
-            in
-            builtins.pathExists defaultNixPath;
+            # Check if targets have default.nix files
+            checkDefaultNix =
+              arch: target:
+              let
+                targetPath = "${toString mySrc}/systems/${arch}/${target}";
+                defaultNixPath = "${targetPath}/default.nix";
+              in
+              builtins.pathExists defaultNixPath;
 
-          # Your actual systems path
-          systemsPath = "${toString mySrc}/systems";
+            # Your actual systems path
+            systemsPath = "${toString mySrc}/systems";
 
-          # Add this to your debug functions
-          getDetailedSystemMetadata =
-            let
-              systems_root = "${toString mySrc}/systems";
-              targets = debuglib.fs.get-directories systems_root;
-              target_paths = builtins.map (t: builtins.unsafeDiscardStringContext t) targets;
-            in
-            {
-              targets = target_paths;
-              metadata = builtins.listToAttrs (
-                builtins.map (target: {
-                  name = builtins.unsafeDiscardStringContext (builtins.baseNameOf target);
-                  value = debuglib.system.get-target-systems-metadata target;
-                }) targets
-              );
-            };
-
-          # Debug the create-systems function
-          debugCreateSystems =
-            let
-              systems_root = "${toString mySrc}/systems";
-              targets = debuglib.fs.get-directories systems_root;
-
-              # This recreates the internal logic of create-systems
-              fix_function = debuglib.internal.system-lib.fix;
-              target_systems_metadata = builtins.concatMap (
-                target: debuglib.system.get-target-systems-metadata target
-              ) targets;
-            in
-            {
-              targets = builtins.map builtins.unsafeDiscardStringContext targets;
-              systems_found = target_systems_metadata;
-            };
-
-          # And also check the final systems output
-          getFinalSystems =
-            let
-              systems = debuglib.system.create-systems {
-                systems = { };
-                homes = { };
+            # Add this to your debug functions
+            getDetailedSystemMetadata =
+              let
+                systems_root = "${toString mySrc}/systems";
+                targets = debuglib.fs.get-directories systems_root;
+                target_paths = builtins.map (t: builtins.unsafeDiscardStringContext t) targets;
+              in
+              {
+                targets = target_paths;
+                metadata = builtins.listToAttrs (
+                  builtins.map (target: {
+                    name = builtins.unsafeDiscardStringContext (builtins.baseNameOf target);
+                    value = debuglib.system.get-target-systems-metadata target;
+                  }) targets
+                );
               };
-            in
-            builtins.attrNames systems;
+
+            # Debug the create-systems function
+            debugCreateSystems =
+              let
+                systems_root = "${toString mySrc}/systems";
+                targets = debuglib.fs.get-directories systems_root;
+
+                # This recreates the internal logic of create-systems
+                fix_function = debuglib.internal.system-lib.fix;
+                target_systems_metadata = builtins.concatMap (
+                  target: debuglib.system.get-target-systems-metadata target
+                ) targets;
+              in
+              {
+                targets = builtins.map builtins.unsafeDiscardStringContext targets;
+                systems_found = target_systems_metadata;
+              };
+
+            # And also check the final systems output
+            getFinalSystems =
+              let
+                systems = debuglib.system.create-systems {
+                  systems = { };
+                  homes = { };
+                };
+              in
+              builtins.attrNames systems;
+          };
+
+        channels-config = {
+          allowUnfree = true;
+          allowUnsupportedSystem = true;
+          permittedInsecurePackages = [
+            # Add any insecure packages you need
+          ];
         };
 
-      channels-config = {
-        allowUnfree = true;
-        allowUnsupportedSystem = true;
-        permittedInsecurePackages = [
-          # Add any insecure packages you need
+        overlays = with inputs; [
+          # flake.overlays.default
+          # thaw.overlays.default
+          # drift.overlays.default
         ];
-      };
+        # modules = {
+        #   nixos = lib.snowfall.module.create-modules {
+        #     src = lib.snowfall.fs.get-snowfall-file "modules/common";
+        #     # namespace = "projectinitiative";
+        #   };
+        # };
 
-      overlays = with inputs; [
-        # flake.overlays.default
-        # thaw.overlays.default
-        # drift.overlays.default
-      ];
-      # modules = {
-      #   nixos = lib.snowfall.module.create-modules {
-      #     src = lib.snowfall.fs.get-snowfall-file "modules/common";
-      #     # namespace = "projectinitiative";
-      #   };
-      # };
-
-      supportedSystems = [
-        "x86_64-linux"
-        "x86_64-darwin"
-        "aarch64-linux"
-      ];
-
-      systems = {
-        targets = [
+        supportedSystems = [
           "x86_64-linux"
           "x86_64-darwin"
           "aarch64-linux"
         ];
-        hosts = {
-          astrolabe = {
-            system = "x86_64-linux";
-            specialArgs = {
-              # ✅ CORRECT: 'config' is safely contained inside the upstream import
-              upstream = import inputs.upstream {
-                system = "x86_64-linux";
-                config = {
-                  allowUnfree = true;
-                  allowBroken = true;
+
+        systems = {
+          targets = [
+            "x86_64-linux"
+            "x86_64-darwin"
+            "aarch64-linux"
+          ];
+          hosts = {
+            astrolabe = {
+              system = "x86_64-linux";
+              specialArgs = {
+                # ✅ CORRECT: 'config' is safely contained inside the upstream import
+                upstream = import inputs.upstream {
+                  system = "x86_64-linux";
+                  config = {
+                    allowUnfree = true;
+                    allowBroken = true;
+                  };
                 };
-              };
-              rocm-upstream = import inputs.rocm-upstream {
-                system = "x86_64-linux";
-                config = {
-                  allowUnfree = true;
-                  allowBroken = true;
+                rocm-upstream = import inputs.rocm-upstream {
+                  system = "x86_64-linux";
+                  config = {
+                    allowUnfree = true;
+                    allowBroken = true;
+                  };
                 };
               };
             };
+            wharfmaster = {
+              system = "aarch64-linux";
+              modules = with inputs; [
+                (
+                  { pkgs, lib, ... }:
+                  {
+                    # Cross-compiled RK3588 kernel (x86_64 → aarch64), rest from cache
+                    boot.kernelPackages = lib.mkOverride 40 nixos-on-arm.linuxPackagesRK3588Cross.x86_64-linux;
+                  }
+                )
+              ];
+            };
+            stormjib = {
+              system = "aarch64-linux";
+              modules = with inputs; [
+                (
+                  { pkgs, lib, ... }:
+                  {
+                    # Cross-compiled kernel (x86_64 → aarch64), rest from cache
+                    boot.kernelPackages = lib.mkOverride 40 nixos-on-arm.linuxPackagesCross.x86_64-linux;
+                  }
+                )
+              ];
+            };
+            dcc-ex = {
+              system = "aarch64-linux";
+            };
           };
-          wharfmaster = {
-            system = "aarch64-linux";
-            modules = with inputs; [
-              ({ pkgs, lib, ... }: {
-                # Cross-compiled RK3588 kernel (x86_64 → aarch64), rest from cache
-                boot.kernelPackages = lib.mkOverride 40 nixos-on-arm.linuxPackagesRK3588Cross.x86_64-linux;
-              })
-            ];
-          };
-          stormjib = {
-            system = "aarch64-linux";
-            modules = with inputs; [
-              ({ pkgs, lib, ... }: {
-                # Cross-compiled kernel (x86_64 → aarch64), rest from cache
-                boot.kernelPackages = lib.mkOverride 40 nixos-on-arm.linuxPackagesCross.x86_64-linux;
-              })
-            ];
-          };
-          dcc-ex = {
-            system = "aarch64-linux";
-          };
+          modules =
+            let
+              build-modules = lib.create-common-modules "modules/common";
+              common-modules = (builtins.attrValues build-modules);
+            in
+            {
+              inherit build-modules common-modules;
+
+              nixos =
+                with inputs;
+                [
+                  # <<< Add an inline module HERE to disable the nixpkgs one early >>>
+                  (
+                    {
+                      config,
+                      pkgs,
+                      lib,
+                      ...
+                    }:
+                    {
+                      # Disable the atticd module provided by the nixpkgs input
+                      disabledModules = [ "services/networking/atticd.nix" ];
+
+                      # Provide hostPkgs for modules that expect it (like nixos-on-arm)
+                      _module.args.hostPkgs = lib.mkDefault pkgs.buildPackages;
+                    }
+                  )
+                  disko.nixosModules.disko
+                  home-manager.nixosModules.home-manager
+                  comin.nixosModules.comin
+                  # nix-ld.nixosModules.nix-ld
+                  sops-nix.nixosModules.sops
+                  loft.nixosModules.loft
+                  # agenix.nixosModules.age
+                  attic.nixosModules.atticd
+                  dcc-ex.nixosModules.jmri-server
+                  # (import ./encrypted/sops.nix)
+                  rockpi-quad.nixosModules.rockpi-quad
+                  faucet-nix.nixosModules.default
+                ]
+                ++ common-modules;
+
+              darwin =
+                with inputs;
+                [
+                  # any darwin specific modules
+                ]
+                ++ common-modules;
+            };
         };
-        modules =
+
+        homes =
           let
             build-modules = lib.create-common-modules "modules/common";
             common-modules = (builtins.attrValues build-modules);
           in
+          # build-homes = lib.create-common-modules "modules/common";
+          # common-homes = (builtins.attrValues build-homes);
           {
             inherit build-modules common-modules;
-
-            nixos =
+            # inherit build-homes common-homes;
+            modules =
               with inputs;
               [
-                # <<< Add an inline module HERE to disable the nixpkgs one early >>>
-                (
-                  { config, pkgs, lib, ... }:
-                  {
-                    # Disable the atticd module provided by the nixpkgs input
-                    disabledModules = [ "services/networking/atticd.nix" ];
-
-                    # Provide hostPkgs for modules that expect it (like nixos-on-arm)
-                    _module.args.hostPkgs = lib.mkDefault pkgs.buildPackages;
-                  }
-                )
-                disko.nixosModules.disko
-                home-manager.nixosModules.home-manager
-                comin.nixosModules.comin
-                # nix-ld.nixosModules.nix-ld
-                sops-nix.nixosModules.sops
-                loft.nixosModules.loft
-                # agenix.nixosModules.age
-                attic.nixosModules.atticd
-                dcc-ex.nixosModules.jmri-server
-                # (import ./encrypted/sops.nix)
-                rockpi-quad.nixosModules.rockpi-quad
-                faucet-nix.nixosModules.default
-              ]
-              ++ common-modules;
-
-            darwin =
-              with inputs;
-              [
-                # any darwin specific modules
+                sops-nix.homeManagerModules.sops
+                # any home specific modules
               ]
               ++ common-modules;
           };
-      };
 
-      homes =
-        let
-          build-modules = lib.create-common-modules "modules/common";
-          common-modules = (builtins.attrValues build-modules);
-        in
-        # build-homes = lib.create-common-modules "modules/common";
-        # common-homes = (builtins.attrValues build-homes);
-        {
-          inherit build-modules common-modules;
-          # inherit build-homes common-homes;
-          modules =
-            with inputs;
-            [
-              sops-nix.homeManagerModules.sops
-              # any home specific modules
-            ]
-            ++ common-modules;
+        # Example host-specific hardware modules
+        # systems.hosts.thinkpad.modules = with inputs; [
+        #   # Add hardware-specific modules
+        #   # Example: nixos-hardware.nixosModules.lenovo-thinkpad-t14
+        #   # nixos-hardware.nixosModules.thinkpad-t16-intel-i71260p
+        # ];
+
+        deploy = lib.mkDeploy {
+          inherit (inputs) self;
+          exclude = [
+            # "stormjib"
+            "thinkpad"
+            "test"
+            "dinghy"
+            "capstan-test"
+            "bcachefs-tester"
+            "pawl"
+            # "cargohold"
+            "lightship-atx"
+          ];
         };
 
-      # Example host-specific hardware modules
-      # systems.hosts.thinkpad.modules = with inputs; [
-      #   # Add hardware-specific modules
-      #   # Example: nixos-hardware.nixosModules.lenovo-thinkpad-t14
-      #   # nixos-hardware.nixosModules.thinkpad-t16-intel-i71260p
-      # ];
+        checks = builtins.mapAttrs (
+          system: deploy-lib: deploy-lib.deployChecks inputs.self.deploy
+        ) inputs.deploy-rs.lib;
 
-      deploy = lib.mkDeploy {
-        inherit (inputs) self;
-        exclude = [
-          # "stormjib"
-          "thinkpad"
-          "test"
-          "dinghy"
-          "capstan-test"
-          "bcachefs-tester"
-          "pawl"
-          # "cargohold"
-          "lightship-atx"
-        ];
+        outputs-builder = channels: {
+          # formatter = channels.nixpkgs.nixfmt-rfc-style;
+          # Define the formatter using treefmt-nix
+          formatter = (inputs.treefmt-nix.lib.evalModule channels.nixpkgs ./treefmt.nix).config.build.wrapper;
+
+          # Add a check for formatting
+          checks.formatting = (inputs.treefmt-nix.lib.evalModule channels.nixpkgs ./treefmt.nix).config.build.check inputs.self;
+        };
       };
-
-      checks = builtins.mapAttrs (
-        system: deploy-lib: deploy-lib.deployChecks inputs.self.deploy
-      ) inputs.deploy-rs.lib;
-
-      outputs-builder = channels: {
-        # formatter = channels.nixpkgs.nixfmt-rfc-style;
-        # Define the formatter using treefmt-nix
-        formatter = (inputs.treefmt-nix.lib.evalModule channels.nixpkgs ./treefmt.nix).config.build.wrapper;
-
-        # Add a check for formatting
-        checks.formatting = (inputs.treefmt-nix.lib.evalModule channels.nixpkgs ./treefmt.nix).config.build.check inputs.self;
-      };
+    in
+    flake
+    // {
+      packages = builtins.mapAttrs (
+        system: pkgs: builtins.removeAttrs pkgs [ "homeConfigurations" ]
+      ) flake.packages;
     }
     // {
       # Add this line to expose self

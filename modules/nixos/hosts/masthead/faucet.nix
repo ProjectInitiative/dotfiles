@@ -10,10 +10,7 @@ with lib.${namespace};
 let
   cfg = config.${namespace}.hosts.masthead;
   activePort =
-    if cfg.routerRole == "primary" then
-      cfg.openflow.primaryPort
-    else
-      cfg.openflow.backupPort;
+    if cfg.routerRole == "primary" then cfg.openflow.primaryPort else cfg.openflow.backupPort;
 
   faucetYaml = pkgs.writeText "faucet.yaml" ''
     dps:

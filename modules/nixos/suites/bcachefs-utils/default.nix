@@ -24,11 +24,26 @@ in
     retention = mkOption {
       type = submodule {
         options = {
-          hourly = mkOption { type = int; default = 12; };
-          daily = mkOption { type = int; default = 14; };
-          weekly = mkOption { type = int; default = 8; };
-          monthly = mkOption { type = int; default = 12; };
-          yearly = mkOption { type = int; default = 5; };
+          hourly = mkOption {
+            type = int;
+            default = 12;
+          };
+          daily = mkOption {
+            type = int;
+            default = 14;
+          };
+          weekly = mkOption {
+            type = int;
+            default = 8;
+          };
+          monthly = mkOption {
+            type = int;
+            default = 12;
+          };
+          yearly = mkOption {
+            type = int;
+            default = 5;
+          };
         };
       };
       default = { };

@@ -463,23 +463,41 @@ in
         ''}
 
         # VRRP script definitions
-        ${concatMapStringsSep "\n\n" (
-          { name, script, ... }:
-          let
-            generated = generateVrrpScript name script;
-          in
-          "vrrp_script ${generated.name} {\n${generated.content}\n}"
-        ) (mapAttrsToList (n: v: { inherit n v; name = n; script = v; }) cfg.vrrpScripts)}
+        ${concatMapStringsSep "\n\n"
+          (
+            { name, script, ... }:
+            let
+              generated = generateVrrpScript name script;
+            in
+            "vrrp_script ${generated.name} {\n${generated.content}\n}"
+          )
+          (
+            mapAttrsToList (n: v: {
+              inherit n v;
+              name = n;
+              script = v;
+            }) cfg.vrrpScripts
+          )
+        }
 
 
         # VRRP instance definitions
-        ${concatMapStringsSep "\n\n" (
-          { name, instance, ... }:
-          let
-            generated = generateVrrpInstance name instance;
-          in
-          "vrrp_instance ${generated.name} {\n${generated.content}\n}"
-        ) (mapAttrsToList (n: v: { inherit n v; name = n; instance = v; }) cfg.vrrpInstances)}
+        ${concatMapStringsSep "\n\n"
+          (
+            { name, instance, ... }:
+            let
+              generated = generateVrrpInstance name instance;
+            in
+            "vrrp_instance ${generated.name} {\n${generated.content}\n}"
+          )
+          (
+            mapAttrsToList (n: v: {
+              inherit n v;
+              name = n;
+              instance = v;
+            }) cfg.vrrpInstances
+          )
+        }
 
         # TODO: Add virtual_server configuration generation if needed
       '';

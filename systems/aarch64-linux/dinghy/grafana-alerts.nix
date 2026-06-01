@@ -629,7 +629,10 @@ let
             {
               refId = "A";
               datasourceUid = "prometheus_ds";
-              relativeTimeRange = { from = 300; to = 0; };
+              relativeTimeRange = {
+                from = 300;
+                to = 0;
+              };
               model = {
                 expr = "max by(job) (garage_cluster_available) == 0";
                 refId = "A";
@@ -638,12 +641,21 @@ let
             {
               refId = "B";
               datasourceUid = "__expr__";
-              model = { expression = "A"; type = "reduce"; reducer = "last"; refId = "B"; };
+              model = {
+                expression = "A";
+                type = "reduce";
+                reducer = "last";
+                refId = "B";
+              };
             }
             {
               refId = "C";
               datasourceUid = "__expr__";
-              model = { expression = "$B == 0"; type = "math"; refId = "C"; };
+              model = {
+                expression = "$B == 0";
+                type = "math";
+                refId = "C";
+              };
             }
           ];
           for = "1m";
@@ -652,7 +664,9 @@ let
           testScenarios = {
             "garage_unavailable" = {
               metric = "garage_cluster_available";
-              labels = { job = "garage" ; };
+              labels = {
+                job = "garage";
+              };
               value = 0;
             };
           };
@@ -667,7 +681,10 @@ let
             {
               refId = "A";
               datasourceUid = "prometheus_ds";
-              relativeTimeRange = { from = 300; to = 0; };
+              relativeTimeRange = {
+                from = 300;
+                to = 0;
+              };
               model = {
                 expr = "min by(job) (garage_cluster_partitions_quorum) < 256";
                 refId = "A";
@@ -676,12 +693,21 @@ let
             {
               refId = "B";
               datasourceUid = "__expr__";
-              model = { expression = "A"; type = "reduce"; reducer = "last"; refId = "B"; };
+              model = {
+                expression = "A";
+                type = "reduce";
+                reducer = "last";
+                refId = "B";
+              };
             }
             {
               refId = "C";
               datasourceUid = "__expr__";
-              model = { expression = "$B < 256"; type = "math"; refId = "C"; };
+              model = {
+                expression = "$B < 256";
+                type = "math";
+                refId = "C";
+              };
             }
           ];
           for = "2m";
@@ -690,7 +716,9 @@ let
           testScenarios = {
             "garage_quorum_lost" = {
               metric = "garage_cluster_partitions_quorum";
-              labels = { job = "garage" ; };
+              labels = {
+                job = "garage";
+              };
               value = 128;
             };
           };
@@ -705,7 +733,10 @@ let
             {
               refId = "A";
               datasourceUid = "prometheus_ds";
-              relativeTimeRange = { from = 300; to = 0; };
+              relativeTimeRange = {
+                from = 300;
+                to = 0;
+              };
               model = {
                 expr = "sum by(instance) (garage_block_resync_errored_blocks) > 0";
                 refId = "A";
@@ -714,12 +745,21 @@ let
             {
               refId = "B";
               datasourceUid = "__expr__";
-              model = { expression = "A"; type = "reduce"; reducer = "last"; refId = "B"; };
+              model = {
+                expression = "A";
+                type = "reduce";
+                reducer = "last";
+                refId = "B";
+              };
             }
             {
               refId = "C";
               datasourceUid = "__expr__";
-              model = { expression = "$B > 0"; type = "math"; refId = "C"; };
+              model = {
+                expression = "$B > 0";
+                type = "math";
+                refId = "C";
+              };
             }
           ];
           for = "5m";
@@ -728,7 +768,9 @@ let
           testScenarios = {
             "garage_sync_error" = {
               metric = "garage_block_resync_errored_blocks";
-              labels = { instance = "garage-0"; };
+              labels = {
+                instance = "garage-0";
+              };
               value = 5;
             };
           };
@@ -743,7 +785,10 @@ let
             {
               refId = "A";
               datasourceUid = "prometheus_ds";
-              relativeTimeRange = { from = 300; to = 0; };
+              relativeTimeRange = {
+                from = 300;
+                to = 0;
+              };
               model = {
                 expr = "garage_cluster_healthy == 0";
                 refId = "A";
@@ -752,12 +797,21 @@ let
             {
               refId = "B";
               datasourceUid = "__expr__";
-              model = { expression = "A"; type = "reduce"; reducer = "last"; refId = "B"; };
+              model = {
+                expression = "A";
+                type = "reduce";
+                reducer = "last";
+                refId = "B";
+              };
             }
             {
               refId = "C";
               datasourceUid = "__expr__";
-              model = { expression = "$B == 0"; type = "math"; refId = "C"; };
+              model = {
+                expression = "$B == 0";
+                type = "math";
+                refId = "C";
+              };
             }
           ];
           for = "3m";
@@ -766,7 +820,9 @@ let
           testScenarios = {
             "garage_node_down" = {
               metric = "garage_cluster_healthy";
-              labels = { job = "garage" ; };
+              labels = {
+                job = "garage";
+              };
               value = 0;
             };
           };
@@ -781,7 +837,10 @@ let
             {
               refId = "A";
               datasourceUid = "prometheus_ds";
-              relativeTimeRange = { from = 300; to = 0; };
+              relativeTimeRange = {
+                from = 300;
+                to = 0;
+              };
               model = {
                 expr = "(garage_local_disk_avail{volume=\"data\"} / garage_local_disk_total{volume=\"data\"}) * 100";
                 refId = "A";
@@ -790,12 +849,21 @@ let
             {
               refId = "B";
               datasourceUid = "__expr__";
-              model = { expression = "A"; type = "reduce"; reducer = "last"; refId = "B"; };
+              model = {
+                expression = "A";
+                type = "reduce";
+                reducer = "last";
+                refId = "B";
+              };
             }
             {
               refId = "C";
               datasourceUid = "__expr__";
-              model = { expression = "$B < 15"; type = "math"; refId = "C"; };
+              model = {
+                expression = "$B < 15";
+                type = "math";
+                refId = "C";
+              };
             }
           ];
           for = "10m";
@@ -804,7 +872,10 @@ let
           testScenarios = {
             "garage_disk_low" = {
               metric = "garage_local_disk_avail";
-              labels = { instance = "garage-1"; volume = "data"; };
+              labels = {
+                instance = "garage-1";
+                volume = "data";
+              };
               value = 10;
             };
           };

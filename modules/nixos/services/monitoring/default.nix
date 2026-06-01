@@ -352,6 +352,10 @@ in
       cfg.exporters.node.enable || cfg.exporters.smartctl.enable || cfg.prometheus.enable
     ) { };
 
+    sops.secrets.grafana_secret_key = mkIf cfg.grafana.enable {
+      owner = "grafana";
+    };
+
     services.grafana = mkIf cfg.grafana.enable {
       enable = true;
       inherit (cfg.grafana) package dataDir;
@@ -361,6 +365,7 @@ in
           http_addr = cfg.grafana.listenAddress;
           http_port = cfg.grafana.port;
         };
+        security.secret_key = "$__file{${config.sops.secrets.grafana_secret_key.path}}";
       };
       provision.datasources.settings = {
         apiVersion = 1;
@@ -372,7 +377,8 @@ in
             access = "proxy";
             url =
               let
-                addr = if cfg.prometheus.listenAddress == "0.0.0.0" then "127.0.0.1" else cfg.prometheus.listenAddress;
+                addr =
+                  if cfg.prometheus.listenAddress == "0.0.0.0" then "127.0.0.1" else cfg.prometheus.listenAddress;
               in
               "http://${addr}:${toString cfg.prometheus.port}";
             isDefault = true;
