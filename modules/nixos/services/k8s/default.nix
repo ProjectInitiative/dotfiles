@@ -348,17 +348,9 @@ in
       networking.tailscale = mkIf (cfg.networkType == "tailscale") enabled;
 
       services = {
-        # use custom version, not provided in nixpkgs
         k3s = {
 
-          #####################
-          #
-          # TODO:
-          # REMOVE ONCE STABLE CATCHES UP
-          #
-          #
-          # ##################
-          package = inputs.nixpkgs-catch-up.legacyPackages.${pkgs.stdenv.hostPlatform.system}.k3s;
+          package = inputs.k3s-pinned.legacyPackages.${pkgs.stdenv.hostPlatform.system}.k3s;
 
           enable = true;
           role = cfg.role;

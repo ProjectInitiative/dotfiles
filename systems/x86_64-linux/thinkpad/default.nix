@@ -246,7 +246,7 @@ in
   projectinitiative = {
 
     settings = {
-      stateVersion = "25.11";
+      stateVersion = "26.05";
     };
 
     encrypted.nix-signing = enabled;
@@ -443,7 +443,7 @@ in
 
     wine64
     winetricks
-    wineWowPackages.waylandFull
+    wineWow64Packages.waylandFull
 
     ani-cli
     stremio-linux-shell

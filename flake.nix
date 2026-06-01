@@ -3,15 +3,8 @@
 
   inputs = {
     # NixPkgs
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     # nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    #
-    # This input will pin the nixpkgs version of unstable until the packages catch
-    # up in stable. current trackers: k3s, tailscaled
-    # when stable includes: 89c2b2330e733d6cdb5eae7b899326930c2c0648 it is safe to
-    # switch
-    nixpkgs-catch-up.url = "github:nixos/nixpkgs/nixos-unstable";
-
     # NixPkgs Unstable
     unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     # NixPkgs Master
@@ -20,13 +13,16 @@
     # NixPkgs Master
     ai-tools.url = "github:nixos/nixpkgs/master";
 
+    
+    k3s-pinned.url = "github:nixos/nixpkgs/nixos-26.05";
+
     # Home Manager
-    home-manager.url = "github:nix-community/home-manager/release-25.11";
+    home-manager.url = "github:nix-community/home-manager/release-26.05";
     # home-manager.url = "github:nix-community/home-manager/release-24.11";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     # macOS Support
-    darwin.url = "github:lnl7/nix-darwin/nix-darwin-24.11";
+    darwin.url = "github:lnl7/nix-darwin/nix-darwin-26.05";
     darwin.inputs.nixpkgs.follows = "nixpkgs";
 
     # Hardware Configuration
@@ -147,7 +143,7 @@
     # FireFox extentions
     firefox-addons = {
       url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
-      inputs.nixpkgs.follows = "nixpkgs";
+      # inputs.nixpkgs.follows = "nixpkgs";
     };
 
     claude-desktop = {
@@ -175,7 +171,6 @@
 
     dcc-ex = {
       url = "github:projectinitiative/dcc-ex";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     faucet-nix = {
