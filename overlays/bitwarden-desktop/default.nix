@@ -1,5 +1,5 @@
 { channels, inputs, ... }:
 
 final: prev: {
-  inherit (channels.unstable) bitwarden-desktop;
+  inherit (channels.upstream) bitwarden-desktop;
 }
