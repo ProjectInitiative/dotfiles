@@ -54,7 +54,7 @@ in
       packages = with pkgs; [
         deploy-rs
         nixos-anywhere
-        nixfmt-rfc-style
+        nixfmt
         nix-prefetch-git
         nix-prefetch-github
         nix-search-cli
