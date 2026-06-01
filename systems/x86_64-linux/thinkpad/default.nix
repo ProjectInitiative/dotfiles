@@ -430,7 +430,6 @@ in
     wireshark
     mqttx
     mqttui
-    wireshark-qt
     networkmanagerapplet
     ## temp
     minicom
@@ -498,6 +497,7 @@ in
       version = "0.5.12";
       src = prev.src.override {
         rev = "0.5.12";
+        tag = null;
         hash = "sha256-3LdERBiPXal+OF7tgguJcVXrqycBSmD3psFzn4z5krY=";
       };
     });
