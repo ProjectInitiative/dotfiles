@@ -93,6 +93,7 @@ in
         eternal-terminal = mkIf cfg.allFeatures enabled;
         opencode-web = mkIf cfg.allFeatures {
           enable = true;
+          user = "kylepzak";
           openFirewall = true;
           passwordFile = sops.secrets.user_password.path;
         };

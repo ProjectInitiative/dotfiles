@@ -65,6 +65,7 @@ in
       skipSignedByKeys = mkOpt (types.listOf types.str) [
         "cache.nixos.org-1"
         "nix-community.cachix.org-1"
+        "devenv.cachix.org-1"
       ] "A list of trusted public keys whose signatures should be skipped.";
       pruning = {
         enable = mkBoolOpt false "Enable automatic pruning of old cache artifacts.";
