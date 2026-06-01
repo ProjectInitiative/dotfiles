@@ -55,7 +55,7 @@ in
         btop
         # busybox
         dool
-        dogdns
+        doggo
         dust
         fd
         jq
