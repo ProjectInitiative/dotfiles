@@ -440,6 +440,7 @@ in
 
     multipath-tools
     usbutils
+    android-tools
 
     wine64
     winetricks
@@ -480,7 +481,7 @@ in
   # Enable CUPS to print documents.
   services.printing.enable = true;
 
-  programs.adb.enable = true;
+
   users.users.kylepzak.extraGroups = [
     "tss"
     "adbusers"
