@@ -95,7 +95,7 @@ in
           enable = true;
           user = "kylepzak";
           openFirewall = true;
-          passwordFile = sops.secrets.user_password.path;
+          passwordFile = sops.secrets.opencode_password.path;
         };
         k8s = mkIf cfg.allFeatures {
           enable = true;

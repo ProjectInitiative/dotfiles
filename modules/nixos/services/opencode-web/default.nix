@@ -19,7 +19,7 @@ in
       type = types.nullOr types.str;
       default = null;
       example = "kylepzak";
-      description = "User to run the service as. Enables linger for this user.";
+      description = "User to run the service as.";
     };
 
     port = mkOption {
@@ -43,36 +43,37 @@ in
     passwordFile = mkOption {
       type = types.nullOr types.path;
       default = null;
-      example = "/run/secrets-for-users/user_password";
-      description = "Path to a file containing the OpenCode server password. Read by the user service.";
+      example = "/run/secrets/opencode_password";
+      description = "Path to a file containing the OpenCode server password. Read by root via LoadCredential.";
     };
   };
 
   config = mkIf cfg.enable {
     environment.systemPackages = with pkgs; [ opencode ];
 
-    systemd.user.services.opencode-web = {
+    systemd.services.opencode-web = {
       description = "OpenCode Web Interface";
       after = [ "network.target" ];
-      wantedBy = [ "default.target" ];
+      wantedBy = [ "multi-user.target" ];
 
       serviceConfig = {
         Restart = "on-failure";
         RestartSec = "5s";
-        ExecStart = pkgs.writeShellScript "opencode-web-start" ''
-          set -o allexport
-          ${optionalString (cfg.passwordFile != null) ''
-            export OPENCODE_SERVER_PASSWORD=$(cat ${cfg.passwordFile})
-          ''}
-          set +o allexport
-          exec ${pkgs.opencode}/bin/opencode web \
-            --port ${toString cfg.port} \
-            --hostname ${cfg.hostname}
-        '';
+        StateDirectory = "opencode";
+        User = mkIf (cfg.user != null) cfg.user;
+      } // optionalAttrs (cfg.passwordFile != null) {
+        LoadCredential = "opencode-password:${cfg.passwordFile}";
       };
-    };
 
-    users.users.${cfg.user}.linger = mkIf (cfg.user != null) true;
+      script = ''
+        ${optionalString (cfg.passwordFile != null) ''
+          export OPENCODE_SERVER_PASSWORD=$(cat "$CREDENTIALS_DIRECTORY/opencode-password")
+        ''}
+        exec ${pkgs.opencode}/bin/opencode web \
+          --port ${toString cfg.port} \
+          --hostname ${cfg.hostname}
+      '';
+    };
 
     networking.firewall.allowedTCPPorts = mkIf cfg.openFirewall [ cfg.port ];
   };
