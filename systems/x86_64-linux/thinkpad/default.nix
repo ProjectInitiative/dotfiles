@@ -421,7 +421,7 @@ in
     # quickgui
     smartmontools
     nvme-cli
-    bitwarden-desktop
+    # bitwarden-desktop
     solaar
     # spotify
     mtr
