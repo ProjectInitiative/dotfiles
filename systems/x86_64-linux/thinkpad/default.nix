@@ -227,7 +227,7 @@ in
 
   # add second monitor
   services.xserver.displayManager.sessionCommands = ''
-    ${lib.getBin pkgs.xorg.xrandr}/bin/xrandr --setprovideroutputsource 2 0
+    ${lib.getBin pkgs.xrandr}/bin/xrandr --setprovideroutputsource 2 0
   '';
 
   virtualisation.docker.extraOptions = "--insecure-registry 172.16.1.50:31872";
