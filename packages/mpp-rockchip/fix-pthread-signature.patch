@@ -1,0 +1,13 @@
+diff --git a/osal/test/mpp_runtime_test.c b/osal/test/mpp_runtime_test.c
+index 75b65a3..0ce3f00 100644
+--- a/osal/test/mpp_runtime_test.c
++++ b/osal/test/mpp_runtime_test.c
+@@ -134,7 +134,7 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+ pthread_cond_t cond;
+ rk_u32 condition = 0;
+
+-void *wait_thread()
++void *wait_thread(void *arg)
+ {
+     int ret;
+     struct timespec ts, ts_s, ts_e;

@@ -29,6 +29,10 @@ stdenv.mkDerivation rec {
     libva
   ];
 
+  patches = [
+    ./fix-pthread-signature.patch
+  ];
+
   # Disable static library build which fails in Nix environment due to POST_BUILD logic
   # Also fix broken paths in pkg-config files
   postPatch = ''
