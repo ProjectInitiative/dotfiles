@@ -13,33 +13,84 @@ let
 
   # POSIX-compliant shell function for bash and zsh
   rebuildHostFunction = ''
-    # Rebuilds and switches a remote NixOS host, piping output to nom.
-    # Usage: rebuild-host <hostname>
+    # Rebuilds a remote NixOS host, piping output to nom.
+    # Usage: rebuild-host [--target <ip>] <hostname> [switch|test|boot]
     rebuild-host() {
-      if [ -z "$1" ]; then
+      local target=""
+      local hostname=""
+      local action="switch"
+
+      while [ $# -gt 0 ]; do
+        case "$1" in
+          --target)
+            if [ -z "$2" ]; then
+              echo "Error: --target requires an argument."
+              return 1
+            fi
+            target="$2"
+            shift 2
+            ;;
+          *)
+            if [ -z "$hostname" ]; then
+              hostname="$1"
+            else
+              action="$1"
+            fi
+            shift
+            ;;
+        esac
+      done
+
+      if [ -z "$hostname" ]; then
         echo "Error: Target hostname is required."
-        echo "Usage: rebuild-host <hostname>"
+        echo "Usage: rebuild-host [--target <ip>] <hostname> [switch|test|boot]"
         return 1
       fi
-      export TARGET="$1"
-      # The |& operator pipes both stdout and stderr
-      nixos-rebuild --target-host "$TARGET" --sudo --flake ".#$TARGET" switch --log-format internal-json |& nom --json
+
+      nixos-rebuild --target-host "''${target:-$hostname}" --sudo --flake ".#$hostname" "$action" --log-format internal-json |& nom --json
     }
   '';
 
   # Fish-specific shell function
   rebuildHostFunctionFish = ''
-    # Rebuilds and switches a remote NixOS host, piping output to nom.
-    # Usage: rebuild-host <hostname>
+    # Rebuilds a remote NixOS host, piping output to nom.
+    # Usage: rebuild-host [--target <ip>] <hostname> [switch|test|boot]
     function rebuild-host
-      if test -z "$argv[1]"
+      set target ""
+      set hostname ""
+      set action "switch"
+
+      set i 1
+      while test $i -le (count $argv)
+        switch $argv[$i]
+          case --target
+            set i (math $i + 1)
+            if test $i -gt (count $argv)
+              echo "Error: --target requires an argument."
+              return 1
+            end
+            set target $argv[$i]
+          case '*'
+            if test -z "$hostname"
+              set hostname $argv[$i]
+            else
+              set action $argv[$i]
+            end
+        end
+        set i (math $i + 1)
+      end
+
+      if test -z "$hostname"
         echo "Error: Target hostname is required."
-        echo "Usage: rebuild-host <hostname>"
+        echo "Usage: rebuild-host [--target <ip>] <hostname> [switch|test|boot]"
         return 1
       end
-      set -gx TARGET $argv[1]
-      # The |& operator pipes both stdout and stderr
-      nixos-rebuild --target-host "$TARGET" --sudo --flake ".#$TARGET" switch --log-format internal-json |& nom --json
+
+      if test -z "$target"
+        set target $hostname
+      end
+
+      nixos-rebuild --target-host "$target" --sudo --flake ".#$hostname" "$action" --log-format internal-json |& nom --json
     end
   '';
 
