@@ -25,7 +25,7 @@ in
         lsp-ai
         nil
         nixd
-        python312Packages.python-lsp-server
+        python313Packages.python-lsp-server
         pyright
       ];
 
