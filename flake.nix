@@ -392,29 +392,6 @@
 
                       # Provide hostPkgs for modules that expect it (like nixos-on-arm)
                       _module.args.hostPkgs = lib.mkDefault pkgs.buildPackages;
-
-                      # python3.12-whatthepatch test times out under QEMU emulation
-                      nixpkgs.overlays = [
-                        (final: prev:
-                          let
-                            skipTest = pkg: pkg.overridePythonAttrs (o: {
-                              checkPhase = "";  # skip tests entirely
-                            });
-                          in
-                          {
-                            python3Packages = prev.python3Packages.override {
-                              overrides = pyfinal: pyprev: {
-                                whatthepatch = skipTest pyprev.whatthepatch;
-                              };
-                            };
-                            python312Packages = prev.python312Packages.override {
-                              overrides = pyfinal: pyprev: {
-                                whatthepatch = skipTest pyprev.whatthepatch;
-                              };
-                            };
-                          }
-                        )
-                      ];
                     }
                   )
                   disko.nixosModules.disko
