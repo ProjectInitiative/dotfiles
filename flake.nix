@@ -395,15 +395,23 @@
 
                       # python3.12-whatthepatch test times out under QEMU emulation
                       nixpkgs.overlays = [
-                        (final: prev: {
-                          python3Packages = prev.python3Packages.override {
-                            overrides = pyfinal: pyprev: {
-                              whatthepatch = pyprev.whatthepatch.overrideAttrs (_: {
-                                doCheck = false;
-                              });
+                        (final: prev:
+                          let
+                            skipTest = pkg: pkg.overrideAttrs (_: { doCheck = false; });
+                          in
+                          {
+                            python3Packages = prev.python3Packages.override {
+                              overrides = pyfinal: pyprev: {
+                                whatthepatch = skipTest pyprev.whatthepatch;
+                              };
                             };
-                          };
-                        })
+                            python312Packages = prev.python312Packages.override {
+                              overrides = pyfinal: pyprev: {
+                                whatthepatch = skipTest pyprev.whatthepatch;
+                              };
+                            };
+                          }
+                        )
                       ];
                     }
                   )
