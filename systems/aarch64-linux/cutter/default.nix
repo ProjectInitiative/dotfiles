@@ -22,11 +22,18 @@ in
   ];
 
   # The AVF module handles:
-  # - Kernel (linuxPackages_6_1 with patches)
+  # - Kernel (linuxPackages_6_1 with patches — overridden below for cross)
   # - Bootloader (systemd-boot)
   # - FileSystems (/, /boot, /mnt/internal, /mnt/shared)
   # - Networking (systemd-networkd, avahi, ttyd)
   avf.defaultUser = "kylepzak";
+
+  # Cross-compile the kernel on x86_64; use AVF's native kernel on aarch64.
+  boot.kernelPackages = lib.mkOverride 40 (
+    if builtins.getEnv "BUILD_ARM_NATIVE" == "true"
+    then pkgs.linuxPackages_6_1
+    else inputs.nixos-on-arm.linuxPackagesCross.x86_64-linux
+  );
 
   projectinitiative = {
 
