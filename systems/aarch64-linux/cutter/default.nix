@@ -12,7 +12,10 @@ with lib;
 with lib.${namespace};
 
 let
-  # Assume namespace is "projectinitiative" as seen in flake.nix
+  # Plain cross-compiled aarch64 kernel from nixpkgs (no Rockchip patches).
+  # AVF applies its own 6.1 patches via boot.kernelPatches.
+  crossKernel = inputs.nixpkgs.legacyPackages.x86_64-linux.pkgsCross.aarch64-multiplatform.linuxPackages_6_1;
+
   cfg = config.${namespace};
 in
 {
@@ -22,7 +25,7 @@ in
   ];
 
   # The AVF module handles:
-  # - Kernel (linuxPackages_6_1 with patches — overridden below for cross)
+  # - Kernel (linuxPackages_6_1 with patches — cross-compiled below on x86_64)
   # - Bootloader (systemd-boot)
   # - FileSystems (/, /boot, /mnt/internal, /mnt/shared)
   # - Networking (systemd-networkd, avahi, ttyd)
@@ -32,7 +35,7 @@ in
   boot.kernelPackages = lib.mkOverride 40 (
     if builtins.getEnv "BUILD_ARM_NATIVE" == "true"
     then pkgs.linuxPackages_6_1
-    else inputs.nixos-on-arm.linuxPackagesCross.x86_64-linux
+    else crossKernel
   );
 
   projectinitiative = {
