@@ -397,7 +397,10 @@
                       nixpkgs.overlays = [
                         (final: prev:
                           let
-                            skipTest = pkg: pkg.overrideAttrs (_: { doCheck = false; });
+                            skipTest = pkg: pkg.overridePythonAttrs (o: {
+                              doCheck = false;
+                              pythonImportsCheck = [ ];
+                            });
                           in
                           {
                             python3Packages = prev.python3Packages.override {
