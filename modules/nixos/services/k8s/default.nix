@@ -335,7 +335,7 @@ in
     boot.kernelModules = optionals (cfg.networkType == "wireguard") [ "wireguard" ];
 
     # Add GPU drivers if GPU support is enabled
-    hardware.graphics.enable = mkIf cfg.gpuSupport true;
+    hardware.opengl.enable = mkIf cfg.gpuSupport true;
     hardware.nvidia.package = mkIf cfg.gpuSupport config.boot.kernelPackages.nvidiaPackages.stable;
     hardware.nvidia.modesetting.enable = mkIf cfg.gpuSupport true;
 
