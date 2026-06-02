@@ -398,8 +398,7 @@
                         (final: prev:
                           let
                             skipTest = pkg: pkg.overridePythonAttrs (o: {
-                              doCheck = false;
-                              pythonImportsCheck = [ ];
+                              checkPhase = "";  # skip tests entirely
                             });
                           in
                           {
