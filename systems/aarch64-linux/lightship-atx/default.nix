@@ -9,9 +9,12 @@
 }:
 let
   nvme = "nvme-TEAM_TM8FP6512G_TPBF2502270050300037-part1";
+  armBoot = if builtins.getEnv "BUILD_ARM_NATIVE" == "true"
+    then inputs.nixos-on-arm.bootModules
+    else inputs.nixos-on-arm.bootModulesCross;
 in
 {
-  imports = inputs.nixos-on-arm.bootModules.rock5a ++ [
+  imports = armBoot.rock5a ++ [
     # Any additional modules you want to import
   ];
 

@@ -6,10 +6,13 @@
   modulesPath,
   lib,
   ...
-}:
-{
+}: let
+  armBoot = if builtins.getEnv "BUILD_ARM_NATIVE" == "true"
+    then inputs.nixos-on-arm.bootModules
+    else inputs.nixos-on-arm.bootModulesCross;
+in {
 
-  imports = inputs.nixos-on-arm.bootModules.orangepi5ultra;
+  imports = armBoot.orangepi5ultra;
 
   # hardware.deviceTree.overlays = [
   #   {

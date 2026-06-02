@@ -12,9 +12,12 @@
   lib,
   modulesPath,
   ...
-}:
-{
-  imports = inputs.nixos-on-arm.bootModules.e52c;
+}: let
+  armBoot = if builtins.getEnv "BUILD_ARM_NATIVE" == "true"
+    then inputs.nixos-on-arm.bootModules
+    else inputs.nixos-on-arm.bootModulesCross;
+in {
+  imports = armBoot.e52c;
 
   boot.supportedFilesystems.zfs = lib.mkForce false;
   hardware.deviceTree.kernelPackage = lib.mkForce config.boot.kernelPackages.kernel;
