@@ -10,14 +10,18 @@
         "apiKey": "dummy"
       },
       "models": {
-        "astrolabe": {
-          "name": "astrolabe (256k context)",
+        "Qwen3.6-27B-UD-Q8_K_XL": {
+          "name": "Qwen 3.6 27B",
           "limit": {
             "context": 256000,
             "output": 16384
-          },
-          "parameters": {
-            "repetition_penalty": 1.02
+          }
+        },
+        "Qwen3.6-35B-A3B-Q8_0": {
+          "name": "Qwen 3.6 35B A3B",
+          "limit": {
+            "context": 256000,
+            "output": 16384
           }
         }
       }
