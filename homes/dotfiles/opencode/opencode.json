@@ -2,9 +2,9 @@
   "autoupdate": false,
   "$schema": "https://opencode.ai/config.json",
   "provider": {
-    "vllm": {
+    "fox": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "vLLM (Astrolabe)",
+      "name": "fox (Astrolabe)",
       "options": {
         "baseURL": "http://astrolabe:8000/v1",
         "apiKey": "dummy"
