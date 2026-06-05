@@ -1752,11 +1752,11 @@
     },
     "upstream": {
       "locked": {
-        "lastModified": 1780325040,
-        "narHash": "sha256-0o0y0HvyksmjiQbiFB7CAXOH8DFf2DKuQ4VpB5cXIyg=",
+        "lastModified": 1780625309,
+        "narHash": "sha256-EX1As1jEsAOSDTOELjT8Xv0RLEn9beG1JALeALrHyTI=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "1a8785a030fe2453cb3a34c9b01c7e0b8fcea2a2",
+        "rev": "70d8b1deff337c20585032e4028d79fe2a0326ca",
         "type": "github"
       },
       "original": {
