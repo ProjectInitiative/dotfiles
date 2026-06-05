@@ -20,8 +20,8 @@ in
       opencode = {
         enable = mkBoolOpt true "Install the opencode AI coding agent.";
       };
-      gemini = {
-        enable = mkBoolOpt true "Install the gemini-cli agent.";
+      antigravity = {
+        enable = mkBoolOpt true "Install the antigravity-cli agent.";
       };
       qwen = {
         enable = mkBoolOpt true "Install qwen-code agent.";
@@ -44,7 +44,7 @@ in
     home.packages =
       with pkgs;
       (optional cfg.agent.opencode.enable opencode)
-      ++ (optional cfg.agent.gemini.enable gemini-cli)
+      ++ (optional cfg.agent.antigravity.enable antigravity-cli)
       ++ (optional cfg.agent.qwen.enable qwen-code)
       ++ (optional cfg.agent.claude.enable claude-code)
       ++ (optional cfg.mcp.enable pkgs.${namespace}.mcp-proxy-runner)

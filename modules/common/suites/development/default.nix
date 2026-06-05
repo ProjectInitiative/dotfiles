@@ -88,7 +88,7 @@ in
           python3Packages.pip
           # ventoy-full - removed until https://github.com/ventoy/Ventoy/issues/3224 is resolved.
           rustup
-          gemini-cli
+          antigravity-cli
           qwen-code
           claude-code
           opencode
