@@ -44,6 +44,16 @@
     "websearch": "allow",
     "question": "allow"
   },
+  "mcp": {
+    "k8s-mc": {
+      "type": "remote",
+      "url": "http://mcp-system-mcp-lb-mc.taildeab2.ts.net/sse"
+    },
+    "k8s-cc": {
+      "type": "remote",
+      "url": "http://mcp-system-mcp-lb-cc.taildeab2.ts.net/sse"
+    }
+  },
   "compaction": {
     "auto": false,
     "prune": false,
