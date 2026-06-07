@@ -51,7 +51,7 @@
     },
     "k8s-mc": {
       "type": "remote",
-      "url": "http://100.90.79.119/sse"
+      "url": "http://100.85.160.67/sse"
     }
   },
   "compaction": {
