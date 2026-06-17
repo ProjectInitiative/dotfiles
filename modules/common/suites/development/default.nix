@@ -94,6 +94,8 @@ in
           opencode
           # pkgs.${namespace}.gemini-cli
           # pkgs.${namespace}.qwen-code
+          awscli2
+          google-cloud-sdk
         ];
         # ++ lib.optionals isGraphical [ inputs.claude-desktop.packages.${system}.claude-desktop-with-fhs ];
       };
