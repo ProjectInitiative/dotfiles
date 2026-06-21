@@ -30,7 +30,6 @@
   "agent": {
     "yolo": {
       "description": "Dangerously skip permissions for local homelab automation",
-      "instructions": "You are an expert NixOS and Systems Engineer. You have full permission to modify files, run shell commands within your directory. Prioritize concise, correct solutions.",
       "permission": {
         "*": "allow"
       }
