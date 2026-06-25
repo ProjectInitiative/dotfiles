@@ -1,6 +1,6 @@
 ---
-description: Fast automation subagent using Qwen3.6 35B with full permissions for homelab automation
-model: lemonade/Qwen3.6-35B-A3B-MTP-GGUF
+description: Fast automation subagent using DeepSeek V4 Flash with full permissions for homelab automation
+model: opencode-go/deepseek-v4-flash
 mode: subagent
 permission:
   "*": allow

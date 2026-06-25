@@ -84,6 +84,12 @@ let
       enableVulkan = true;      # Vulkan GPU backends (llamacpp + whispercpp)
       enableImageGen = true;    # default true; set false to drop sd-cpp from closure
       lemonade.user = "kylepzak";
+      lemonade.host = "0.0.0.0";
+      lemonade.maxLoadedModels = 4;
+    };
+    systemd.services.lemond.environment = {
+      HF_HOME = "/mnt/pool/ai/huggingface";
+      XDG_CACHE_HOME = "/mnt/pool/ai/huggingface";
     };
 
     boot.extraModulePackages = [ config.boot.kernelPackages.r8125 ];

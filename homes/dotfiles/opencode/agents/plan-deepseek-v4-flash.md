@@ -1,6 +1,6 @@
 ---
-description: Fast planning subagent using Qwen3.6 35B for lightweight planning and code review
-model: lemonade/Qwen3.6-35B-A3B-MTP-GGUF
+description: Fast planning subagent using DeepSeek V4 Flash for lightweight planning and code review
+model: opencode-go/deepseek-v4-flash
 mode: subagent
 permission:
   edit: deny

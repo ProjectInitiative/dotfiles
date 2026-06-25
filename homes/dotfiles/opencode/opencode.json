@@ -25,6 +25,14 @@
           }
         }
       }
+    },
+    "lemonade": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "lemonade",
+      "options": {
+        "baseURL": "http://100.81.89.107:13305/v1",
+        "apiKey": "dummy"
+      }
     }
   },
   "agent": {
