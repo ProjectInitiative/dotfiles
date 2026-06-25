@@ -168,8 +168,13 @@ in
           # specific ports
           80
           443
+          # FTP
+          21
         ];
-        allowedTCPPortRanges = [ ];
+        allowedTCPPortRanges = [
+          # FTP Passive control
+          { from = 21100; to = 21102;}
+        ];
         allowedUDPPorts = [
           # DNS
           53
