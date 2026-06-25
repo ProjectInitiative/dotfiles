@@ -4,7 +4,6 @@
   lib,
   pkgs,
   namespace,
-  rocm-upstream ? pkgs,
   ...
 }:
 with lib;
@@ -17,8 +16,7 @@ in
   config = mkIf cfg.enable {
     hardware.graphics = {
       enable = true;
-      # 'unstable' now comes from your host's specialArgs
-      extraPackages = with rocm-upstream; [
+      extraPackages = with pkgs; [
         rocmPackages.clr
         rocmPackages.clr.icd
         rocmPackages.hipfort
@@ -29,8 +27,6 @@ in
 
     # Memory optimizations for the 128GB unified RAM
     boot.kernelParams = [
-      # "amdgpu.gttsize=102400"
-      # "ttm.pages_limit=26214400"
       "amdgpu.gttsize=126976"
       "ttm.pages_limit=32505856"
       "amdgpu.vis_vram_limit=102400"
@@ -48,7 +44,7 @@ in
       HSA_ENABLE_SDMA = "0";
     };
 
-    environment.systemPackages = with rocm-upstream; [
+    environment.systemPackages = with pkgs; [
       rocmPackages.rocm-smi
       rocmPackages.rocminfo
     ];

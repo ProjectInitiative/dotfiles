@@ -198,6 +198,7 @@ in
         ".config/direnv/direnv.toml".source = "${inputs.self}/homes/dotfiles/direnv.toml";
         ".config/direnv/lib/devenv.sh".source = "${inputs.self}/homes/dotfiles/direnv/lib/devenv.sh";
         ".config/opencode/opencode.json".source = "${inputs.self}/homes/dotfiles/opencode/opencode.json";
+        ".config/opencode/agents".source = "${inputs.self}/homes/dotfiles/opencode/agents";
       };
     };
 

@@ -9,9 +9,10 @@
     unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     # NixPkgs Master
     upstream.url = "github:nixos/nixpkgs/master";
-    rocm-upstream.url = "github:nixos/nixpkgs/master";
     # NixPkgs Master
     ai-tools.url = "github:nixos/nixpkgs/master";
+
+    nix-amd-ai.url = "github:ProjectInitiative/nix-amd-ai";
 
     k3s-pinned.url = "github:nixos/nixpkgs/nixos-26.05";
 
@@ -330,13 +331,6 @@
                     allowBroken = true;
                   };
                 };
-                rocm-upstream = import inputs.rocm-upstream {
-                  system = "x86_64-linux";
-                  config = {
-                    allowUnfree = true;
-                    allowBroken = true;
-                  };
-                };
               };
             };
             wharfmaster = {
@@ -388,6 +382,7 @@
                   # (import ./encrypted/sops.nix)
                   rockpi-quad.nixosModules.rockpi-quad
                   faucet-nix.nixosModules.default
+                  nix-amd-ai.nixosModules.default 
                 ]
                 ++ common-modules;
 
