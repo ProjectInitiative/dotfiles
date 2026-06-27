@@ -61,6 +61,9 @@
       "url": "http://100.85.160.67/sse"
     }
   },
+  "plugins": {
+    "oc-tps": "latest"
+  },
   "compaction": {
     "auto": false,
     "prune": false,
