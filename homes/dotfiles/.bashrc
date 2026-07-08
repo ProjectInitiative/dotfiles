@@ -122,7 +122,6 @@ alias refresh='source ~/.bashrc'
 # changes default editor
 set completion-ignore-case on
 #export GOPATH=~/go
-export VISUAL="/home/kpzak/.cargo/bin/hx"
 export EDITOR="$VISUAL"
 alias vim="nvim"
 
@@ -210,7 +209,6 @@ alias ls="exa"
 alias ll="exa -al"
 alias cat="bat"
 export PATH=$PATH:/usr/local/go/bin
-export PATH=/home/kpzak/.tiup/bin:$PATH
 
 export PATH="$PATH:/home/linuxbrew/.linuxbrew/bin"
 

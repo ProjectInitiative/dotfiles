@@ -484,6 +484,7 @@ in
     "tss"
     "adbusers"
     "dialout"
+    "networkmanager"
   ]; # tss group has access to TPM devices
 
   # rtkit is optional but recommended

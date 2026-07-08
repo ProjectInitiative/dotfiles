@@ -40,12 +40,12 @@ zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
 
 # Environment variables
 export GPG_TTY=$(tty)
-export VISUAL="/home/kpzak/.cargo/bin/hx"
+export VISUAL="/home/kylepzak/.cargo/bin/hx"
 export EDITOR="$VISUAL"
 export KUBECONFIG=~/.kube/config
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 export PATH=$PATH:/usr/local/go/bin
-export PATH=/home/kpzak/.tiup/bin:$PATH
+export PATH=/home/kylepzak/.tiup/bin:$PATH
 export PATH="$PATH:/home/linuxbrew/.linuxbrew/bin"
 
 # NVM setup
