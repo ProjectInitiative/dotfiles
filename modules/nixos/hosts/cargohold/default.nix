@@ -206,7 +206,7 @@ in
             secret_access_key = ${config.sops.placeholder."readonly_backup_secret_access_key"}
             provider = Other
             s3_force_path_style = true
-            endpoint = http://172.16.1.50:31292
+            endpoint = http://100.116.36.101:3900
           '';
         };
       };

@@ -28,7 +28,7 @@ in
       s3 = {
         bucket = mkOpt types.str "nix-cache" "The name of the S3 bucket.";
         region = mkOpt types.str "us-east-1" "The AWS region of the bucket.";
-        endpoint = mkOpt types.str "http://172.16.1.50:31292" "The S3 endpoint URL.";
+        endpoint = mkOpt types.str "http://100.116.36.101:3900" "The S3 endpoint URL.";
       };
 
       publicKey =
