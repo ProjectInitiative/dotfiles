@@ -92,6 +92,7 @@ in
           qwen-code
           claude-code
           opencode
+          pi-coding-agent
           # pkgs.${namespace}.gemini-cli
           # pkgs.${namespace}.qwen-code
           awscli2

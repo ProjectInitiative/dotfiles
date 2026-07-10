@@ -29,6 +29,7 @@
     "lemonade": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "lemonade",
+      "discoverModels": true,
       "options": {
         "baseURL": "http://100.81.89.107:13305/v1",
         "apiKey": "dummy"
@@ -50,19 +51,6 @@
     "webfetch": "allow",
     "websearch": "allow",
     "question": "allow"
-  },
-  "mcp": {
-    "k8s-cc": {
-      "type": "remote",
-      "url": "http://100.90.79.119/sse"
-    },
-    "k8s-mc": {
-      "type": "remote",
-      "url": "http://100.85.160.67/sse"
-    }
-  },
-  "plugins": {
-    "oc-tps": "latest"
   },
   "compaction": {
     "auto": false,

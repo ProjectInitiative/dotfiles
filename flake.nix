@@ -1,5 +1,6 @@
 {
   description = "NixOS configuration with multiple hosts using Snowfall";
+  # nix run github:ogulcancelik/herdr
 
   inputs = {
     # NixPkgs

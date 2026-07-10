@@ -42,6 +42,7 @@ in
       };
 
       suites = {
+        ai = enabled;
         terminal-env = enabled;
         # TODO: non-host specific items should eventually be removed
         # development.enable = false;
@@ -197,7 +198,7 @@ in
         ".config/atuin/config.toml".source = "${inputs.self}/homes/dotfiles/atuin/config.toml";
         ".config/direnv/direnv.toml".source = "${inputs.self}/homes/dotfiles/direnv.toml";
         ".config/direnv/lib/devenv.sh".source = "${inputs.self}/homes/dotfiles/direnv/lib/devenv.sh";
-        ".config/opencode/opencode.json".source = "${inputs.self}/homes/dotfiles/opencode/opencode.json";
+        ".config/opencode/tui.json".source = "${inputs.self}/homes/dotfiles/opencode/tui.json";
         ".config/opencode/agents".source = "${inputs.self}/homes/dotfiles/opencode/agents";
       };
     };

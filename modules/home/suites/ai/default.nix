@@ -11,6 +11,44 @@ with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.suites.ai;
+
+  jsonFormat = pkgs.formats.json { };
+
+  # Build github-mcp-server wrapper that reads GITHUB_TOKEN from sops at runtime
+  githubMcpWrapper = pkgs.writeShellScriptBin "github-mcp-server" ''
+    export GITHUB_TOKEN="$(cat /run/secrets/github_pat)"
+    exec ${pkgs.github-mcp-server}/bin/github-mcp-server "$@"
+  '';
+
+  # Read base opencode config (providers, permissions, agents, compaction)
+  baseOpenCodeConfig = builtins.fromJSON (
+    builtins.readFile "${inputs.self}/homes/dotfiles/opencode/opencode.json"
+  );
+
+  # Collect enabled MCP servers
+  enabledServers = lib.filterAttrs (name: server: server.enable) cfg.mcp.servers;
+
+  # Transform server definitions into opencode MCP format
+  mcpServersJson = builtins.mapAttrs (name: server:
+    if server.type == "remote" then {
+      type = "remote";
+      url = server.url;
+    } else if server.type == "streamable-http" then {
+      type = "streamable-http";
+      url = server.url;
+    } else {
+      type = "stdio";
+      command = server.command;
+      args = server.args;
+    } // lib.optionalAttrs (server.env != { }) { env = server.env; }
+  ) enabledServers;
+
+  # Merge base config with generated MCP section
+  fullOpenCodeConfig = baseOpenCodeConfig // {
+    mcp = mcpServersJson;
+  };
+
+  generatedOpenCodeConfig = jsonFormat.generate "opencode.json" fullOpenCodeConfig;
 in
 {
   options.${namespace}.suites.ai = with types; {
@@ -32,10 +70,58 @@ in
       aider = {
         enable = mkBoolOpt true "Install aider agent.";
       };
+      pi-coding = {
+        enable = mkBoolOpt true "Install pi-coding-agent.";
+      };
     };
 
     mcp = {
       enable = mkBoolOpt true "Configure MCP servers for AI agents.";
+
+      servers = mkOption {
+        type = types.attrsOf (types.submodule {
+          options = {
+            enable = mkEnableOption "this MCP server";
+            type = mkOption {
+              type = types.enum [ "stdio" "remote" "streamable-http" ];
+              description = "MCP transport type";
+            };
+            url = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "URL for remote/streamable-http servers";
+            };
+            command = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "Command for stdio servers";
+            };
+            args = mkOption {
+              type = types.listOf types.str;
+              default = [ ];
+              description = "Arguments for stdio servers";
+            };
+            env = mkOption {
+              type = types.attrsOf types.str;
+              default = { };
+              description = "Environment variables for stdio servers";
+            };
+          };
+        });
+        default = {
+          k8s-cc = {
+            enable = true;
+            type = "remote";
+            url = "http://100.90.79.119/sse";
+          };
+          k8s-mc = {
+            enable = true;
+            type = "remote";
+            url = "http://100.85.160.67/sse";
+          };
+        };
+        description = "MCP server configurations. Each attr name is the MCP server identifier.";
+      };
     };
   };
 
@@ -47,7 +133,10 @@ in
       ++ (optional cfg.agent.antigravity.enable antigravity-cli)
       ++ (optional cfg.agent.qwen.enable qwen-code)
       ++ (optional cfg.agent.claude.enable claude-code)
+      ++ (optional cfg.agent.aider.enable pkgs.aider-chat)
+      ++ (optional cfg.agent.pi-coding.enable pi-coding-agent)
       ++ (optional cfg.mcp.enable pkgs.${namespace}.mcp-proxy-runner)
+      ++ (optional cfg.mcp.enable githubMcpWrapper)
       ++ (optional cfg.mcp.enable uv)
       ++ (optionals cfg.mcp.enable [
         poppler
@@ -56,10 +145,15 @@ in
         exiftool
       ]);
 
-    # ${namespace}.tools.aider = mkIf cfg.agent.aider.enable enabled;
-
-    home.file = {
-      ".config/opencode/opencode.json".source = "${inputs.self}/homes/dotfiles/opencode/opencode.json";
+    ${namespace} = {
+      cli-apps.pi-coding = mkIf cfg.agent.pi-coding.enable enabled;
+      tools.aider = mkIf cfg.agent.aider.enable enabled;
     };
+
+    # Generate opencode.json with MCP servers injected from config
+    home.file = {
+      ".config/opencode/opencode.json".source = generatedOpenCodeConfig;
+    };
+
   };
 }

@@ -1,15 +1,15 @@
 { channels, inputs, ... }:
 final: prev: {
   opencode = channels.ai-tools.opencode.overrideAttrs (oldAttrs: {
-    version = "1.15.10-pr-32731";
+    version = "1.17.0-custom-model-discovery";
     src = final.fetchFromGitHub {
-      owner = "anomalyco";
+      owner = "projectinitiative";
       repo = "opencode";
-      rev = "450ac3754f76cca981eeb6950fd4702bc47c9619";
-      hash = "sha256-4Z2JtOWGJpskj33n+OulJBQf5CSPZeyzNHKzShgp7yk=";
+      rev = "f6dfb738c24862e3743e7b5fc01494865ccfd1c8";
+      hash = "sha256-5rCAmZMce7SHLb0r4qGp6ZehZJ4PIbmxevRKgcheam8=";
     };
     node_modules = oldAttrs.node_modules.overrideAttrs (_: {
-      outputHash = "sha256-4QarL+3fzfC8usp83w3H337TLSEP38H8kq/oQT3z8Dw=";
+      outputHash = "sha256-9cb02n4vRAiP5Fz8f6jg/l7KNj17cwqYaEoyOuwi9As=";  # Will be provided by nix-build failure message
     });
   });
   inherit (channels.ai-tools) antigravity-cli qwen-code;

@@ -202,6 +202,7 @@ in
             DHCP = "no";
             IPv6AcceptRA = "no";
           };
+          linkConfig.MTUBytes = "9000";
           address = [ "${cfg.vlanIpAddress}" ];
         };
       };
