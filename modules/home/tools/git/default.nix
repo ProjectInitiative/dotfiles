@@ -43,6 +43,7 @@ in
         lazygit
         trufflehog
         gh
+        jujutsu
       ];
     };
 

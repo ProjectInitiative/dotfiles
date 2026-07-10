@@ -60,6 +60,7 @@ in
         fd
         jq
         glow
+        herdr
         mtr
         ncdu
         icdiff

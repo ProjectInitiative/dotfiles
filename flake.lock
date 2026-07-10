@@ -321,7 +321,7 @@
           "loft",
           "nixpkgs"
         ],
-        "rust-overlay": "rust-overlay"
+        "rust-overlay": "rust-overlay_2"
       },
       "locked": {
         "lastModified": 1780091591,
@@ -777,6 +777,27 @@
         "type": "github"
       }
     },
+    "herdr": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": "rust-overlay"
+      },
+      "locked": {
+        "lastModified": 1783688957,
+        "narHash": "sha256-61uly7UK6V7X4jaA87OMtj8L5WakAF8O9f/c0gNDr2E=",
+        "owner": "ogulcancelik",
+        "repo": "herdr",
+        "rev": "66be0b655fe922867f1eed100a41d67038b6ffd6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ogulcancelik",
+        "repo": "herdr",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -838,7 +859,7 @@
         "mk-shell-bin": "mk-shell-bin",
         "nix2container": "nix2container",
         "nixpkgs": "nixpkgs_4",
-        "rust-overlay": "rust-overlay_2"
+        "rust-overlay": "rust-overlay_3"
       },
       "locked": {
         "lastModified": 1780349555,
@@ -1555,6 +1576,7 @@
         "firefox-addons": "firefox-addons",
         "flake-compat": "flake-compat_4",
         "gpg-base-conf": "gpg-base-conf",
+        "herdr": "herdr",
         "home-manager": "home-manager",
         "k3s-pinned": "k3s-pinned",
         "loft": "loft",
@@ -1598,6 +1620,27 @@
     "rust-overlay": {
       "inputs": {
         "nixpkgs": [
+          "herdr",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1783577481,
+        "narHash": "sha256-EWMxOWrJ031f8f/lrcEmhTRs4npw1/5N3Hcjin846c8=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "4cdea398dc491b082dccdce0fad1ed0b75fa3394",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "rust-overlay_2": {
+      "inputs": {
+        "nixpkgs": [
           "loft",
           "devenv",
           "nixpkgs"
@@ -1617,7 +1660,7 @@
         "type": "github"
       }
     },
-    "rust-overlay_2": {
+    "rust-overlay_3": {
       "inputs": {
         "nixpkgs": [
           "loft",
