@@ -95,6 +95,15 @@ function stop_watch() {
 
 function watch_loop() {
 	local names=("$@")
+
+	# Check for inotifywait
+	if ! command -v inotifywait &>/dev/null; then
+		echo "inotifywait not found — falling back to stat polling (every 2s)" >&2
+		echo "Install inotify-tools for instant file watching." >&2
+		poll_watch "${names[@]}"
+		return
+	fi
+
 	echo "Watching ${#names[@]} extension(s) for changes..." >&2
 	echo "Run /reload in pi after each save." >&2
 	echo "Press Ctrl+C to stop." >&2
@@ -111,7 +120,6 @@ function watch_loop() {
 	done
 
 	# Use inotifywait monitor mode — outputs filename on each change
-	# The -m flag keeps watching, -q suppresses headers
 	inotifywait -q -m -e close_write "${watch_files[@]}" --format '%f' \
 	| while read -r changed_file; do
 		if [ -n "$changed_file" ]; then
@@ -119,6 +127,35 @@ function watch_loop() {
 			deploy_extension "$name"
 			echo "  → /reload ready" >&2
 		fi
+	done
+}
+
+function poll_watch() {
+	local names=("$@")
+
+	# First deploy
+	for name in "${names[@]}"; do
+		deploy_extension "$name"
+	done
+
+	# Build file list with mtimes
+	local -A mtimes
+	for name in "${names[@]}"; do
+		local f="$EXTENSIONS_DIR/$name.ts"
+		mtimes["$f"]=$(stat -c %Y "$f" 2>/dev/null || echo 0)
+	done
+
+	while true; do
+		sleep 2
+		for name in "${names[@]}"; do
+			local f="$EXTENSIONS_DIR/$name.ts"
+			local cur=$(stat -c %Y "$f" 2>/dev/null || echo 0)
+			if [ "$cur" != "${mtimes[$f]}" ]; then
+				mtimes["$f"]=$cur
+				deploy_extension "$name"
+				echo "  → /reload ready" >&2
+			fi
+		done
 	done
 }
 

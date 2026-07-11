@@ -30,6 +30,7 @@ let requestRender: (() => void) | null = null;
 
 let lastTurnTft = 0;
 let lastTurnTps = 0;
+let contextWindowSize = 0;
 
 // ─── Throttle — limit re-renders to ~5fps ────────────────────────────────────
 
@@ -150,13 +151,16 @@ export default function (pi: ExtensionAPI) {
 				render(width: number): string[] {
 					const lines: string[] = [];
 
-					// ── Line 1: pwd ────────────────────────────────────────────
-					lines.push(truncateToWidth(theme.fg("dim", ctx.sessionManager.getCwd()), width));
+					// ── Line 1: pwd + git branch ──────────────────────────────
+					const dir = ctx.sessionManager.getCwd();
+					const branch = footerData.getGitBranch();
+					const dirStr = branch ? `${dir} (${branch})` : dir;
+					lines.push(truncateToWidth(theme.fg("dim", dirStr), width));
 
 					// ── Line 2: stats ──────────────────────────────────────────
 					const parts: string[] = [];
 
-					// Token stats (cumulative across session)
+					// Token stats (cumulative across session) — dimmed, less important
 					let input = 0, output = 0, cacheRead = 0;
 					for (const e of ctx.sessionManager.getBranch()) {
 						if (e.type === "message" && e.message.role === "assistant") {
@@ -167,20 +171,24 @@ export default function (pi: ExtensionAPI) {
 						}
 					}
 
-					parts.push(`↑${fmt(input)}`);
-					parts.push(`↓${fmt(output)}`);
-					if (cacheRead) parts.push(`R${fmt(cacheRead)}`);
+					const dim = (s: string) => theme.fg("dim", s);
+					parts.push(dim(`↑${fmt(input)}`));
+					parts.push(dim(`↓${fmt(output)}`));
+					if (cacheRead) parts.push(dim(`R${fmt(cacheRead)}`));
 
-					// Context usage percentage (colorized)
+					// Separator
+					parts.push(dim(`│`));
+
+					// Context usage — actual tokens + percentage
 					const ctxUsage = ctx.getContextUsage();
 					if (ctxUsage?.contextWindow) {
+						contextWindowSize = ctxUsage.contextWindow;
 						const pct = ctxUsage.percent ?? 0;
-						const pctStr = pct.toFixed(1);
-						const cw = fmt(ctxUsage.contextWindow);
+						const tokens = ctxUsage.tokens ?? 0;
 						let colored: string;
-						if (pct > 90) colored = theme.fg("error", `${pctStr}%/${cw}`);
-						else if (pct > 70) colored = theme.fg("warning", `${pctStr}%/${cw}`);
-						else colored = `${pctStr}%/${cw}`;
+						if (pct > 90) colored = theme.fg("error", `${fmt(tokens)} (${pct.toFixed(1)}%)`);
+						else if (pct > 70) colored = theme.fg("warning", `${fmt(tokens)} (${pct.toFixed(1)}%)`);
+						else colored = `${fmt(tokens)} (${pct.toFixed(1)}%)`;
 						parts.push(colored);
 					}
 
@@ -191,15 +199,18 @@ export default function (pi: ExtensionAPI) {
 					const showTps = liveTps > 0 ? liveTps : lastTurnTps;
 
 					if (showTft > 0) {
-						parts.push(`|`);
-						if (showTps > 0) parts.push(`TPS ${showTps}`);
-						parts.push(`TFT ${showTft}ms`);
+						parts.push(dim(`│`));
+						if (showTps > 0) parts.push(dim(`TPS ${showTps}`));
+						const tftSec = (showTft / 1000).toFixed(1);
+						parts.push(dim(`TFT ${tftSec}s`));
 					}
 
-					// Right-aligned model name for stable width
-					const modelName = ctx.model?.id || "no-model";
-					const branch = footerData.getGitBranch();
-					const modelStr = branch ? `${modelName} (${branch})` : modelName;
+					// Right-aligned model name + context window size
+					const modelStr = ctx.model?.id
+						? contextWindowSize > 0
+							? `${ctx.model.id} ${fmt(contextWindowSize)}`
+							: ctx.model.id
+						: "no-model";
 
 					const leftRaw = parts.join(" ");
 					const leftWidth = visibleWidth(leftRaw);
