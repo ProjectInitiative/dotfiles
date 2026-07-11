@@ -153,6 +153,28 @@ in
           hideThinkingBlock = true;
         };
 
+        # Custom providers
+        models = {
+          providers.neuralwatt = {
+            baseUrl = "https://api.neuralwatt.com/v1";
+            api = "openai-completions";
+            apiKey = "$NEURALWATT_API_KEY";
+            models = [
+              { id = "kimi-k2.7-code"; }
+              { id = "kimi-k2.6"; }
+              { id = "kimi-k2.6-fast"; }
+              { id = "qwen3.5-397b"; }
+              { id = "qwen3.5-397b-fast"; }
+              { id = "glm-5.2"; }
+              { id = "glm-5.2-fast"; }
+              { id = "glm-5.2-short"; }
+              { id = "glm-5.2-short-fast"; }
+              { id = "qwen3.6-35b"; }
+              { id = "qwen3.6-35b-fast"; }
+            ];
+          };
+        };
+
         # Permission gate extension - full spectrum trust levels
         extensions.permissions = {
           enable = true;

@@ -47,6 +47,17 @@ Pi packages (`pi-subagents`, `pi-web-access`, etc.) are installed at runtime via
 - Can we bundle pi packages into a single derivation that references pi's bundled modules at runtime?
 - Does `@earendil-works/*` scoped packages need special handling (they're bundled with pi)?
 
+## Remote provider auto-discovery
+
+Crossbar handles local/self-hosted providers. For remote providers like NeuralWatt,
+OpenRouter, etc., we need a way to auto-discover models from their /v1/models endpoint.
+
+Idea: a simple extension that:
+- Takes a list of provider API URLs from config
+- Fetches /v1/models on startup
+- Calls pi.registerProvider() for each with discovered models
+- Similar to @kylebrodeur/pi-model-discovery but for remote providers
+
 ## Desired Pi Packages
 
 These npm packages need to be Nixified:

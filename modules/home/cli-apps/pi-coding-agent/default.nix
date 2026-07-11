@@ -334,7 +334,9 @@ in
 
       # Models (~/.pi/agent/models.json) — custom providers and models
       // (optionalAttrs (cfg.models != null) {
-        ".pi/agent/models.json" = jsonFormat.generate "models.json" cfg.models;
+        ".pi/agent/models.json" = {
+          source = jsonFormat.generate "models.json" cfg.models;
+        };
       })
 
       # Skills — capability packages loaded on-demand
