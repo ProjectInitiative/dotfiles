@@ -120,6 +120,49 @@ in
       '';
     };
 
+    models = mkOption {
+      type = types.nullOr (types.submodule {
+        freeformType = jsonFormat.type;
+        options.providers = mkOption {
+          type = types.attrsOf (types.submodule {
+            freeformType = jsonFormat.type;
+            options = {
+              baseUrl = mkOption {
+                type = types.str;
+                description = "API base URL (e.g., http://localhost:11434/v1).";
+              };
+              api = mkOption {
+                type = types.enum [ "openai-completions" "anthropic-messages" ];
+                description = "API format.";
+              };
+              apiKey = mkOption {
+                type = types.str;
+                default = "";
+                description = "API key (required even if unused, like Ollama).";
+              };
+              models = mkOption {
+                type = types.listOf (types.submodule {
+                  freeformType = jsonFormat.type;
+                  options.id = mkOption {
+                    type = types.str;
+                    description = "Model ID (e.g., llama3.1:8b).";
+                  };
+                });
+                description = "List of models from this provider.";
+              };
+            };
+          });
+          default = { };
+          description = "Provider configurations (ollama, vllm, lm-studio, etc.).";
+        };
+      });
+      default = null;
+      description = ''
+        Custom providers and models written to ~/.pi/agent/models.json.
+        See https://pi.pages.dev/models for full documentation.
+      '';
+    };
+
     extensions = mkOption {
       type = types.attrsOf (types.submodule {
         options = {
@@ -237,6 +280,11 @@ in
           text = builtins.toJSON (stripNull cfg.settings);
           force = true;
         };
+      })
+
+      # Models (~/.pi/agent/models.json) — custom providers and models
+      // (optionalAttrs (cfg.models != null) {
+        ".pi/agent/models.json" = jsonFormat.generate "models.json" cfg.models;
       })
 
       # Skills — capability packages loaded on-demand
