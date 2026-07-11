@@ -241,9 +241,9 @@ export default function (pi: ExtensionAPI) {
 		},
 	});
 
-	// ── Expand toggle command + shortcut ─────────────────────────────────────
+	// ── Expand toggle command ────────────────────────────────────────────────
 	// Ctrl+O is the default pi binding but may conflict in Zellij.
-	// Ctrl+Shift+O and /expand provide alternatives.
+	// /expand provides a command-based alternative.
 
 	pi.registerCommand("expand", {
 		description: "Toggle tool output expansion",
@@ -251,13 +251,6 @@ export default function (pi: ExtensionAPI) {
 			const expanded = ctx.ui.getToolsExpanded();
 			ctx.ui.setToolsExpanded(!expanded);
 			ctx.ui.notify(`Tool output ${!expanded ? "expanded" : "collapsed"}`, "info");
-		},
-	});
-	pi.registerShortcut("ctrl+shift+o", {
-		description: "Toggle tool output expansion",
-		handler: async (ctx) => {
-			const expanded = ctx.ui.getToolsExpanded();
-			ctx.ui.setToolsExpanded(!expanded);
 		},
 	});
 
