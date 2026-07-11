@@ -247,7 +247,7 @@ export default function (pi: ExtensionAPI) {
 					// Thinking level — inline with model, dimmed when set
 					const thinkingLevel = typeof pi.getThinkingLevel === "function" ? pi.getThinkingLevel() : undefined;
 					const thinkingStr = thinkingLevel && thinkingLevel !== "off"
-						? dim(`│ think:${thinkingLevel}`)
+						? dim(`│ ${thinkingLevel}`)
 						: "";
 
 					// Right-aligned model name + context window size
