@@ -155,10 +155,14 @@ in
 
         # Custom providers
         models = {
+          providers.lemonade = {
+            baseUrl = "http://100.81.89.107:13305/v1";
+            api = "openai-completions";
+            # Models discovered dynamically — run /crossbar to scan
+          };
           providers.neuralwatt = {
             baseUrl = "https://api.neuralwatt.com/v1";
             api = "openai-completions";
-            apiKey = "$NEURALWATT_API_KEY";
             models = [
               { id = "kimi-k2.7-code"; }
               { id = "kimi-k2.6"; }

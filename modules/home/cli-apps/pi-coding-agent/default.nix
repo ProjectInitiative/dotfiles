@@ -11,8 +11,11 @@ with lib.${namespace};
 let
   cfg = config.${namespace}.cli-apps.pi-coding;
   jsonFormat = pkgs.formats.json { };
-  # Strip null values from settings so optional fields don't clutter the JSON
-  stripNull = attrs: lib.filterAttrs (n: v: v != null) attrs;
+  # Strip null values from attrs so optional fields don't clutter the JSON
+  stripNull = attrs: builtins.mapAttrs (n: v:
+    if builtins.isAttrs v then stripNull v
+    else v
+  ) (lib.filterAttrs (n: v: v != null) attrs);
 
   # Build package references for settings.json packages array
   packagesList = lib.pipe cfg.packages [
@@ -153,8 +156,8 @@ in
                 description = "API format.";
               };
               apiKey = mkOption {
-                type = types.str;
-                default = "";
+                type = types.nullOr types.str;
+                default = null;
                 description = ''
                   API key. Use "$ENV_VAR" to pull from environment, or "!command" to
                   execute a shell command at request time. Avoid hardcoding secrets in Nix.
