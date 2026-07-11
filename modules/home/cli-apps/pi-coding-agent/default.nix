@@ -261,6 +261,7 @@ in
     home.packages = with pkgs; [
       pi-coding-agent
       (writeShellScriptBin "pi-dev" (builtins.readFile ./extensions/pi-dev.sh))
+      (writeShellScriptBin "pi-discover" (builtins.readFile ./extensions/pi-discover.sh))
     ];
 
     home.file =
