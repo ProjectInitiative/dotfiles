@@ -12,7 +12,8 @@
  *   /dashboard     — Toggle custom dashboard footer on/off (default: on)
  */
 
-import type { AssistantMessage, ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { AssistantMessage } from "@earendil-works/pi-ai";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
 // ─── Turn timing (live) ──────────────────────────────────────────────────────
@@ -24,6 +25,14 @@ let liveTft = 0;            // ms — updates after first token
 let liveTps = 0;            // tokens/sec — updates every 200ms during streaming
 let lastUpdateTime = 0;
 let requestRender: (() => void) | null = null;
+
+// ─── Retry timer ────────────────────────────────────────────────────────────
+
+let retryAttempt = 0;
+let retryMaxAttempts = 0;
+let retryDelayMs = 0;
+let retryStartTime = 0;
+let retryErrorMessage = "";
 
 // ─── Persisted stats (last completed turn) ───────────────────────────────────
 // These stay visible until a new turn produces its first token.
@@ -131,6 +140,24 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	// ── Install footer ────────────────────────────────────────────────────────
+	pi.on("auto_retry_start", async (event: any) => {
+		retryAttempt = event.attempt;
+		retryMaxAttempts = event.maxAttempts;
+		retryDelayMs = event.delayMs;
+		retryStartTime = Date.now();
+		retryErrorMessage = event.errorMessage || "";
+		requestRender?.();
+	});
+
+	pi.on("auto_retry_end", async () => {
+		retryAttempt = 0;
+		retryMaxAttempts = 0;
+		retryDelayMs = 0;
+		retryStartTime = 0;
+		retryErrorMessage = "";
+		requestRender?.();
+	});
+
 	pi.on("session_start", async (_event, ctx) => {
 		if (enabled) installFooter(ctx);
 	});
@@ -203,6 +230,14 @@ export default function (pi: ExtensionAPI) {
 						if (showTps > 0) parts.push(dim(`TPS ${showTps}`));
 						const tftSec = (showTft / 1000).toFixed(1);
 						parts.push(dim(`TFT ${tftSec}s`));
+					}
+
+					// Retry countdown — shows when pi is auto-retrying after a 429 or other error
+					if (retryAttempt > 0 && retryMaxAttempts > 0) {
+						const elapsed = Date.now() - retryStartTime;
+						const remaining = Math.max(0, Math.ceil((retryDelayMs - elapsed) / 1000));
+						parts.push(dim(`│`));
+						parts.push(theme.fg("warning", `⏳ retry ${retryAttempt}/${retryMaxAttempts} ${remaining}s`));
 					}
 
 					// Right-aligned model name + context window size
