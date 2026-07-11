@@ -153,29 +153,15 @@ in
           hideThinkingBlock = true;
         };
 
-        # Custom providers
+        # Custom providers — models auto-discovered at startup by remote-providers extension
         models = {
           providers.lemonade = {
             baseUrl = "http://100.81.89.107:13305/v1";
             api = "openai-completions";
-            # Models discovered dynamically — run /crossbar to scan
           };
           providers.neuralwatt = {
             baseUrl = "https://api.neuralwatt.com/v1";
             api = "openai-completions";
-            models = [
-              { id = "kimi-k2.7-code"; }
-              { id = "kimi-k2.6"; }
-              { id = "kimi-k2.6-fast"; }
-              { id = "qwen3.5-397b"; }
-              { id = "qwen3.5-397b-fast"; }
-              { id = "glm-5.2"; }
-              { id = "glm-5.2-fast"; }
-              { id = "glm-5.2-short"; }
-              { id = "glm-5.2-short-fast"; }
-              { id = "qwen3.6-35b"; }
-              { id = "qwen3.6-35b-fast"; }
-            ];
           };
         };
 
@@ -195,6 +181,13 @@ in
         extensions.dashboard-footer = {
           enable = true;
           text = builtins.readFile "${inputs.self}/modules/home/cli-apps/pi-coding-agent/extensions/dashboard-footer.ts";
+        };
+
+        # Remote provider discovery - fetches /v1/models at startup for providers
+        # configured in models.json without explicit model lists
+        extensions.remote-providers = {
+          enable = true;
+          text = builtins.readFile "${inputs.self}/modules/home/cli-apps/pi-coding-agent/extensions/remote-providers.ts";
         };
 
         # Pi packages from npm — pinned versions, auto-installed on startup
