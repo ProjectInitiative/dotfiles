@@ -54,7 +54,7 @@ These npm packages need to be Nixified:
 | Package | Version | Purpose | Has native deps? |
 |---------|---------|---------|-----------------|
 | `pi-subagents` | 0.34.0 | Delegate tasks to subagents with chains/parallel execution | No (jiti only) |
-| `pi-web-access` | 0.13.0 | Web search, URL fetch, GitHub clone, PDF/video extraction | No |
+| `pi-web-access` | 0.13.0 | Web search, URL fetch, GitHub clone, PDF/video extraction | No — **but requires pi ≥ 0.79+** (imports `@earendil-works/pi-ai/compat`) |
 | `context-mode` | 1.0.169 | MCP context plugin, sandboxed code execution, FTS5 knowledge base | **Yes** (better-sqlite3) |
 | `pi-mcp-adapter` | 2.11.0 | MCP protocol adapter for Pi | No |
 | `@hypabolic/pi-hypa` | 0.1.10 | Compress noisy tool output out of context window | No |
