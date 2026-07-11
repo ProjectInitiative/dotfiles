@@ -212,6 +212,8 @@ in
             enable = true;
             version = "0.1.10";
           };
+          # Local model auto-discovery (Ollama, vLLM, LM Studio, etc.)
+          # Not needed today — kept for future laptop with local models
           "@hypabolic/crossbar" = {
             enable = true;
             version = "0.5.1";
