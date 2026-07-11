@@ -57,7 +57,7 @@ export default async function (pi: ExtensionAPI) {
 
 			pi.registerProvider(name, {
 				baseUrl: provider.baseUrl,
-				apiKey: provider.apiKey ?? "",
+				apiKey: provider.apiKey ?? "placeholder",
 				api: provider.api,
 				models: models.map((m: any) => ({
 					id: m.id,
