@@ -13,6 +13,28 @@ let
   jsonFormat = pkgs.formats.json { };
   # Strip null values from settings so optional fields don't clutter the JSON
   stripNull = attrs: lib.filterAttrs (n: v: v != null) attrs;
+
+  # Build package references for settings.json packages array
+  packagesList = lib.pipe cfg.packages [
+    (lib.filterAttrs (n: v: v.enable))
+    (lib.mapAttrsToList (n: v:
+      "npm:${n}" + lib.optionalString (v.version != null) "@${v.version}"
+    ))
+  ];
+
+  # Final settings JSON: merge user settings with managed packages list
+  settingsJson = builtins.toJSON (stripNull (
+    (if cfg.settings != null then cfg.settings else { })
+    // { packages = packagesList; }
+  ));
+
+  # Wrapper for pi: isolates npm packages to ~/.pi/npm/ and ensures node is in PATH
+  # Named pi-launcher to avoid binary name conflict with nixpkgs pi-coding-agent
+  piLauncher = pkgs.writeShellScriptBin "pi-launcher" ''
+    export NPM_CONFIG_PREFIX="$HOME/.pi/npm"
+    export PATH="${pkgs.lib.makeBinPath [ pkgs.nodejs_latest ]}:$PATH"
+    exec ${pkgs.lib.getExe pkgs.pi-coding-agent} "$@"
+  '';
 in
 {
   options.${namespace}.cli-apps.pi-coding = with types; {
@@ -166,6 +188,37 @@ in
       '';
     };
 
+    packages = mkOption {
+      type = types.attrsOf (types.submodule {
+        options = {
+          enable = mkEnableOption "this pi package";
+          version = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description = ''
+              Version to pin (e.g. "0.34.0"). Omit to let pi resolve to latest.
+            '';
+          };
+        };
+      });
+      default = { };
+      description = ''
+        Pi packages installed from npm. These are pinned by version when specified.
+        Pi auto-installs missing packages from settings.json on startup.
+        Usage:
+        ```
+        packages = {
+          pi-subagents.enable = true;
+          pi-web-access = {
+            enable = true;
+            version = "0.13.0";
+          };
+          "@hypabolic/pi-hypa".enable = true;
+        };
+        ```
+      '';
+    };
+
     extensions = mkOption {
       type = types.attrsOf (types.submodule {
         options = {
@@ -259,9 +312,8 @@ in
     '';
 
     home.packages = with pkgs; [
-      pi-coding-agent
+      piLauncher
       (writeShellScriptBin "pi-dev" (builtins.readFile ./extensions/pi-dev.sh))
-      (writeShellScriptBin "pi-discover" (builtins.readFile ./extensions/pi-discover.sh))
     ];
 
     home.file =
@@ -279,12 +331,12 @@ in
 
       # Settings (~/.pi/agent/settings.json)
       # force = true because pi may have written it first with lastChangelogVersion
-      // (optionalAttrs (cfg.settings != null) {
+      // {
         ".pi/agent/settings.json" = {
-          text = builtins.toJSON (stripNull cfg.settings);
+          text = settingsJson;
           force = true;
         };
-      })
+      }
 
       # Models (~/.pi/agent/models.json) — custom providers and models
       // (optionalAttrs (cfg.models != null) {
@@ -309,6 +361,14 @@ in
           }) skill.tools
         )
       ) { } (attrNames cfg.skills))
+
+      # pi wrapper in ~/.local/bin — takes priority over system packages
+      // {
+        ".local/bin/pi" = {
+          executable = true;
+          source = "${piLauncher}/bin/pi-launcher";
+        };
+      }
 
       # Extensions — TypeScript modules that extend pi
       // (foldl' (acc: extName:

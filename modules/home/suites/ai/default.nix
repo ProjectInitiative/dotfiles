@@ -134,7 +134,6 @@ in
       ++ (optional cfg.agent.qwen.enable qwen-code)
       ++ (optional cfg.agent.claude.enable claude-code)
       ++ (optional cfg.agent.aider.enable pkgs.aider-chat)
-      ++ (optional cfg.agent.pi-coding.enable pi-coding-agent)
       ++ (optional cfg.mcp.enable pkgs.${namespace}.mcp-proxy-runner)
       ++ (optional cfg.mcp.enable githubMcpWrapper)
       ++ (optional cfg.mcp.enable uv)
@@ -170,6 +169,30 @@ in
         extensions.dashboard-footer = {
           enable = true;
           text = builtins.readFile "${inputs.self}/modules/home/cli-apps/pi-coding-agent/extensions/dashboard-footer.ts";
+        };
+
+        # Pi packages from npm — pinned versions, auto-installed on startup
+        packages = {
+          pi-subagents = {
+            enable = true;
+            version = "0.34.0";
+          };
+          pi-web-access = {
+            enable = true;
+            version = "0.13.0";
+          };
+          context-mode = {
+            enable = true;
+            version = "1.0.169";
+          };
+          pi-mcp-adapter = {
+            enable = true;
+            version = "2.11.0";
+          };
+          "@hypabolic/pi-hypa" = {
+            enable = true;
+            version = "0.1.10";
+          };
         };
       };
 
