@@ -158,6 +158,10 @@ export default function (pi: ExtensionAPI) {
 		requestRender?.();
 	});
 
+	pi.on("thinking_level_select", async () => {
+		requestRender?.();
+	});
+
 	pi.on("session_start", async (_event, ctx) => {
 		if (enabled) installFooter(ctx);
 	});
@@ -232,13 +236,19 @@ export default function (pi: ExtensionAPI) {
 						parts.push(dim(`TFT ${tftSec}s`));
 					}
 
-					// Retry countdown — shows when pi is auto-retrying after a 429 or other error
+						// Retry countdown — shows when pi is auto-retrying after a 429 or other error
 					if (retryAttempt > 0 && retryMaxAttempts > 0) {
 						const elapsed = Date.now() - retryStartTime;
 						const remaining = Math.max(0, Math.ceil((retryDelayMs - elapsed) / 1000));
 						parts.push(dim(`│`));
 						parts.push(theme.fg("warning", `⏳ retry ${retryAttempt}/${retryMaxAttempts} ${remaining}s`));
 					}
+
+					// Thinking level — inline with model, dimmed when set
+					const thinkingLevel = ctx.sessionManager.getThinkingLevel();
+					const thinkingStr = thinkingLevel && thinkingLevel !== "off"
+						? dim(`│ think:${thinkingLevel}`)
+						: "";
 
 					// Right-aligned model name + context window size
 					const modelStr = ctx.model?.id
@@ -249,7 +259,7 @@ export default function (pi: ExtensionAPI) {
 
 					const leftRaw = parts.join(" ");
 					const leftWidth = visibleWidth(leftRaw);
-					const rightRaw = theme.fg("dim", modelStr);
+					const rightRaw = theme.fg("dim", modelStr) + thinkingStr;
 					const rightWidth = visibleWidth(rightRaw);
 					const pad = Math.max(2, width - leftWidth - rightWidth);
 

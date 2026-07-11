@@ -47,6 +47,38 @@ Pi packages (`pi-subagents`, `pi-web-access`, etc.) are installed at runtime via
 - Can we bundle pi packages into a single derivation that references pi's bundled modules at runtime?
 - Does `@earendil-works/*` scoped packages need special handling (they're bundled with pi)?
 
+## pi_agent_rust — drop-in Rust replacement for Pi
+
+**Priority:** Medium (interesting future option)
+**Reference:** https://github.com/Dicklesworthstone/pi_agent_rust
+
+### Status: CERTIFIED drop-in replacement
+- 22/22 certification gates PASS, 16/16 blocking gates PASS
+- Installer preserves TS pi as `legacy-pi`, Rust pi as `pi`
+- <100ms startup, <50MB idle, single ~21MB binary
+
+### Extension system (two runtimes)
+| Runtime | What it runs | Dep story |
+|---------|-------------|-----------|
+| **QuickJS** | Existing JS/TS extensions (ours: permissions, footer, etc.) | Node API shims for fs/path/os/crypto/child_process — no Node/Bun |
+| **native-rust** | `.native.json` descriptors | Compiled Rust — zero npm deps |
+
+### Why this could solve our dep problem
+Native Rust extensions are compiled descriptors — no npm install, no node_modules,
+no better-sqlite3 compilation. If community packages had Rust equivalents,
+they'd be single binary deps.
+
+### Research needed
+- Do our custom extensions (permissions, footer, tool-renderer, remote-providers)
+  work in QuickJS? Need to test Node API shim coverage.
+- Are there Rust-native equivalents for installed packages?
+  (pi-subagents, pi-web-access, context-mode, pi-mcp-adapter, pi-hypa, crossbar)
+- If not, could we rewrite any as native-rust extensions?
+  - permissions.ts → built-in security model (capability gates + exec mediation)
+  - remote-providers.ts → simpler with native HTTP + JSON parsing
+  - dashboard-footer.ts → needs TUI bindings, likely stays JS
+- Nix packaging: trivial — single binary, no npm deps
+
 ## Remote provider auto-discovery
 
 ✅ Solved by `remote-providers.ts` extension — reads providers from `models.json`
