@@ -49,14 +49,8 @@ Pi packages (`pi-subagents`, `pi-web-access`, etc.) are installed at runtime via
 
 ## Remote provider auto-discovery
 
-Crossbar handles local/self-hosted providers. For remote providers like NeuralWatt,
-OpenRouter, etc., we need a way to auto-discover models from their /v1/models endpoint.
-
-Idea: a simple extension that:
-- Takes a list of provider API URLs from config
-- Fetches /v1/models on startup
-- Calls pi.registerProvider() for each with discovered models
-- Similar to @kylebrodeur/pi-model-discovery but for remote providers
+✅ Solved by `remote-providers.ts` extension — reads providers from `models.json`
+and discovers models via `/v1/models` at startup.
 
 ## Desired Pi Packages
 
@@ -70,10 +64,4 @@ These npm packages need to be Nixified:
 | `pi-mcp-adapter` | 2.11.0 | MCP protocol adapter for Pi | No |
 | `@hypabolic/pi-hypa` | 0.1.10 | Compress noisy tool output out of context window | No |
 
-### `@kylebrodeur/pi-model-discovery`
 
-- Auto-discovers Ollama models and registers via `pi.registerProvider()`
-- Only supports Ollama (not generic OpenAI-compatible providers)
-- Config: `~/.pi/agent/local-providers.json`
-- Could adapt to support NeuralWatt, Lemonade, etc.
-- See: https://github.com/kylebrodeur/pi-model-discovery
