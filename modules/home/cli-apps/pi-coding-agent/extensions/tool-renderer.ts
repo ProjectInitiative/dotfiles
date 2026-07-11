@@ -51,7 +51,8 @@ export default function (pi: ExtensionAPI) {
 		},
 
 		renderCall(args, theme) {
-			let text = action("read ", theme) + dim(args.path, theme);
+			// Blue accent = pending/in-progress
+			let text = theme.fg("accent", `read ${args.path}`);
 			if (args.offset || args.limit) {
 				const parts: string[] = [];
 				if (args.offset) parts.push(`offset=${args.offset}`);
@@ -116,8 +117,9 @@ export default function (pi: ExtensionAPI) {
 		},
 
 		renderCall(args, theme) {
+			// Blue accent = pending/in-progress
 			const cmd = args.command.length > 80 ? `${args.command.slice(0, 77)}...` : args.command;
-			let text = prompt("$ ", theme) + dim(cmd, theme);
+			let text = theme.fg("accent", `$ ${cmd}`);
 			if (args.timeout) text += dim(` (${args.timeout}s)`, theme);
 			return new Text(text, 0, 0);
 		},
@@ -172,7 +174,7 @@ export default function (pi: ExtensionAPI) {
 		},
 
 		renderCall(args, theme) {
-			return new Text(action("edit ", theme) + dim(args.path, theme), 0, 0);
+			return new Text(theme.fg("accent", `edit ${args.path}`), 0, 0);
 		},
 
 		renderResult(result, { expanded, isPartial }, theme) {
@@ -253,8 +255,7 @@ export default function (pi: ExtensionAPI) {
 
 		renderCall(args, theme) {
 			const lineCount = args.content.split("\n").length;
-			let text = action("write ", theme) + dim(args.path, theme);
-			text += dim(` (${lineCount} lines)`, theme);
+			let text = theme.fg("accent", `write ${args.path} (${lineCount} lines)`);
 			return new Text(text, 0, 0);
 		},
 
