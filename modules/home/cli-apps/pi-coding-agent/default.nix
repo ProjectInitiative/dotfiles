@@ -138,7 +138,10 @@ in
               apiKey = mkOption {
                 type = types.str;
                 default = "";
-                description = "API key (required even if unused, like Ollama).";
+                description = ''
+                  API key. Use "$ENV_VAR" to pull from environment, or "!command" to
+                  execute a shell command at request time. Avoid hardcoding secrets in Nix.
+                '';
               };
               models = mkOption {
                 type = types.listOf (types.submodule {
