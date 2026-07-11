@@ -197,6 +197,10 @@ in
             enable = true;
             version = "0.5.1";
           };
+          "@lnilluv/pi-opencode-go-rotation" = {
+            enable = true;
+            version = "1.4.2";
+          };
         };
       };
 
