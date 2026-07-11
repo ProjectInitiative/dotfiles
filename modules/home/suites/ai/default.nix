@@ -193,6 +193,10 @@ in
             enable = true;
             version = "0.1.10";
           };
+          "@hypabolic/crossbar" = {
+            enable = true;
+            version = "0.5.1";
+          };
         };
       };
 
