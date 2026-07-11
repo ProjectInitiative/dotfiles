@@ -43,12 +43,27 @@ let
     } // lib.optionalAttrs (server.env != { }) { env = server.env; }
   ) enabledServers;
 
+  # Pi MCP config — same servers, different format
+  # remote → streamable-http SSE (supported by pi-mcp-adapter)
+  mcpPiJson = builtins.mapAttrs (name: server:
+    if server.type == "remote" then {
+      type = "streamable-http";
+      url = server.url;
+    } else {
+      command = server.command;
+      args = server.args;
+    } // lib.optionalAttrs (server.env != { }) { env = server.env; }
+  ) enabledServers;
+
+  mcpPiConfig = { mcpServers = mcpPiJson; };
+
   # Merge base config with generated MCP section
   fullOpenCodeConfig = baseOpenCodeConfig // {
     mcp = mcpServersJson;
   };
 
   generatedOpenCodeConfig = jsonFormat.generate "opencode.json" fullOpenCodeConfig;
+  generatedMcpConfig = jsonFormat.generate "mcp.json" mcpPiConfig;
 in
 {
   options.${namespace}.suites.ai = with types; {
@@ -224,9 +239,10 @@ in
       tools.aider = mkIf cfg.agent.aider.enable enabled;
     };
 
-    # Generate opencode.json with MCP servers injected from config
+    # Generate configs with MCP servers injected from config
     home.file = {
       ".config/opencode/opencode.json".source = generatedOpenCodeConfig;
+      ".config/mcp/mcp.json".source = generatedMcpConfig;
     };
 
   };
