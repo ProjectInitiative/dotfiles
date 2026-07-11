@@ -146,7 +146,33 @@ in
       ]);
 
     ${namespace} = {
-      cli-apps.pi-coding = mkIf cfg.agent.pi-coding.enable enabled;
+      cli-apps.pi-coding = mkIf cfg.agent.pi-coding.enable {
+        enable = true;
+
+        # Default settings managed by Nix
+        settings = {
+          hideThinkingBlock = true;
+        };
+
+        # Permission gate extension - full spectrum trust levels
+        extensions.permissions = {
+          enable = true;
+          text = builtins.readFile "${inputs.self}/modules/home/cli-apps/pi-coding-agent/extensions/permissions.ts";
+        };
+
+        # Peek extension - toggle thinking block visibility with Ctrl+Shift+H
+        extensions.peek = {
+          enable = true;
+          text = builtins.readFile "${inputs.self}/modules/home/cli-apps/pi-coding-agent/extensions/peek.ts";
+        };
+
+        # Dashboard footer - rich stats footer with TPS/TFT, trust, and peek status
+        extensions.dashboard-footer = {
+          enable = true;
+          text = builtins.readFile "${inputs.self}/modules/home/cli-apps/pi-coding-agent/extensions/dashboard-footer.ts";
+        };
+      };
+
       tools.aider = mkIf cfg.agent.aider.enable enabled;
     };
 

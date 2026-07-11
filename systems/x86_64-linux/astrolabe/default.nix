@@ -176,6 +176,8 @@ lib.recursiveUpdate commonSystemConfig {
 
   home-manager = {
 
+    backupFileExtension = "backup";
+
     users.kylepzak.${namespace} = {
       suites = {
         development.enable = true;
