@@ -117,9 +117,8 @@ export default function (pi: ExtensionAPI) {
 		},
 
 		renderCall(args, theme) {
-			// Blue accent = pending/in-progress
-			const cmd = args.command.length > 80 ? `${args.command.slice(0, 77)}...` : args.command;
-			let text = theme.fg("accent", `$ ${cmd}`);
+			// Blue accent = pending/in-progress, full command (no truncation)
+			let text = theme.fg("accent", `$ ${args.command}`);
 			if (args.timeout) text += dim(` (${args.timeout}s)`, theme);
 			return new Text(text, 0, 0);
 		},
@@ -154,6 +153,8 @@ export default function (pi: ExtensionAPI) {
 				if (output.split("\n").length > 20) {
 					text += `\n${dim("... more output", theme)}`;
 				}
+			} else if (lineCount > 0) {
+				text += dim(" (Ctrl+O to expand)", theme);
 			}
 
 			return new Text(text, 0, 0);
@@ -217,7 +218,7 @@ export default function (pi: ExtensionAPI) {
 			const remaining = diffLines.length - previewLines.length;
 			text += `\n${theme.fg("success", `+${additions} / -${removals}`)}`;
 			if (remaining > 0 && !expanded) {
-				text += dim(` (${remaining} more lines)`, theme);
+				text += dim(` (${remaining} more lines — Ctrl+O to expand)`, theme);
 			}
 
 			// Expanded: show the full diff with same coloring
@@ -237,6 +238,26 @@ export default function (pi: ExtensionAPI) {
 			}
 
 			return new Text(text, 0, 0);
+		},
+	});
+
+	// ── Expand toggle command + shortcut ─────────────────────────────────────
+	// Ctrl+O is the default pi binding but may conflict in Zellij.
+	// Ctrl+Shift+O and /expand provide alternatives.
+
+	pi.registerCommand("expand", {
+		description: "Toggle tool output expansion",
+		handler: async (_args, ctx) => {
+			const expanded = ctx.ui.getToolsExpanded();
+			ctx.ui.setToolsExpanded(!expanded);
+			ctx.ui.notify(`Tool output ${!expanded ? "expanded" : "collapsed"}`, "info");
+		},
+	});
+	pi.registerShortcut("ctrl+shift+o", {
+		description: "Toggle tool output expansion",
+		handler: async (ctx) => {
+			const expanded = ctx.ui.getToolsExpanded();
+			ctx.ui.setToolsExpanded(!expanded);
 		},
 	});
 
