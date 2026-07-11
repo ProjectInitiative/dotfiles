@@ -30,11 +30,6 @@ let
 
   # Wrapper for pi: isolates npm packages to ~/.pi/npm/ and ensures node is in PATH
   # Named pi-launcher to avoid binary name conflict with nixpkgs pi-coding-agent
-  piLauncher = pkgs.writeShellScriptBin "pi-launcher" ''
-    export NPM_CONFIG_PREFIX="$HOME/.pi/npm"
-    export PATH="${pkgs.lib.makeBinPath [ pkgs.nodejs_latest ]}:$PATH"
-    exec ${pkgs.lib.getExe pkgs.pi-coding-agent} "$@"
-  '';
 in
 {
   options.${namespace}.cli-apps.pi-coding = with types; {
@@ -312,7 +307,6 @@ in
     '';
 
     home.packages = with pkgs; [
-      piLauncher
       (writeShellScriptBin "pi-dev" (builtins.readFile ./extensions/pi-dev.sh))
     ];
 
@@ -361,14 +355,6 @@ in
           }) skill.tools
         )
       ) { } (attrNames cfg.skills))
-
-      # pi wrapper in ~/.local/bin — takes priority over system packages
-      // {
-        ".local/bin/pi" = {
-          executable = true;
-          source = "${piLauncher}/bin/pi-launcher";
-        };
-      }
 
       # Extensions — TypeScript modules that extend pi
       // (foldl' (acc: extName:
