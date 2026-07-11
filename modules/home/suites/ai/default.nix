@@ -172,12 +172,14 @@ in
         };
 
         # Pi packages from npm — pinned versions, auto-installed on startup
-        # pi-web-access@0.13.0 disabled: imports @earendil-works/pi-ai/compat
-        # which doesn't exist in pi 0.78.0 (version mismatch)
         packages = {
           pi-subagents = {
             enable = true;
             version = "0.34.0";
+          };
+          pi-web-access = {
+            enable = true;
+            version = "0.13.0";
           };
           context-mode = {
             enable = true;

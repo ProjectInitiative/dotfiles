@@ -2,13 +2,13 @@
  * Full-Spectrum Permission Gate Extension
  *
  * Commands:
- *   /trust              - Show current trust level and status
- *   /trust off          - No gates (pure pi default behavior)
- *   /trust audit        - Log all tool calls, never block
- *   /trust normal       - Confirm dangerous commands, block protected paths (default)
- *   /trust paranoid     - Confirm ALL tool calls
- *   /trust yolo         - Let everything through (same as off, but loud)
- *   /trust yolo <secs>  - Let everything through for N seconds with countdown
+ *   /gate              - Show current gate level and status
+ *   /gate off          - No gates (pure pi default behavior)
+ *   /gate audit        - Log all tool calls, never block
+ *   /gate normal       - Confirm dangerous commands, block protected paths (default)
+ *   /gate paranoid     - Confirm ALL tool calls
+ *   /gate yolo         - Let everything through (same as off, but loud)
+ *   /gate yolo <secs>  - Let everything through for N seconds with countdown
  *
  * Protected patterns (normal mode):
  *   - Dangerous bash: rm -rf, sudo, chmod 777, dd, mkfs, fork bomb,
@@ -190,19 +190,19 @@ export default function (pi: ExtensionAPI) {
   function updateStatus(ctx: { ui: { setStatus: (key: string, text: string | undefined) => void; notify: (msg: string, level: string) => void; theme: { fg: (color: string, text: string) => string } } }) {
     const t = ctx.ui.theme;
     if (currentLevel === "off") {
-      ctx.ui.setStatus("trust", t.fg("dim", "⚙ trust: off"));
+      ctx.ui.setStatus("gate", t.fg("dim", "🔓 off"));
     } else if (currentLevel === "audit") {
-      ctx.ui.setStatus("trust", t.fg("muted", "⚙ trust: audit"));
+      ctx.ui.setStatus("gate", t.fg("muted", "🔍 audit"));
     } else if (currentLevel === "normal") {
-      ctx.ui.setStatus("trust", t.fg("success", "⚙ trust: normal"));
+      ctx.ui.setStatus("gate", t.fg("success", "🛡 normal"));
     } else if (currentLevel === "paranoid") {
-      ctx.ui.setStatus("trust", t.fg("warning", "⚙ trust: paranoid"));
+      ctx.ui.setStatus("gate", t.fg("warning", "🔒 paranoid"));
     } else if (isYoloActive()) {
       const remaining = yoloUntil > 0 ? Math.max(0, Math.ceil((yoloUntil - Date.now()) / 1000)) : 0;
       if (remaining > 0) {
-        ctx.ui.setStatus("trust", t.fg("error", `🔥 YOLO ${remaining}s`));
+        ctx.ui.setStatus("gate", t.fg("error", `🔥 YOLO ${remaining}s`));
       } else {
-        ctx.ui.setStatus("trust", t.fg("error", "🔥 YOLO"));
+        ctx.ui.setStatus("gate", t.fg("error", "🔥 YOLO"));
       }
     }
   }
@@ -259,13 +259,13 @@ export default function (pi: ExtensionAPI) {
     currentLevel = next;
     clearYoloTimer();
     yoloUntil = 0;
-    ctx.ui.notify(`Trust level: ${formatLevel(next)}`, "info");
+    ctx.ui.notify(`Gate level: ${formatLevel(next)}`, "info");
     updateStatus(ctx);
   }
 
-  // ── Register /trust command ────────────────────────────────────────────────
-  pi.registerCommand("trust", {
-    description: "Set trust level: off, audit, normal, paranoid, yolo, yolo <secs>, status",
+  // ── Register /gate command ─────────────────────────────────────────────────
+  pi.registerCommand("gate", {
+    description: "Set gate level: off, audit, normal, paranoid, yolo, yolo <secs>, status",
     getArgumentCompletions: (prefix: string): AutocompleteItem[] | null => {
       const levels = ["off", "audit", "normal", "paranoid", "yolo"];
       const filtered = levels.filter(l => l.startsWith(prefix));
@@ -280,14 +280,14 @@ export default function (pi: ExtensionAPI) {
       if (!arg || arg === "status") {
         const yoloRemaining = yoloUntil > 0 ? Math.max(0, Math.ceil((yoloUntil - Date.now()) / 1000)) : 0;
         const lines = [
-          t.fg("accent", t.bold("Trust Status")),
+          t.fg("accent", t.bold("Gate Status")),
           "",
           `  Level:    ${formatLevel(currentLevel)}`,
           yoloRemaining > 0 ? `  YOLO:     ${yoloRemaining}s remaining` : "",
           `  Stats:    ${toolCallCount} calls · ${allowedCount} allowed · ${blockedCount} blocked`,
           `  Audit:    ${auditLog.length} entries`,
           "",
-          t.fg("dim", "Commands: /trust off | audit | normal | paranoid | yolo | yolo <secs>"),
+          t.fg("dim", "Commands: /gate off | audit | normal | paranoid | yolo | yolo <secs>"),
         ].filter(Boolean).join("\n");
         ctx.ui.notify(lines, "info");
         return;
@@ -332,12 +332,12 @@ export default function (pi: ExtensionAPI) {
           ctx.ui.notify("🔥 YOLO mode (unlimited)", "error");
         }
       } else {
-        ctx.ui.notify(`Unknown trust level: ${arg}. Try: off, audit, normal, paranoid, yolo, yolo <secs>`, "error");
+        ctx.ui.notify(`Unknown gate level: ${arg}. Try: off, audit, normal, paranoid, yolo, yolo <secs>`, "error");
         return;
       }
 
       if (prev !== currentLevel) {
-        ctx.ui.notify(`Trust level: ${formatLevel(currentLevel)}${currentLevel === "yolo" ? " 🔥" : ""}`, "info");
+        ctx.ui.notify(`Gate level: ${formatLevel(currentLevel)}${currentLevel === "yolo" ? " 🔥" : ""}`, "info");
       }
       updateStatus(ctx as any);
     },
@@ -345,7 +345,7 @@ export default function (pi: ExtensionAPI) {
 
   // ── Keyboard shortcut: Ctrl+Shift+T to cycle trust levels ─────────────────
   pi.registerShortcut("ctrl+shift+t", {
-    description: "Cycle trust level forward",
+    description: "Cycle gate level forward",
     handler: async (ctx) => {
       cycleTrust(1, ctx as any);
     },
@@ -408,7 +408,7 @@ export default function (pi: ExtensionAPI) {
       );
       if (!allowed) {
         blockedCount++;
-        return { block: true, reason: "Blocked by paranoid trust level" };
+        return { block: true, reason: "Blocked by paranoid gate level" };
       }
       allowedCount++;
       return undefined;
@@ -525,7 +525,7 @@ export default function (pi: ExtensionAPI) {
   // ── Session start: set initial status ──────────────────────────────────────
   pi.on("session_start", async (_event, ctx) => {
     const t = ctx.ui.theme;
-    ctx.ui.setStatus("trust", t.fg("success", "⚙ trust: normal"));
+    ctx.ui.setStatus("gate", t.fg("success", "🛡 normal"));
   });
 
   // ── Update YOLO countdown in status bar on each turn end ──────────────────
