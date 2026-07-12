@@ -58,20 +58,34 @@ export default async function (pi: ExtensionAPI) {
 				continue;
 			}
 
-			const baseModels = models.map((m: any) => ({
-				id: m.id,
-				name: m.id,
-				contextWindow: 128000,
-				maxTokens: 16384,
-			}));
+			const baseModels = models.map((m: any) => {
+				const ctx = m.max_model_len ?? 128000;
+				const pricing = m.metadata?.pricing;
+				return {
+					id: m.id,
+					name: m.metadata?.display_name ?? m.id,
+					contextWindow: ctx,
+					maxTokens: Math.min(ctx, 16384),
+					cost: pricing ? {
+						input: (pricing.input_per_million ?? 0) / 1_000_000,
+						output: (pricing.output_per_million ?? 0) / 1_000_000,
+						cacheRead: (pricing.cached_input_per_million ?? 0) / 1_000_000,
+						cacheWrite: (pricing.cached_input_per_million ?? 0) / 1_000_000,
+					} : undefined,
+				};
+			});
 
 			// Generate -flex variants for NeuralWatt Flex tier
 			const flexModels = FLEX_PROVIDERS.has(name)
-				? models.map((m: any) => ({
+				? baseModels.map((m: any) => ({
+					...m,
 					id: `${m.id}-flex`,
-					name: `${m.id} (flex)`,
-					contextWindow: 128000,
-					maxTokens: 16384,
+					name: `${m.name} (flex)`,
+					cost: m.cost ? {
+						...m.cost,
+						input: m.cost.input * 0.65,
+						output: m.cost.output * 0.65,
+					} : undefined,
 				}))
 				: [];
 
