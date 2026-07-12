@@ -65,16 +65,14 @@ export default async function (pi: ExtensionAPI) {
 				maxTokens: 16384,
 			}));
 
-			// Generate -flex variants for providers that support Flex tier
+			// Generate -flex variants for NeuralWatt Flex tier
 			const flexModels = FLEX_PROVIDERS.has(name)
-				? models
-					.filter((m: any) => !m.id.endsWith("-flex") && !m.id.endsWith("-fast"))
-					.map((m: any) => ({
-						id: `${m.id}-flex`,
-						name: `${m.id} (flex)`,
-						contextWindow: 128000,
-						maxTokens: 16384,
-					}))
+				? models.map((m: any) => ({
+					id: `${m.id}-flex`,
+					name: `${m.id} (flex)`,
+					contextWindow: 128000,
+					maxTokens: 16384,
+				}))
 				: [];
 
 			const allModels = [...baseModels, ...flexModels];
