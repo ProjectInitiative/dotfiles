@@ -45,9 +45,8 @@ export default async function (pi: ExtensionAPI) {
 	const entries = Object.entries(providers) as Array<[string, any]>;
 
 	for (const [name, provider] of entries) {
-		// Skip providers that already have models listed
-		if (provider.models && provider.models.length > 0) continue;
-		// Need at least baseUrl and api to discover
+		// Skip providers that already explicitly opt out of discovery
+		// (models list with real models selected by user)
 		if (!provider.baseUrl || !provider.api) continue;
 		if (provider.api !== "openai-completions") continue;
 
@@ -116,6 +115,9 @@ export default async function (pi: ExtensionAPI) {
 				: [];
 
 			const allModels = [...baseModels, ...flexModels];
+
+			// Unregister first to clear any empty stub registered from models.json
+			try { pi.unregisterProvider(name); } catch {}
 
 			pi.registerProvider(name, {
 				baseUrl: provider.baseUrl,

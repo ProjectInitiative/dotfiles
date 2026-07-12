@@ -174,7 +174,9 @@ in
           toolTitle = "accent";
         };
 
-        # Custom providers — models auto-discovered at startup by remote-providers extension
+        # Custom providers — listed here for /login, models auto-discovered by
+        # remote-providers extension. A single stub model avoids pi registering
+        # an empty stub that would conflict with dynamic discovery.
         models = {
           providers.lemonade = {
             baseUrl = "http://100.81.89.107:13305/v1";
