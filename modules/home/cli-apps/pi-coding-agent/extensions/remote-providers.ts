@@ -58,15 +58,48 @@ export default async function (pi: ExtensionAPI) {
 				continue;
 			}
 
-			const baseModels = models.map((m: any) => ({
-				id: m.id,
-				name: m.id,
-				reasoning: false,
-				input: ["text"],
-				cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-				contextWindow: m.max_model_len ?? 128000,
-				maxTokens: 16384,
-			}));
+			const baseModels = models.map((m: any) => {
+				const caps = m.metadata?.capabilities ?? {};
+				const pricing = m.metadata?.pricing;
+				const input = ["text"];
+				if (caps.vision) input.push("image");
+
+				// Build thinking level map for reasoning models
+				let thinkingLevelMap: Record<string, string | null> | undefined;
+				if (caps.reasoning_effort) {
+					thinkingLevelMap = {
+						off: null,
+						minimal: "low",
+						low: "low",
+						medium: "medium",
+						high: "high",
+					};
+				} else if (caps.reasoning) {
+					thinkingLevelMap = {
+						off: null,
+						minimal: "low",
+						low: "low",
+						medium: "medium",
+						high: "high",
+					};
+				}
+
+				return {
+					id: m.id,
+					name: m.metadata?.display_name ?? m.id,
+					reasoning: caps.reasoning ?? false,
+					thinkingLevelMap,
+					input,
+					cost: {
+						input: (pricing?.input_per_million ?? 0) / 1_000_000,
+						output: (pricing?.output_per_million ?? 0) / 1_000_000,
+						cacheRead: (pricing?.cached_input_per_million ?? 0) / 1_000_000,
+						cacheWrite: 0,
+					},
+					contextWindow: m.max_model_len ?? m.metadata?.limits?.max_context_length ?? 128000,
+					maxTokens: 16384,
+				};
+			});
 
 			// Generate -flex variants for NeuralWatt Flex tier
 			const flexModels = FLEX_PROVIDERS.has(name)
