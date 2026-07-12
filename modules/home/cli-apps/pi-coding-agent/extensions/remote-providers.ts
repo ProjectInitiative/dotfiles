@@ -17,12 +17,12 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 /** Providers that support -flex variants (NeuralWatt) */
 const FLEX_PROVIDERS = new Set(["neuralwatt"]);
 
-async function discoverModels(baseUrl: string): Promise<Array<{ id: string }>> {
+async function discoverModels(baseUrl: string): Promise<any[]> {
 	const url = `${baseUrl.replace(/\/+$/, "")}/models`;
 	const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
 	if (!res.ok) throw new Error(`GET ${url} returned ${res.status}`);
 	const data = await res.json();
-	return (data.data ?? []).map((m: any) => ({ id: m.id }));
+	return data.data ?? [];
 }
 
 export default async function (pi: ExtensionAPI) {
@@ -57,26 +57,29 @@ export default async function (pi: ExtensionAPI) {
 				continue;
 			}
 
-			const capByName = (m: any) => m.metadata?.capabilities ?? {};
-			const pricing = (m: any) => m.metadata?.pricing ?? {};
-			// Use bracket notation for snake_case — QuickJS may not support dot notation
+			// QuickJS doesn't support dot notation on snake_case JSON keys.
+			// Always use bracket notation for API response properties.
+			const capByName = (m: any) => m["metadata"]?.["capabilities"] ?? {};
+			const pricing = (m: any) => m["metadata"]?.["pricing"] ?? {};
 			const ctx = (m: any) => m["max_model_len"] ?? m["metadata"]?.["limits"]?.["max_context_length"] ?? 128000;
-			const input = (m: any) => capByName(m).vision ? ["text", "image"] : ["text"];
+			const input = (m: any) => capByName(m)["vision"] ? ["text", "image"] : ["text"];
 
 			const buildModelDef = (m: any, suffix = "", flex = false) => {
 				const caps = capByName(m);
+				const p = pricing(m);
+				const meta = m["metadata"] ?? {};
 				return {
 					id: m.id + suffix,
-					name: (m.metadata?.display_name ?? m.id) + (suffix ? " (flex)" : ""),
-					reasoning: caps.reasoning ?? false,
-					thinkingLevelMap: caps.reasoning || caps.reasoning_effort
+					name: (meta["display_name"] ?? m.id) + (suffix ? " (flex)" : ""),
+					reasoning: caps["reasoning"] ?? false,
+					thinkingLevelMap: caps["reasoning"] || caps["reasoning_effort"]
 						? { off: null, minimal: "low", low: "low", medium: "medium", high: "high" }
 						: undefined,
 					input: input(m),
 					cost: {
-						input: ((pricing(m).input_per_million ?? 0) * (flex ? 0.65 : 1)) / 1_000_000,
-						output: ((pricing(m).output_per_million ?? 0) * (flex ? 0.65 : 1)) / 1_000_000,
-						cacheRead: ((pricing(m).cached_input_per_million ?? 0) * (flex ? 0.65 : 1)) / 1_000_000,
+						input: ((p["input_per_million"] ?? 0) * (flex ? 0.65 : 1)) / 1_000_000,
+						output: ((p["output_per_million"] ?? 0) * (flex ? 0.65 : 1)) / 1_000_000,
+						cacheRead: ((p["cached_input_per_million"] ?? 0) * (flex ? 0.65 : 1)) / 1_000_000,
 						cacheWrite: 0,
 					},
 					contextWindow: ctx(m),
@@ -91,33 +94,16 @@ export default async function (pi: ExtensionAPI) {
 					: []),
 			];
 
-			console.log(`[discovery] ${name}: ${allModels[0]?.id} has contextWindow=${allModels[0]?.contextWindow}`);
+			// Register provider with discovered models
+			try { pi.unregisterProvider(name); } catch {}
+			pi.registerProvider(name, {
+				baseUrl: provider.baseUrl,
+				apiKey: provider.apiKey ?? "placeholder",
+				api: provider.api,
+				models: allModels,
+			});
 
-			// Write directly to models.json so pi reads it at startup
-			// This avoids issues with registerProvider not preserving contextWindow
-			try {
-				const existing = JSON.parse(readFileSync(modelsPath, "utf-8"));
-				existing.providers = existing.providers ?? {};
-				existing.providers[name] = {
-					...existing.providers[name],
-					baseUrl: provider.baseUrl,
-					apiKey: provider.apiKey ?? "placeholder",
-					api: provider.api,
-					models: allModels,
-				};
-				writeFileSync(modelsPath, JSON.stringify(existing, null, 2));
-				console.log(`[discovery] ${name}: wrote ${allModels.length} models to models.json`);
-			} catch (err) {
-				console.log(`[discovery] ${name}: failed to write models.json — ${err}. Falling back to registerProvider.`);
-				// Fallback: register dynamically
-				try { pi.unregisterProvider(name); } catch {}
-				pi.registerProvider(name, {
-					baseUrl: provider.baseUrl,
-					apiKey: provider.apiKey ?? "placeholder",
-					api: provider.api,
-					models: allModels,
-				});
-			}
+			console.log(`[discovery] ${name}: registered ${allModels.length} models`);
 		} catch (err) {
 			console.log(`[discovery] ${name}: failed — ${err}`);
 		}
