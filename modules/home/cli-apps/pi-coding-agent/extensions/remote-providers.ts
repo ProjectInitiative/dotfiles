@@ -84,6 +84,9 @@ export default async function (pi: ExtensionAPI) {
 					},
 					contextWindow: ctx(m),
 					maxTokens: 16384,
+					compat: {
+						supportsDeveloperRole: false,
+					},
 				};
 			};
 
