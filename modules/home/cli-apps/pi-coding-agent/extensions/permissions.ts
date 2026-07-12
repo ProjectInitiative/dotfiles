@@ -476,6 +476,29 @@ export default function (pi: ExtensionAPI) {
         }
       }
 
+      // Context-mode MCP tools: check for dangerous commands in code
+      if (event.toolName === "ctx_execute" || event.toolName === "ctx_batch_execute" || event.toolName === "ctx_execute_file") {
+        const code = event.input?.code || event.input?.command || "";
+        if (code) {
+          const { dangerous, reason } = isDangerousCommand(code);
+          if (dangerous) {
+            const allowed = await confirmTool(
+              ctx as any,
+              "⚠️ Dangerous Command in ctx_execute",
+              `${event.toolName}\n\n${code.slice(0, 200)}\n\n${reason}`,
+              event.toolCallId,
+              event.toolName,
+            );
+            if (!allowed) {
+              blockedCount++;
+              return { block: true, reason: `Dangerous command blocked in ${event.toolName}: ${reason}` };
+            }
+            allowedCount++;
+            return undefined;
+          }
+        }
+      }
+
       // Edit: check for protected paths
       if (event.toolName === "edit") {
         const input = event.input as unknown as EditToolInput;
