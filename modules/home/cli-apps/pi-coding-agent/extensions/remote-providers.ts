@@ -61,7 +61,11 @@ export default async function (pi: ExtensionAPI) {
 			// Always use bracket notation for API response properties.
 			const capByName = (m: any) => m["metadata"]?.["capabilities"] ?? {};
 			const pricing = (m: any) => m["metadata"]?.["pricing"] ?? {};
-			const ctx = (m: any) => m["max_model_len"] ?? m["metadata"]?.["limits"]?.["max_context_length"] ?? 128000;
+			const ctx = (m: any) =>
+				m["max_model_len"] ??
+				m["max_context_window"] ??
+				m["metadata"]?.["limits"]?.["max_context_length"] ??
+				128000;
 			const input = (m: any) => capByName(m)["vision"] ? ["text", "image"] : ["text"];
 
 			const buildModelDef = (m: any, suffix = "", flex = false) => {
