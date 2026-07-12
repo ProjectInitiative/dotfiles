@@ -251,6 +251,8 @@ in
     home.file = {
       ".config/opencode/opencode.json".source = generatedOpenCodeConfig;
       ".config/mcp/mcp.json".source = generatedMcpConfig;
+      # Disable pi-web-access curator (no browser available — SSH/headless terminal)
+      ".pi/web-search.json".text = builtins.toJSON { workflow = "auto-summary"; };
     };
 
   };
