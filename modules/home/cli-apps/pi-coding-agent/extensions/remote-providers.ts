@@ -12,7 +12,7 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { join } from "node:path";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 /** Providers that support -flex variants (NeuralWatt) */
 const FLEX_PROVIDERS = new Set(["neuralwatt"]);
@@ -57,76 +57,67 @@ export default async function (pi: ExtensionAPI) {
 				continue;
 			}
 
-			const baseModels = models.map((m: any) => {
-				const caps = m.metadata?.capabilities ?? {};
-				const pricing = m.metadata?.pricing;
-				const input = ["text"];
-				if (caps.vision) input.push("image");
+			const capByName = (m: any) => m.metadata?.capabilities ?? {};
+			const pricing = (m: any) => m.metadata?.pricing ?? {};
+			// Use bracket notation for snake_case — QuickJS may not support dot notation
+			const ctx = (m: any) => m["max_model_len"] ?? m["metadata"]?.["limits"]?.["max_context_length"] ?? 128000;
+			const input = (m: any) => capByName(m).vision ? ["text", "image"] : ["text"];
 
-				// Build thinking level map for reasoning models
-				let thinkingLevelMap: Record<string, string | null> | undefined;
-				if (caps.reasoning_effort) {
-					thinkingLevelMap = {
-						off: null,
-						minimal: "low",
-						low: "low",
-						medium: "medium",
-						high: "high",
-					};
-				} else if (caps.reasoning) {
-					thinkingLevelMap = {
-						off: null,
-						minimal: "low",
-						low: "low",
-						medium: "medium",
-						high: "high",
-					};
-				}
-
+			const buildModelDef = (m: any, suffix = "", flex = false) => {
+				const caps = capByName(m);
 				return {
-					id: m.id,
-					name: m.metadata?.display_name ?? m.id,
+					id: m.id + suffix,
+					name: (m.metadata?.display_name ?? m.id) + (suffix ? " (flex)" : ""),
 					reasoning: caps.reasoning ?? false,
-					thinkingLevelMap,
-					input,
+					thinkingLevelMap: caps.reasoning || caps.reasoning_effort
+						? { off: null, minimal: "low", low: "low", medium: "medium", high: "high" }
+						: undefined,
+					input: input(m),
 					cost: {
-						input: (pricing?.input_per_million ?? 0) / 1_000_000,
-						output: (pricing?.output_per_million ?? 0) / 1_000_000,
-						cacheRead: (pricing?.cached_input_per_million ?? 0) / 1_000_000,
+						input: ((pricing(m).input_per_million ?? 0) * (flex ? 0.65 : 1)) / 1_000_000,
+						output: ((pricing(m).output_per_million ?? 0) * (flex ? 0.65 : 1)) / 1_000_000,
+						cacheRead: ((pricing(m).cached_input_per_million ?? 0) * (flex ? 0.65 : 1)) / 1_000_000,
 						cacheWrite: 0,
 					},
-					contextWindow: m.max_model_len ?? m.metadata?.limits?.max_context_length ?? 128000,
+					contextWindow: ctx(m),
 					maxTokens: 16384,
 				};
-			});
+			};
 
-			// Generate -flex variants for NeuralWatt Flex tier
-			const flexModels = FLEX_PROVIDERS.has(name)
-				? baseModels.map((m: any) => ({
-					...m,
-					id: `${m.id}-flex`,
-					name: `${m.name} (flex)`,
-					cost: m.cost ? {
-						...m.cost,
-						input: m.cost.input * 0.65,
-						output: m.cost.output * 0.65,
-					} : undefined,
-				}))
-				: [];
+			const allModels = [
+				...models.map((m: any) => buildModelDef(m)),
+				...(FLEX_PROVIDERS.has(name)
+					? models.map((m: any) => buildModelDef(m, "-flex", true))
+					: []),
+			];
 
-			const allModels = [...baseModels, ...flexModels];
+			console.log(`[discovery] ${name}: ${allModels[0]?.id} has contextWindow=${allModels[0]?.contextWindow}`);
 
-			// Unregister first to clear any empty stub registered from models.json
-			try { pi.unregisterProvider(name); } catch {}
-
-			pi.registerProvider(name, {
-				baseUrl: provider.baseUrl,
-				apiKey: provider.apiKey ?? "placeholder",
-				api: provider.api,
-				models: allModels,
-			});
-
-			console.log(`[discovery] ${name}: registered ${baseModels.length} models${flexModels.length > 0 ? ` + ${flexModels.length} flex` : ""}`);
+			// Write directly to models.json so pi reads it at startup
+			// This avoids issues with registerProvider not preserving contextWindow
+			try {
+				const existing = JSON.parse(readFileSync(modelsPath, "utf-8"));
+				existing.providers = existing.providers ?? {};
+				existing.providers[name] = {
+					...existing.providers[name],
+					baseUrl: provider.baseUrl,
+					apiKey: provider.apiKey ?? "placeholder",
+					api: provider.api,
+					models: allModels,
+				};
+				writeFileSync(modelsPath, JSON.stringify(existing, null, 2));
+				console.log(`[discovery] ${name}: wrote ${allModels.length} models to models.json`);
+			} catch (err) {
+				console.log(`[discovery] ${name}: failed to write models.json — ${err}. Falling back to registerProvider.`);
+				// Fallback: register dynamically
+				try { pi.unregisterProvider(name); } catch {}
+				pi.registerProvider(name, {
+					baseUrl: provider.baseUrl,
+					apiKey: provider.apiKey ?? "placeholder",
+					api: provider.api,
+					models: allModels,
+				});
+			}
 		} catch (err) {
 			console.log(`[discovery] ${name}: failed — ${err}`);
 		}
