@@ -140,6 +140,23 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	// ── Install footer ────────────────────────────────────────────────────────
+	// ─── Track current context-mode tool execution ────────────────────────────
+	let currentCtxTool = "";
+
+	pi.on("tool_execution_start", async (event: any) => {
+		if (event.toolName?.startsWith("ctx_")) {
+			currentCtxTool = event.toolName;
+			requestRender?.();
+		}
+	});
+
+	pi.on("tool_execution_end", async (event: any) => {
+		if (event.toolName?.startsWith("ctx_")) {
+			currentCtxTool = "";
+			requestRender?.();
+		}
+	});
+
 	pi.on("auto_retry_start", async (event: any) => {
 		retryAttempt = event.attempt;
 		retryMaxAttempts = event.maxAttempts;
@@ -238,7 +255,13 @@ export default function (pi: ExtensionAPI) {
 						parts.push(dim(`TFT ${tftSec}s`));
 					}
 
-						// Retry countdown — shows when pi is auto-retrying after a 429 or other error
+						// Current context-mode tool executing
+					if (currentCtxTool) {
+						parts.push(dim(`│`));
+						parts.push(theme.fg("accent", `⚡${currentCtxTool}`));
+					}
+
+					// Retry countdown — shows when pi is auto-retrying after a 429 or other error
 					if (retryAttempt > 0 && retryMaxAttempts > 0) {
 						const elapsed = Date.now() - retryStartTime;
 						const remaining = Math.max(0, Math.ceil((retryDelayMs - elapsed) / 1000));

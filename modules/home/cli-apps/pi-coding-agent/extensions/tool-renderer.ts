@@ -12,7 +12,7 @@
 
 import type { BashToolDetails, EditToolDetails, ExtensionAPI, ReadToolDetails } from "@earendil-works/pi-coding-agent";
 import { createBashTool, createEditTool, createReadTool, createWriteTool, getLanguageFromPath, highlightCode } from "@earendil-works/pi-coding-agent";
-import { Text } from "@earendil-works/pi-tui";
+import { Text, truncateToWidth } from "@earendil-works/pi-tui";
 
 export default function (pi: ExtensionAPI) {
 	const cwd = process.cwd();
@@ -284,4 +284,37 @@ export default function (pi: ExtensionAPI) {
 			return new Text(theme.fg("success", "Written"), 0, 0);
 		},
 	});
+
+	// ── Context-mode tool visibility ────────────────────────────────────────
+	// Show a brief summary of what ctx_execute/ctx_batch_execute/etc are doing
+	let currentCtxTool = "";
+
+	pi.on("tool_execution_start", (event) => {
+		if (event.toolName.startsWith("ctx_")) {
+			currentCtxTool = `${event.toolName}(${summarizeArgs(event.args)})`;
+		}
+	});
+
+	pi.on("tool_execution_end", (event) => {
+		if (event.toolName.startsWith("ctx_")) {
+			currentCtxTool = "";
+		}
+	});
+
+	// Register a pseudo-status that dashboard-footer can pick up
+	// via footerData.getExtensionStatuses() if desired.
+	// For now, just make tool_call results more informative.
+
+	function summarizeArgs(args: any): string {
+		if (!args) return "";
+		if (args.queries) {
+			const qs = Array.isArray(args.queries) ? args.queries : [args.queries];
+			return qs.map((q: string) => q.slice(0, 40)).join(", ");
+		}
+		if (args.code) return args.code.slice(0, 60).replace(/\n/g, " ");
+		if (args.command) return args.command.slice(0, 80).replace(/\n/g, " ");
+		if (args.url) return args.url.slice(0, 60);
+		if (args.path) return args.path;
+		return JSON.stringify(args).slice(0, 60);
+	}
 }
