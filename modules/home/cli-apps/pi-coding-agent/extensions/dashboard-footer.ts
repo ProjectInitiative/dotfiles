@@ -159,7 +159,9 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	pi.on("thinking_level_select", async () => {
-		requestRender?.();
+		if (typeof pi.getThinkingLevel !== "function") return;
+		if (!requestRender) return;
+		requestRender();
 	});
 
 	pi.on("session_start", async (_event, ctx) => {
@@ -245,17 +247,20 @@ export default function (pi: ExtensionAPI) {
 					}
 
 					// Thinking level — inline with model, dimmed when set
-					const thinkingLevel = typeof pi.getThinkingLevel === "function" ? pi.getThinkingLevel() : undefined;
-					const thinkingStr = thinkingLevel && thinkingLevel !== "off"
-						? dim(`│ ${thinkingLevel}`)
-						: "";
+					let thinkingStr = "";
+					try {
+						const tl = typeof pi.getThinkingLevel === "function" ? pi.getThinkingLevel() : undefined;
+						if (tl && tl !== "off") thinkingStr = dim(`│ ${tl}`);
+					} catch { /* thinking level not available yet */ }
 
 					// Right-aligned model name + context window size
-					const modelStr = ctx.model?.id
-						? contextWindowSize > 0
-							? `${ctx.model.id} ${fmt(contextWindowSize)}`
-							: ctx.model.id
-						: "no-model";
+					let modelStr = "no-model";
+					try {
+						const mId = ctx.model?.id;
+						if (mId) {
+							modelStr = contextWindowSize > 0 ? `${mId} ${fmt(contextWindowSize)}` : mId;
+						}
+					} catch { /* model info not ready yet */ }
 
 					const leftRaw = parts.join(" ");
 					const leftWidth = visibleWidth(leftRaw);
