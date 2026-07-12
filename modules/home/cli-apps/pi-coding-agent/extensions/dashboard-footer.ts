@@ -289,9 +289,11 @@ export default function (pi: ExtensionAPI) {
 					const leftWidth = visibleWidth(leftRaw);
 					const rightRaw = theme.fg("dim", modelStr) + thinkingStr;
 					const rightWidth = visibleWidth(rightRaw);
-					const pad = Math.max(2, width - leftWidth - rightWidth);
+					const pad = Math.max(2, Math.min(width - leftWidth - rightWidth, width - leftWidth));
+					const line = leftRaw + " ".repeat(pad) + rightRaw;
 
-					lines.push(leftRaw + " ".repeat(pad) + rightRaw);
+					// Ensure the line fits within terminal width
+					lines.push(truncateToWidth(line, width));
 
 					return lines;
 				},
