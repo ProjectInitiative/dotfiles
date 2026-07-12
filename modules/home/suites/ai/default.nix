@@ -166,6 +166,12 @@ in
         # Default settings managed by Nix
         settings = {
           hideThinkingBlock = true;
+          # Subtle tool backgrounds — near-invisible so boxes don't pop
+          # Matches terminal background (#18181e on dark theme)
+          toolPendingBg = "#18181e";
+          toolSuccessBg = "#18181e";
+          toolErrorBg = "#211818";
+          toolTitle = "accent";
         };
 
         # Custom providers — models auto-discovered at startup by remote-providers extension
