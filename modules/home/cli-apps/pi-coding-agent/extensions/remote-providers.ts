@@ -14,6 +14,9 @@ import { join } from "node:path";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import { existsSync, readFileSync } from "node:fs";
 
+/** Providers that support -flex variants (NeuralWatt) */
+const FLEX_PROVIDERS = new Set(["neuralwatt"]);
+
 async function discoverModels(baseUrl: string): Promise<Array<{ id: string }>> {
 	const url = `${baseUrl.replace(/\/+$/, "")}/models`;
 	const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
@@ -55,19 +58,35 @@ export default async function (pi: ExtensionAPI) {
 				continue;
 			}
 
+			const baseModels = models.map((m: any) => ({
+				id: m.id,
+				name: m.id,
+				contextWindow: 128000,
+				maxTokens: 16384,
+			}));
+
+			// Generate -flex variants for providers that support Flex tier
+			const flexModels = FLEX_PROVIDERS.has(name)
+				? models
+					.filter((m: any) => !m.id.endsWith("-flex") && !m.id.endsWith("-fast"))
+					.map((m: any) => ({
+						id: `${m.id}-flex`,
+						name: `${m.id} (flex)`,
+						contextWindow: 128000,
+						maxTokens: 16384,
+					}))
+				: [];
+
+			const allModels = [...baseModels, ...flexModels];
+
 			pi.registerProvider(name, {
 				baseUrl: provider.baseUrl,
 				apiKey: provider.apiKey ?? "placeholder",
 				api: provider.api,
-				models: models.map((m: any) => ({
-					id: m.id,
-					name: m.id,
-					contextWindow: 128000,
-					maxTokens: 16384,
-				})),
+				models: allModels,
 			});
 
-			console.log(`[discovery] ${name}: registered ${models.length} models`);
+			console.log(`[discovery] ${name}: registered ${baseModels.length} models${flexModels.length > 0 ? ` + ${flexModels.length} flex` : ""}`);
 		} catch (err) {
 			console.log(`[discovery] ${name}: failed — ${err}`);
 		}
