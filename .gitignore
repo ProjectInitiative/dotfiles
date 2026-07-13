@@ -16,3 +16,4 @@ prompt.txt
 .aider*
 ####== local ==####
 vendor/
+.pi-subagents/
