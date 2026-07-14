@@ -19,7 +19,7 @@ let
     version = "0.1.7";
     binary = pkgs.fetchurl {
       url = "https://github.com/nikok6/herdr-mirror/releases/download/v${version}/herdr-mirror-linux-x86_64";
-      hash = "sha256-47IhAeIv9BC+cdV+aoNYDV34bc2KOF9+esPzMUxoBZM=";
+      hash = "sha256-47IXAeIv0oUdf+vYKHcQWt14CD2PGF9+qs8xTUjB1ZM=";
     };
     manifest = pkgs.writeText "herdr-mirror-plugin.toml" ''
       id = "mirror"
@@ -148,7 +148,7 @@ in
   config = mkIf cfg.enable {
 
     home.packages = with pkgs; [
-      pkgs.${namespace}.herdr
+      pkgs.herdr
     ];
 
     home.file = {

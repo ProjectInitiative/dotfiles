@@ -31,6 +31,7 @@ in
         };
         zoxide = enabled;
         zellij = enabled;
+        herdr = enabled;
         # QOL cli
         bat = enabled;
         eza = enabled;
