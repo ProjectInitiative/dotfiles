@@ -31,7 +31,12 @@ in
         };
         zoxide = enabled;
         zellij = enabled;
-        herdr = enabled;
+        herdr = {
+          enable = true;
+          plugins = {
+            mirror = { enable = true; };        # nikok6/herdr-mirror
+          };
+        };
         # QOL cli
         bat = enabled;
         eza = enabled;
