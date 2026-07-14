@@ -2,6 +2,40 @@
 
 ## Plugin management
 
+`herdr plugin install <name>` downloads a prebuilt binary from GitHub Releases
+and places it in herdr's plugin directory. Fully compatible with Nix FOD
+(fixed-output derivation) approach — `pkgs.fetchurl` with pinned hash.
+
+### Approach for each plugin
+
+```nix
+pkgs.fetchurl {
+  url = "https://github.com/nikok6/herdr-mirror/releases/download/v0.1.7/herdr-mirror-linux-x86_64";
+  hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+};
+```
+
+Then copy to herdr's plugin directory (run `herdr plugin install` once to find
+the path, then replicate with Nix).
+
+### Release formats
+
+**herdr-mirror** (Rust, prebuilt binary):
+- `herdr-mirror-linux-x86_64` — single binary, no deps
+- `herdr-mirror-linux-aarch64`
+- SHA256SUMS available for verification
+
+**herdr-remote** (mixed Rust/Python):
+- Primarily a macOS app (Herdi.app) with a Python relay component
+- Has `herdr-push` sub-plugin for remote monitoring
+- Need to investigate the relay + TUI Python deps
+
+### Plugin configuration
+
+Plugins are configured via TOML files in `~/.config/herdr/plugins/config/`. For
+herdr-mirror this is `mirror/hosts.toml`. We can generate these via Nix's
+`home.file`.
+
 herdr supports plugins via Zellij's WASM plugin system. Plugins are compiled to
 `.wasm` files and loaded at runtime.
 
