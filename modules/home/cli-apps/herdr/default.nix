@@ -159,6 +159,12 @@ in
         "${herdrMirror}/herdr-plugin.toml";
       # Plugin registry
       ".config/herdr/plugins.json".source = pluginsJson;
+
+      # Plugin config — add remote hosts here
+      # ".config/herdr/plugins/config/mirror/hosts.toml".text = ''
+      #   [hosts.work]
+      #   target = "work"
+      # '';
     };
 
   };
