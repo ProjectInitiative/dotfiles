@@ -55,6 +55,7 @@ in
         zsh = enabled;
         nix = enabled;
         home-manager = enabled;
+        herdr = enabled;
       };
 
       security = {

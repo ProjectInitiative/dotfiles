@@ -1,0 +1,74 @@
+# Herdr configuration — no prefix, everything is direct Alt bindings like zellij.
+
+onboarding = false
+
+[theme]
+name = "catppuccin"
+
+[keys]
+# prefix is defined but never referenced in the bindings below
+prefix = "ctrl+b"
+
+# ── pane navigation (zellij: Alt+h/j/k/l) ─────────────────────────────
+focus_pane_left  = "alt+h"
+focus_pane_down  = "alt+j"
+focus_pane_up    = "alt+k"
+focus_pane_right = "alt+l"
+
+# ── swap/move panes (zellij: move mode with h/j/k/l) ──────────────────
+swap_pane_left  = "alt+shift+h"
+swap_pane_down  = "alt+shift+j"
+swap_pane_up    = "alt+shift+k"
+swap_pane_right = "alt+shift+l"
+
+# ── navigate mode (from sidebar) ──────────────────────────────────────
+navigate_pane_left      = "h"
+navigate_pane_down      = "j"
+navigate_pane_up        = "k"
+navigate_pane_right     = "l"
+navigate_workspace_up   = "up"
+navigate_workspace_down = "down"
+
+# ── tabs (like browser alt+1..9, alt+n for new) ────────────────────────
+new_tab       = "alt+n"
+next_tab      = "alt+right"
+previous_tab  = "alt+left"
+switch_tab    = "alt+1..9"
+rename_tab    = "alt+shift+t"
+close_tab     = "alt+shift+x"
+
+# ── panes ───────────────────────────────────────────────────────────────
+split_vertical   = "alt+v"
+split_horizontal = "alt+-"
+close_pane       = "alt+x"
+zoom             = "alt+z"
+cycle_pane_next  = "alt+tab"
+
+# ── resize mode (then h/j/k/l, zellij: Ctrl+n → resize mode) ─────────
+resize_mode = "alt+r"
+
+# ── workspaces ─────────────────────────────────────────────────────────
+new_workspace    = "alt+shift+n"
+close_workspace  = "alt+shift+d"
+workspace_picker = "alt+w"
+rename_workspace = "alt+shift+w"
+goto             = "alt+g"
+
+# ── other ───────────────────────────────────────────────────────────────
+detach         = "alt+q"
+toggle_sidebar = "alt+b"
+copy_mode      = "alt+["
+last_pane      = ""
+
+[ui]
+sidebar_width = 32
+pane_borders = true
+pane_gaps = true
+confirm_close = true
+
+[ui.toast]
+delivery = "herdr"
+delay_seconds = 1
+
+[session]
+resume_agents_on_restore = true

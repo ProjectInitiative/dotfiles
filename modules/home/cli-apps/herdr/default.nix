@@ -4,6 +4,7 @@
   lib,
   pkgs,
   namespace,
+  inputs,
   ...
 }:
 with lib;
@@ -50,6 +51,10 @@ in
       herdr
       pluginsScript
     ];
+
+    home.file.".config/herdr/config.toml" = {
+      source = "${inputs.self}/homes/dotfiles/herdr/config.toml";
+    };
 
   };
 }
