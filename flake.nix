@@ -13,7 +13,8 @@
     # NixPkgs Master
     ai-tools.url = "github:nixos/nixpkgs/master";
 
-    nix-amd-ai.url = "github:ProjectInitiative/nix-amd-ai";
+    # nix-amd-ai.url = "github:ProjectInitiative/nix-amd-ai";
+    nix-amd-ai.url = "path:/home/kylepzak/development/nix-amd-ai";
 
     k3s-pinned.url = "github:nixos/nixpkgs/nixos-26.05";
 

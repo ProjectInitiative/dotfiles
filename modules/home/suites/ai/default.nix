@@ -149,6 +149,7 @@ in
       ++ (optional cfg.agent.qwen.enable qwen-code)
       ++ (optional cfg.agent.claude.enable claude-code)
       ++ (optional cfg.agent.aider.enable pkgs.aider-chat)
+      ++ [ pkgs.ketch ]
       ++ (optional cfg.mcp.enable pkgs.${namespace}.mcp-proxy-runner)
       ++ (optional cfg.mcp.enable githubMcpWrapper)
       ++ (optional cfg.mcp.enable uv)
