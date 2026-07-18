@@ -12,8 +12,8 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { join } from "node:path";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-
+import { existsSync, readFileSync } from "node:fs";
+import { URL } from "node:url";
 /** Providers that support -flex variants (NeuralWatt) */
 const FLEX_PROVIDERS = new Set(["neuralwatt"]);
 
@@ -78,8 +78,6 @@ export default async function (pi: ExtensionAPI) {
 	const entries = Object.entries(providers) as Array<[string, any]>;
 
 	for (const [name, provider] of entries) {
-		// Skip providers that already explicitly opt out of discovery
-		// (models list with real models selected by user)
 		if (!provider.baseUrl || !provider.api) continue;
 		if (provider.api !== "openai-completions") continue;
 
@@ -92,7 +90,6 @@ export default async function (pi: ExtensionAPI) {
 			models = await discoverModels(provider.baseUrl);
 		} catch (err) {
 			lastErr = err;
-			// Step 2: if 402 and we have a key, retry with auth
 			if (apiKey && String(err).includes("402")) {
 				console.log(`[discovery] ${name}: 402 (auth required), retrying with api key`);
 				try {
@@ -106,7 +103,6 @@ export default async function (pi: ExtensionAPI) {
 
 		if (lastErr) {
 			console.log(`[discovery] ${name}: failed — ${lastErr}`);
-			// Register provider anyway (with a placeholder model) so it appears in /login screen
 			try { pi.unregisterProvider(name); } catch {}
 			pi.registerProvider(name, {
 				baseUrl: provider.baseUrl,
@@ -127,7 +123,6 @@ export default async function (pi: ExtensionAPI) {
 
 		if (models.length === 0) {
 			console.log(`[discovery] ${name}: no models found at ${provider.baseUrl}`);
-			// Register with placeholder so provider shows up in /login
 			try { pi.unregisterProvider(name); } catch {}
 			pi.registerProvider(name, {
 				baseUrl: provider.baseUrl,
@@ -146,8 +141,6 @@ export default async function (pi: ExtensionAPI) {
 			continue;
 		}
 
-		// QuickJS doesn't support dot notation on snake_case JSON keys.
-		// Always use bracket notation for API response properties.
 		const capByName = (m: any) => m["metadata"]?.["capabilities"] ?? {};
 		const pricing = (m: any) => m["metadata"]?.["pricing"] ?? {};
 		const ctx = (m: any) =>
@@ -159,16 +152,18 @@ export default async function (pi: ExtensionAPI) {
 			m["meta"]?.["n_ctx_train"] ??
 			128000;
 		const input = (m: any) => capByName(m)["vision"] ? ["text", "image"] : ["text"];
+		const providerReasoning = provider.reasoning === true;
 
 		const buildModelDef = (m: any, suffix = "", flex = false) => {
 			const caps = capByName(m);
 			const p = pricing(m);
 			const meta = m["metadata"] ?? {};
+			const isReasoning = caps["reasoning"] || caps["reasoning_effort"] || providerReasoning;
 			return {
 				id: m.id + suffix,
 				name: (meta["display_name"] ?? m.id) + (suffix ? " (flex)" : ""),
-				reasoning: caps["reasoning"] ?? false,
-				thinkingLevelMap: caps["reasoning"] || caps["reasoning_effort"]
+				reasoning: isReasoning,
+				thinkingLevelMap: isReasoning
 					? { off: null, minimal: "low", low: "low", medium: "medium", high: "high" }
 					: undefined,
 				input: input(m),
@@ -193,15 +188,34 @@ export default async function (pi: ExtensionAPI) {
 				: []),
 		];
 
-		// Register provider with discovered models
+		// If maxConcurrency is set, register with the shared FIFO proxy
+		let effectiveBaseUrl = provider.baseUrl;
+		const maxConcurrency = provider.maxConcurrency;
+		if (typeof maxConcurrency === "number" && maxConcurrency > 0) {
+			const proxyBase = "http://127.0.0.1:3080";
+			const origUrl = new URL(provider.baseUrl);
+			effectiveBaseUrl = proxyBase + "/" + name + origUrl.pathname;
+			try {
+				await fetch(proxyBase + "/__register", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ id: name, target: provider.baseUrl, concurrency: maxConcurrency }),
+					signal: AbortSignal.timeout(5_000),
+				});
+				console.log(`[discovery] ${name}: registered with queue proxy (concurrency=${maxConcurrency})`);
+			} catch (err) {
+				console.log(`[discovery] ${name}: queue proxy registration failed — ${err}`);
+			}
+		}
+
 		try { pi.unregisterProvider(name); } catch {}
 		pi.registerProvider(name, {
-			baseUrl: provider.baseUrl,
+			baseUrl: effectiveBaseUrl,
 			apiKey: apiKey ?? "placeholder",
 			api: provider.api,
 			models: allModels,
 		});
 
-		console.log(`[discovery] ${name}: registered ${allModels.length} models`);
+		console.log(`[discovery] ${name}: registered ${allModels.length} models` + (effectiveBaseUrl !== provider.baseUrl ? ` via queue proxy` : ""));
 	}
 }

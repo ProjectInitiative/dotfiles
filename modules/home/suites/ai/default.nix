@@ -150,6 +150,7 @@ in
       ++ (optional cfg.agent.claude.enable claude-code)
       ++ (optional cfg.agent.aider.enable pkgs.aider-chat)
       ++ [ pkgs.${namespace}.ketch ]
+      ++ [ pkgs.${namespace}."fifo-proxy" ]
       ++ (optional cfg.mcp.enable pkgs.${namespace}.mcp-proxy-runner)
       ++ (optional cfg.mcp.enable githubMcpWrapper)
       ++ (optional cfg.mcp.enable uv)
@@ -190,10 +191,13 @@ in
           providers.cheapestinference = {
             baseUrl = "https://api.cheapestinference.com/v1";
             api = "openai-completions";
+            reasoning = true;
+            maxConcurrency = 1;
           };
           providers.astrolabe = {
             baseUrl = "http://100.81.89.107:8080/v1";
             api = "openai-completions";
+            reasoning = true;
           };
         };
         # Permission gate extension - full spectrum trust levels
@@ -261,6 +265,26 @@ in
       ".config/mcp/mcp.json".source = generatedMcpConfig;
       # Disable pi-web-access curator (no browser available — SSH/headless terminal)
       ".pi/web-search.json".text = builtins.toJSON { workflow = "auto-summary"; };
+    };
+
+    # FIFO queue proxy — serializes cheapestinference requests to 1 at a time
+    systemd.user.services.fifo-proxy = {
+      Unit = {
+        Description = "FIFO queue proxy for cheapestinference API";
+        After = [ "network-online.target" ];
+        Wants = [ "network-online.target" ];
+      };
+
+      Service = {
+        Type = "simple";
+        ExecStart = "${(pkgs.${namespace}."fifo-proxy")}/bin/fifo-proxy";
+        Restart = "on-failure";
+        RestartSec = 5;
+      };
+
+      Install = {
+        WantedBy = [ "default.target" ];
+      };
     };
 
   };
