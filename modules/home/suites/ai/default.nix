@@ -187,8 +187,11 @@ in
             baseUrl = "https://api.neuralwatt.com/v1";
             api = "openai-completions";
           };
+          providers.cheapestinference = {
+            baseUrl = "https://api.cheapestinference.com/v1";
+            api = "openai-completions";
+          };
         };
-
         # Permission gate extension - full spectrum trust levels
         extensions.permissions = {
           enable = true;
