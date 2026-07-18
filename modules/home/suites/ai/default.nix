@@ -191,6 +191,10 @@ in
             baseUrl = "https://api.cheapestinference.com/v1";
             api = "openai-completions";
           };
+          providers.astrolabe = {
+            baseUrl = "http://100.81.89.107:8080/v1";
+            api = "openai-completions";
+          };
         };
         # Permission gate extension - full spectrum trust levels
         extensions.permissions = {

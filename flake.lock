@@ -868,6 +868,23 @@
         "type": "github"
       }
     },
+    "llama-cpp-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1780900403,
+        "narHash": "sha256-Fnz3WHBisOYhqD2ozyMaVx5xMR67SWf0zeJ+G2114YE=",
+        "owner": "ggml-org",
+        "repo": "llama.cpp",
+        "rev": "19bba67c1f4db723c60a0d421aa0788bf4ddc699",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ggml-org",
+        "repo": "llama.cpp",
+        "rev": "19bba67c1f4db723c60a0d421aa0788bf4ddc699",
+        "type": "github"
+      }
+    },
     "loft": {
       "inputs": {
         "devenv": "devenv",
@@ -979,13 +996,14 @@
       "inputs": {
         "flake-compat": "flake-compat_6",
         "flake-parts": "flake-parts_4",
+        "llama-cpp-src": "llama-cpp-src",
         "nix-darwin": "nix-darwin",
         "nixpkgs": "nixpkgs_5",
         "rocm-systems": "rocm-systems"
       },
       "locked": {
-        "lastModified": 1784125532,
-        "narHash": "sha256-CEkobsqccC+bJ+3kZpHrWCvUhttvxXxlO/uXme4nZoU=",
+        "lastModified": 1784176106,
+        "narHash": "sha256-gvwC5XhOXO0m5DB7uD47bD2057liIwNC9G2A0YPuWBE=",
         "path": "/home/kylepzak/development/nix-amd-ai",
         "type": "path"
       },

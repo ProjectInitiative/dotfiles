@@ -2,6 +2,7 @@
   config,
   lib,
   namespace,
+  pkgs,
   options,
   upstream,
   inputs,
@@ -91,6 +92,11 @@ let
       HF_HOME = "/mnt/pool/ai/huggingface";
       XDG_CACHE_HOME = "/mnt/pool/ai/huggingface";
     };
+
+     environment.systemPackages = [
+       inputs.nix-amd-ai.packages.${pkgs.system}.llama-cpp-vulkan
+       inputs.nix-amd-ai.packages.${pkgs.system}.llama-cpp-rocm
+     ];
 
     boot.extraModulePackages = [ config.boot.kernelPackages.r8125 ];
     boot.blacklistedKernelModules = [ "r8169" ];

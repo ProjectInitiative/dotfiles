@@ -155,6 +155,8 @@ export default async function (pi: ExtensionAPI) {
 			m["max_model_len"] ??
 			m["max_context_window"] ??
 			m["metadata"]?.["limits"]?.["max_context_length"] ??
+			m["meta"]?.["n_ctx"] ??
+			m["meta"]?.["n_ctx_train"] ??
 			128000;
 		const input = (m: any) => capByName(m)["vision"] ? ["text", "image"] : ["text"];
 
