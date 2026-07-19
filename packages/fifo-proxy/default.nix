@@ -32,6 +32,17 @@ writeShellScriptBin "fifo-proxy" ''
       return 3080;
     })();
 
+    const DEFAULT_TARGET = (() => {
+      for (const a of process.argv) {
+        if (a.startsWith("--default-target=")) return a.split("=").slice(1).join("=");
+        if (a === "--default-target" && process.argv[process.argv.indexOf(a) + 1]) {
+          return process.argv[process.argv.indexOf(a) + 1];
+        }
+      }
+      return "https://api.cheapestinference.com/v1";
+    })();
+    console.log("[fifo] default target: " + DEFAULT_TARGET);
+
     // Registered targets: Map<id, { target: URL, concurrency: number, queue: [], inFlight: number }>
     const targets = new Map();
 
@@ -134,11 +145,13 @@ writeShellScriptBin "fifo-proxy" ''
       }
       const id = parts[0];
 
-      const t = targets.get(id);
+      let t = targets.get(id);
       if (!t || !t.target) {
-        res.writeHead(502);
-        res.end("Unknown provider: " + id + " (not registered)");
-        return;
+        // Auto-register with default target so it works without pre-registration
+        const targetUrl = new URL(DEFAULT_TARGET);
+        t = { target: targetUrl, concurrency: 1, queue: [], inFlight: 0 };
+        targets.set(id, t);
+        console.log("[fifo] auto-registered " + id + " -> " + DEFAULT_TARGET + " (concurrency=1)");
       }
 
       if (t.concurrency <= 0) {

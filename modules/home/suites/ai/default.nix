@@ -194,11 +194,12 @@ in
             reasoning = true;
             maxConcurrency = 1;
           };
-          providers.astrolabe = {
-            baseUrl = "http://100.81.89.107:8080/v1";
-            api = "openai-completions";
-            reasoning = true;
-          };
+          # astrolabe: disabled until local llama-server comes back up
+          # providers.astrolabe = {
+          #   baseUrl = "http://100.81.89.107:8080/v1";
+          #   api = "openai-completions";
+          #   reasoning = true;
+          # };
         };
         # Permission gate extension - full spectrum trust levels
         extensions.permissions = {
