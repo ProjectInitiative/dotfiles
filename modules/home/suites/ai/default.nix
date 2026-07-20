@@ -279,8 +279,9 @@ in
       Service = {
         Type = "simple";
         ExecStart = "${(pkgs.${namespace}."fifo-proxy")}/bin/fifo-proxy";
-        Restart = "on-failure";
-        RestartSec = 5;
+        Restart = "always";
+        RestartSec = 3;
+        TimeoutStopSec = 10;
       };
 
       Install = {

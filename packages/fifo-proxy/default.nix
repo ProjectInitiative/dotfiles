@@ -64,6 +64,26 @@ writeShellScriptBin "fifo-proxy" ''
       }
     }
 
+    const REQUEST_TIMEOUT = (() => {
+      for (const a of process.argv) {
+        if (a.startsWith("--timeout=")) return parseInt(a.split("=")[1], 10);
+        if (a === "--timeout" && process.argv[process.argv.indexOf(a) + 1]) {
+          return parseInt(process.argv[process.argv.indexOf(a) + 1], 10);
+        }
+      }
+      return 60_000;
+    })();
+    console.log("[fifo] request timeout: " + REQUEST_TIMEOUT + "ms");
+
+    // Safely decrement in-flight and drain next queued request
+    function releaseInflight(id) {
+      const t = targets.get(id);
+      if (t && t.inFlight > 0) {
+        t.inFlight--;
+        processQueue(id);
+      }
+    }
+
     function forward(id, { req, res }) {
       const t = targets.get(id);
       if (!t || !t.target) {
@@ -85,23 +105,39 @@ writeShellScriptBin "fifo-proxy" ''
         method: req.method,
         headers: { ...req.headers, host: targetUrl.host },
         rejectUnauthorized: false,
+        timeout: REQUEST_TIMEOUT,
       };
 
       const requester = targetUrl.protocol === "https:" ? https : http;
+      let released = false;
+      function safeRelease() {
+        if (released) return;
+        released = true;
+        releaseInflight(id);
+      }
+
       const proxyReq = requester.request(options, (proxyRes) => {
         res.writeHead(proxyRes.statusCode, proxyRes.headers);
         proxyRes.pipe(res);
-        proxyRes.on("end", () => {
-          t.inFlight--;
-          processQueue(id);
+
+        const onDone = () => safeRelease();
+        proxyRes.on("end", onDone);
+        proxyRes.on("close", onDone);
+        proxyRes.on("error", (err) => {
+          try { res.end(); } catch {}
+          safeRelease();
         });
       });
 
       proxyReq.on("error", (err) => {
         try { res.writeHead(502, { "Content-Type": "text/plain" }); } catch {}
         try { res.end("Proxy error: " + err.message); } catch {}
-        t.inFlight--;
-        processQueue(id);
+        safeRelease();
+      });
+
+      // HTTP-level timeout — fires after the socket idle timeout above
+      proxyReq.on("timeout", () => {
+        proxyReq.destroy(new Error("Request timed out after " + REQUEST_TIMEOUT + "ms"));
       });
 
       req.pipe(proxyReq);
@@ -133,6 +169,17 @@ writeShellScriptBin "fifo-proxy" ''
             res.end("Invalid JSON: " + e.message);
           }
         });
+        return;
+      }
+
+      // Health check
+      if (req.url === "/__health" || req.url === "/health") {
+        const status = {};
+        for (const [id, t] of targets) {
+          status[id] = { concurrency: t.concurrency, inFlight: t.inFlight, queued: t.queue.length, target: t.target ? t.target.href : null };
+        }
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, uptime: process.uptime().toFixed(1) + "s", targets: status }));
         return;
       }
 
