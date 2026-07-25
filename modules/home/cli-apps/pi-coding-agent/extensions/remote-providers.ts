@@ -46,16 +46,28 @@ function resolveApiKey(providerName: string, configKey: string | undefined): str
 	return undefined;
 }
 
-async function discoverModels(baseUrl: string, apiKey?: string): Promise<any[]> {
+async function discoverModels(baseUrl: string, apiKey?: string, retries = 2): Promise<any[]> {
 	const url = `${baseUrl.replace(/\/+$/, "")}/models`;
 	const headers: Record<string, string> = {};
 	if (apiKey) {
 		headers["Authorization"] = `Bearer ${apiKey}`;
 	}
-	const res = await fetch(url, { signal: AbortSignal.timeout(10_000), headers });
-	if (!res.ok) throw new Error(`GET ${url} returned ${res.status}`);
-	const data = await res.json();
-	return data.data ?? [];
+	for (let attempt = 1; attempt <= retries; attempt++) {
+		try {
+			const res = await fetch(url, { signal: AbortSignal.timeout(20_000), headers });
+			if (!res.ok) throw new Error(`GET ${url} returned ${res.status}`);
+			const data = await res.json();
+			return data.data ?? [];
+		} catch (err) {
+			if (attempt < retries && String(err).includes("terminated")) {
+				console.log(`[discovery] models fetch attempt ${attempt}/${retries} was terminated, retrying...`);
+				await new Promise(r => setTimeout(r, 1000));
+				continue;
+			}
+			throw err;
+		}
+	}
+	throw new Error("fetch failed after " + retries + " retries");
 }
 
 export default async function (pi: ExtensionAPI) {
@@ -83,15 +95,19 @@ export default async function (pi: ExtensionAPI) {
 
 		const apiKey = resolveApiKey(name, provider.apiKey);
 
-		// Step 1: try discovery without auth (some providers work fine this way)
+		// Step 1: try discovery with api key first if available
 		let lastErr: unknown;
 		let models: any[] = [];
 		try {
-			models = await discoverModels(provider.baseUrl);
+			if (apiKey) {
+				models = await discoverModels(provider.baseUrl, apiKey);
+			} else {
+				models = await discoverModels(provider.baseUrl);
+			}
 		} catch (err) {
 			lastErr = err;
-			if (apiKey && String(err).includes("402")) {
-				console.log(`[discovery] ${name}: 402 (auth required), retrying with api key`);
+			if (apiKey && (String(err).includes("401") || String(err).includes("402"))) {
+				console.log(`[discovery] ${name}: ${String(err).includes("402") ? "402" : "401"} (auth required), retrying with api key`);
 				try {
 					models = await discoverModels(provider.baseUrl, apiKey);
 					lastErr = undefined;
@@ -217,5 +233,9 @@ export default async function (pi: ExtensionAPI) {
 		});
 
 		console.log(`[discovery] ${name}: registered ${allModels.length} models` + (effectiveBaseUrl !== provider.baseUrl ? ` via queue proxy` : ""));
+		// Debug: log the baseUrl being used
+		if (allModels.length > 0) {
+			console.log(`[discovery] ${name}: baseUrl = ${effectiveBaseUrl}`);
+		}
 	}
 }
