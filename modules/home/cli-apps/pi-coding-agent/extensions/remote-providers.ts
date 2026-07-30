@@ -12,7 +12,7 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { join } from "node:path";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { URL } from "node:url";
 /** Providers that support -flex variants (NeuralWatt) */
 const FLEX_PROVIDERS = new Set(["neuralwatt"]);
@@ -222,7 +222,10 @@ export default async function (pi: ExtensionAPI) {
 			} catch (err) {
 				console.log(`[discovery] ${name}: queue proxy registration failed — ${err}`);
 			}
-		}
+			
+			} catch (err) {
+				console.log(`[discovery] ${name}: models.json patch failed: ${err}`);
+			}}
 
 		try { pi.unregisterProvider(name); } catch {}
 		pi.registerProvider(name, {

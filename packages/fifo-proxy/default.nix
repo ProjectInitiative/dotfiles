@@ -102,15 +102,23 @@ writeShellScriptBin "fifo-proxy" ''
         if (ch.delta) {
           const hasReasoning = !!(ch.delta.reasoning_content && typeof ch.delta.reasoning_content === "string" && ch.delta.reasoning_content.length > 0);
 
-          if (hasReasoning) {
-            // Content is just a duplicate of reasoning_content — suppress it
-            if (ch.delta.content !== undefined && ch.delta.content !== "") {
+          if (hasReasoning && ch.delta.content) {
+            // reasoning_content is present — content may have <think>...</think>
+            // If </think> is also here, strip the think block and keep the response
+            const stripped = ch.delta.content.replace(/<think>[\s\S]*?<\/think>\s*/g, "");
+            if (stripped !== ch.delta.content) {
+              ch.delta.content = stripped;
+              changed = true;
+              thinkState.inThink = false;
+            } else if (stripped.length === 0) {
+              // Content is entirely thinking — suppress it
               ch.delta.content = "";
               changed = true;
+              thinkState.inThink = true;
             }
-            thinkState.inThink = true;
           } else if (thinkState.inThink && ch.delta.content) {
-            // First content after reasoning — strip leftover </think> tags
+            // First chunk after reasoning without reasoning_content
+            // Strip any leftover </think> tags
             const stripped = ch.delta.content.replace(/^\s*<\/think>\s*/g, "");
             if (stripped !== ch.delta.content) {
               ch.delta.content = stripped;
