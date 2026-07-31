@@ -222,10 +222,7 @@ export default async function (pi: ExtensionAPI) {
 			} catch (err) {
 				console.log(`[discovery] ${name}: queue proxy registration failed — ${err}`);
 			}
-			
-			} catch (err) {
-				console.log(`[discovery] ${name}: models.json patch failed: ${err}`);
-			}}
+		}
 
 		try { pi.unregisterProvider(name); } catch {}
 		pi.registerProvider(name, {
