@@ -323,6 +323,7 @@
         systems = {
           targets = [
             "x86_64-linux"
+            "x86_64-kubevirt"
             "x86_64-darwin"
             "aarch64-linux"
           ];
@@ -448,11 +449,7 @@
         ) inputs.deploy-rs.lib;
 
         outputs-builder = channels: {
-          # formatter = channels.nixpkgs.nixfmt-rfc-style;
-          # Define the formatter using treefmt-nix
           formatter = (inputs.treefmt-nix.lib.evalModule channels.nixpkgs ./treefmt.nix).config.build.wrapper;
-
-          # Add a check for formatting
           checks.formatting = (inputs.treefmt-nix.lib.evalModule channels.nixpkgs ./treefmt.nix).config.build.check inputs.self;
         };
       };
