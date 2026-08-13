@@ -75,7 +75,7 @@ in
       shell = pkgs.zsh;
 
       openssh.authorizedKeys.keys = mkForce [
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKxw1azMwGx2sEs2HipWWjRjQ4EIqL5Hx8HHGtUk602c"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDRiGsoimWWFcrnXlN8+AcdkZba43h1D26D5Ep3KDDYe"
       ];
 
       hashedPasswordFile = sops.secrets.user_password.path;

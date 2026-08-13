@@ -17,6 +17,7 @@ in
 {
   options.${namespace}.user = with types; {
     enable = mkBoolOpt true "Whether or not to enable auto user creation";
+    includePassword = mkBoolOpt true "Whether or not to provision the user's hashed password file.";
     name = mkOpt str "kylepzak" "The name to use for the user account.";
     fullName = mkOpt str "Kyle Petryszak" "The full name of the user.";
     email = mkOpt str "6314611+ProjectInitiative@users.noreply.github.com" "The email of the user.";
@@ -65,7 +66,7 @@ in
       #   "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIDCXiqG+u+KlXDdEOtSqYCAxvORNMDcXUJ9gUvG7zO+ deployer"
       # ];
 
-      hashedPasswordFile = sops.secrets.user_password.path;
+      hashedPasswordFile = mkIf cfg.includePassword sops.secrets.user_password.path;
 
       # Arbitrary user ID to use for the user. Since I only
       # have a single user on my machines this won't ever collide.

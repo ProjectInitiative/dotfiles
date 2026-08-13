@@ -9,7 +9,7 @@ final: prev: {
       hash = "sha256-5rCAmZMce7SHLb0r4qGp6ZehZJ4PIbmxevRKgcheam8=";
     };
     node_modules = oldAttrs.node_modules.overrideAttrs (_: {
-      outputHash = "sha256-9cb02n4vRAiP5Fz8f6jg/l7KNj17cwqYaEoyOuwi9As=";  # Will be provided by nix-build failure message
+      outputHash = "sha256-QR8P79dirU+TuEKr1LBGa5zoKPblt1fYZS0k3/Y12Do=";  # Will be provided by nix-build failure message
     });
   });
   inherit (channels.ai-tools) antigravity-cli qwen-code;

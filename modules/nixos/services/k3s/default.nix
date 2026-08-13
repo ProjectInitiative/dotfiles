@@ -7,6 +7,7 @@
 }:
 let
   cfg = config.${namespace}.services.k3s;
+
   removeOption =
     config: instruction:
     lib.mkRemovedOptionModule (
@@ -25,7 +26,11 @@ let
   manifestModule =
     let
       mkTarget =
-        name: if (lib.hasSuffix ".yaml" name || lib.hasSuffix ".yml" name) then name else name + ".yaml";
+        name:
+        if lib.hasSuffix ".yaml" name || lib.hasSuffix ".yml" name then
+          name
+        else
+          name + ".yaml";
     in
     lib.types.submodule (
       {
@@ -46,7 +51,7 @@ let
             type = lib.types.nonEmptyStr;
             example = lib.literalExpression "manifest.yaml";
             description = ''
-              Name of the symlink (relative to {file}`${manifestDir}`).
+              Name of the symlink relative to {file}`${manifestDir}`.
               Defaults to the attribute name.
             '';
           };
@@ -55,38 +60,45 @@ let
             type = with lib.types; nullOr (either attrs (listOf attrs));
             default = null;
             description = ''
-              Content of the manifest file. A single attribute set will
-              generate a single document YAML file. A list of attribute sets
-              will generate multiple documents separated by `---` in a single
-              YAML file.
+              Content of the manifest file.
+
+              A single attribute set generates a single-document YAML file.
+              A list of attribute sets generates multiple YAML documents
+              separated by `---` in a single file.
             '';
           };
 
           source = lib.mkOption {
             type = lib.types.path;
             example = lib.literalExpression "./manifests/app.yaml";
-            description = ''
-              Path of the source `.yaml` file.
-            '';
+            description = "Path of the source YAML file.";
           };
         };
 
         config = {
           target = lib.mkDefault (mkTarget name);
+
           source = lib.mkIf (config.content != null) (
             let
-              name' = "k3s-manifest-" + builtins.baseNameOf name;
-              docName = "k3s-manifest-doc-" + builtins.baseNameOf name;
+              name' = "k3s-manifest-${builtins.baseNameOf name}";
+              docName = "k3s-manifest-doc-${builtins.baseNameOf name}";
               yamlDocSeparator = builtins.toFile "yaml-doc-separator" "\n---\n";
-              mkYaml = name: x: (pkgs.formats.yaml { }).generate name x;
+
+              mkYaml =
+                yamlName: value:
+                (pkgs.formats.yaml { }).generate yamlName value;
+
               mkSource =
                 value:
                 if builtins.isList value then
                   pkgs.concatText name' (
-                    lib.concatMap (x: [
-                      yamlDocSeparator
-                      (mkYaml docName x)
-                    ]) value
+                    lib.concatMap (
+                      document:
+                      [
+                        yamlDocSeparator
+                        (mkYaml docName document)
+                      ]
+                    ) value
                   )
                 else
                   mkYaml name' value;
@@ -97,79 +109,308 @@ let
       }
     );
 
-  enabledManifests = lib.filter (m: m.enable) (lib.attrValues cfg.manifests);
-  linkManifestEntry = m: "${pkgs.coreutils-full}/bin/ln -sfn ${m.source} ${manifestDir}/${m.target}";
-  linkImageEntry = image: "${pkgs.coreutils-full}/bin/ln -sfn ${image} ${imageDir}/${image.name}";
+  enabledManifests =
+    lib.filter
+      (manifest: manifest.enable)
+      (lib.attrValues cfg.manifests);
+
+  linkManifestEntry =
+    manifest:
+    "${pkgs.coreutils-full}/bin/ln -sfn ${manifest.source} ${manifestDir}/${manifest.target}";
+
+  linkImageEntry =
+    image:
+    "${pkgs.coreutils-full}/bin/ln -sfn ${image} ${imageDir}/${image.name}";
+
   linkChartEntry =
     let
-      mkTarget = name: if (lib.hasSuffix ".tgz" name) then name else name + ".tgz";
+      mkTarget =
+        name:
+        if lib.hasSuffix ".tgz" name then
+          name
+        else
+          name + ".tgz";
     in
     name: value:
     "${pkgs.coreutils-full}/bin/ln -sfn ${value} ${chartDir}/${mkTarget (builtins.baseNameOf name)}";
 
   activateK3sContent = pkgs.writeShellScript "activate-k3s-content" ''
+    set -euo pipefail
+
     ${lib.optionalString (
       builtins.length enabledManifests > 0
     ) "${pkgs.coreutils-full}/bin/mkdir -p ${manifestDir}"}
-    ${lib.optionalString (cfg.charts != { }) "${pkgs.coreutils-full}/bin/mkdir -p ${chartDir}"}
+
+    ${lib.optionalString (
+      cfg.charts != { }
+    ) "${pkgs.coreutils-full}/bin/mkdir -p ${chartDir}"}
+
     ${lib.optionalString (
       builtins.length cfg.images > 0
     ) "${pkgs.coreutils-full}/bin/mkdir -p ${imageDir}"}
 
-    ${builtins.concatStringsSep "\n" (map linkManifestEntry enabledManifests)}
-    ${builtins.concatStringsSep "\n" (lib.mapAttrsToList linkChartEntry cfg.charts)}
-    ${builtins.concatStringsSep "\n" (map linkImageEntry cfg.images)}
+    ${builtins.concatStringsSep "\n" (
+      map linkManifestEntry enabledManifests
+    )}
+
+    ${builtins.concatStringsSep "\n" (
+      lib.mapAttrsToList linkChartEntry cfg.charts
+    )}
+
+    ${builtins.concatStringsSep "\n" (
+      map linkImageEntry cfg.images
+    )}
 
     ${lib.optionalString (cfg.containerdConfigTemplate != null) ''
-      mkdir -p $(dirname ${containerdConfigTemplateFile})
-      ${pkgs.coreutils-full}/bin/ln -sfn ${pkgs.writeText "config.toml.tmpl" cfg.containerdConfigTemplate} ${containerdConfigTemplateFile}
+      ${pkgs.coreutils-full}/bin/mkdir -p \
+        "$(${pkgs.coreutils-full}/bin/dirname ${lib.escapeShellArg containerdConfigTemplateFile})"
+
+      ${pkgs.coreutils-full}/bin/ln -sfn \
+        ${
+          pkgs.writeText
+            "config.toml.tmpl"
+            cfg.containerdConfigTemplate
+        } \
+        ${lib.escapeShellArg containerdConfigTemplateFile}
     ''}
   '';
+
+  normalizedExtraFlags =
+    if builtins.isList cfg.extraFlags then
+      cfg.extraFlags
+    else
+      [ cfg.extraFlags ];
 
   startK3sScript =
     let
       kubeletParams =
-        (lib.optionalAttrs (cfg.gracefulNodeShutdown.enable) {
-          inherit (cfg.gracefulNodeShutdown) shutdownGracePeriod shutdownGracePeriodCriticalPods;
+        (lib.optionalAttrs cfg.gracefulNodeShutdown.enable {
+          inherit (cfg.gracefulNodeShutdown)
+            shutdownGracePeriod
+            shutdownGracePeriodCriticalPods
+            ;
         })
         // cfg.extraKubeletConfig;
-      kubeletConfig = (pkgs.formats.yaml { }).generate "k3s-kubelet-config" (
-        {
-          apiVersion = "kubelet.config.k8s.io/v1beta1";
-          kind = "KubeletConfiguration";
-        }
-        // kubeletParams
-      );
 
-      kubeProxyConfig = (pkgs.formats.yaml { }).generate "k3s-kubeProxy-config" (
-        {
-          apiVersion = "kubeproxy.config.k8s.io/v1alpha1";
-          kind = "KubeProxyConfiguration";
-        }
-        // cfg.extraKubeProxyConfig
-      );
+      kubeletConfig =
+        (pkgs.formats.yaml { }).generate "k3s-kubelet-config" (
+          {
+            apiVersion = "kubelet.config.k8s.io/v1beta1";
+            kind = "KubeletConfiguration";
+          }
+          // kubeletParams
+        );
 
-      k3sCommand = lib.concatStringsSep " \\\n  " (
-        [ "${cfg.package}/bin/k3s ${cfg.role}" ]
-        ++ (lib.optional cfg.clusterInit "--cluster-init")
-        ++ (lib.optional cfg.disableAgent "--disable-agent")
-        ++ (lib.optional (cfg.serverAddr != "") "--server ${cfg.serverAddr}")
-        ++ (lib.optional (cfg.token != "") "--token ${cfg.token}")
-        ++ (lib.optional (cfg.tokenFile != null) "--token-file ${cfg.tokenFile}")
-        ++ (lib.optional (cfg.configPath != null) "--config ${cfg.configPath}")
-        ++ (lib.optional (cfg.dataDir != "/var/lib/rancher/k3s") "--data-dir ${cfg.dataDir}")
-        ++ (lib.optional (kubeletParams != { }) "--kubelet-arg=config=${kubeletConfig}")
-        ++ (lib.optional (cfg.extraKubeProxyConfig != { }) "--kube-proxy-arg=config=${kubeProxyConfig}")
-        ++ (lib.flatten cfg.extraFlags)
-      );
+      kubeProxyConfig =
+        (pkgs.formats.yaml { }).generate "k3s-kubeProxy-config" (
+          {
+            apiVersion = "kubeproxy.config.k8s.io/v1alpha1";
+            kind = "KubeProxyConfiguration";
+          }
+          // cfg.extraKubeProxyConfig
+        );
+
+      k3sCommand =
+        lib.concatStringsSep " \\\n  " (
+          [ "${cfg.package}/bin/k3s ${cfg.role}" ]
+          ++ lib.optional cfg.clusterInit "--cluster-init"
+          ++ lib.optional cfg.disableAgent "--disable-agent"
+          ++ lib.optional (
+            cfg.serverAddr != ""
+          ) "--server ${lib.escapeShellArg cfg.serverAddr}"
+          ++ lib.optional (
+            cfg.token != ""
+          ) "--token ${lib.escapeShellArg cfg.token}"
+          ++ lib.optional (
+            cfg.tokenFile != null
+          ) "--token-file ${lib.escapeShellArg (toString cfg.tokenFile)}"
+          ++ lib.optional (
+            cfg.configPath != null
+          ) "--config ${lib.escapeShellArg (toString cfg.configPath)}"
+          ++ lib.optional (
+            cfg.dataDir != "/var/lib/rancher/k3s"
+          ) "--data-dir ${lib.escapeShellArg (toString cfg.dataDir)}"
+          ++ lib.optional (
+            kubeletParams != { }
+          ) "--kubelet-arg=config=${lib.escapeShellArg (toString kubeletConfig)}"
+          ++ lib.optional (
+            cfg.extraKubeProxyConfig != { }
+          ) "--kube-proxy-arg=config=${lib.escapeShellArg (toString kubeProxyConfig)}"
+          ++ normalizedExtraFlags
+        );
     in
     pkgs.writeShellScript "start-k3s" ''
+      set -euo pipefail
       exec ${k3sCommand}
     '';
+
+  /*
+    Embedded-etcd administration wrapper.
+
+    This command must generally be run through sudo because the K3s-managed
+    etcd client certificates are not readable by unprivileged users.
+
+    Examples:
+
+      sudo k3s-etcdctl member list --write-out=table
+      sudo k3s-etcdctl endpoint health --cluster
+      sudo k3s-etcdctl endpoint status --cluster --write-out=table
+  */
+  k3sEtcdctl = pkgs.writeShellApplication {
+    name = "k3s-etcdctl";
+
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.etcd
+    ];
+
+    text = ''
+      set -euo pipefail
+
+      export ETCDCTL_API=3
+
+      data_dir=${lib.escapeShellArg (toString cfg.dataDir)}
+      etcd_tls_dir="$data_dir/server/tls/etcd"
+
+      ca="$etcd_tls_dir/server-ca.crt"
+
+      if [[ -r "$etcd_tls_dir/client.crt" ]] &&
+         [[ -r "$etcd_tls_dir/client.key" ]]; then
+        cert="$etcd_tls_dir/client.crt"
+        key="$etcd_tls_dir/client.key"
+      elif [[ -r "$etcd_tls_dir/server-client.crt" ]] &&
+           [[ -r "$etcd_tls_dir/server-client.key" ]]; then
+        cert="$etcd_tls_dir/server-client.crt"
+        key="$etcd_tls_dir/server-client.key"
+      else
+        echo "k3s-etcdctl: unable to find an etcd client certificate." >&2
+        echo >&2
+        echo "Checked:" >&2
+        echo "  $etcd_tls_dir/client.crt" >&2
+        echo "  $etcd_tls_dir/client.key" >&2
+        echo "  $etcd_tls_dir/server-client.crt" >&2
+        echo "  $etcd_tls_dir/server-client.key" >&2
+        echo >&2
+        echo "This command is intended for a K3s server using embedded etcd." >&2
+        exit 1
+      fi
+
+      if [[ ! -r "$ca" ]]; then
+        echo "k3s-etcdctl: cannot read the etcd server CA:" >&2
+        echo "  $ca" >&2
+        echo >&2
+        echo "Run this command as root:" >&2
+        echo "  sudo k3s-etcdctl ..." >&2
+        exit 1
+      fi
+
+      exec etcdctl \
+        --endpoints=https://127.0.0.1:2379 \
+        --cacert="$ca" \
+        --cert="$cert" \
+        --key="$key" \
+        "$@"
+    '';
+  };
+
+  k3sEtcdHealth = pkgs.writeShellApplication {
+    name = "k3s-etcd-health";
+
+    runtimeInputs = [
+      k3sEtcdctl
+    ];
+
+    text = ''
+      set -euo pipefail
+
+      exec k3s-etcdctl \
+        endpoint health \
+        --cluster \
+        "$@"
+    '';
+  };
+
+  k3sEtcdStatus = pkgs.writeShellApplication {
+    name = "k3s-etcd-status";
+
+    runtimeInputs = [
+      k3sEtcdctl
+    ];
+
+    text = ''
+      set -euo pipefail
+
+      exec k3s-etcdctl \
+        endpoint status \
+        --cluster \
+        --write-out=table \
+        "$@"
+    '';
+  };
+
+  k3sEtcdMembers = pkgs.writeShellApplication {
+    name = "k3s-etcd-members";
+
+    runtimeInputs = [
+      k3sEtcdctl
+    ];
+
+    text = ''
+      set -euo pipefail
+
+      exec k3s-etcdctl \
+        member list \
+        --write-out=table \
+        "$@"
+    '';
+  };
+
+  /*
+    Intended as a maintenance gate before restarting or rebooting another
+    control-plane node.
+
+    It exits nonzero if endpoint health fails.
+  */
+  k3sEtcdRequireHealthy = pkgs.writeShellApplication {
+    name = "k3s-etcd-require-healthy";
+
+    runtimeInputs = [
+      k3sEtcdctl
+    ];
+
+    text = ''
+      set -euo pipefail
+
+      echo "Embedded-etcd members:"
+      echo
+
+      k3s-etcdctl \
+        member list \
+        --write-out=table
+
+      echo
+      echo "Embedded-etcd endpoint status:"
+      echo
+
+      k3s-etcdctl \
+        endpoint status \
+        --cluster \
+        --write-out=table
+
+      echo
+      echo "Embedded-etcd health:"
+      echo
+
+      k3s-etcdctl \
+        endpoint health \
+        --cluster
+
+      echo
+      echo "Embedded-etcd cluster is healthy."
+    '';
+  };
 in
 {
-
-  # interface
   options.${namespace}.services.k3s = {
     enable = lib.mkEnableOption "k3s";
 
@@ -177,20 +418,24 @@ in
 
     role = lib.mkOption {
       description = ''
-        Whether k3s should run as a server or agent.
+        Whether K3s should run as a server or agent.
 
-        If it's a server:
+        When configured as a server:
 
-        - By default it also runs workloads as an agent.
-        - Starts by default as a standalone server using an embedded sqlite datastore.
-        - Configure `clusterInit = true` to switch over to embedded etcd datastore and enable HA mode.
-        - Configure `serverAddr` to join an already-initialized HA cluster.
+        - It also runs workloads as an agent by default.
+        - It starts as a standalone server using embedded SQLite by default.
+        - Set `clusterInit = true` on the first server to initialize an
+          embedded-etcd HA cluster.
+        - Set `serverAddr` on additional servers to join the initialized
+          HA cluster.
 
-        If it's an agent:
+        When configured as an agent:
 
-        - `serverAddr` is required.
+        - `serverAddr` is required unless supplied through `configPath`.
       '';
+
       default = "server";
+
       type = lib.types.enum [
         "server"
         "agent"
@@ -199,13 +444,15 @@ in
 
     serverAddr = lib.mkOption {
       type = lib.types.str;
-      description = ''
-        The k3s server to connect to.
 
-        Servers and agents need to communicate each other. Read
-        [the networking docs](https://rancher.com/docs/k3s/latest/en/installation/installation-requirements/#networking)
-        to know how to configure the firewall.
+      description = ''
+        The K3s server URL to connect to.
+
+        Servers and agents must be able to communicate with the configured
+        address. Review the K3s networking requirements when configuring
+        firewalls and routing.
       '';
+
       example = "https://10.0.0.10:6443";
       default = "";
     };
@@ -213,96 +460,125 @@ in
     clusterInit = lib.mkOption {
       type = lib.types.bool;
       default = false;
+
       description = ''
-        Initialize HA cluster using an embedded etcd datastore.
+        Initialize an HA cluster using embedded etcd.
 
-        If this option is `false` and `role` is `server`
+        Set this on the first server that initializes the embedded-etcd
+        cluster. Additional server nodes should leave this disabled and join
+        through `serverAddr`.
 
-        On a server that was using the default embedded sqlite backend,
-        enabling this option will migrate to an embedded etcd DB.
-
-        If an HA cluster using the embedded etcd datastore was already initialized,
-        this option has no effect.
-
-        This option only makes sense in a server that is not connecting to another server.
-
-        If you are configuring an HA cluster with an embedded etcd,
-        the 1st server must have `clusterInit = true`
-        and other servers must connect to it using `serverAddr`.
+        If an HA cluster using embedded etcd is already initialized, this
+        option normally has no additional effect. It should nevertheless not
+        be configured on joining servers.
       '';
     };
 
     token = lib.mkOption {
       type = lib.types.str;
-      description = ''
-        The k3s token to use when connecting to a server.
 
-        WARNING: This option will expose store your token unencrypted world-readable in the nix store.
-        If this is undesired use the tokenFile option instead.
+      description = ''
+        The K3s token used when connecting to a server.
+
+        WARNING: This option stores the token in the world-readable Nix store.
+        Prefer `tokenFile` for secrets.
       '';
+
       default = "";
     };
 
     tokenFile = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
-      description = "File path containing k3s token to use when connecting to the server.";
+
+      description = ''
+        File containing the K3s token used when connecting to a server.
+
+        The file should be provisioned outside the Nix store, for example by
+        sops-nix or agenix.
+      '';
+
       default = null;
     };
 
     extraFlags = lib.mkOption {
-      description = "Extra flags to pass to the k3s command.";
-      type = with lib.types; either str (listOf str);
+      description = "Additional flags passed to the K3s command.";
+
+      type =
+        with lib.types;
+        either str (listOf str);
+
       default = [ ];
+
       example = [
-        "--no-deploy traefik"
-        "--cluster-cidr 10.24.0.0/16"
+        "--disable=traefik"
+        "--cluster-cidr=10.24.0.0/16"
       ];
     };
 
     disableAgent = lib.mkOption {
       type = lib.types.bool;
       default = false;
-      description = "Only run the server. This option only makes sense for a server.";
+
+      description = ''
+        Disable the K3s agent components on a server.
+
+        This option only applies when `role = "server"`.
+      '';
     };
 
     environmentFile = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
+
       description = ''
-        File path containing environment variables for configuring the k3s service in the format of an EnvironmentFile. See {manpage}`systemd.exec(5)`.
+        File containing environment variables for the K3s service in systemd
+        EnvironmentFile format. See {manpage}`systemd.exec(5)`.
       '';
+
       default = null;
     };
 
     configPath = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
       default = null;
-      description = "File path containing the k3s YAML config. This is useful when the config is generated (for example on boot).";
+
+      description = ''
+        Path to a K3s YAML configuration file.
+
+        This is useful when the configuration is generated at boot or
+        provisioned outside the Nix store.
+      '';
     };
 
     dataDir = lib.mkOption {
       type = lib.types.path;
       default = "/var/lib/rancher/k3s";
-      description = "Directory to use for k3s data.";
+      description = "Directory used for K3s persistent data.";
     };
 
     manifests = lib.mkOption {
       type = lib.types.attrsOf manifestModule;
       default = { };
+
       example = lib.literalExpression ''
         deployment.source = ../manifests/deployment.yaml;
+
         my-service = {
           enable = false;
           target = "app-service.yaml";
+
           content = {
             apiVersion = "v1";
             kind = "Service";
+
             metadata = {
               name = "app-service";
             };
+
             spec = {
               selector = {
                 "app.kubernetes.io/name" = "MyApp";
               };
+
               ports = [
                 {
                   name = "name-of-service-port";
@@ -312,24 +588,28 @@ in
                 }
               ];
             };
-          }
+          };
         };
 
         nginx.content = [
           {
             apiVersion = "v1";
             kind = "Pod";
+
             metadata = {
               name = "nginx";
+
               labels = {
                 "app.kubernetes.io/name" = "MyApp";
               };
             };
+
             spec = {
               containers = [
                 {
                   name = "nginx";
                   image = "nginx:1.14.2";
+
                   ports = [
                     {
                       containerPort = 80;
@@ -340,16 +620,20 @@ in
               ];
             };
           }
+
           {
             apiVersion = "v1";
             kind = "Service";
+
             metadata = {
               name = "nginx-service";
             };
+
             spec = {
               selector = {
                 "app.kubernetes.io/name" = "MyApp";
               };
+
               ports = [
                 {
                   name = "name-of-service-port";
@@ -362,38 +646,48 @@ in
           }
         ];
       '';
+
       description = ''
-        Auto-deploying manifests that are linked to {file}`${manifestDir}` before k3s starts.
-        Note that deleting manifest files will not remove or otherwise modify the resources
-        it created. Please use the the `--disable` flag or `.skip` files to delete/disable AddOns,
-        as mentioned in the [docs](https://docs.k3s.io/installation/packaged-components#disabling-manifests).
-        This option only makes sense on server nodes (`role = server`).
-        Read the [auto-deploying manifests docs](https://docs.k3s.io/installation/packaged-components#auto-deploying-manifests-addons)
-        for further information.
+        Auto-deploying manifests linked into {file}`${manifestDir}` before K3s
+        starts.
+
+        Removing a manifest file does not automatically remove the resources
+        it created. Use K3s AddOn disable mechanisms or `.skip` files when
+        disabling packaged or managed AddOns.
+
+        This option only applies to server nodes.
       '';
     };
 
     charts = lib.mkOption {
-      type = with lib.types; attrsOf (either path package);
+      type =
+        with lib.types;
+        attrsOf (either path package);
+
       default = { };
+
       example = lib.literalExpression ''
         nginx = ../charts/my-nginx-chart.tgz;
         redis = ../charts/my-redis-chart.tgz;
       '';
+
       description = ''
-        Packaged Helm charts that are linked to {file}`${chartDir}` before k3s starts.
-        The attribute name will be used as the link target (relative to {file}`${chartDir}`).
-        The specified charts will only be placed on the file system and made available to the
-        Kubernetes APIServer from within the cluster, you may use the
-        [k3s Helm controller](https://docs.k3s.io/helm#using-the-helm-controller)
-        to deploy the charts. This option only makes sense on server nodes
-        (`role = server`).
+        Packaged Helm charts linked into {file}`${chartDir}` before K3s starts.
+
+        The attribute name is used as the link target. A `.tgz` suffix is added
+        when it is not already present.
+
+        These charts are only made available to the K3s Helm controller; they
+        are not deployed automatically by this option.
+
+        This option only applies to server nodes.
       '';
     };
 
     containerdConfigTemplate = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
+
       example = lib.literalExpression ''
         # Base K3s config
         {{ template "base" . }}
@@ -401,19 +695,27 @@ in
         # Add a custom runtime
         [plugins."io.containerd.grpc.v1.cri".containerd.runtimes."custom"]
           runtime_type = "io.containerd.runc.v2"
+
         [plugins."io.containerd.grpc.v1.cri".containerd.runtimes."custom".options]
           BinaryName = "/path/to/custom-container-runtime"
       '';
+
       description = ''
-        Config template for containerd, to be placed at
-        `/var/lib/rancher/k3s/agent/etc/containerd/config.toml.tmpl`.
-        See the K3s docs on [configuring containerd](https://docs.k3s.io/advanced#configuring-containerd).
+        Containerd configuration template placed at:
+
+        `${containerdConfigTemplateFile}`
+
+        See the K3s documentation for configuring containerd.
       '';
     };
 
     images = lib.mkOption {
-      type = with lib.types; listOf package;
+      type =
+        with lib.types;
+        listOf package;
+
       default = [ ];
+
       example = lib.literalExpression ''
         [
           (pkgs.dockerTools.pullImage {
@@ -426,30 +728,31 @@ in
           config.services.k3s.package.airgapImages
         ]
       '';
+
       description = ''
-        List of derivations that provide container images.
-        All images are linked to {file}`${imageDir}` before k3s starts and consequently imported
-        by the k3s agent. Consider importing the k3s airgap images archive of the k3s package in
-        use, if you want to pre-provision this node with all k3s container images. This option
-        only makes sense on nodes with an enabled agent.
+        Derivations providing container images.
+
+        Images are linked into {file}`${imageDir}` and imported by the K3s
+        agent. Consider including the matching K3s air-gap image archive when
+        pre-provisioning nodes without registry access.
+
+        This option only applies to nodes with an enabled agent.
       '';
     };
 
     gracefulNodeShutdown = {
       enable = lib.mkEnableOption ''
-        graceful node shutdowns where the kubelet attempts to detect
-        node system shutdown and terminates pods running on the node. See the
-        [documentation](https://kubernetes.io/docs/concepts/cluster-administration/node-shutdown/#graceful-node-shutdown)
-        for further information.
+        graceful Kubernetes node shutdown handling
       '';
 
       shutdownGracePeriod = lib.mkOption {
         type = lib.types.nonEmptyStr;
         default = "30s";
         example = "1m30s";
+
         description = ''
-          Specifies the total duration that the node should delay the shutdown by. This is the total
-          grace period for pod termination for both regular and critical pods.
+          Total amount of time allocated for pod termination during system
+          shutdown.
         '';
       };
 
@@ -457,109 +760,259 @@ in
         type = lib.types.nonEmptyStr;
         default = "10s";
         example = "15s";
+
         description = ''
-          Specifies the duration used to terminate critical pods during a node shutdown. This should be
-          less than `shutdownGracePeriod`.
+          Portion of the shutdown grace period reserved for terminating
+          critical pods.
+
+          This value should be shorter than `shutdownGracePeriod`.
         '';
       };
     };
 
     extraKubeletConfig = lib.mkOption {
-      type = with lib.types; attrsOf anything;
+      type =
+        with lib.types;
+        attrsOf anything;
+
       default = { };
+
       example = {
         podsPerCore = 3;
         memoryThrottlingFactor = 0.69;
         containerLogMaxSize = "5Mi";
       };
+
       description = ''
-        Extra configuration to add to the kubelet's configuration file. The subset of the kubelet's
-        configuration that can be configured via a file is defined by the
-        [KubeletConfiguration](https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/)
-        struct. See the
-        [documentation](https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/)
-        for further information.
+        Additional values added to the generated KubeletConfiguration file.
+
+        Only settings supported by the Kubernetes KubeletConfiguration API may
+        be supplied here.
       '';
     };
 
     extraKubeProxyConfig = lib.mkOption {
-      type = with lib.types; attrsOf anything;
+      type =
+        with lib.types;
+        attrsOf anything;
+
       default = { };
+
       example = {
         mode = "nftables";
-        clientConnection.kubeconfig = "/var/lib/rancher/k3s/agent/kubeproxy.kubeconfig";
+
+        clientConnection.kubeconfig =
+          "/var/lib/rancher/k3s/agent/kubeproxy.kubeconfig";
       };
+
       description = ''
-        Extra configuration to add to the kube-proxy's configuration file. The subset of the kube-proxy's
-        configuration that can be configured via a file is defined by the
-        [KubeProxyConfiguration](https://kubernetes.io/docs/reference/config-api/kube-proxy-config.v1alpha1/)
-        struct. Note that the kubeconfig param will be override by `clientConnection.kubeconfig`, so you must
-        set the `clientConnection.kubeconfig` if you want to use `extraKubeProxyConfig`.
+        Additional values added to the generated KubeProxyConfiguration file.
+
+        K3s overrides the kubeconfig argument, so set
+        `clientConnection.kubeconfig` when using this option.
       '';
     };
   };
 
-  # implementation
-
   config = lib.mkIf cfg.enable {
     warnings =
-      (lib.optional (cfg.role != "server" && cfg.manifests != { })
-        "k3s: Auto deploying manifests are only installed on server nodes (role == server), they will be ignored by this node."
-      )
-      ++ (lib.optional (cfg.role != "server" && cfg.charts != { })
-        "k3s: Helm charts are only made available to the cluster on server nodes (role == server), they will be ignored by this node."
-      )
-      ++ (lib.optional (
+      lib.optional (
+        cfg.role != "server" && cfg.manifests != { }
+      ) ''
+        k3s: Auto-deploying manifests are only installed on server nodes
+        (`role = "server"`). They will be ignored by this node.
+      ''
+      ++ lib.optional (
+        cfg.role != "server" && cfg.charts != { }
+      ) ''
+        k3s: Helm charts are only made available on server nodes
+        (`role = "server"`). They will be ignored by this node.
+      ''
+      ++ lib.optional (
         cfg.disableAgent && cfg.images != [ ]
-      ) "k3s: Images are only imported on nodes with an enabled agent, they will be ignored by this node")
-      ++ (lib.optional (
-        cfg.role == "agent" && cfg.configPath == null && cfg.serverAddr == ""
-      ) "k3s: ServerAddr or configPath (with 'server' key) should be set if role is 'agent'")
-      ++ (lib.optional
-        (cfg.role == "agent" && cfg.configPath == null && cfg.tokenFile == null && cfg.token == "")
-        "k3s: Token or tokenFile or configPath (with 'token' or 'token-file' keys) should be set if role is 'agent'"
-      );
+      ) ''
+        k3s: Images are only imported on nodes with an enabled agent.
+        They will be ignored by this node.
+      ''
+      ++ lib.optional (
+        cfg.role == "agent"
+        && cfg.configPath == null
+        && cfg.serverAddr == ""
+      ) ''
+        k3s: An agent should set `serverAddr` or provide a `server` key through
+        `configPath`.
+      ''
+      ++ lib.optional (
+        cfg.role == "agent"
+        && cfg.configPath == null
+        && cfg.tokenFile == null
+        && cfg.token == ""
+      ) ''
+        k3s: An agent should set `token`, `tokenFile`, or provide a token
+        through `configPath`.
+      '';
 
     assertions = [
       {
-        assertion = cfg.role == "agent" -> !cfg.disableAgent;
-        message = "k3s: disableAgent must be false if role is 'agent'";
+        assertion =
+          cfg.role != "agent"
+          || !cfg.disableAgent;
+
+        message = ''
+          k3s: `disableAgent` must be false when `role = "agent"`.
+        '';
       }
+
       {
-        assertion = cfg.role == "agent" -> !cfg.clusterInit;
-        message = "k3s: clusterInit must be false if role is 'agent'";
+        assertion =
+          cfg.role != "agent"
+          || !cfg.clusterInit;
+
+        message = ''
+          k3s: `clusterInit` must be false when `role = "agent"`.
+        '';
+      }
+
+      {
+        assertion =
+          !(
+            cfg.role == "server"
+            && cfg.clusterInit
+            && cfg.serverAddr != ""
+          );
+
+        message = ''
+          k3s: `clusterInit` and `serverAddr` must not both be set.
+
+          Use `clusterInit` only on the initial server. Joining servers should
+          use `serverAddr`.
+        '';
+      }
+
+      {
+        assertion =
+          !(cfg.token != "" && cfg.tokenFile != null);
+
+        message = ''
+          k3s: Configure either `token` or `tokenFile`, not both.
+        '';
+      }
+
+      {
+        assertion =
+          !(cfg.configPath != null && cfg.clusterInit);
+
+        message = ''
+          k3s: `clusterInit` should not be set alongside `configPath`.
+
+          Put the cluster initialization setting in one configuration source
+          to avoid conflicting effective settings.
+        '';
+      }
+
+      {
+        assertion =
+          !(cfg.configPath != null && cfg.serverAddr != "");
+
+        message = ''
+          k3s: `serverAddr` should not be set alongside `configPath`.
+
+          Put the server address in one configuration source to avoid
+          conflicting effective settings.
+        '';
+      }
+
+      {
+        assertion =
+          !(cfg.configPath != null && cfg.token != "");
+
+        message = ''
+          k3s: `token` should not be set alongside `configPath`.
+
+          Put the token in one configuration source to avoid conflicting
+          effective settings.
+        '';
+      }
+
+      {
+        assertion =
+          !(cfg.configPath != null && cfg.tokenFile != null);
+
+        message = ''
+          k3s: `tokenFile` should not be set alongside `configPath`.
+
+          Put the token file in one configuration source to avoid conflicting
+          effective settings.
+        '';
       }
     ];
 
-    environment.systemPackages = [ config.services.k3s.package ];
+    environment.systemPackages =
+      [ cfg.package ]
+      ++ lib.optionals (cfg.role == "server") [
+        pkgs.etcd
+        k3sEtcdctl
+        k3sEtcdHealth
+        k3sEtcdStatus
+        k3sEtcdMembers
+        k3sEtcdRequireHealthy
+      ];
 
     systemd.services.k3s = {
-      description = "k3s service";
+      description = "K3s service";
+
       after = [
         "firewall.service"
         "network-online.target"
       ];
+
       wants = [
         "firewall.service"
         "network-online.target"
       ];
-      wantedBy = [ "multi-user.target" ];
-      path = lib.optional config.boot.zfs.enabled config.boot.zfs.package;
-      serviceConfig = {
-        # See: https://github.com/rancher/k3s/blob/dddbd16305284ae4bd14c0aade892412310d7edc/install.sh#L197
-        Type = if cfg.role == "agent" then "exec" else "notify";
-        KillMode = "process";
-        Delegate = "yes";
-        Restart = "always";
-        RestartSec = "5s";
-        LimitNOFILE = 1048576;
-        LimitNPROC = "infinity";
-        LimitCORE = "infinity";
-        TasksMax = "infinity";
-        EnvironmentFile = cfg.environmentFile;
-        ExecStartPre = activateK3sContent;
-        ExecStart = startK3sScript;
-      };
+
+      wantedBy = [
+        "multi-user.target"
+      ];
+
+      path =
+        lib.optional
+          config.boot.zfs.enabled
+          config.boot.zfs.package;
+
+      serviceConfig =
+        {
+          # K3s agents do not use systemd readiness notification. Servers do.
+          Type =
+            if cfg.role == "agent" then
+              "exec"
+            else
+              "notify";
+
+          KillMode = "process";
+          Delegate = "yes";
+
+          Restart = "always";
+          RestartSec = "5s";
+
+          LimitNOFILE = 1048576;
+          LimitNPROC = "infinity";
+          LimitCORE = "infinity";
+          TasksMax = "infinity";
+
+          EnvironmentFile = cfg.environmentFile;
+
+          ExecStartPre = activateK3sContent;
+          ExecStart = startK3sScript;
+        }
+        // lib.optionalAttrs (cfg.role == "server") {
+          /*
+            A newly added embedded-etcd member may need additional time to
+            receive and apply its initial datastore snapshot before K3s sends
+            its systemd readiness notification.
+          */
+          TimeoutStartSec = "300s";
+        };
     };
   };
 

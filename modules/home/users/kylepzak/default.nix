@@ -17,7 +17,7 @@ in
 {
   options.${namespace}.users.kylepzak = with types; {
     enable = mkBoolOpt false "Whether or not to enable common user config.";
-
+    includeSSH = mkBoolOpt true "Whether or not to include the SSH key provisioning";
   };
 
   config = mkIf cfg.enable {
@@ -190,7 +190,9 @@ in
         # Add the directory creation to ensure it exists
         ".config/sops/age/.keep".text = "";
         # ".config/zellij/zellij".source = "${inputs.self}/homes/dotfiles/zellij/zellij";
-        ".ssh/id_ed25519".source = config.lib.file.mkOutOfStoreSymlink sops.secrets.kylepzak_ssh_key.path;
+        ".ssh/id_ed25519" = mkIf cfg.includeSSH {
+          source = config.lib.file.mkOutOfStoreSymlink sops.secrets.kylepzak_ssh_key.path;
+        };
         ".config/helix/config.toml".source = "${inputs.self}/homes/dotfiles/helix/config.toml";
         ".config/helix/themes".source = "${inputs.self}/homes/dotfiles/helix/themes";
         # ".config/helix/languages.toml".source = helixLanguagesConfig;

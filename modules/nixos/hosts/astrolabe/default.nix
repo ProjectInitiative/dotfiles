@@ -36,9 +36,6 @@ in
         k8s_token = {
           sopsFile = ./secrets.enc.yaml;
         };
-        opencode_password = {
-          sopsFile = ./secrets.enc.yaml;
-        };
       }
     ];
 
@@ -94,12 +91,6 @@ in
 
       services = {
         eternal-terminal = mkIf cfg.allFeatures enabled;
-        opencode-web = mkIf cfg.allFeatures {
-          enable = true;
-          user = "kylepzak";
-          openFirewall = true;
-          passwordFile = sops.secrets.opencode_password.path;
-        };
         k8s = mkIf cfg.allFeatures {
           enable = true;
           tokenFile = sops.secrets.k8s_token.path;

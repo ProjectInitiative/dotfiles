@@ -1002,14 +1002,17 @@
         "rocm-systems": "rocm-systems"
       },
       "locked": {
-        "lastModified": 1784176106,
-        "narHash": "sha256-gvwC5XhOXO0m5DB7uD47bD2057liIwNC9G2A0YPuWBE=",
-        "path": "/home/kylepzak/development/nix-amd-ai",
-        "type": "path"
+        "lastModified": 1784176104,
+        "narHash": "sha256-kpizBBenIO3XeBF9f8xsec9gjxTigrtwFNMjvUPoWRI=",
+        "owner": "ProjectInitiative",
+        "repo": "nix-amd-ai",
+        "rev": "cf8e345e954121f883ebda62e6417fb2ae8a2504",
+        "type": "github"
       },
       "original": {
-        "path": "/home/kylepzak/development/nix-amd-ai",
-        "type": "path"
+        "owner": "ProjectInitiative",
+        "repo": "nix-amd-ai",
+        "type": "github"
       }
     },
     "nix-darwin": {
@@ -1773,7 +1776,7 @@
     "ssh-pub-keys": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-j1KmpEcn0BX2ZhnqaFC0w3HHVPEU/zdCfoPRCAxEC3w=",
+        "narHash": "sha256-FD1wbvtYpyCxsqmRCbNkl55bNmJLyl4f/iACNmG7R7k=",
         "type": "file",
         "url": "https://github.com/projectinitiative.keys"
       },
