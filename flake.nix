@@ -185,6 +185,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # NVIDIA DGX Spark (GB10) hardware module — custom NVIDIA 6.17 kernel,
+    # nvidia open driver, container toolkit, DGX dashboard.
+    # Reference copy pinned at vendor/nixos-dgx-spark (rev 07dfbef).
+    nixos-dgx-spark = {
+      url = "github:graham33/nixos-dgx-spark/07dfbef281c41f9289d461a22f36450c1f6dd7ac";
+    };
+
   };
 
   outputs =
@@ -350,6 +357,12 @@
             dcc-ex = {
               system = "aarch64-linux";
             };
+            sextant = {
+              system = "aarch64-linux";
+            };
+            chronometer = {
+              system = "aarch64-linux";
+            };
           };
           modules =
             let
@@ -390,7 +403,8 @@
                   # (import ./encrypted/sops.nix)
                   rockpi-quad.nixosModules.rockpi-quad
                   faucet-nix.nixosModules.default
-                  nix-amd-ai.nixosModules.default 
+                  nix-amd-ai.nixosModules.default
+                  nixos-dgx-spark.nixosModules.dgx-spark
                 ]
                 ++ common-modules;
 
