@@ -1,7 +1,7 @@
 keys:
   - &sensitive_not_secret age13xqt963jl65rsvu85vzrtv69mych5qmm5pjcvpf7huq6auufv4kq9he0xx
   - &users:
-    - &kylepzak age1q3mp87y8ddl2x0skpjla8n7cuqr0attzm6ywt3axgrj28ukvy5lqq5l32t
+    - &kylepzak age1fepmpsw6v9juhx3nkq5es0mhjs40xtmajn3fl9jxe779flmjh5wq0palxn
     - &ssh_thinkpad age14hqndcn28shcmyqafh53ykqsz26rs6hre94nfwr9xm5laln8d9qs3mp3lt
     - &cutter age1vf7xhw0czsg77utrm9p2xqnu5c2l82c4jtm6qvhhanldtr2hz3vs057hsv
     - &ssh_kylepzak age1n8d7jwfy7k9c3xg58n4m4vwc384mqxqqjsrae4tlusln9gmuh5fq2j0jec
@@ -18,6 +18,9 @@ keys:
     - &ssh_capstan2 age1daxggyz58h525ww5clnwwuwxu7tf5mlz8as8n7cy8dhv74u4qcqq0jagrp
     - &ssh_capstan3 age1wwtevxuhkfh6nyl23axkx0s3pnywrw95tj85qrg03fhh6jkmf5nsfknx09
   - &ssh_astrolabe age15p00q78suah3sfrnw7duxwsdslcmlcl57e7f5a9e320gncxc54rqg3fl0w
+  - &ssh_chronometer age1trgkzgeepv0d0deqwzfc4cxzld05py4mn2qtnr5e79sg73uvncxqcqzkgx
+  - &ssh_sextant age19u7vlzm7hhrpqt5fx66gu5ay8mxnfclgwxtpjqrp99j27ndlu3ws0dx4w5
+
   - &lightships:
     - &ssh_lightship_atx age1csp7a8m4d8gfpeq86wje2ttxw9f66phehlacsuqckrft46s6s4csfjzrsl
     - &ssh_lightship_dfw age132gpza62jw8hehnz8yy9yrwepe0rl5hmhdnzf3zpr33vrrh02edqdxn4lu
@@ -54,6 +57,8 @@ creation_rules:
           - *ssh_capstan2
           - *ssh_capstan3
           - *ssh_astrolabe
+          - *ssh_chronometer 
+          - *ssh_sextant
           - *ssh_lightship_atx
           - *ssh_lightship_dfw
           - *ssh_lightship_dal
@@ -106,6 +111,16 @@ creation_rules:
           - *ssh_kylepzak
           - *ssh_thinkpad
           - *ssh_astrolabe
+
+  - path_regex: dgx-spark/[^/]+\.yaml$
+    # - path: capstan/secrets.enc.yaml
+    key_groups:
+      - age:
+          - *ssh_kylepzak
+          - *ssh_thinkpad
+          - *ssh_chronometer 
+          - *ssh_sextant
+
 
   - path_regex: thinkpad/[^/]+\.yaml$
     # - path: thinkpad/secrets.enc.yaml
