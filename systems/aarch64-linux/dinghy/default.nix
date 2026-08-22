@@ -271,6 +271,8 @@ in
                 "capstan1:9100"
                 "capstan2:9100"
                 "capstan3:9100"
+                "172.16.1.55:9100" # chronometer
+                "172.16.1.56:9100" # sextant
                 "172.16.1.1:9100"
                 "wharfmaster:9100"
                 # "stormjib:9100"
@@ -300,6 +302,8 @@ in
                 "capstan1:9633"
                 "capstan2:9633"
                 "capstan3:9633"
+                "172.16.1.55:9633" # chronometer
+                "172.16.1.56:9633" # sextant
                 "wharfmaster:9633"
                 "cargohold:9633"
                 # "stormjib:9633"

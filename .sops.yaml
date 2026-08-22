@@ -18,8 +18,8 @@ keys:
     - &ssh_capstan2 age1daxggyz58h525ww5clnwwuwxu7tf5mlz8as8n7cy8dhv74u4qcqq0jagrp
     - &ssh_capstan3 age1wwtevxuhkfh6nyl23axkx0s3pnywrw95tj85qrg03fhh6jkmf5nsfknx09
   - &ssh_astrolabe age15p00q78suah3sfrnw7duxwsdslcmlcl57e7f5a9e320gncxc54rqg3fl0w
-  - &ssh_chronometer age1trgkzgeepv0d0deqwzfc4cxzld05py4mn2qtnr5e79sg73uvncxqcqzkgx
-  - &ssh_sextant age19u7vlzm7hhrpqt5fx66gu5ay8mxnfclgwxtpjqrp99j27ndlu3ws0dx4w5
+  - &ssh_chronometer age1pae46sxrwachnsnz6lhk3896e335uhzr4avr9wezze8pt3plq4jqh90h4r
+  - &ssh_sextant age1y8c7qe33a4rkuswjhlh8g2pzkqnny9cwhgjn0580awktp75hks3qvetgnx
 
   - &lightships:
     - &ssh_lightship_atx age1csp7a8m4d8gfpeq86wje2ttxw9f66phehlacsuqckrft46s6s4csfjzrsl

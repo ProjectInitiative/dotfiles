@@ -60,7 +60,6 @@ in
             theme = "robbyrussell";
             plugins = [
               "git"
-              "docker"
               "kubectl"
             ];
           };

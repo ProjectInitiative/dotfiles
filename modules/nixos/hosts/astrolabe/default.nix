@@ -101,6 +101,10 @@ in
           networkType = "standard";
           role = "agent"; # Worker/Agent node
           extraArgs = [
+            "--node-label=node-role.kubernetes.io/ai-compute=true"
+            "--node-label=node-role.kubernetes.io/worker=true"
+            "--node-label=node-role.kubernetes.io/amd=true"
+            "--node-label=gpu-vendor=amd"
             "--node-label=gpu=strix-halo"
             "--node-label=tier=compute"
           ];

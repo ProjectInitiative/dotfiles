@@ -389,6 +389,14 @@
 
                       # Provide hostPkgs for modules that expect it (like nixos-on-arm)
                       _module.args.hostPkgs = lib.mkDefault pkgs.buildPackages;
+
+                      # The DGX Spark reference overlay disables the Jetson-only
+                      # cuda_compat package on aarch64-linux. Without it,
+                      # nixpkgs tries to unpack cuda_compat with src = null
+                      # while cross-building the Spark system.
+                      nixpkgs.overlays = lib.optional
+                        (config.nixpkgs.system == "aarch64-linux")
+                        inputs.nixos-dgx-spark.overlays.fixes;
                     }
                   )
                   disko.nixosModules.disko
