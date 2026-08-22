@@ -620,6 +620,60 @@ let
       interval = "1m";
       rules = [
         {
+          uid = "garage_metrics_unavailable";
+          title = "Garage Metrics Unavailable";
+          condition = "C";
+          # A missing/failed scrape must be treated as an outage, not as OK.
+          noDataState = "Alerting";
+          execErrState = "Alerting";
+          data = [
+            {
+              refId = "A";
+              datasourceUid = "prometheus_ds";
+              relativeTimeRange = {
+                from = 300;
+                to = 0;
+              };
+              model = {
+                # bool makes the failed up sample evaluate to 1; absent handles a missing target.
+                expr = "up{job=\"garage\"} == bool 0 or absent(up{job=\"garage\"}) or absent(garage_cluster_available{job=\"garage\"})";
+                refId = "A";
+              };
+            }
+            {
+              refId = "B";
+              datasourceUid = "__expr__";
+              model = {
+                expression = "A";
+                type = "reduce";
+                reducer = "last";
+                refId = "B";
+              };
+            }
+            {
+              refId = "C";
+              datasourceUid = "__expr__";
+              model = {
+                expression = "$B > 0";
+                type = "math";
+                refId = "C";
+              };
+            }
+          ];
+          for = "1m";
+          labels.severity = "critical";
+          annotations.summary = "🚨 <b>Garage Metrics Unavailable</b>\nPrometheus cannot scrape Garage. The cluster state cannot be verified.";
+          testScenarios = {
+            "garage_metrics_unavailable" = {
+              metric = "up";
+              labels = {
+                job = "garage";
+              };
+              value = 0;
+            };
+          };
+        }
+        {
           uid = "garage_cluster_unavailable";
           title = "Garage Cluster Unavailable";
           condition = "C";
@@ -1103,13 +1157,12 @@ in
             }];
           };
     */
-    # FIXME: this needs to be removed after grafana bug is fixed for contactPoints
     policies.settings = {
       apiVersion = 1;
       policies = [
         {
           orgId = 1;
-          receiver = "Telegram-Critical-And-Reports-Manual";
+          receiver = "Telegram-Critical-And-Reports";
           group_by = [
             "alertname"
             "instance"
@@ -1118,7 +1171,7 @@ in
           ];
           routes = [
             {
-              receiver = "Telegram-Critical-And-Reports-Manual";
+              receiver = "Telegram-Critical-And-Reports";
               object_matchers = [
                 [
                   "severity"
@@ -1130,7 +1183,7 @@ in
               repeat_interval = "1h";
             }
             {
-              receiver = "Telegram-Critical-And-Reports-Manual";
+              receiver = "Telegram-Critical-And-Reports";
               object_matchers = [
                 [
                   "report"

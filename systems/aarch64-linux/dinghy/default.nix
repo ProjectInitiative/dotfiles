@@ -271,8 +271,8 @@ in
                 "capstan1:9100"
                 "capstan2:9100"
                 "capstan3:9100"
-                "172.16.1.55:9100" # chronometer
-                "172.16.1.56:9100" # sextant
+                "chronometer:9100"
+                "sextant:9100"
                 "172.16.1.1:9100"
                 "wharfmaster:9100"
                 # "stormjib:9100"
@@ -286,10 +286,8 @@ in
             };
             garage = {
               targets = [
-                "172.16.4.50:31630" # vip
-                # "172.16.4.51:31630" # capstan1
-                # "172.16.4.52:31630" # capstan2
-                # "172.16.4.53:31630" # capstan3
+                "172.16.4.50:31630" # vip (HA endpoint)
+                # The VIP routes to the active Garage service and load-balances internally.
               ];
             };
             # A job for scraping smartctl data if it's on a different port/host
@@ -302,8 +300,8 @@ in
                 "capstan1:9633"
                 "capstan2:9633"
                 "capstan3:9633"
-                "172.16.1.55:9633" # chronometer
-                "172.16.1.56:9633" # sextant
+                "chronometer:9633"
+                "sextant:9633"
                 "wharfmaster:9633"
                 "cargohold:9633"
                 # "stormjib:9633"
