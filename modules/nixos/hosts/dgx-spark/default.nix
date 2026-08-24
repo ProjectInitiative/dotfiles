@@ -209,9 +209,6 @@ in
           role = "agent"; # Worker/Agent node
           extraArgs = [
             # kubectl derives the ROLES column from node-role.kubernetes.io/*.
-            "--node-label=node-role.kubernetes.io/ai-compute=true"
-            "--node-label=node-role.kubernetes.io/worker=true"
-            "--node-label=node-role.kubernetes.io/nvidia=true"
             "--node-label=gpu-vendor=nvidia"
             "--node-label=gpu=dgx-spark"
             "--node-label=tier=compute"
