@@ -24,6 +24,14 @@ with lib.${namespace};
     ];
   };
   # ── Boot ────────────────────────────────────────────────────────────────
+  # 
+  boot.kernelParams = [ 
+    # Forces the headless generic video driver (simple-framebuffer) to keep 
+    # the video output pin permanently active. This prevents the server from 
+    # dropping the video signal when the Sipeed NanoKVM Lite is power-cycled 
+    # or disconnected remotely.
+    "video=Unknown-1:e" 
+  ];
   # systemd-boot for a standard EFI mini-pc
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
