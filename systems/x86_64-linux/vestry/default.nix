@@ -119,7 +119,8 @@ with lib.${namespace};
       tor.enable = mkForce false;
     };
     suites = {
-      ai.enable = mkForce false;
+      ai.enable = true;
+      development.enable = true;
       backup.enable = mkForce false;
       messengers.enable = mkForce false;
       digital-creation.enable = mkForce false;
