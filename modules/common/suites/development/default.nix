@@ -97,6 +97,7 @@ in
           # pkgs.${namespace}.qwen-code
           awscli2
           google-cloud-sdk
+          infisical
         ];
         # ++ lib.optionals isGraphical [ inputs.claude-desktop.packages.${system}.claude-desktop-with-fhs ];
       };

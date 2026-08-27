@@ -46,6 +46,13 @@ with lib.${namespace};
     };
   };
 
+  zramSwap = {
+      enable = true;
+      algorithm = "zstd"; # Best compression ratio for servers
+      memoryPercent = 15;
+    };
+
+
   # ── SSH (hardened, key-only — keys come from the kylepzak user module) ──
   services.openssh = {
     enable = true;

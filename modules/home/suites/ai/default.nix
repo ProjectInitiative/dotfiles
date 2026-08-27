@@ -132,7 +132,7 @@ in
           k8s-mc = {
             enable = true;
             type = "remote";
-            url = "http://100.85.160.67/sse";
+            url = "http://100.64.72.152/sse";
           };
         };
         description = "MCP server configurations. Each attr name is the MCP server identifier.";
