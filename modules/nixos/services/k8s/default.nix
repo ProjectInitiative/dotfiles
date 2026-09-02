@@ -62,7 +62,8 @@ in
       leaderElection = mkBoolOpt true "Whether to use leader election for kube-vip.";
     };
 
-    gpuSupport = mkBoolOpt false "Enable GPU support for this node.";
+    gpuSupport = mkBoolOpt false "Enable NVIDIA GPU support for this node.";
+    enableAmdGpuSupport = mkBoolOpt false "Enable AMD GPU device-plugin support for this node.";
     enableNvidiaContainerRuntime = mkBoolOpt false "Enable the NVIDIA containerd runtime for GPU workloads.";
     extraArgs = mkOpt (listOf str) [ ] "Additional arguments to pass to k3s.";
     environmentFile = mkOpt (nullOr path) null "Environment file for k3s service.";
@@ -379,7 +380,7 @@ in
             let
               # Add GPU support if needed
               gpuFlags = (
-                optionals cfg.gpuSupport [
+                optionals (cfg.gpuSupport || cfg.enableAmdGpuSupport) [
                   "--kubelet-arg=feature-gates=DevicePlugins=true"
                   "--kubelet-arg=allow-privileged=true"
                 ]
