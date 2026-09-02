@@ -207,6 +207,8 @@ in
           serverAddr = cfg.k8sServerAddr;
           networkType = "standard";
           role = "agent"; # Worker/Agent node
+          gpuSupport = true;
+          enableNvidiaContainerRuntime = true;
           extraArgs = [
             # kubectl derives the ROLES column from node-role.kubernetes.io/*.
             "--node-label=gpu-vendor=nvidia"
