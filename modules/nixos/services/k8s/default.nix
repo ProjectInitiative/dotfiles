@@ -165,12 +165,12 @@ in
     };
 
     environment.systemPackages =
-      (mkIf (cfg.networkType == "cilium") [
+      (optionals (cfg.networkType == "cilium") [
         pkgs.cilium-cli
         pkgs.procps
         pkgs.cni-plugins
       ])
-      ++ (mkIf cfg.enableNvidiaContainerRuntime [ pkgs.nvidia-container-toolkit ]);
+      ++ optionals cfg.enableNvidiaContainerRuntime [ pkgs.nvidia-container-toolkit ];
 
     # Add systemd service to install Cilium after k3s starts (first node only)
     systemd.services.cilium-install = mkIf (cfg.networkType == "cilium" && cfg.isFirstNode) {
