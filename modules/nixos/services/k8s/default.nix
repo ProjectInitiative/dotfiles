@@ -174,6 +174,9 @@ in
         (lib.getOutput "tools" pkgs.nvidia-container-toolkit)
       ];
 
+    # Make runc available to nvidia-container-runtime through the k3s service PATH.
+    systemd.services.k3s.path = optionals cfg.enableNvidiaContainerRuntime [ pkgs.runc ];
+
     # Add systemd service to install Cilium after k3s starts (first node only)
     systemd.services.cilium-install = mkIf (cfg.networkType == "cilium" && cfg.isFirstNode) {
       description = "Install Cilium CNI";
