@@ -11,6 +11,10 @@ with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.services.k8s;
+  nvidiaContainerRuntime = pkgs.writeShellScript "nvidia-container-runtime-k3s" ''
+    export PATH="${pkgs.runc}/bin:${pkgs.coreutils}/bin:$PATH"
+    exec ${lib.getOutput "tools" pkgs.nvidia-container-toolkit}/bin/nvidia-container-runtime "$@"
+  '';
 in
 {
   options.${namespace}.services.k8s = with types; {
@@ -374,7 +378,7 @@ in
               runtime_type = "io.containerd.runc.v2"
 
             [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia.options]
-              BinaryName = "${lib.getOutput "tools" pkgs.nvidia-container-toolkit}/bin/nvidia-container-runtime"
+              BinaryName = "${nvidiaContainerRuntime}"
           '';
 
           # Configure based on whether this is the first node
