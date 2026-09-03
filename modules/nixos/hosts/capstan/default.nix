@@ -424,8 +424,7 @@ in
           networkType = "standard";
           role = "server";
           gpuSupport = cfg.nvidiaSupport;
-          # Keep the NVIDIA runtime disabled until the containerd integration is validated.
-          enableNvidiaContainerRuntime = false;
+          enableNvidiaContainerRuntime = cfg.nvidiaSupport;
           extraArgs = [
             # TLS configuration
             "--tls-san=172.16.1.50"
