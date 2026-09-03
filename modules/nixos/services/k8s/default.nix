@@ -63,7 +63,6 @@ in
     };
 
     gpuSupport = mkBoolOpt false "Enable GPU support for this node.";
-    enableNvidiaContainerRuntime = mkBoolOpt false "Enable the NVIDIA containerd runtime for GPU workloads.";
     extraArgs = mkOpt (listOf str) [ ] "Additional arguments to pass to k3s.";
     environmentFile = mkOpt (nullOr path) null "Environment file for k3s service.";
     dataDir = mkOpt path "/var/lib/rancher/k3s" "Directory to use for k3s data.";
@@ -163,13 +162,11 @@ in
       };
     };
 
-    environment.systemPackages =
-      (mkIf (cfg.networkType == "cilium") [
-        pkgs.cilium-cli
-        pkgs.procps
-        pkgs.cni-plugins
-      ])
-      ++ (mkIf cfg.enableNvidiaContainerRuntime [ pkgs.nvidia-container-toolkit ]);
+    environment.systemPackages = mkIf (cfg.networkType == "cilium") [
+      pkgs.cilium-cli
+      pkgs.procps
+      pkgs.cni-plugins
+    ];
 
     # Add systemd service to install Cilium after k3s starts (first node only)
     systemd.services.cilium-install = mkIf (cfg.networkType == "cilium" && cfg.isFirstNode) {
@@ -360,15 +357,6 @@ in
           tokenFile = cfg.tokenFile;
           environmentFile = cfg.environmentFile;
           dataDir = cfg.dataDir;
-          containerdConfigTemplate = mkIf cfg.enableNvidiaContainerRuntime ''
-            {{ template "base" . }}
-
-            [plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.nvidia]
-              runtime_type = "io.containerd.runc.v2"
-
-            [plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.nvidia.options]
-              BinaryName = "${pkgs.nvidia-container-toolkit}/bin/nvidia-container-runtime"
-          '';
 
           # Configure based on whether this is the first node
           clusterInit = cfg.isFirstNode;

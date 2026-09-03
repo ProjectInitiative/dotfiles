@@ -187,7 +187,6 @@ lib.recursiveUpdate commonSystemConfig {
       # This new flag will control which features are enabled inside the module.
       # You will eventually define this as a proper option in the module itself.
       allFeatures = true;
-      nvidiaSupport = true;
 
       # The full configuration is defined once.
       ipAddress = "${config.sensitiveNotSecret.default_subnet}51/24";

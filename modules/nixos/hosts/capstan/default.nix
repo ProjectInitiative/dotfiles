@@ -423,8 +423,6 @@ in
           dataDir = cfg.k3sDataDir;
           networkType = "standard";
           role = "server";
-          gpuSupport = cfg.nvidiaSupport;
-          enableNvidiaContainerRuntime = cfg.nvidiaSupport;
           extraArgs = [
             # TLS configuration
             "--tls-san=172.16.1.50"
