@@ -12,7 +12,7 @@ with lib.${namespace};
 let
   cfg = config.${namespace}.services.k8s;
   nvidiaContainerRuntime = pkgs.writeShellScript "nvidia-container-runtime-k3s" ''
-    export PATH="${pkgs.runc}/bin:${pkgs.coreutils}/bin:$PATH"
+    export PATH="${cfg.dataDir}/data/current/bin:${pkgs.runc}/bin:${pkgs.coreutils}/bin:$PATH"
     exec ${lib.getOutput "tools" pkgs.nvidia-container-toolkit}/bin/nvidia-container-runtime "$@"
   '';
 in
