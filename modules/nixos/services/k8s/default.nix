@@ -178,7 +178,30 @@ in
         (lib.getOutput "tools" pkgs.nvidia-container-toolkit)
       ];
 
-    # Make runc available to nvidia-container-runtime through the k3s service PATH.
+    # Configure the legacy NVIDIA runtime with Nix store paths. Without this,
+    # nvidia-container-runtime looks for nvidia-container-cli under /usr/bin.
+    environment.etc."nvidia-container-runtime/config.toml" = mkIf cfg.enableNvidiaContainerRuntime {
+      text = ''
+        disable-require = true
+        supported-driver-capabilities = "compute,utility"
+
+        [nvidia-container-cli]
+        path = "${lib.getExe' pkgs.libnvidia-container "nvidia-container-cli"}"
+
+        [nvidia-container-runtime]
+        mode = "legacy"
+        runtimes = ["runc"]
+
+        [nvidia-container-runtime-hook]
+        path = "${lib.getOutput "tools" pkgs.nvidia-container-toolkit}/bin/nvidia-container-runtime-hook"
+
+        [nvidia-ctk]
+        path = "${lib.getExe' pkgs.nvidia-container-toolkit "nvidia-ctk"}"
+      '';
+    };
+
+    # Make the low-level runtime available to nvidia-container-runtime through
+    # the k3s service PATH as well.
     systemd.services.k3s.path = optionals cfg.enableNvidiaContainerRuntime [ pkgs.runc ];
 
     # Add systemd service to install Cilium after k3s starts (first node only)
