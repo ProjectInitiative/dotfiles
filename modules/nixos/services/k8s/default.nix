@@ -169,7 +169,10 @@ in
         pkgs.procps
         pkgs.cni-plugins
       ])
-      ++ optionals cfg.enableNvidiaContainerRuntime [ pkgs.nvidia-container-toolkit ];
+      ++ optionals cfg.enableNvidiaContainerRuntime [
+        pkgs.nvidia-container-toolkit
+        (lib.getOutput "tools" pkgs.nvidia-container-toolkit)
+      ];
 
     # Add systemd service to install Cilium after k3s starts (first node only)
     systemd.services.cilium-install = mkIf (cfg.networkType == "cilium" && cfg.isFirstNode) {
@@ -363,11 +366,12 @@ in
           containerdConfigTemplate = mkIf cfg.enableNvidiaContainerRuntime ''
             {{ template "base" . }}
 
-            [plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.nvidia]
+            [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia]
+              privileged_without_host_devices = false
               runtime_type = "io.containerd.runc.v2"
 
-            [plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.nvidia.options]
-              BinaryName = "${pkgs.nvidia-container-toolkit}/bin/nvidia-container-runtime"
+            [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia.options]
+              BinaryName = "${lib.getOutput "tools" pkgs.nvidia-container-toolkit}/bin/nvidia-container-runtime"
           '';
 
           # Configure based on whether this is the first node
