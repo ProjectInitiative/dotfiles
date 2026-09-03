@@ -382,6 +382,7 @@ in
               gpuFlags = (
                 optionals (cfg.gpuSupport || cfg.enableAmdGpuSupport) [
                   "--kubelet-arg=feature-gates=DevicePlugins=true"
+                  "--kubelet-arg=allow-privileged=true"
                 ]
               );
               # Network-specific flags
