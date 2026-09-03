@@ -100,7 +100,6 @@ in
           serverAddr = cfg.k8sServerAddr;
           networkType = "standard";
           role = "agent"; # Worker/Agent node
-          enableAmdGpuSupport = true;
           extraArgs = [
             "--node-label=gpu-vendor=amd"
             "--node-label=gpu=strix-halo"
