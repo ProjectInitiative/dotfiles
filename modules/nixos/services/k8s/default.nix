@@ -389,12 +389,9 @@ in
           extraFlags =
             let
               # Add GPU support if needed
-              gpuFlags = (
-                optionals cfg.gpuSupport [
-                  "--kubelet-arg=feature-gates=DevicePlugins=true"
-                  "--kubelet-arg=allow-privileged=true"
-                ]
-              );
+              # Device plugins are enabled by default; no deprecated kubelet
+              # feature-gate or allow-privileged flags are required.
+              gpuFlags = [ ];
               # Network-specific flags
               node-ip =
                 if cfg.nodeIp != "" then

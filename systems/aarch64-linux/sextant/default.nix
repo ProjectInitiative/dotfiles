@@ -24,6 +24,7 @@ in
     # Kubernetes node/data path on VLAN 10 (172.16.4.0/24).
     allFeatures = true;
     enableK8s = true;
+    enableNvidiaContainerRuntime = true;
     dhcp = false;
     ipAddress = "${config.sensitiveNotSecret.default_subnet}56/24";
     vlanIpAddress = "172.16.4.56/24";
