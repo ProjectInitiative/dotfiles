@@ -39,6 +39,7 @@ in
     enable = mkBoolOpt false "Whether to enable the DGX Spark (GB10) base configuration";
     allFeatures = mkBoolOpt true "Whether to enable all features. Set to false for safe boot mode with minimal services.";
     enableK8s = mkBoolOpt true "Whether to provision and start the Kubernetes node";
+    enableNvidiaContainerRuntime = mkBoolOpt false "Whether to enable the NVIDIA containerd runtime";
     dhcp = mkBoolOpt false "Use DHCP on the management interface instead of static addressing";
     ipAddress = mkOpt types.str "" "Main static management IP address with CIDR";
     vlanIpAddress = mkOpt types.str "" "Additional IP with CIDR for tagged VLAN on mgmnt interface";
@@ -207,6 +208,7 @@ in
           serverAddr = cfg.k8sServerAddr;
           networkType = "standard";
           role = "agent"; # Worker/Agent node
+          enableNvidiaContainerRuntime = cfg.enableNvidiaContainerRuntime;
           extraArgs = [
             # kubectl derives the ROLES column from node-role.kubernetes.io/*.
             "--node-label=gpu-vendor=nvidia"
