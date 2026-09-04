@@ -66,12 +66,20 @@ in
     services.resolved.enable = true;
     systemd.services.tailscale-dns = {
       description = "Configure Tailscale split DNS";
-      wantedBy = [ "multi-user.target" ];
-      wants = [ "tailscale-autoconnect.service" ];
+      wantedBy = [
+        "multi-user.target"
+        "sys-subsystem-net-devices-tailscale0.device"
+      ];
+      wants = [
+        "tailscale-autoconnect.service"
+        "sys-subsystem-net-devices-tailscale0.device"
+      ];
+      bindsTo = [ "sys-subsystem-net-devices-tailscale0.device" ];
       after = [
         "systemd-resolved.service"
         "tailscaled.service"
         "tailscale-autoconnect.service"
+        "sys-subsystem-net-devices-tailscale0.device"
       ];
       serviceConfig = {
         Type = "oneshot";
