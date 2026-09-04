@@ -17,6 +17,7 @@ let
       config.sops.secrets.tailscale_ephemeral_auth_key.path
     else
       config.sops.secrets.tailscale_auth_key.path;
+  tailscale_flags = unique ([ "--accept-dns=false" ] ++ cfg.extraArgs);
 in
 {
   # ===============================================================
@@ -26,6 +27,9 @@ in
     enable = mkBoolOpt false "Whether or not to enable tailscale";
     ephemeral = mkBoolOpt true "Use ephemeral node key for tailscale";
     extraArgs = mkOpt (listOf str) [ ] "Additional arguments to pass to tailscale.";
+    tailnetDomain =
+      mkOpt str "taildeab2.ts.net"
+        "Tailnet DNS domain to route to Tailscale's local resolver.";
   };
 
   # ===============================================================
@@ -41,23 +45,33 @@ in
       # Pass the path to your sops-nix secret, respecting your 'ephemeral' flag
       authKeyFile = tailscale_key;
 
-      # Pass all of your existing 'extraArgs' to the one-time 'up' command.
-      # This is the core of the pass-through logic.
-      # extraUpFlags = cfg.extraArgs;
+      # Keep host DNS management in the host resolver. The local Quad100
+      # resolver remains available for MagicDNS when accept-dns is disabled.
+      extraUpFlags = tailscale_flags;
 
       # Set a sensible default required for subnet routing.
       # You can override this in your host config if needed, e.g.,
       # services.tailscale.useRoutingFeatures = "both";
       useRoutingFeatures = "server";
 
-      # --- IMPORTANT NOTE ---
-      # The 'extraSetFlags' option from the official module is NOT used here.
-      # This means that settings like '--advertise-routes' will only be applied
-      # once during initial provisioning. For fully declarative updates to those
-      # settings, you should plan to eventually migrate your configurations
-      # to use 'services.tailscale.extraSetFlags' directly.
-      extraSetFlags = cfg.extraArgs;
+      # Apply the same setting on subsequent `tailscale set` invocations,
+      # while retaining any host-specific flags.
+      extraSetFlags = tailscale_flags;
+    };
 
+    # Configure split DNS without allowing Tailscale to replace the host's
+    # regular DNS servers. systemd-networkd applies this whenever tailscale0
+    # appears, including after tailscaled restarts.
+    services.resolved.enable = true;
+    systemd.network = {
+      enable = true;
+      networks."99-tailscale" = {
+        matchConfig.Name = "tailscale0";
+        networkConfig = {
+          DNS = [ "100.100.100.100" ];
+          Domains = [ "~${cfg.tailnetDomain}" ];
+        };
+      };
     };
 
   };

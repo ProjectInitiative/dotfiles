@@ -223,7 +223,6 @@ in
           enable = true;
           ephemeral = false;
           extraArgs = [
-            "--accept-dns=false"
             "--accept-routes=false"
             "--advertise-routes="
             "--snat-subnet-routes=true"

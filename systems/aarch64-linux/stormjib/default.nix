@@ -110,7 +110,6 @@ in {
         enable = true;
         ephemeral = false;
         extraArgs = [
-          "--accept-dns=false"
           "--accept-routes"
         ];
       };
