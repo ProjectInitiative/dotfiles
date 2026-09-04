@@ -68,17 +68,14 @@ in
       description = "Configure Tailscale split DNS";
       wantedBy = [
         "multi-user.target"
-        "sys-subsystem-net-devices-tailscale0.device"
+        "tailscaled.service"
       ];
-      wants = [
-        "tailscale-autoconnect.service"
-        "sys-subsystem-net-devices-tailscale0.device"
-      ];
+      wants = [ "sys-subsystem-net-devices-tailscale0.device" ];
       bindsTo = [ "sys-subsystem-net-devices-tailscale0.device" ];
+      partOf = [ "tailscaled.service" ];
       after = [
         "systemd-resolved.service"
         "tailscaled.service"
-        "tailscale-autoconnect.service"
         "sys-subsystem-net-devices-tailscale0.device"
       ];
       serviceConfig = {
@@ -89,7 +86,10 @@ in
         for attempt in $(seq 1 30); do
           if ${pkgs.iproute2}/bin/ip link show tailscale0 >/dev/null 2>&1; then
             ${pkgs.systemd}/bin/resolvectl dns tailscale0 100.100.100.100
-            ${pkgs.systemd}/bin/resolvectl domain tailscale0 '~${cfg.tailnetDomain}'
+            # The routing domain limits this resolver to the tailnet zone;
+            # the bare domain also makes single-label names (for example
+            # `dinghy`) expand to `dinghy.${cfg.tailnetDomain}`.
+            ${pkgs.systemd}/bin/resolvectl domain tailscale0 '~${cfg.tailnetDomain}' '${cfg.tailnetDomain}'
             exit 0
           fi
           sleep 1
