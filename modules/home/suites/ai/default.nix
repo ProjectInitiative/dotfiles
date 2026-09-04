@@ -127,12 +127,12 @@ in
           k8s-cc = {
             enable = true;
             type = "remote";
-            url = "http://100.90.79.119/sse";
+            url = "http://mcp-system-mcp-lb-cc.taildeab2.ts.net/sse";
           };
           k8s-mc = {
             enable = true;
             type = "remote";
-            url = "http://100.64.72.152/sse";
+            url = "http://mcp-system-mcp-lb-mc.taildeab2.ts.net/sse";
           };
         };
         description = "MCP server configurations. Each attr name is the MCP server identifier.";
