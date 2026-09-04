@@ -72,7 +72,10 @@ in
         "systemd-resolved.service"
         "tailscaled.service"
       ];
-      serviceConfig.Type = "oneshot";
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
       script = ''
         for attempt in $(seq 1 30); do
           if ${pkgs.iproute2}/bin/ip link show tailscale0 >/dev/null 2>&1; then
