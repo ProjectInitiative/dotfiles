@@ -60,18 +60,35 @@ in
     };
 
     # Configure split DNS without allowing Tailscale to replace the host's
-    # regular DNS servers. systemd-networkd applies this whenever tailscale0
-    # appears, including after tailscaled restarts.
+    # regular DNS servers. Do this through resolved directly rather than a
+    # .network file: networkd managing tailscale0 makes tailscaled report
+    # that it cannot manage the link's DNS settings.
     services.resolved.enable = true;
-    systemd.network = {
-      enable = true;
-      networks."99-tailscale" = {
-        matchConfig.Name = "tailscale0";
-        networkConfig = {
-          DNS = [ "100.100.100.100" ];
-          Domains = [ "~${cfg.tailnetDomain}" ];
-        };
+    systemd.services.tailscale-dns = {
+      description = "Configure Tailscale split DNS";
+      wantedBy = [ "multi-user.target" ];
+      wants = [ "tailscale-autoconnect.service" ];
+      after = [
+        "systemd-resolved.service"
+        "tailscaled.service"
+        "tailscale-autoconnect.service"
+      ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
       };
+      script = ''
+        for attempt in $(seq 1 30); do
+          if ${pkgs.iproute2}/bin/ip link show tailscale0 >/dev/null 2>&1; then
+            ${pkgs.systemd}/bin/resolvectl dns tailscale0 100.100.100.100
+            ${pkgs.systemd}/bin/resolvectl domain tailscale0 '~${cfg.tailnetDomain}'
+            exit 0
+          fi
+          sleep 1
+        done
+        echo "tailscale0 did not appear; split DNS was not configured" >&2
+        exit 1
+      '';
     };
 
   };
