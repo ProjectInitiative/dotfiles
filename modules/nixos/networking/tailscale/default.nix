@@ -66,22 +66,13 @@ in
     services.resolved.enable = true;
     systemd.services.tailscale-dns = {
       description = "Configure Tailscale split DNS";
-      wantedBy = [
-        "multi-user.target"
-        "tailscaled.service"
-      ];
-      wants = [ "sys-subsystem-net-devices-tailscale0.device" ];
-      bindsTo = [ "sys-subsystem-net-devices-tailscale0.device" ];
+      wantedBy = [ "multi-user.target" ];
       partOf = [ "tailscaled.service" ];
       after = [
         "systemd-resolved.service"
         "tailscaled.service"
-        "sys-subsystem-net-devices-tailscale0.device"
       ];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-      };
+      serviceConfig.Type = "oneshot";
       script = ''
         for attempt in $(seq 1 30); do
           if ${pkgs.iproute2}/bin/ip link show tailscale0 >/dev/null 2>&1; then
