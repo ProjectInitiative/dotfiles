@@ -66,8 +66,11 @@ in
     services.resolved.enable = true;
     systemd.services.tailscale-dns = {
       description = "Configure Tailscale split DNS";
-      wantedBy = [ "multi-user.target" ];
-      partOf = [ "tailscaled.service" ];
+      wantedBy = [
+        "multi-user.target"
+        "tailscaled.service"
+      ];
+      bindsTo = [ "tailscaled.service" ];
       after = [
         "systemd-resolved.service"
         "tailscaled.service"
