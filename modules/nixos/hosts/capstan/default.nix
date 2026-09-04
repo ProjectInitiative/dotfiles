@@ -104,6 +104,16 @@ in
         message = "When bonding mode is 'mellanox', `bonding.mellanoxPcieAddress` must be set.";
       }
     ];
+    # GTX 1080/1080 Ti support uses the proprietary NVIDIA kernel module;
+    # the open kernel module does not support Pascal GPUs.
+    hardware.nvidia = mkIf cfg.nvidiaSupport {
+      open = false;
+      modesetting.enable = true;
+      package = config.boot.kernelPackages.nvidiaPackages.stable;
+    };
+    services.xserver.videoDrivers = mkIf cfg.nvidiaSupport [ "nvidia" ];
+    boot.blacklistedKernelModules = mkIf cfg.nvidiaSupport [ "nouveau" ];
+
     # enable custom secrets
     sops.secrets = mkMerge [
       {
@@ -133,7 +143,7 @@ in
       "pcie_port_pm=off"
       # disable nvme sleep states
       "nvme_core.default_ps_max_latency_us=0"
-    ];
+    ] ++ optionals cfg.nvidiaSupport [ "nouveau.modeset=0" ];
     boot.supportedFilesystems = [ "bcachefs" ];
     boot.kernelModules = [
       "bcachefs"
