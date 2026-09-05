@@ -110,6 +110,14 @@ in
     # is headless, so do not include this optional GUI package.
     hardware.nvidia.nvidiaSettings = lib.mkForce false;
 
+    # Keep the physical HDMI/KVM console backed by NVIDIA DRM while the
+    # Kubernetes device plugin exposes the GPU to workloads. No X server is
+    # required for the text console.
+    boot.kernelParams = [
+      "nvidia-drm.modeset=1"
+      "nvidia-drm.fbdev=1"
+    ];
+
     # The upstream module scrubs kernel-dev store references from the built .ko
     # files against its own internal (native) kernel, which drags a QEMU-built
     # kernel into the closure when cross-compiling. Scrub against whichever

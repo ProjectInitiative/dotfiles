@@ -143,7 +143,11 @@ in
       "pcie_port_pm=off"
       # disable nvme sleep states
       "nvme_core.default_ps_max_latency_us=0"
-    ] ++ optionals cfg.nvidiaSupport [ "nouveau.modeset=0" ];
+    ] ++ optionals cfg.nvidiaSupport [
+      "nouveau.modeset=0"
+      "nvidia-drm.modeset=1"
+      "nvidia-drm.fbdev=1"
+    ];
     boot.supportedFilesystems = [ "bcachefs" ];
     boot.kernelModules = [
       "bcachefs"
