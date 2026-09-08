@@ -184,16 +184,6 @@ in
             baseUrl = "http://100.81.89.107:13305/v1";
             api = "openai-completions";
           };
-          providers.neuralwatt = {
-            baseUrl = "https://api.neuralwatt.com/v1";
-            api = "openai-completions";
-          };
-          providers.cheapestinference = {
-            baseUrl = "https://api.cheapestinference.com/v1";
-            api = "openai-completions";
-            reasoning = true;
-            maxConcurrency = 1;
-          };
           # astrolabe: disabled until local llama-server comes back up
           # providers.astrolabe = {
           #   baseUrl = "http://100.81.89.107:8080/v1";
