@@ -184,6 +184,10 @@ in
             baseUrl = "http://100.81.89.107:13305/v1";
             api = "openai-completions";
           };
+          providers.ai = {
+            baseUrl = "http://ai.taildeab2.ts.net/v1";
+            api = "openai-completions";
+          };
           # astrolabe: disabled until local llama-server comes back up
           # providers.astrolabe = {
           #   baseUrl = "http://100.81.89.107:8080/v1";
