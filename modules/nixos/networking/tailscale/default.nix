@@ -11,12 +11,20 @@ with lib.${namespace};
 let
   cfg = config.${namespace}.networking.tailscale;
 
-  # This logic to select the correct key based on the ephemeral flag remains unchanged.
+  # Select the auth key. Precedence:
+  #   1. an explicit path (e.g. delivered at runtime by an agent such as Infisical)
+  #   2. sops (the historical default for homelab hosts)
+  #   3. null -> no autoconnect; authenticate interactively with `tailscale up`
   tailscale_key =
-    if cfg.ephemeral then
-      config.sops.secrets.tailscale_ephemeral_auth_key.path
+    if cfg.authKeyFile != null then
+      cfg.authKeyFile
+    else if cfg.useSops then
+      if cfg.ephemeral then
+        config.sops.secrets.tailscale_ephemeral_auth_key.path
+      else
+        config.sops.secrets.tailscale_auth_key.path
     else
-      config.sops.secrets.tailscale_auth_key.path;
+      null;
   # Do not let tailscaled change the host resolver. The separate service below
   # only points split-DNS traffic at Quad100 and listens for Tailscale state
   # changes through the local API event stream.
@@ -35,6 +43,10 @@ in
     tailnetDomain =
       mkOpt str "taildeab2.ts.net"
         "Tailnet DNS domain to route to Tailscale's local resolver.";
+    useSops = mkBoolOpt true "Whether to source the tailscale auth key from sops.";
+    authKeyFile =
+      mkOpt (nullOr path) null
+        "Explicit path to a tailscale auth key. Takes precedence over sops. If null and useSops is false, no autoconnect is configured.";
   };
 
   # ===============================================================
@@ -47,8 +59,9 @@ in
       # Enable the official tailscale daemon and autoconnect service
       enable = true;
 
-      # Pass the path to your sops-nix secret, respecting your 'ephemeral' flag
-      authKeyFile = tailscale_key;
+      # Only set authKeyFile when we actually have a key; otherwise tailscaled
+      # runs without autoconnect and the admin can `tailscale up` interactively.
+      authKeyFile = mkIf (tailscale_key != null) tailscale_key;
 
       # Keep host DNS management in the host resolver. The local Quad100
       # resolver remains available for MagicDNS when accept-dns is disabled.

@@ -167,7 +167,8 @@ in
 
         # Default settings managed by Nix
         settings = {
-          hideThinkingBlock = true;
+          # Always show thinking blocks — no hiding/collapsing.
+          hideThinkingBlock = false;
           # Subtle tool backgrounds — near-invisible so boxes don't pop
           # Matches terminal background (#18181e on dark theme)
           toolPendingBg = "#18181e";
@@ -202,8 +203,9 @@ in
         };
 
         # Peek extension - toggle thinking block visibility with Ctrl+Shift+H
+        # Disabled: thinking should always be visible (hideThinkingBlock = false).
         extensions.peek = {
-          enable = true;
+          enable = false;
           text = builtins.readFile "${inputs.self}/modules/home/cli-apps/pi-coding-agent/extensions/peek.ts";
         };
 
