@@ -292,7 +292,11 @@ in
         } else {
           Driver = cfg.interfaceDriver;
         };
-        linkConfig.Name = "mgmnt";
+        linkConfig = {
+          Name = "mgmnt";
+          # The VLAN carrying the Kubernetes fabric cannot exceed its parent MTU.
+          MTUBytes = "9000";
+        };
       };
 
       netdevs."20-mgmnt-vlan" = mkIf (cfg.vlanIpAddress != "") {

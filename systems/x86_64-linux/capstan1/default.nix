@@ -146,7 +146,6 @@ let
           "--data_replicas_required=1"
         ];
         mountOptions = [
-          "fix_errors"
           "discard"
           "verbose"
           "degraded"
