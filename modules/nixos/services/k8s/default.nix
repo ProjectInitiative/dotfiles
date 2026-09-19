@@ -353,10 +353,14 @@ in
     # Flannel ethtool configuration - only when flannel is active (not cilium)
     systemd.services.flannel-ethtool = mkIf (cfg.networkType != "cilium") {
       description = "Disable VXLAN checksum offloading for flannel.1";
-      # Ensure this runs after the flannel.1 device is up
+      # Ensure this runs after the flannel.1 device is up and is rerun if
+      # flannel recreates the device during a k3s restart.
       after = [ "sys-devices-virtual-net-flannel.1.device" ];
-      requires = [ "sys-devices-virtual-net-flannel.1.device" ];
-      wantedBy = [ "multi-user.target" ];
+      bindsTo = [ "sys-devices-virtual-net-flannel.1.device" ];
+      wantedBy = [
+        "multi-user.target"
+        "sys-devices-virtual-net-flannel.1.device"
+      ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;

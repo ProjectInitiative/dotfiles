@@ -155,8 +155,8 @@ in
         matchConfig.PermanentMACAddress = cfg.interfaceMac;
         linkConfig = {
           Name = "mgmnt";
-          # The VLAN carrying the Kubernetes fabric cannot exceed its parent MTU.
-          MTUBytes = "9000";
+          # Keep the management uplink compatible with the upstream switch.
+          MTUBytes = "1500";
         };
       };
 
@@ -197,7 +197,7 @@ in
             DHCP = "no";
             IPv6AcceptRA = "no";
           };
-          linkConfig.MTUBytes = "9000";
+          linkConfig.MTUBytes = "1500";
           address = [ "${cfg.vlanIpAddress}" ];
         };
       };
