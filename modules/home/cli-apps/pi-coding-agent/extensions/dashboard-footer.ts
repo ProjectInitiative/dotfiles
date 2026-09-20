@@ -281,7 +281,12 @@ export default function (pi: ExtensionAPI) {
 					try {
 						const mId = ctx.model?.id;
 						if (mId) {
-							modelStr = contextWindowSize > 0 ? `${mId} ${fmt(contextWindowSize)}` : mId;
+							// Dynamic gateways expose a stable alias (for example
+							// dgx-spark) while LiteLLM metadata identifies the live
+							// backend model. Keep both visible in the footer.
+							const liveModel = ctx.model?.name && ctx.model.name !== mId ? ` (${ctx.model.name})` : "";
+							const label = `${mId}${liveModel}`;
+							modelStr = contextWindowSize > 0 ? `${label} ${fmt(contextWindowSize)}` : label;
 						}
 					} catch { /* model info not ready yet */ }
 

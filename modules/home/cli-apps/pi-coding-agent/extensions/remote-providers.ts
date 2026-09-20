@@ -80,7 +80,7 @@ async function discoverModelInfo(baseUrl: string, apiKey?: string): Promise<Map<
 	const res = await fetch(url, { signal: AbortSignal.timeout(20_000), headers });
 	if (!res.ok) throw new Error(`GET ${url} returned ${res.status}`);
 	const data = await res.json();
-	return new Map((data.data ?? []).map((entry: any) => [entry.model_name, entry.model_info ?? {}]));
+	return new Map((data.data ?? []).map((entry: any) => [entry.model_name, entry]));
 }
 
 export default async function (pi: ExtensionAPI) {
@@ -181,8 +181,9 @@ export default async function (pi: ExtensionAPI) {
 
 		const capByName = (m: any) => m["metadata"]?.["capabilities"] ?? {};
 		const pricing = (m: any) => m["metadata"]?.["pricing"] ?? {};
+		const modelInfo = (m: any) => modelInfoByName.get(m.id)?.model_info ?? {};
 		const ctx = (m: any) => {
-			const info = modelInfoByName.get(m.id) ?? {};
+			const info = modelInfo(m);
 			return m["context_length"] ??
 				m["max_model_len"] ??
 				m["max_context_window"] ??
@@ -200,10 +201,12 @@ export default async function (pi: ExtensionAPI) {
 			const caps = capByName(m);
 			const p = pricing(m);
 			const meta = m["metadata"] ?? {};
+			const backendModel = modelInfoByName.get(m.id)?.litellm_params?.model
+				?.replace(/^[^/]+\//, "");
 			const isReasoning = caps["reasoning"] || caps["reasoning_effort"] || providerReasoning;
 			return {
 				id: m.id + suffix,
-				name: (meta["display_name"] ?? m.id) + (suffix ? " (flex)" : ""),
+				name: (meta["display_name"] ?? backendModel ?? m.id) + (suffix ? " (flex)" : ""),
 				reasoning: isReasoning,
 				thinkingLevelMap: isReasoning
 					? { off: null, minimal: "low", low: "low", medium: "medium", high: "high" }
