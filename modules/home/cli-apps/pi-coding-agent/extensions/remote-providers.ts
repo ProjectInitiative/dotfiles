@@ -70,6 +70,19 @@ async function discoverModels(baseUrl: string, apiKey?: string, retries = 2): Pr
 	throw new Error("fetch failed after " + retries + " retries");
 }
 
+/** LiteLLM keeps context metadata in /model/info rather than /v1/models. */
+async function discoverModelInfo(baseUrl: string, apiKey?: string): Promise<Map<string, any>> {
+	const url = new URL(`${baseUrl.replace(/\/+$/, "")}/../model/info`);
+	const headers: Record<string, string> = {};
+	if (apiKey) {
+		headers["Authorization"] = `Bearer ${apiKey}`;
+	}
+	const res = await fetch(url, { signal: AbortSignal.timeout(20_000), headers });
+	if (!res.ok) throw new Error(`GET ${url} returned ${res.status}`);
+	const data = await res.json();
+	return new Map((data.data ?? []).map((entry: any) => [entry.model_name, entry.model_info ?? {}]));
+}
+
 export default async function (pi: ExtensionAPI) {
 	const modelsPath = join(getAgentDir(), "models.json");
 
@@ -157,16 +170,29 @@ export default async function (pi: ExtensionAPI) {
 			continue;
 		}
 
+		let modelInfoByName = new Map<string, any>();
+		try {
+			modelInfoByName = await discoverModelInfo(provider.baseUrl, apiKey);
+		} catch (err) {
+			// Plain vLLM and other OpenAI-compatible servers do not expose this
+			// LiteLLM endpoint; their /v1/models metadata remains sufficient.
+			console.log(`[discovery] ${name}: no /model/info metadata — ${err}`);
+		}
+
 		const capByName = (m: any) => m["metadata"]?.["capabilities"] ?? {};
 		const pricing = (m: any) => m["metadata"]?.["pricing"] ?? {};
-		const ctx = (m: any) =>
-			m["context_length"] ??
-			m["max_model_len"] ??
-			m["max_context_window"] ??
-			m["metadata"]?.["limits"]?.["max_context_length"] ??
-			m["meta"]?.["n_ctx"] ??
-			m["meta"]?.["n_ctx_train"] ??
-			128000;
+		const ctx = (m: any) => {
+			const info = modelInfoByName.get(m.id) ?? {};
+			return m["context_length"] ??
+				m["max_model_len"] ??
+				m["max_context_window"] ??
+				m["metadata"]?.["limits"]?.["max_context_length"] ??
+				m["meta"]?.["n_ctx"] ??
+				m["meta"]?.["n_ctx_train"] ??
+				info.max_input_tokens ??
+				info.max_tokens ??
+				128000;
+		};
 		const input = (m: any) => capByName(m)["vision"] ? ["text", "image"] : ["text"];
 		const providerReasoning = provider.reasoning === true;
 
