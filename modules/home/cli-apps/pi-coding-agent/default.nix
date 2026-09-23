@@ -240,7 +240,8 @@ in
 
   config = mkIf cfg.enable {
 
-    ${namespace}.cli-apps.pi-coding.agent.instructions = mkDefault ''
+    ${namespace}.cli-apps.pi-coding.agent.instructions = mkMerge [
+      (mkDefault ''
       # pi self-configuration guide
 
       Your config is managed by Nix (home-manager). To extend yourself, add skills under
@@ -307,10 +308,9 @@ in
       ## Apply
 
       Run `home-manager switch` then `/reload` in pi.
-    '';
-
-    # keel — dev-node portfolio grounding (canonical copy: ~/development/keel/ENTRY.md)
-    ${namespace}.cli-apps.pi-coding.agent.instructions = mkAfter ''
+      '')
+      # keel — dev-node portfolio grounding (canonical copy: ~/development/keel/ENTRY.md)
+      (mkAfter ''
       # keel — project portfolio grounding
 
       The dev node's project portfolio is mapped by **keel** at `~/development/keel`
@@ -339,7 +339,8 @@ in
       Prime directive: keel is ADVISORY, NEVER BLOCKING. Best-effort records with honest
       `confidence:`; never block delivery. Never edit `views/`. Never invent state you
       didn't observe.
-    '';
+      '')
+    ];
 
     home.packages = with pkgs; [
       (writeShellScriptBin "pi-dev" (builtins.readFile ./extensions/pi-dev.sh))
