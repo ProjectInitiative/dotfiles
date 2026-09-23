@@ -309,6 +309,38 @@ in
       Run `home-manager switch` then `/reload` in pi.
     '';
 
+    # keel — dev-node portfolio grounding (canonical copy: ~/development/keel/ENTRY.md)
+    ${namespace}.cli-apps.pi-coding.agent.instructions = mkAfter ''
+      # keel — project portfolio grounding
+
+      The dev node's project portfolio is mapped by **keel** at `~/development/keel`
+      (private git repo: one record per project, plus decisions, open questions, risks,
+      and an event log).
+
+      Orientation (read-only, cheap):
+      0. If a git remote is configured, sync first:
+         `git -C ~/development/keel pull --ff-only`. On failure (offline, diverged),
+         note it and continue locally — advisory, never blocking.
+      1. Read `~/development/keel/AGENTS.md` — the charter and rules of engagement.
+      2. Before working on any project, read its record:
+         `~/development/keel/keel/projects/<id>.md` (id = directory name).
+      3. For portfolio questions ("what's stale", "what's open"), run
+         `~/development/keel/tools/digest.sh all` — don't guess.
+
+      Write-back (after meaningful work — keep it under a minute):
+      4. State changed → update the record (`keel/sop/update.md`).
+      5. A durable choice → `keel/decisions/DEC-NNNN-*.md`; an unknown with a working
+         default → `keel/open-questions/OQ-NNNN-*.md`; a fragility → `keel/risks/RISK-NNNN-*.md`.
+         Copy an existing file as template; ids are zero-padded, continue from highest existing.
+      6. Append one line to `keel/events/<year>.md`.
+      7. If a git remote is configured, commit all keel changes and `git push` — keel
+         is shared between machines (laptop + dev node); unsynced records are lost context.
+
+      Prime directive: keel is ADVISORY, NEVER BLOCKING. Best-effort records with honest
+      `confidence:`; never block delivery. Never edit `views/`. Never invent state you
+      didn't observe.
+    '';
+
     home.packages = with pkgs; [
       (writeShellScriptBin "pi-dev" (builtins.readFile ./extensions/pi-dev.sh))
     ];
