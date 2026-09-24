@@ -11,7 +11,7 @@ let
   rootDiskDevicePath = "/dev/nvme0n1";
 in
 {
-  networking.hostName = "Octant";
+  networking.hostName = "octant";
 
   # NVIDIA DGX Spark shared base module (kernels, drivers, k8s worker role).
   # Like astrolabe: mgmnt IP on the .1 subnet (via default_subnet), k8s fabric
@@ -30,26 +30,28 @@ in
     vlanIpAddress = "172.16.4.57/24";
     vlanId = 10;
     # Standard management NIC (enP7s7 / enP7p1s0), not ConnectX-7.
-    interfaceMac = "30:c5:99:40:c4:2d";
-    # One connected QSFP port exposes two 100G host paths. Keep them on
-    # separate subnets so NCCL can stripe them without ARP flux.
+    interfaceMac = "30:c5:99:be:70:fc";
+    # ConnectX port 1 → Chronometer port 2; port 2 → Sextant port 2.
     rdmaLinks = [
       {
         name = "enp1s0f1np1";
-        mac = "30:c5:99:40:c4:2f";
-        address = "172.16.5.56/24";
-        peerAddress = "172.16.5.55";
-        peerMac = "30:c5:99:40:fb:cf";
-      }
-      {
-        name = "enP2p1s0f1np1";
-        mac = "30:c5:99:40:c4:33";
-        address = "172.16.6.56/24";
+        mac = "30:c5:99:be:70:fe";
+        address = "172.16.6.57/24";
         peerAddress = "172.16.6.55";
         peerMac = "30:c5:99:40:fb:d3";
       }
+      {
+        name = "enP2p1s0f1np1";
+        mac = "30:c5:99:be:71:02";
+        address = "172.16.7.57/24";
+        peerAddress = "172.16.7.56";
+        peerMac = "30:c5:99:40:c4:33";
+      }
     ];
-    rdmaPeerManagementIp = "172.16.1.55";
+    rdmaPeerManagementIps = [
+      "172.16.1.55" # Chronometer
+      "172.16.1.56" # Sextant
+    ];
     k8sServerAddr = "https://172.16.1.50:6443";
     k8sNodeIp = "172.16.4.57";
     k8sNodeIface = "mgmnt.10";

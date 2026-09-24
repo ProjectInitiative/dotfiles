@@ -11,6 +11,11 @@ with lib.${namespace};
 let
   cfg = config.${namespace}.hosts.dgx-spark;
   sops = config.sops;
+  peerManagementIps =
+    if cfg.rdmaPeerManagementIps != [ ] then
+      cfg.rdmaPeerManagementIps
+    else
+      lib.optional (cfg.rdmaPeerManagementIp != "") cfg.rdmaPeerManagementIp;
 
   # Build natively on the Spark itself (or on ARM infra) by setting
   # BUILD_ARM_NATIVE=true. Default: cross-compile the NVIDIA kernel on x86_64
@@ -47,7 +52,9 @@ in
     interfaceMac = mkOpt types.str "" "MAC of the primary fabric (k3s/mgmt) NIC. The ConnectX-7 ports are the dedicated RDMA interconnect — the k3s fabric should be on the standard NIC (like astrolabe). Pin this once hardware arrives.";
     interfaceDriver = mkOpt types.str "" "Driver of the primary fabric NIC (e.g. r8125). Used as a fallback when interfaceMac is unset. NOTE: do not use mlx5_core here — those ports are the ConnectX interconnect, not the k3s fabric.";
     rdmaPeerManagementIp = mkOpt types.str ""
-      "Management IP of the directly connected RDMA peer (for MPI bootstrap callbacks)";
+      "Management IP of a directly connected RDMA peer (legacy single-peer form)";
+    rdmaPeerManagementIps = mkOpt (types.listOf types.str) [ ]
+      "Management IPs of directly connected RDMA peers (for MPI bootstrap callbacks)";
     rdmaLinks = mkOption {
       default = [ ];
       description = "ConnectX/RoCE interfaces to configure as direct links";
@@ -253,16 +260,16 @@ in
         # the peer Spark (rather than trusting the whole management LAN), or
         # the remote daemon stalls before trying the RDMA addresses.
         extraCommands = mkIf (
-          cfg.rdmaPeerManagementIp != "" && !config.networking.nftables.enable
-        ) ''
-          iptables -w -C nixos-fw -s ${cfg.rdmaPeerManagementIp} -j nixos-fw-accept 2>/dev/null || \
-            iptables -w -I nixos-fw 1 -s ${cfg.rdmaPeerManagementIp} -j nixos-fw-accept
-        '';
+          peerManagementIps != [ ] && !config.networking.nftables.enable
+        ) (lib.concatMapStringsSep "\n" (peerIp: ''
+          iptables -w -C nixos-fw -s ${peerIp} -j nixos-fw-accept 2>/dev/null || \
+            iptables -w -I nixos-fw 1 -s ${peerIp} -j nixos-fw-accept
+        '') peerManagementIps);
         extraInputRules = mkIf (
-          cfg.rdmaPeerManagementIp != "" && config.networking.nftables.enable
-        ) ''
-          ip saddr ${cfg.rdmaPeerManagementIp} accept comment "DGX Spark MPI peer"
-        '';
+          peerManagementIps != [ ] && config.networking.nftables.enable
+        ) (lib.concatMapStringsSep "\n" (peerIp: ''
+          ip saddr ${peerIp} accept comment "DGX Spark MPI peer"
+        '') peerManagementIps);
       };
       # DHCP/static addressing is managed explicitly by systemd.network below.
       useDHCP = false;

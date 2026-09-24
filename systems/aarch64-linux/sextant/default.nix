@@ -44,9 +44,10 @@ in
       {
         name = "enP2p1s0f1np1";
         mac = "30:c5:99:40:c4:33";
-        address = "172.16.6.56/24";
-        peerAddress = "172.16.6.55";
-        peerMac = "30:c5:99:40:fb:d3";
+        # ConnectX port 2 → Octant port 2.
+        address = "172.16.7.56/24";
+        peerAddress = "172.16.7.57";
+        peerMac = "30:c5:99:be:71:02";
       }
     ];
     rdmaPeerManagementIp = "172.16.1.55";

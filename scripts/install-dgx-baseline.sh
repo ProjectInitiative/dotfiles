@@ -4,9 +4,9 @@ set -euo pipefail
 # Install a minimal, standalone NixOS baseline from a booted live installer.
 # This intentionally does not use this repository's flake.
 
-TARGET="${1:-nixos@192.168.1.106}"
+TARGET="${1:-nixos@192.168.1.165}"
 DISK="${2:-/dev/nvme0n1}"
-INSTALL_HOSTNAME="${3:-sextant}"
+INSTALL_HOSTNAME="${3:-octant}"
 INSTALL_USER="${INSTALL_USER:-kylepzak}"
 STATE_VERSION="${STATE_VERSION:-26.05}"
 
