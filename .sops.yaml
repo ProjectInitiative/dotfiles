@@ -20,6 +20,7 @@ keys:
   - &ssh_astrolabe age15p00q78suah3sfrnw7duxwsdslcmlcl57e7f5a9e320gncxc54rqg3fl0w
   - &ssh_chronometer age1pae46sxrwachnsnz6lhk3896e335uhzr4avr9wezze8pt3plq4jqh90h4r
   - &ssh_sextant age1y8c7qe33a4rkuswjhlh8g2pzkqnny9cwhgjn0580awktp75hks3qvetgnx
+  - &ssh_octant age1zjd0q2nu708zrp5u86ffq832yscwy3hn5238fv5u8nsdx5fj6dkq43gufp
 
   - &lightships:
     - &ssh_lightship_atx age1csp7a8m4d8gfpeq86wje2ttxw9f66phehlacsuqckrft46s6s4csfjzrsl
@@ -59,6 +60,7 @@ creation_rules:
           - *ssh_astrolabe
           - *ssh_chronometer 
           - *ssh_sextant
+          - *ssh_octant
           - *ssh_lightship_atx
           - *ssh_lightship_dfw
           - *ssh_lightship_dal
@@ -120,6 +122,7 @@ creation_rules:
           - *ssh_thinkpad
           - *ssh_chronometer 
           - *ssh_sextant
+          - *ssh_octant
 
 
   - path_regex: thinkpad/[^/]+\.yaml$
