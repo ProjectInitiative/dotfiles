@@ -34,18 +34,20 @@ in
     # ConnectX port 1 → Chronometer port 2; port 2 → Sextant port 2.
     rdmaLinks = [
       {
+        # Physical connection: Sextant port 2 → Octant port 1.
         name = "enp1s0f1np1";
         mac = "30:c5:99:be:70:fe";
-        address = "172.16.6.57/24";
-        peerAddress = "172.16.6.55";
-        peerMac = "30:c5:99:40:fb:d3";
-      }
-      {
-        name = "enP2p1s0f1np1";
-        mac = "30:c5:99:be:71:02";
         address = "172.16.7.57/24";
         peerAddress = "172.16.7.56";
         peerMac = "30:c5:99:40:c4:33";
+      }
+      {
+        # Physical connection: Chronometer port 2 → Octant port 2.
+        name = "enP2p1s0f1np1";
+        mac = "30:c5:99:be:71:02";
+        address = "172.16.6.57/24";
+        peerAddress = "172.16.6.55";
+        peerMac = "30:c5:99:40:fb:d3";
       }
     ];
     rdmaPeerManagementIps = [
