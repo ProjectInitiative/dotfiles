@@ -84,7 +84,11 @@ in
             };
             peerAddress = mkOption {
               type = types.str;
-              description = "Peer IPv4 address without prefix";
+              description = "Peer direct-link IPv4 address without prefix";
+            };
+            peerControlAddress = mkOption {
+              type = types.str;
+              description = "Peer IPv4 address on the common Kubernetes network";
             };
             peerMac = mkOption {
               type = types.str;
@@ -250,6 +254,7 @@ in
                 interface = link.name;
                 address = link.address;
                 peerAddress = link.peerAddress;
+                peerControlAddress = link.peerControlAddress;
                 mac = link.mac;
                 peerMac = link.peerMac;
               }) cfg.rdmaLinks;

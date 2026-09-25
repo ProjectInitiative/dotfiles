@@ -1,5 +1,11 @@
 { lib }:
 let
+  controlAddresses = {
+    chronometer = "172.16.4.55";
+    sextant = "172.16.4.56";
+    octant = "172.16.4.57";
+  };
+
   # The switchless fabric is declared once. Each link has exactly two endpoints;
   # linksFor derives reciprocal peer identity, addresses, and MACs so those
   # values cannot drift between host configurations.
@@ -123,14 +129,18 @@ let
             inherit peerNode;
             linkId = link.id;
             peerAddress = addressWithoutPrefix peer.address;
+            peerControlAddress = controlAddresses.${peerNode};
             peerMac = peer.mac;
           }
         ]
     ) links;
+
+  peerControlAddressesFor =
+    nodeName: lib.unique (builtins.map (link: link.peerControlAddress) (linksFor nodeName));
 in
 assert lib.assertMsg (
   builtins.length (lib.unique (builtins.map (link: link.id) links)) == builtins.length links
 ) "DGX Spark RDMA link IDs must be unique";
 {
-  inherit links linksFor;
+  inherit controlAddresses links linksFor peerControlAddressesFor;
 }
