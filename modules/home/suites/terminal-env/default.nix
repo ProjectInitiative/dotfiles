@@ -71,6 +71,9 @@ in
         ncdu
         icdiff
         usbutils
+        # rclone usage on interactive hosts goes through
+        # security.bitwarden's `rclone-load` (config from the vault, tmpfs,
+        # single-command lifetime) — see modules/home/security/bitwarden
         rclone
         magic-wormhole-rs
         file

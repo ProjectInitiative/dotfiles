@@ -47,6 +47,12 @@ in
         # kn = "kubectl ns";
         # ks = "kubeseal";
       };
+
+      # Bitwarden-backed exec users for declared clusters; merged via KUBECONFIG
+      # so base-file entries win. No-op unless security.bitwarden is enabled.
+      sessionVariables.KUBECONFIG = mkIf config.${namespace}.security.bitwarden.enable (
+        mkDefault "${config.home.homeDirectory}/.kube/config:${config.xdg.configHome}/kubeauth/kubeconfig"
+      );
     };
 
     programs.zsh.initContent = mkIf config.programs.zsh.enable ''

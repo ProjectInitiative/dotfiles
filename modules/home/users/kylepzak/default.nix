@@ -60,6 +60,7 @@ in
 
       security = {
         sops = enabled;
+        bitwarden = enabled;
       };
 
       tools = {
