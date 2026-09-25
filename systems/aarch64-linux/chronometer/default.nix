@@ -9,6 +9,7 @@
 let
   # DGX Spark 4TB NVMe
   rootDiskDevicePath = "/dev/nvme0n1";
+  rdmaTopology = import ../../../modules/nixos/hosts/dgx-spark/topology.nix { inherit lib; };
 in
 {
   networking.hostName = "chronometer";
@@ -35,36 +36,7 @@ in
     # Each physical QSFP port exposes two 100G logical paths. Physical port
     # f1 remains the direct Chronometer–Sextant link; physical port f0 goes
     # to Octant's physical port f1.
-    rdmaLinks = [
-      {
-        name = "enp1s0f1np1";
-        mac = "30:c5:99:40:fb:cf";
-        address = "172.16.5.55/24";
-        peerAddress = "172.16.5.56";
-        peerMac = "30:c5:99:40:c4:2f";
-      }
-      {
-        name = "enP2p1s0f1np1";
-        mac = "30:c5:99:40:fb:d3";
-        address = "172.16.6.55/24";
-        peerAddress = "172.16.6.56";
-        peerMac = "30:c5:99:40:c4:33";
-      }
-      {
-        name = "enp1s0f0np0";
-        mac = "30:c5:99:40:fb:ce";
-        address = "172.16.7.55/24";
-        peerAddress = "172.16.7.57";
-        peerMac = "30:c5:99:be:70:fe";
-      }
-      {
-        name = "enP2p1s0f0np0";
-        mac = "30:c5:99:40:fb:d2";
-        address = "172.16.8.55/24";
-        peerAddress = "172.16.8.57";
-        peerMac = "30:c5:99:be:71:02";
-      }
-    ];
+    rdmaLinks = rdmaTopology.linksFor config.networking.hostName;
     rdmaPeerManagementIps = [
       "172.16.1.56" # Sextant
       "172.16.1.57" # Octant

@@ -25,13 +25,12 @@ let
   # Reuse the exact component derivations from the vendor's NCCL dev shell.
   # This is important: that shell is built from the vendor's CUDA-fixed package
   # scope, where the invalid SBSA cuda_compat package is disabled.
-  ncclShell =
-    inputs.nixos-dgx-spark.devShells.${pkgs.stdenv.hostPlatform.system}.nccl-two-sparks;
+  ncclShell = inputs.nixos-dgx-spark.devShells.${pkgs.stdenv.hostPlatform.system}.nccl-two-sparks;
   ncclShellPackages = ncclShell.nativeBuildInputs;
-  ncclPackage = name:
+  ncclPackage =
+    name:
     builtins.head (
-      builtins.filter (package: (package.pname or package.name or "") == name)
-        ncclShellPackages
+      builtins.filter (package: (package.pname or package.name or "") == name) ncclShellPackages
     );
   perftest = ncclPackage "perftest";
   ncclNetSetup = ncclPackage "nccl-net-setup";
@@ -49,39 +48,55 @@ in
     ipAddress = mkOpt types.str "" "Main static management IP address with CIDR";
     vlanIpAddress = mkOpt types.str "" "Additional IP with CIDR for tagged VLAN on mgmnt interface";
     vlanId = mkOpt types.int 1 "VLAN ID for the tagged VLAN";
-    interfaceMac = mkOpt types.str "" "MAC of the primary fabric (k3s/mgmt) NIC. The ConnectX-7 ports are the dedicated RDMA interconnect — the k3s fabric should be on the standard NIC (like astrolabe). Pin this once hardware arrives.";
-    interfaceDriver = mkOpt types.str "" "Driver of the primary fabric NIC (e.g. r8125). Used as a fallback when interfaceMac is unset. NOTE: do not use mlx5_core here — those ports are the ConnectX interconnect, not the k3s fabric.";
-    rdmaPeerManagementIp = mkOpt types.str ""
-      "Management IP of a directly connected RDMA peer (legacy single-peer form)";
-    rdmaPeerManagementIps = mkOpt (types.listOf types.str) [ ]
-      "Management IPs of directly connected RDMA peers (for MPI bootstrap callbacks)";
+    interfaceMac =
+      mkOpt types.str ""
+        "MAC of the primary fabric (k3s/mgmt) NIC. The ConnectX-7 ports are the dedicated RDMA interconnect — the k3s fabric should be on the standard NIC (like astrolabe). Pin this once hardware arrives.";
+    interfaceDriver =
+      mkOpt types.str ""
+        "Driver of the primary fabric NIC (e.g. r8125). Used as a fallback when interfaceMac is unset. NOTE: do not use mlx5_core here — those ports are the ConnectX interconnect, not the k3s fabric.";
+    rdmaPeerManagementIp =
+      mkOpt types.str ""
+        "Management IP of a directly connected RDMA peer (legacy single-peer form)";
+    rdmaPeerManagementIps =
+      mkOpt (types.listOf types.str) [ ]
+        "Management IPs of directly connected RDMA peers (for MPI bootstrap callbacks)";
     rdmaLinks = mkOption {
       default = [ ];
       description = "ConnectX/RoCE interfaces to configure as direct links";
-      type = types.listOf (types.submodule {
-        options = {
-          name = mkOption {
-            type = types.str;
-            description = "Kernel network interface name";
+      type = types.listOf (
+        types.submodule {
+          options = {
+            name = mkOption {
+              type = types.str;
+              description = "Kernel network interface name";
+            };
+            mac = mkOption {
+              type = types.str;
+              description = "Permanent ConnectX MAC address";
+            };
+            address = mkOption {
+              type = types.str;
+              description = "Direct-link IPv4 address with prefix";
+            };
+            peerAddress = mkOption {
+              type = types.str;
+              description = "Peer IPv4 address without prefix";
+            };
+            peerMac = mkOption {
+              type = types.str;
+              description = "Peer MAC address for a persistent neighbor entry";
+            };
+            peerNode = mkOption {
+              type = types.str;
+              description = "Kubernetes/NixOS node name at the other end of this direct link";
+            };
+            linkId = mkOption {
+              type = types.str;
+              description = "Stable cluster-wide identifier shared by both ends of this direct link";
+            };
           };
-          mac = mkOption {
-            type = types.str;
-            description = "Permanent ConnectX MAC address";
-          };
-          address = mkOption {
-            type = types.str;
-            description = "Direct-link IPv4 address with prefix";
-          };
-          peerAddress = mkOption {
-            type = types.str;
-            description = "Peer IPv4 address without prefix";
-          };
-          peerMac = mkOption {
-            type = types.str;
-            description = "Peer MAC address for a persistent neighbor entry";
-          };
-        };
-      });
+        }
+      );
     };
     k8sNodeIp = mkOpt types.str "" "IP address for custom k8s node IP";
     k8sNodeIface = mkOpt types.str "" "Iface for k8s";
@@ -132,7 +147,8 @@ in
     hardware.nvidia.package = lib.mkForce (
       let
         prod = config.boot.kernelPackages.nvidiaPackages.production;
-        scrubKernelDevRefs = drv:
+        scrubKernelDevRefs =
+          drv:
           drv.overrideAttrs (old: {
             postFixup = (old.postFixup or "") + ''
               if [ -d "$out/lib/modules" ]; then
@@ -195,6 +211,44 @@ in
       ncclRun16g
     ];
 
+    # Materialize rather than symlink the inventory: kubelet can bind-mount this
+    # exact host file without exposing or depending on a /nix/store path inside
+    # the workload container.
+    systemd.services.dgx-spark-rdma-inventory = mkIf (cfg.rdmaLinks != [ ]) {
+      description = "Materialize the DGX Spark RDMA fabric inventory";
+      wantedBy = [ "multi-user.target" ];
+      before = [ "k3s.service" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = ''
+        ${pkgs.coreutils}/bin/install -d -m 0755 /var/lib/dgx-spark
+        ${pkgs.coreutils}/bin/install -m 0444 ${
+          pkgs.writeText "rdma-fabric.json" (
+            builtins.toJSON {
+              schemaVersion = 1;
+              fabric = "dgx-spark-direct-roce";
+              nodeName = config.networking.hostName;
+              controlPlane = {
+                address = cfg.k8sNodeIp;
+                interface = cfg.k8sNodeIface;
+              };
+              links = builtins.map (link: {
+                id = link.linkId;
+                peerNode = link.peerNode;
+                interface = link.name;
+                address = link.address;
+                peerAddress = link.peerAddress;
+                mac = link.mac;
+                peerMac = link.peerMac;
+              }) cfg.rdmaLinks;
+            }
+          )
+        } /var/lib/dgx-spark/rdma-fabric.json
+      '';
+    };
+
     ${namespace} = {
 
       system = {
@@ -229,6 +283,12 @@ in
             "--node-label=gpu-vendor=nvidia"
             "--node-label=gpu=dgx-spark"
             "--node-label=tier=compute"
+          ] ++ optionals (cfg.rdmaLinks != [ ]) [
+            # Stable workload-facing fabric contract. The physical interface,
+            # address, and peer mapping remain host-owned in rdmaLinks; pods
+            # select the capability rather than a hostname or ConnectX port.
+            "--node-label=fabric.homelab.io/rdma=roce-v2"
+            "--node-label=fabric.homelab.io/topology=direct-ring"
           ];
         };
       };
@@ -259,21 +319,21 @@ in
         # PRRTE advertises management first in its callback URI. Permit only
         # the peer Spark (rather than trusting the whole management LAN), or
         # the remote daemon stalls before trying the RDMA addresses.
-        extraCommands = mkIf (
-          peerManagementIps != [ ] && !config.networking.nftables.enable
-        ) (lib.concatMapStringsSep "\n" (peerIp: ''
-          iptables -w -C nixos-fw -s ${peerIp} -j nixos-fw-accept 2>/dev/null || \
-            iptables -w -I nixos-fw 1 -s ${peerIp} -j nixos-fw-accept
-        '') peerManagementIps);
-        extraInputRules = mkIf (
-          peerManagementIps != [ ] && config.networking.nftables.enable
-        ) (lib.concatMapStringsSep "\n" (peerIp: ''
-          ip saddr ${peerIp} accept comment "DGX Spark MPI peer"
-        '') peerManagementIps);
+        extraCommands = mkIf (peerManagementIps != [ ] && !config.networking.nftables.enable) (
+          lib.concatMapStringsSep "\n" (peerIp: ''
+            iptables -w -C nixos-fw -s ${peerIp} -j nixos-fw-accept 2>/dev/null || \
+              iptables -w -I nixos-fw 1 -s ${peerIp} -j nixos-fw-accept
+          '') peerManagementIps
+        );
+        extraInputRules = mkIf (peerManagementIps != [ ] && config.networking.nftables.enable) (
+          lib.concatMapStringsSep "\n" (peerIp: ''
+            ip saddr ${peerIp} accept comment "DGX Spark MPI peer"
+          '') peerManagementIps
+        );
       };
       # DHCP/static addressing is managed explicitly by systemd.network below.
       useDHCP = false;
-      interfaces = {};
+      interfaces = { };
       nameservers = [
         "172.16.1.1"
         "1.1.1.1"
@@ -294,11 +354,15 @@ in
       # interfaceDriver); with neither set the link unit is skipped and the
       # machine boots with stock interface names.
       links."10-mgmnt" = mkIf (cfg.interfaceMac != "" || cfg.interfaceDriver != "") {
-        matchConfig = if cfg.interfaceMac != "" then {
-          PermanentMACAddress = cfg.interfaceMac;
-        } else {
-          Driver = cfg.interfaceDriver;
-        };
+        matchConfig =
+          if cfg.interfaceMac != "" then
+            {
+              PermanentMACAddress = cfg.interfaceMac;
+            }
+          else
+            {
+              Driver = cfg.interfaceDriver;
+            };
         linkConfig = {
           Name = "mgmnt";
           # The VLAN carrying the Kubernetes fabric cannot exceed its parent MTU.
@@ -353,8 +417,10 @@ in
           linkConfig.MTUBytes = "9000";
           address = [ "${cfg.vlanIpAddress}" ];
         };
-      } // builtins.listToAttrs (
-        lib.imap0 (index: link:
+      }
+      // builtins.listToAttrs (
+        lib.imap0 (
+          index: link:
           lib.nameValuePair "30-rdma-${toString index}" {
             matchConfig = {
               Name = link.name;
