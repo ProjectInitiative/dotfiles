@@ -18,6 +18,5 @@ prompt.txt
 vendor/
 .pi-subagents/
 
-# local key material / dumps — never commit (see keel RISK-0014)
-NEW_SECRETS/
+# core dumps — never commit (keel RISK-0014)
 *.core
