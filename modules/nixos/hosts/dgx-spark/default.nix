@@ -231,6 +231,7 @@ in
     systemd.services.dgx-spark-rdma-inventory = mkIf (cfg.rdmaLinks != [ ]) {
       description = "Materialize the DGX Spark RDMA fabric inventory";
       wantedBy = [ "multi-user.target" ];
+      requiredBy = optionals (cfg.allFeatures && cfg.enableK8s) [ "k3s.service" ];
       before = [ "k3s.service" ];
       serviceConfig = {
         Type = "oneshot";
