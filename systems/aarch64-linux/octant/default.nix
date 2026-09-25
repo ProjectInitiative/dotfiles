@@ -31,23 +31,36 @@ in
     vlanId = 10;
     # Standard management NIC (enP7s7 / enP7p1s0), not ConnectX-7.
     interfaceMac = "30:c5:99:be:70:fc";
-    # ConnectX port 1 → Chronometer port 2; port 2 → Sextant port 2.
+    # Octant physical port f1 connects to Chronometer physical port f0;
+    # Octant physical port f0 connects to Sextant physical port f0.
     rdmaLinks = [
       {
-        # Physical connection: Sextant port 2 → Octant port 1.
         name = "enp1s0f1np1";
         mac = "30:c5:99:be:70:fe";
         address = "172.16.7.57/24";
-        peerAddress = "172.16.7.56";
-        peerMac = "30:c5:99:40:c4:33";
+        peerAddress = "172.16.7.55";
+        peerMac = "30:c5:99:40:fb:ce";
       }
       {
-        # Physical connection: Chronometer port 2 → Octant port 2.
         name = "enP2p1s0f1np1";
         mac = "30:c5:99:be:71:02";
-        address = "172.16.6.57/24";
-        peerAddress = "172.16.6.55";
-        peerMac = "30:c5:99:40:fb:d3";
+        address = "172.16.8.57/24";
+        peerAddress = "172.16.8.55";
+        peerMac = "30:c5:99:40:fb:d2";
+      }
+      {
+        name = "enp1s0f0np0";
+        mac = "30:c5:99:be:70:fd";
+        address = "172.16.9.57/24";
+        peerAddress = "172.16.9.56";
+        peerMac = "30:c5:99:40:c4:2e";
+      }
+      {
+        name = "enP2p1s0f0np0";
+        mac = "30:c5:99:be:71:01";
+        address = "172.16.10.57/24";
+        peerAddress = "172.16.10.56";
+        peerMac = "30:c5:99:40:c4:32";
       }
     ];
     rdmaPeerManagementIps = [

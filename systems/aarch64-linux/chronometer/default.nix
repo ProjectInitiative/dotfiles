@@ -32,8 +32,9 @@ in
     # Standard management NIC (enP7s7 / enP7p1s0), not ConnectX-7.
     # fbcd
     interfaceMac = "30:c5:99:40:fb:cd";
-    # One connected QSFP port exposes two 100G host paths. Keep them on
-    # separate subnets so NCCL can stripe them without ARP flux.
+    # Each physical QSFP port exposes two 100G logical paths. Physical port
+    # f1 remains the direct Chronometer–Sextant link; physical port f0 goes
+    # to Octant's physical port f1.
     rdmaLinks = [
       {
         name = "enp1s0f1np1";
@@ -46,11 +47,28 @@ in
         name = "enP2p1s0f1np1";
         mac = "30:c5:99:40:fb:d3";
         address = "172.16.6.55/24";
-        peerAddress = "172.16.6.57";
+        peerAddress = "172.16.6.56";
+        peerMac = "30:c5:99:40:c4:33";
+      }
+      {
+        name = "enp1s0f0np0";
+        mac = "30:c5:99:40:fb:ce";
+        address = "172.16.7.55/24";
+        peerAddress = "172.16.7.57";
         peerMac = "30:c5:99:be:70:fe";
       }
+      {
+        name = "enP2p1s0f0np0";
+        mac = "30:c5:99:40:fb:d2";
+        address = "172.16.8.55/24";
+        peerAddress = "172.16.8.57";
+        peerMac = "30:c5:99:be:71:02";
+      }
     ];
-    rdmaPeerManagementIp = "172.16.1.56";
+    rdmaPeerManagementIps = [
+      "172.16.1.56" # Sextant
+      "172.16.1.57" # Octant
+    ];
     k8sServerAddr = "https://172.16.1.50:6443";
     k8sNodeIp = "172.16.4.55";
     k8sNodeIface = "mgmnt.10";

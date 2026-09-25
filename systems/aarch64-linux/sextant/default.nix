@@ -31,8 +31,9 @@ in
     vlanId = 10;
     # Standard management NIC (enP7s7 / enP7p1s0), not ConnectX-7.
     interfaceMac = "30:c5:99:40:c4:2d";
-    # One connected QSFP port exposes two 100G host paths. Keep them on
-    # separate subnets so NCCL can stripe them without ARP flux.
+    # Each physical QSFP port exposes two 100G logical paths. Physical port
+    # f1 remains the direct Sextant–Chronometer link; physical port f0 goes
+    # to Octant's physical port f0.
     rdmaLinks = [
       {
         name = "enp1s0f1np1";
@@ -44,13 +45,29 @@ in
       {
         name = "enP2p1s0f1np1";
         mac = "30:c5:99:40:c4:33";
-        # ConnectX port 2 → Octant port 2.
-        address = "172.16.7.56/24";
-        peerAddress = "172.16.7.57";
-        peerMac = "30:c5:99:be:71:02";
+        address = "172.16.6.56/24";
+        peerAddress = "172.16.6.55";
+        peerMac = "30:c5:99:40:fb:d3";
+      }
+      {
+        name = "enp1s0f0np0";
+        mac = "30:c5:99:40:c4:2e";
+        address = "172.16.9.56/24";
+        peerAddress = "172.16.9.57";
+        peerMac = "30:c5:99:be:70:fd";
+      }
+      {
+        name = "enP2p1s0f0np0";
+        mac = "30:c5:99:40:c4:32";
+        address = "172.16.10.56/24";
+        peerAddress = "172.16.10.57";
+        peerMac = "30:c5:99:be:71:01";
       }
     ];
-    rdmaPeerManagementIp = "172.16.1.55";
+    rdmaPeerManagementIps = [
+      "172.16.1.55" # Chronometer
+      "172.16.1.57" # Octant
+    ];
     k8sServerAddr = "https://172.16.1.50:6443";
     k8sNodeIp = "172.16.4.56";
     k8sNodeIface = "mgmnt.10";
