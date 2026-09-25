@@ -183,11 +183,13 @@ in
       sopsFile = ./secrets.enc.yaml;
     };
 
-    # 802.1Q tagging for the mgmnt VLAN and the userspace RDMA connection
-    # manager required by the Kubernetes RDMA shared-device plugin.
+    # 802.1Q tagging for the mgmnt VLAN plus the userspace RDMA connection
+    # manager and subnet administration devices required by the Kubernetes
+    # RDMA shared-device plugin.
     boot.kernelModules = [
       "8021q"
       "rdma_ucm"
+      "ib_umad"
     ];
 
     services.openssh = {
