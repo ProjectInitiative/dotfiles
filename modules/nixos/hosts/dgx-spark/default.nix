@@ -64,6 +64,16 @@ in
     rdmaPeerControlIps =
       mkOpt (types.listOf types.str) [ ]
         "Common Kubernetes-network IPs of RDMA peers (for DNS/rendezvous and MPI callbacks)";
+    k8sHostNetworkServiceSourceCidrs =
+      mkOpt (types.listOf types.str)
+        [
+          "10.42.0.0/16"
+          "172.16.4.48/28"
+        ]
+        "Kubernetes pod and node source CIDRs permitted to reach explicitly exposed host-network service ports";
+    k8sHostNetworkServiceTCPPorts = mkOpt (types.listOf types.port) [
+      8000
+    ] "Host-network TCP ports reachable from Kubernetes through normal Services";
     rdmaLinks = mkOption {
       default = [ ];
       description = "ConnectX/RoCE interfaces to configure as direct links";
@@ -299,7 +309,8 @@ in
             "--node-label=gpu-vendor=nvidia"
             "--node-label=gpu=dgx-spark"
             "--node-label=tier=compute"
-          ] ++ optionals (cfg.rdmaLinks != [ ]) [
+          ]
+          ++ optionals (cfg.rdmaLinks != [ ]) [
             # Stable workload-facing fabric contract. The physical interface,
             # address, and peer mapping remain host-owned in rdmaLinks; pods
             # select the capability rather than a hostname or ConnectX port.
@@ -335,16 +346,34 @@ in
         # Permit callbacks from each peer's management and common Kubernetes
         # address without trusting either whole LAN. The common network carries
         # DNS/rendezvous and MPI/NCCL bootstrap; bulk data stays on RoCE.
-        extraCommands = mkIf (peerControlIps != [ ] && !config.networking.nftables.enable) (
+        # Kubernetes pod ingress is narrower: only declared host-network service
+        # ports are reachable, allowing ClusterIP/LoadBalancer Services to target
+        # a dynamically placed serving pod without an intermediate relay.
+        extraCommands = mkIf (!config.networking.nftables.enable) (
           lib.concatMapStringsSep "\n" (peerIp: ''
             iptables -w -C nixos-fw -s ${peerIp} -j nixos-fw-accept 2>/dev/null || \
               iptables -w -I nixos-fw 1 -s ${peerIp} -j nixos-fw-accept
           '') peerControlIps
+          + optionalString (cfg.k8sHostNetworkServiceTCPPorts != [ ]) "\n"
+          + lib.concatMapStringsSep "\n" (
+            sourceCidr:
+            lib.concatMapStringsSep "\n" (port: ''
+              iptables -w -C nixos-fw -p tcp -s ${sourceCidr} --dport ${toString port} -j nixos-fw-accept 2>/dev/null || \
+                iptables -w -I nixos-fw 1 -p tcp -s ${sourceCidr} --dport ${toString port} -j nixos-fw-accept
+            '') cfg.k8sHostNetworkServiceTCPPorts
+          ) cfg.k8sHostNetworkServiceSourceCidrs
         );
-        extraInputRules = mkIf (peerControlIps != [ ] && config.networking.nftables.enable) (
+        extraInputRules = mkIf config.networking.nftables.enable (
           lib.concatMapStringsSep "\n" (peerIp: ''
             ip saddr ${peerIp} accept comment "DGX Spark MPI peer"
           '') peerControlIps
+          + optionalString (cfg.k8sHostNetworkServiceTCPPorts != [ ]) "\n"
+          + lib.concatMapStringsSep "\n" (
+            sourceCidr:
+            lib.concatMapStringsSep "\n" (port: ''
+              ip saddr ${sourceCidr} tcp dport ${toString port} accept comment "DGX Spark Kubernetes host-network service"
+            '') cfg.k8sHostNetworkServiceTCPPorts
+          ) cfg.k8sHostNetworkServiceSourceCidrs
         );
       };
       # DHCP/static addressing is managed explicitly by systemd.network below.
