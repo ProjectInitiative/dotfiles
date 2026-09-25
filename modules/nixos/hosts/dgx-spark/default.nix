@@ -183,8 +183,12 @@ in
       sopsFile = ./secrets.enc.yaml;
     };
 
-    # 802.1Q tagging for the mgmnt VLAN (same fabric as astrolabe)
-    boot.kernelModules = [ "8021q" ];
+    # 802.1Q tagging for the mgmnt VLAN and the userspace RDMA connection
+    # manager required by the Kubernetes RDMA shared-device plugin.
+    boot.kernelModules = [
+      "8021q"
+      "rdma_ucm"
+    ];
 
     services.openssh = {
       enable = true;
