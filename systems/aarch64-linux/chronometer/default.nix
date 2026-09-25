@@ -41,6 +41,10 @@ in
       "172.16.1.56" # Sextant
       "172.16.1.57" # Octant
     ];
+    rdmaPeerControlIps = [
+      "172.16.4.56" # Sextant
+      "172.16.4.57" # Octant
+    ];
     k8sServerAddr = "https://172.16.1.50:6443";
     k8sNodeIp = "172.16.4.55";
     k8sNodeIface = "mgmnt.10";

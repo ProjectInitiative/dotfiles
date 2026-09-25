@@ -16,6 +16,7 @@ let
       cfg.rdmaPeerManagementIps
     else
       lib.optional (cfg.rdmaPeerManagementIp != "") cfg.rdmaPeerManagementIp;
+  peerControlIps = lib.unique (peerManagementIps ++ cfg.rdmaPeerControlIps);
 
   # Build natively on the Spark itself (or on ARM infra) by setting
   # BUILD_ARM_NATIVE=true. Default: cross-compile the NVIDIA kernel on x86_64
@@ -60,6 +61,9 @@ in
     rdmaPeerManagementIps =
       mkOpt (types.listOf types.str) [ ]
         "Management IPs of directly connected RDMA peers (for MPI bootstrap callbacks)";
+    rdmaPeerControlIps =
+      mkOpt (types.listOf types.str) [ ]
+        "Common Kubernetes-network IPs of RDMA peers (for DNS/rendezvous and MPI callbacks)";
     rdmaLinks = mkOption {
       default = [ ];
       description = "ConnectX/RoCE interfaces to configure as direct links";
@@ -322,19 +326,19 @@ in
         # the Sparks. RDMA/NCCL also uses dynamic ports during bootstrap.
         trustedInterfaces = builtins.map (link: link.name) cfg.rdmaLinks;
 
-        # PRRTE advertises management first in its callback URI. Permit only
-        # the peer Spark (rather than trusting the whole management LAN), or
-        # the remote daemon stalls before trying the RDMA addresses.
-        extraCommands = mkIf (peerManagementIps != [ ] && !config.networking.nftables.enable) (
+        # Permit callbacks from each peer's management and common Kubernetes
+        # address without trusting either whole LAN. The common network carries
+        # DNS/rendezvous and MPI/NCCL bootstrap; bulk data stays on RoCE.
+        extraCommands = mkIf (peerControlIps != [ ] && !config.networking.nftables.enable) (
           lib.concatMapStringsSep "\n" (peerIp: ''
             iptables -w -C nixos-fw -s ${peerIp} -j nixos-fw-accept 2>/dev/null || \
               iptables -w -I nixos-fw 1 -s ${peerIp} -j nixos-fw-accept
-          '') peerManagementIps
+          '') peerControlIps
         );
-        extraInputRules = mkIf (peerManagementIps != [ ] && config.networking.nftables.enable) (
+        extraInputRules = mkIf (peerControlIps != [ ] && config.networking.nftables.enable) (
           lib.concatMapStringsSep "\n" (peerIp: ''
             ip saddr ${peerIp} accept comment "DGX Spark MPI peer"
-          '') peerManagementIps
+          '') peerControlIps
         );
       };
       # DHCP/static addressing is managed explicitly by systemd.network below.
