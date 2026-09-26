@@ -20,3 +20,5 @@ vendor/
 
 # core dumps — never commit (keel RISK-0014)
 *.core
+
+__pycache__/

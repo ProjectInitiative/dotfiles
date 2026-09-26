@@ -1,74 +1,74 @@
-# security.bitwarden — interactive secrets via Bitwarden (rbw)
+# security.bitwarden — Bitwarden-backed interactive secrets
 
 Long-running services keep using **sops-nix** (`/run/secrets`). This module
-covers the **interactive** surface: secrets are pulled from Bitwarden on demand
-and live only in process env vars — no plaintext secret files.
+covers the **interactive** surface only. Nothing here ever writes a credential
+to a named file on disk, git, or the Nix store.
 
-## Model
+## Commands
 
-- `rbw` keeps an encrypted local cache; `pinentry` prompts on demand.
-- Every grab runs with `RBW_UNLOCK_TIMEOUT` (default 5s): the vault unlocks,
-  serves the secret, and re-locks itself. The master password never lingers.
-- `RBW_NONINTERACTIVE=1` option makes any script fail instead of hanging on a
-  prompt — useful for wrappers and agents.
+### Auth session shells (bw CLI + jit-auth broker)
 
-## Kubernetes (multiple clusters)
-
-1. Store each cluster's bearer token as a Bitwarden item (field `token`),
-   e.g. items `dgx-k8s-token` and `homelab-k8s-token`.
-2. Declare clusters in the module and rebuild.
-3. Per shell session:
-
-   ```zsh
-   eval "$(k8s-token-dgx)"                 # prompts once, exports K8S_TOKEN_DGX
-   kubectl --context dgx get pods          # exec-based user reads $K8S_TOKEN_DGX
-   kubectl bitwarden unset K8S_TOKEN_DGX   # wipe when done
-   ```
-
-   Nothing touches disk: the generated kubeconfig users call `k8s-token-env`,
-   which emits the ExecCredential JSON from the env var named by
-   `K8S_AUTH_TOKEN_ENV`. The fragment lives in
-   `~/.config/kubeauth/kubeconfig` and is merged via `KUBECONFIG`
-   (`~/.kube/config:${XDG_CONFIG_HOME}/kubeauth/kubeconfig`) — entries in your
-   base kubeconfig win on conflicts.
-
-   Generic versions (work for clusters not declared in the module):
-
-   ```zsh
-   eval "$(k8s-token dgx-k8s-token K8S_TOKEN_DGX)"
-   bw-run K8S_TOKEN_DGX dgx-k8s-token -- kubectl --context dgx get pods   # one-shot, no export
-   kubectl bitwarden token dgx-k8s-token K8S_TOKEN_DGX                    # kubectl plugin spelling
-   ```
-
-## rclone
-
-Store the whole `rclone.conf` as a Bitwarden **secure note** (item
-`rclone-config` by default), then:
-
-```zsh
-rclone-load rclone-config listremotes
-rclone-load rclone-config copy bigfile.tar remote:backups/
+```text
+k8s-auth        unlock Bitwarden once -> raw kubeconfig held in RAM -> $SHELL
+rclone-auth     same for the raw rclone.conf -> RCLONE_CONFIG
 ```
 
-The config is materialized to a 0600 file in `XDG_RUNTIME_DIR` (tmpfs) for
-exactly one command, then deleted. `RCLONE_CONFIG` is never persisted.
+Inside the session:
 
-## Other wrappers
+- `$PATH` gains a session-local wrapper dir, so plain `kubectl` / `rclone`
+  work in scripts, `make`, `python subprocess`, `sh -c`, ... — transparently.
+- Each invocation gets a **fresh memfd** (anonymous RAM-only file) handed over
+  `SCM_RIGHTS` by `jit-auth-broker`; concurrent commands never share a read
+  offset. The config is never written to any named file.
+- `BW_SESSION`, `KUBECONFIG_RAW`, `RCLONE_CONFIG_RAW` are never exported into
+  the shell. Bitwarden is queried **once per session entry**, not per command.
+- Prompt is marked `[$k8s] ...` / `[$rclone] ...`; the reliable hook for your
+  own prompt config is the `JIT_AUTH_SESSION` env var.
+- `exit` kills the broker, removes the session dir (socket + wrapper), and the
+  credential is gone. Traps cover INT/TERM.
 
-- `bw-grab <FIELD> <ITEM> [-- VARNAME]` — print a field, or emit
-  `export VARNAME=...` for `eval "$(bw-grab password x -- X)"`
-- `bw-env VARNAME...` — dump only the requested entries from an explicitly
-  unlocked vault (`rbw agent env` protocol)
-- `bw-run <VAR> <ITEM> -- cmd...` — one-shot; secret exists only in the child
-- `argocd-login` — password from the vault, `ARGOCD_SERVER` required
-- `helm-registry-login <REGISTRY>` — registry secret from the vault
-- `bw-unlock` / `bw-lock` — manual control when you want it
+### One-shot helpers (rbw, unlock -> grab -> auto-relock)
 
-## Session hygiene tips
+```text
+bw-grab <FIELD> <ITEM> [-- VARNAME]   print value, or emit export line
+bw-run <VAR> <ITEM> -- cmd...         secret exists in the child only
+rclone-load <BW_ITEM> args...         whole rclone.conf, one command lifetime
+argocd-login                          password from the vault
+helm-registry-login <REGISTRY>        registry secret from the vault
+bw-unlock / bw-lock                   manual vault control
+```
 
-- Wipe vars when done: `kubectl bitwarden unset K8S_TOKEN_DGX` (they die with
-  the shell anyway — zellij panes included).
-- Keep `unlockTimeout` small; set `security.bitwarden.nonInteractive = true`
-  once your items are named so wrappers never hang on a prompt.
-- Enable the rbw agent in your window-manager autostart to avoid repeated
-  pinentry prompts: `rbw agent` (or `systemctl --user start rbw-agent`).
+## Configuration
+
+```nix
+projectinitiative.security.bitwarden = {
+  enable = true;
+  kubernetes.kubeconfigItem = "<BW item UUID or name>";  # REPLACE-ME
+  rclone.configItem = "<BW item UUID or name>";          # REPLACE-ME
+};
+```
+
+The raw kubeconfig / rclone.conf live in the vault as **secure notes**. To
+change extraction (e.g. a custom field), edit `bw_fetch_config()` in
+`packages/jit-auth/jit-auth-run`.
+
+## Trust model / security limitations (read this)
+
+This is **session scoping**, not same-UID isolation:
+
+- Anything you deliberately launch **inside** `k8s-auth` may use the session's
+  Kubernetes identity. That is the intended feature, not a leak.
+- Anything launched **outside** (other terminal, LLM agent, cron) gets
+  nothing: no env vars, no PATH wrapper, no reachable socket that survives
+  ancestry checks.
+- A malicious process already running as the same Unix UID can defeat all of
+  this via ptrace / `/proc` / injection. The system defends against:
+  persistent credentials on disk, globally exported credentials, accidental
+  cross-session reuse, and (via broker ancestry checks + 0600 socket +
+  0700 session dir) accidental access from unrelated same-UID processes.
+
+## Testing (fake credentials only)
+
+`packages/jit-auth/test.sh` exercises the broker lifecycle with a fake
+kubeconfig: once-per-session retrieval, PATH-wrapper invocation from
+bash/sh/scripts, concurrency, env hygiene, and exit cleanup.
