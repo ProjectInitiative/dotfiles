@@ -60,7 +60,11 @@ in
 
       security = {
         sops = enabled;
-        bitwarden = enabled;
+        bitwarden = {
+          enable = true;
+          kubernetes.kubeconfigItem = "3ab9fe60-6a48-477b-bf2d-b4d10040ae6c";
+          rclone.configItem = "9e164eb1-f3de-4608-97fe-b4d100407013";
+        };
       };
 
       tools = {
