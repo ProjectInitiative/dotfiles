@@ -4,6 +4,8 @@
   bash,
   bitwarden-cli,
   kubectl,
+  kubectx,
+  k9s,
   rclone,
   # Bitwarden item identifiers (UUID or name). Identifiers only — secret
   # contents never enter the store. Overridden from the module.
@@ -15,19 +17,22 @@
 #
 #   k8s-auth / rclone-auth  frontends: set JIT_* parameters, exec the core
 #   jit-auth-run            generic core: unlock bw once, fetch config once,
-#                           materialize it in a RAM-backed session file
-#                           ($XDG_RUNTIME_DIR/jit-auth-<session>-<pid>/config,
-#                           0600, inside a 0700 dir, removed on exit), export
-#                           it as the tool's config env var, spawn $SHELL.
+#                           start jit-auth-broker (owns ONE session-lifetime
+#                           mutable memfd), spawn $SHELL with session PATH
+#                           wrappers, clean up on exit
+#   jit-auth-broker         python helper: holds the config in an anonymous
+#                           RAM-only memfd; every wrapped invocation receives
+#                           a fresh open-file description of that SAME memfd
+#                           over SCM_RIGHTS (independent offsets, shared
+#                           mutable content) — kubectx/kubens rewrites
+#                           persist for the session without any named file
 #
-# Deviation from the original memfd-per-invocation design: context tools
-# (kubectx/kubens) REWRITE the kubeconfig and full-screen tools (k9s) read it
-# via $KUBECONFIG, so the session uses one mutable RAM-backed file instead of
-# per-invocation memfds. XDG_RUNTIME_DIR is tmpfs (systemd), so the config
-# lives in RAM only and vanishes at session end. See jit-auth-run's header.
+# Wrapper sets:
+#   k8s-auth    kubectl kubectx kubens k9s  (KUBECONFIG=/proc/self/fd/N)
+#   rclone-auth rclone                      (RCLONE_CONFIG=/proc/self/fd/N)
 stdenv.mkDerivation {
   pname = "jit-auth";
-  version = "0.2.0";
+  version = "0.3.0";
 
   src = ./.;
 
@@ -39,8 +44,9 @@ stdenv.mkDerivation {
     runHook preInstall
     mkdir -p $out/bin
 
+    install -Dm755 ${./jit-auth-broker} $out/bin/jit-auth-broker
     install -Dm755 ${./jit-auth-run} $out/bin/jit-auth-run
-    patchShebangs $out/bin/jit-auth-run
+    patchShebangs $out/bin
 
     substitute ${./frontend.sh.in} $out/bin/k8s-auth \
       --subst-var out \
@@ -49,6 +55,7 @@ stdenv.mkDerivation {
       --subst-var-by cmd_name kubectl \
       --subst-var-by config_env KUBECONFIG \
       --subst-var-by real_bin ${kubectl}/bin/kubectl \
+      --subst-var-by wrappers "kubectl:${kubectl}/bin/kubectl kubectx:${kubectx}/bin/kubectx kubens:${kubectx}/bin/kubens k9s:${k9s}/bin/k9s" \
       --subst-var-by bitwardenCli ${bitwarden-cli}
     chmod +x $out/bin/k8s-auth
 
@@ -59,6 +66,7 @@ stdenv.mkDerivation {
       --subst-var-by cmd_name rclone \
       --subst-var-by config_env RCLONE_CONFIG \
       --subst-var-by real_bin ${rclone}/bin/rclone \
+      --subst-var-by wrappers "rclone:${rclone}/bin/rclone" \
       --subst-var-by bitwardenCli ${bitwarden-cli}
     chmod +x $out/bin/rclone-auth
 

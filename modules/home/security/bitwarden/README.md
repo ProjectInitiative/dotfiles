@@ -9,23 +9,31 @@ to a named file on disk, git, or the Nix store.
 ### Auth session shells (bw CLI + jit-auth broker)
 
 ```text
-k8s-auth        unlock Bitwarden once -> raw kubeconfig held in RAM -> $SHELL
-rclone-auth     same for the raw rclone.conf -> RCLONE_CONFIG
+k8s-auth        unlock Bitwarden once -> broker owns ONE session-lifetime
+                mutable memfd -> $SHELL with wrappers for
+                kubectl/kubectx/kubens/k9s
+rclone-auth     same for the raw rclone.conf -> RCLONE_CONFIG (rclone wrapper)
 ```
 
 Inside the session:
 
-- `$PATH` gains a session-local wrapper dir, so plain `kubectl` / `rclone`
-  work in scripts, `make`, `python subprocess`, `sh -c`, ... — transparently.
-- Each invocation gets a **fresh memfd** (anonymous RAM-only file) handed over
-  `SCM_RIGHTS` by `jit-auth-broker`; concurrent commands never share a read
-  offset. The config is never written to any named file.
-- `BW_SESSION`, `KUBECONFIG_RAW`, `RCLONE_CONFIG_RAW` are never exported into
-  the shell. Bitwarden is queried **once per session entry**, not per command.
-- Prompt is marked `[$k8s] ...` / `[$rclone] ...`; the reliable hook for your
-  own prompt config is the `JIT_AUTH_SESSION` env var.
-- `exit` kills the broker, removes the session dir (socket + wrapper), and the
-  credential is gone. Traps cover INT/TERM.
+- `$PATH` gains a session-local wrapper dir, so plain `kubectl`, `kx`, `kn`,
+  `k9s`, `rclone` work in scripts, `make`, `python subprocess`, `sh -c`, ... —
+  transparently.
+- The broker holds the config as **one anonymous, RAM-only memfd for the
+  whole session**. Every invocation receives a fresh open-file description of
+  that SAME memfd over `SCM_RIGHTS`: independent per-client offsets
+  (concurrency-safe) but shared mutable content — so `kx`/`kn` rewrites
+  persist across commands and `k9s` sees them. No named file anywhere ever
+  contains the config; nothing is discoverable by crawling
+  `$XDG_RUNTIME_DIR`.
+- `BW_SESSION`, `KUBECONFIG_RAW`, `RCLONE_CONFIG_RAW` and a global
+  `KUBECONFIG` are never exported into the shell. Only the wrapped tool
+  process itself temporarily receives `KUBECONFIG=/proc/self/fd/N`.
+  Bitwarden is queried **once per session entry**, not per command.
+- `exit` kills the broker (its memfd — the only copy — closes with it),
+  removes the session dir (socket + wrappers), and the credential is gone.
+  Traps cover INT/TERM. A new `k8s-auth` starts fresh from the vault.
 
 ### One-shot helpers (rbw, unlock -> grab -> auto-relock)
 
@@ -60,12 +68,14 @@ This is **session scoping**, not same-UID isolation:
   Kubernetes identity. That is the intended feature, not a leak.
 - Anything launched **outside** (other terminal, LLM agent, cron) gets
   nothing: no env vars, no PATH wrapper, no reachable socket that survives
-  ancestry checks.
+  ancestry checks — and crucially, **no named file to find**: the config is
+  an anonymous memfd reachable only through the broker socket.
 - A malicious process already running as the same Unix UID can defeat all of
-  this via ptrace / `/proc` / injection. The system defends against:
-  persistent credentials on disk, globally exported credentials, accidental
-  cross-session reuse, and (via broker ancestry checks + 0600 socket +
-  0700 session dir) accidental access from unrelated same-UID processes.
+  this via ptrace / `/proc` / injection (it could even talk to the broker if
+  it spoofs ancestry — this is a capability boundary, not a wall). The
+  system defends against: persistent credentials on disk, globally exported
+  credentials, accidental discovery via directory crawling, and accidental
+  cross-session reuse.
 
 ## Testing (fake credentials only)
 

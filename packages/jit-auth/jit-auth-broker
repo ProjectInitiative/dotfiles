@@ -1,0 +1,233 @@
+#!/usr/bin/env python3
+"""jit-auth-broker — session credential holder for jit-auth shells.
+
+The broker owns ONE memfd per session, created at startup and populated once
+from its input fd. That anonymous, RAM-only file is the authoritative MUTABLE
+session state. On every authorized client request the broker opens a fresh
+open-file description on the same memfd (os.open on /proc/self/fd/<fd> yields
+a NEW file description — independent offset — referencing the SAME underlying
+data) and passes it to the client over SCM_RIGHTS.
+
+Consequences:
+  * concurrent clients never interfere: each request got its own description,
+    so one client's reads/seeks cannot consume or move another's offset
+  * writes through one client's descriptor (kubectx/kubens rewriting the
+    kubeconfig in place) are visible to every later client — context and
+    namespace mutations persist for the whole session
+  * when the broker exits the memfd closes and the config ceases to exist;
+    no named file anywhere ever contains it
+
+Security posture (see modules/home/security/bitwarden/README.md): this is a
+session capability boundary, NOT a defense against hostile code running as
+the same Unix UID (ptrace / /proc / injection defeat it).
+"""
+
+import argparse
+import os
+import select
+import socket
+import struct
+import sys
+
+MAX_CONFIG_BYTES = 4 * 1024 * 1024
+
+
+def die(msg: str) -> None:
+    print(f"jit-auth-broker: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def ppid_of(pid: int) -> int:
+    try:
+        with open(f"/proc/{pid}/status") as f:
+            for line in f:
+                if line.startswith("PPid:"):
+                    return int(line.split()[1])
+    except OSError:
+        pass
+    return 0
+
+
+def is_descendant(pid: int, root: int, max_hops: int = 128) -> bool:
+    """True if pid is root or a process-tree descendant of root."""
+    for _ in range(max_hops):
+        if pid == root:
+            return True
+        if pid <= 1:
+            return False
+        pid = ppid_of(pid)
+    return False
+
+
+def peer_pid(conn: socket.socket) -> int:
+    """Best-effort SO_PEERCRED; returns 0 when unavailable."""
+    try:
+        SO_PEERCRED = socket.SO_PEERCRED  # noqa: N806 (Linux-only constant)
+    except AttributeError:
+        return 0
+    try:
+        creds = conn.getsockopt(socket.SOL_SOCKET, SO_PEERCRED, 12)
+        pid, _uid, _gid = struct.unpack("3i", creds)
+        return pid
+    except OSError:
+        return 0
+
+
+def read_config_fd(fd: int) -> bytes:
+    chunks = []
+    total = 0
+    while True:
+        chunk = os.read(fd, 65536)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > MAX_CONFIG_BYTES:
+            die("config larger than 4MiB limit")
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
+def cmd_serve(args) -> None:
+    config = read_config_fd(args.config_fd)
+
+    # One memfd for the whole session. It is the authoritative mutable state;
+    # the Python bytes copy is dropped after this block.
+    try:
+        memfd = os.memfd_create("jit-auth-config", 0)
+    except (AttributeError, OSError) as e:
+        die(f"memfd_create failed: {e}")
+    os.write(memfd, config)
+    config = None  # the memfd now holds the only plaintext
+    os.lseek(memfd, 0, os.SEEK_SET)
+    # Reopening this path yields a fresh open-file description (independent
+    # offset) on the same anonymous inode — the trick that gives clients
+    # shared content WITHOUT shared offsets.
+    memfd_path = f"/proc/self/fd/{memfd}"
+
+    session_dir = os.path.dirname(args.socket)
+    try:
+        os.chmod(session_dir, 0o700)
+    except OSError:
+        pass
+
+    if os.path.exists(args.socket):
+        os.unlink(args.socket)
+    listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    listener.bind(args.socket)
+    os.chmod(args.socket, 0o600)
+    listener.listen(8)
+
+    # Readiness signal (parent polls for the socket too; this is belt+braces).
+    print("ready", flush=True)
+
+    while True:
+        try:
+            rlist, _, _ = select.select([sys.stdin, listener], [], [])
+        except InterruptedError:
+            continue
+        if sys.stdin in rlist:
+            break  # lifecycle pipe closed: parent auth script is gone
+        if listener not in rlist:
+            continue
+        try:
+            conn, _ = listener.accept()
+        except InterruptedError:
+            continue
+        with conn:
+            peer = peer_pid(conn)
+            # Capability boundary against accidental access from unrelated
+            # user processes, not a security wall.
+            if args.root_pid > 0 and peer > 0 and not is_descendant(peer, args.root_pid):
+                continue
+            try:
+                req = conn.recv(32).decode(errors="replace").strip()
+            except OSError:
+                continue
+            if req == "SHUTDOWN":
+                break
+            if req != "GET":
+                continue
+            # Fresh description on the SAME memfd: independent offset,
+            # shared mutable content.
+            try:
+                desc = os.open(memfd_path, os.O_RDWR)
+            except OSError as e:
+                die(f"cannot reopen session memfd: {e}")
+            try:
+                conn.sendmsg(
+                    [b"K"],
+                    [(socket.SOL_SOCKET, socket.SCM_RIGHTS, struct.pack("i", desc))],
+                )
+            except OSError:
+                pass
+            finally:
+                os.close(desc)  # client's received fd keeps the description alive
+
+    try:
+        os.unlink(args.socket)
+    except OSError:
+        pass
+    os.close(memfd)  # config ceases to exist with the broker
+
+
+def cmd_client(args) -> None:
+    try:
+        conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        conn.connect(args.socket)
+    except OSError as e:
+        die(f"cannot reach auth session socket: {e}")
+    with conn:
+        conn.sendall(b"GET\n")
+        try:
+            data, ancdata, _flags, _addr = conn.recvmsg(
+                16, socket.CMSG_SPACE(struct.calcsize("i"))
+            )
+        except OSError as e:
+            die(f"failed to receive credential: {e}")
+    fd = None
+    for _level, _ctype, cdata in ancdata:
+        fd = struct.unpack("i", cdata)[0]
+        break
+    if fd is None:
+        die("auth session did not provide a credential")
+    try:
+        os.set_inheritable(fd, True)  # survive execvpe below
+    except OSError:
+        die("failed to prepare credential descriptor")
+    env = dict(os.environ)
+    env[args.env] = f"/proc/self/fd/{fd}"
+    try:
+        os.execvpe(args.cmd[0], args.cmd, env)
+    except OSError:
+        die(f"cannot execute {args.cmd[0]}")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(prog="jit-auth-broker", add_help=False)
+    sub = parser.add_subparsers(dest="mode", required=True)
+
+    p_serve = sub.add_parser("serve")
+    p_serve.add_argument("--socket", required=True)
+    p_serve.add_argument("--root-pid", type=int, default=0)
+    p_serve.add_argument("--config-fd", type=int, default=3)
+
+    p_client = sub.add_parser("client")
+    p_client.add_argument("--socket", required=True)
+    p_client.add_argument("--env", required=True)
+    p_client.add_argument("cmd", nargs=argparse.REMAINDER)
+
+    args = parser.parse_args()
+    if args.mode == "client":
+        cmd = args.cmd
+        if cmd and cmd[0] == "--":
+            cmd = cmd[1:]
+        if not cmd:
+            die("client mode requires -- <command>")
+        args.cmd = cmd
+        cmd_client(args)
+    else:
+        cmd_serve(args)
+
+
+if __name__ == "__main__":
+    main()
