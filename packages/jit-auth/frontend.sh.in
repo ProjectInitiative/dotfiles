@@ -10,6 +10,5 @@ export JIT_BW_ITEM="@bw_item@"
 export JIT_CMD_NAME="@cmd_name@"
 export JIT_CONFIG_ENV="@config_env@"
 export JIT_REAL_BIN="@real_bin@"
-export JIT_BROKER="@out@/bin/jit-auth-broker"
 
 exec "@out@/bin/jit-auth-run" "$@"

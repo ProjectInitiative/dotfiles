@@ -1,15 +1,12 @@
 {
   lib,
   stdenv,
-  python3,
   bash,
   bitwarden-cli,
   kubectl,
   rclone,
-  makeWrapper,
   # Bitwarden item identifiers (UUID or name). Identifiers only — secret
-  # contents never enter the store. Override from the module once the items
-  # exist in the vault.
+  # contents never enter the store. Overridden from the module.
   k8sBitwardenItem ? "REPLACE-ME",
   rcloneBitwardenItem ? "REPLACE-ME",
 }:
@@ -18,19 +15,23 @@
 #
 #   k8s-auth / rclone-auth  frontends: set JIT_* parameters, exec the core
 #   jit-auth-run            generic core: unlock bw once, fetch config once,
-#                           start in-memory broker, spawn $SHELL, clean up
-#   jit-auth-broker         python helper: holds config in RAM, hands a fresh
-#                           memfd to each wrapped invocation over SCM_RIGHTS
+#                           materialize it in a RAM-backed session file
+#                           ($XDG_RUNTIME_DIR/jit-auth-<session>-<pid>/config,
+#                           0600, inside a 0700 dir, removed on exit), export
+#                           it as the tool's config env var, spawn $SHELL.
+#
+# Deviation from the original memfd-per-invocation design: context tools
+# (kubectx/kubens) REWRITE the kubeconfig and full-screen tools (k9s) read it
+# via $KUBECONFIG, so the session uses one mutable RAM-backed file instead of
+# per-invocation memfds. XDG_RUNTIME_DIR is tmpfs (systemd), so the config
+# lives in RAM only and vanishes at session end. See jit-auth-run's header.
 stdenv.mkDerivation {
   pname = "jit-auth";
-  version = "0.1.0";
+  version = "0.2.0";
 
   src = ./.;
 
-  nativeBuildInputs = [
-    makeWrapper
-    python3
-  ];
+  nativeBuildInputs = [ ];
   dontUnpack = true;
   dontBuild = true;
 
@@ -38,9 +39,8 @@ stdenv.mkDerivation {
     runHook preInstall
     mkdir -p $out/bin
 
-    install -Dm755 ${./jit-auth-broker} $out/bin/jit-auth-broker
     install -Dm755 ${./jit-auth-run} $out/bin/jit-auth-run
-    patchShebangs $out/bin
+    patchShebangs $out/bin/jit-auth-run
 
     substitute ${./frontend.sh.in} $out/bin/k8s-auth \
       --subst-var out \

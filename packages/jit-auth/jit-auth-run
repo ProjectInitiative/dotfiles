@@ -7,13 +7,21 @@
 #   JIT_BW_ITEM        Bitwarden item (UUID or name) holding the raw config
 #   JIT_CMD_NAME       wrapped command name (kubectl, rclone)
 #   JIT_CONFIG_ENV     env var the real tool reads (KUBECONFIG, RCLONE_CONFIG)
-#   JIT_REAL_BIN       absolute path to the real Nix-store binary
-#   JIT_BROKER         path to jit-auth-broker
+#   JIT_REAL_BIN       absolute path to the real Nix-store binary (existence check)
 #
-# Lifecycle: unlock Bitwarden once -> fetch config once -> hand it to a
-# jit-auth-broker (config held in RAM only) -> spawn $SHELL with a session
-# PATH wrapper -> on exit, broker killed, session dir (socket/wrapper) removed.
-# The config never exists as a named file; BW_SESSION never reaches the shell.
+# Lifecycle: unlock Bitwarden once -> fetch config once -> write it to a
+# RAM-backed session file (XDG_RUNTIME_DIR is tmpfs under systemd; 0600 in a
+# 0700 session dir) -> export it as JIT_CONFIG_ENV -> spawn $SHELL. On exit
+# the session dir is removed and the credential is gone. BW_SESSION never
+# reaches the shell.
+#
+# WHY A NAMED FILE (deviation from the original memfd-per-invocation design):
+# context-switching tools (kubectx/kubens) REWRITE the kubeconfig, and
+# full-screen tools (k9s) read it directly from $KUBECONFIG. A fresh memfd
+# per invocation can serve reads but cannot persist mutations between
+# commands. A session-scoped tmpfs file gives every child one mutable,
+# RAM-only source of truth that is destroyed at session end. Never /tmp,
+# never persistent, never in the store.
 #
 # SECURITY POSTURE: session scoping only — not a defense against hostile code
 # already running as the same Unix UID (ptrace / /proc / injection defeat it).
@@ -27,7 +35,6 @@ BW_ITEM="${JIT_BW_ITEM:-}"
 CMD_NAME="${JIT_CMD_NAME:?JIT_CMD_NAME not set}"
 CONFIG_ENV="${JIT_CONFIG_ENV:?JIT_CONFIG_ENV not set}"
 REAL_BIN="${JIT_REAL_BIN:?JIT_REAL_BIN not set}"
-BROKER="${JIT_BROKER:?JIT_BROKER not set}"
 
 msg() { printf '%s\n' "$*"; }
 fail() { printf 'error: %s\n' "$*" >&2; exit 1; }
@@ -38,18 +45,12 @@ fail() { printf 'error: %s\n' "$*" >&2; exit 1; }
 command -v bw >/dev/null 2>&1 || fail "bitwarden CLI (bw) not found in PATH"
 
 RUNTIME_BASE="$XDG_RUNTIME_DIR/jit-auth-$SESSION-$$"
-SOCKET="$RUNTIME_BASE/broker.sock"
-BIN_DIR="$RUNTIME_BASE/bin"
-mkdir -p "$BIN_DIR"
+mkdir -p "$RUNTIME_BASE"
 chmod 700 "$RUNTIME_BASE"
 
 cleanup() {
-  # Broker dies first so nothing can serve credentials afterwards, then the
-  # session dir (socket, wrapper) goes away with the directory.
-  if [ -n "${BROKER_PID:-}" ]; then
-    kill "$BROKER_PID" 2>/dev/null || true
-    wait "$BROKER_PID" 2>/dev/null || true
-  fi
+  # The session dir holds the RAM-backed config file, so removing it is the
+  # credential destruction step.
   rm -rf "$RUNTIME_BASE"
 }
 trap cleanup EXIT
@@ -78,36 +79,14 @@ CONFIG="$(bw_fetch_config)" || { unset BW_SESSION; fail "failed to retrieve $SES
 unset BW_SESSION  # the auth shell never sees the vault session key
 # (No `bw lock` needed: without BW_SESSION the CLI holds no unlocked state.)
 
-# Broker: config arrives on fd 3 (process-substitution pipe — the plaintext
-# never exists as a named file). The lifecycle fifo keeps the broker alive
-# only while this script lives; EOF on exit stops it even if cleanup breaks.
-LIFECYCLE="$RUNTIME_BASE/lifecycle"
-mkfifo "$LIFECYCLE"
-exec {LIFE_FD}<>"$LIFECYCLE"
-"$BROKER" serve --socket "$SOCKET" --root-pid "$$" < "$LIFECYCLE" \
-  3< <(printf '%s' "$CONFIG") &
-BROKER_PID=$!
+# Session config file: RAM-backed, 0600, inside the 0700 session dir,
+# removed on exit. One mutable source of truth for every child process.
+CONFIG_FILE="$RUNTIME_BASE/config"
+printf '%s\n' "$CONFIG" > "$CONFIG_FILE"
+chmod 600 "$CONFIG_FILE"
+unset CONFIG  # drop the shell's copy; the file is the only plaintext
 
-for _ in $(seq 1 50); do
-  [ -S "$SOCKET" ] && break
-  kill -0 "$BROKER_PID" 2>/dev/null || fail "jit-auth helper failed to start"
-  sleep 0.1
-done
-[ -S "$SOCKET" ] || fail "jit-auth helper failed to start"
-
-# Session-local PATH wrapper: children resolve the command via normal PATH
-# lookup and land here; it fetches a fresh memfd from the broker and execs
-# the real Nix-store binary (absolute path — no wrapper recursion).
-# Contains only store paths and the socket location — no secrets.
-cat > "$BIN_DIR/$CMD_NAME" <<WRAPPER_EOF
-#!/usr/bin/env bash
-exec "$BROKER" client --socket "$SOCKET" --env "$CONFIG_ENV" -- "$REAL_BIN" "\$@"
-WRAPPER_EOF
-chmod 700 "$BIN_DIR/$CMD_NAME"
-
-unset CONFIG  # the broker now owns the only plaintext copy
-
-export PATH="$BIN_DIR:$PATH"
+export "$CONFIG_ENV=$CONFIG_FILE"
 export JIT_AUTH_SESSION="$SESSION"
 # Best-effort prompt mark; if the user's zsh theme overrides PROMPT,
 # JIT_AUTH_SESSION is the reliable hook for their own prompt config.
