@@ -311,21 +311,23 @@ in
       '')
       # keel — dev-node portfolio grounding (canonical copy: ~/development/keel/ENTRY.md)
       (mkAfter ''
-      # keel — project portfolio grounding
+      # keel — project portfolio grounding (two instances: personal + church)
 
-      The dev node's project portfolio is mapped by **keel** at `~/development/keel`
-      (private git repo: one record per project, plus decisions, open questions, risks,
-      and an event log).
+      Two keel instances exist. **Route grounding and write-backs by project estate:**
+      - **Personal estate** (`ProjectInitiative` org, this dev node + laptop) → keel at `~/development/keel`
+      - **Church estate** (`ACTs-Fellowship-Church` org, mostly on the on-prem node) → keel-church at `~/development/keel-church`
 
-      Orientation (read-only, cheap):
+      Read the matching instance's `keel/projects/<id>.md` before working on a project; write records, DEC/OQ/RISK atoms, and events back into the **same instance**. Never mix estate records; cross-estate references are plain URLs, never atom ids. If unsure which estate a project belongs to, check both `keel/projects/` directories before inventing a record — and prefer keel-church for anything ACTs-Fellowship-Church-related.
+
+      Orientation for whichever keel applies (read-only, cheap):
       0. If a git remote is configured, sync first:
-         `git -C ~/development/keel pull --ff-only`. On failure (offline, diverged),
+         `git -C <keel-dir> pull --ff-only`. On failure (offline, diverged),
          note it and continue locally — advisory, never blocking.
-      1. Read `~/development/keel/AGENTS.md` — the charter and rules of engagement.
+      1. Read `<keel-dir>/AGENTS.md` — the charter and rules of engagement.
       2. Before working on any project, read its record:
-         `~/development/keel/keel/projects/<id>.md` (id = directory name).
+         `<keel-dir>/keel/projects/<id>.md` (id = directory name).
       3. For portfolio questions ("what's stale", "what's open"), run
-         `~/development/keel/tools/digest.sh all` — don't guess.
+         `<keel-dir>/tools/digest.sh all` — don't guess.
 
       Write-back (after meaningful work — keep it under a minute):
       4. State changed → update the record (`keel/sop/update.md`).
@@ -333,12 +335,12 @@ in
          default → `keel/open-questions/OQ-NNNN-*.md`; a fragility → `keel/risks/RISK-NNNN-*.md`.
          Copy an existing file as template; ids are zero-padded, continue from highest existing.
       6. Append one line to `keel/events/<year>.md`.
-      7. If a git remote is configured, commit all keel changes and `git push` — keel
-         is shared between machines (laptop + dev node); unsynced records are lost context.
+      7. If a git remote is configured, commit all keel changes and `git push` —
+         unsynced records are lost context.
 
       Prime directive: keel is ADVISORY, NEVER BLOCKING. Best-effort records with honest
       `confidence:`; never block delivery. Never edit `views/`. Never invent state you
-      didn't observe.
+      didn't observe. Sync failures are noted, never fatal.
       '')
     ];
 

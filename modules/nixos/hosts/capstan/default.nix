@@ -10,6 +10,7 @@ with lib.${namespace};
 let
   cfg = config.${namespace}.hosts.capstan;
   sops = config.sops;
+  lmdbCompact = pkgs.callPackage ../../../../packages/lmdb-compact { };
 
   nvmeDebugCollector = pkgs.writeShellApplication {
     name = "nvme-debug-collector";
@@ -143,7 +144,8 @@ in
       "pcie_port_pm=off"
       # disable nvme sleep states
       "nvme_core.default_ps_max_latency_us=0"
-    ] ++ optionals cfg.nvidiaSupport [
+    ]
+    ++ optionals cfg.nvidiaSupport [
       "nouveau.modeset=0"
       "nvidia-drm.modeset=1"
       "nvidia-drm.fbdev=1"
@@ -203,6 +205,7 @@ in
     # users.users.YOUR_USER.extraGroups = [ "tss" ];  # tss group has access to TPM devices
 
     environment.systemPackages = with pkgs; [
+      lmdbCompact
       bcachefs-tools
       util-linux
       smartmontools
