@@ -222,6 +222,12 @@ in
           text = builtins.readFile "${inputs.self}/modules/home/cli-apps/pi-coding-agent/extensions/remote-providers.ts";
         };
 
+        # Custom tool rendering; starts sessions with tool output expanded.
+        extensions.tool-renderer = {
+          enable = true;
+          text = builtins.readFile "${inputs.self}/modules/home/cli-apps/pi-coding-agent/extensions/tool-renderer.ts";
+        };
+
         # Pi packages from npm — pinned versions, auto-installed on startup
         packages = {
           pi-subagents = {

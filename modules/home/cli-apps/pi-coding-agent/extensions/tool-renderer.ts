@@ -17,6 +17,11 @@ import { Text, truncateToWidth } from "@earendil-works/pi-tui";
 export default function (pi: ExtensionAPI) {
 	const cwd = process.cwd();
 
+	// Start every session with tool output expanded instead of Pi's compact view.
+	pi.on("session_start", (_event, ctx) => {
+		ctx.ui.setToolsExpanded(true);
+	});
+
 	// ── Style helpers ─────────────────────────────────────────────────────────
 
 	function muted(s: string, theme: any) {
