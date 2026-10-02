@@ -68,7 +68,13 @@ with lib.${namespace};
   # right; switch to a static IP (or NetworkManager) if the LAN requires it.
   networking = {
     useNetworkd = true;
-    firewall.enable = true;
+    firewall = {
+      enable = true;
+      allowedTCPPorts = [ 8080 ];
+  #     allowedUDPPortRanges = [
+  #       { from = 4000; to = 4007; }
+  # ];
+};
   };
 
   systemd.network.networks."10-ethernet" = {
