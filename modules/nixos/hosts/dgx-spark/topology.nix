@@ -142,5 +142,10 @@ assert lib.assertMsg (
   builtins.length (lib.unique (builtins.map (link: link.id) links)) == builtins.length links
 ) "DGX Spark RDMA link IDs must be unique";
 {
-  inherit controlAddresses links linksFor peerControlAddressesFor;
+  inherit
+    controlAddresses
+    links
+    linksFor
+    peerControlAddressesFor
+    ;
 }

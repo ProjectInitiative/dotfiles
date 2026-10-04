@@ -29,33 +29,47 @@ let
   enabledServers = lib.filterAttrs (name: server: server.enable) cfg.mcp.servers;
 
   # Transform server definitions into opencode MCP format
-  mcpServersJson = builtins.mapAttrs (name: server:
-    if server.type == "remote" then {
-      type = "remote";
-      url = server.url;
-    } else if server.type == "streamable-http" then {
-      type = "streamable-http";
-      url = server.url;
-    } else {
-      type = "stdio";
-      command = server.command;
-      args = server.args;
-    } // lib.optionalAttrs (server.env != { }) { env = server.env; }
+  mcpServersJson = builtins.mapAttrs (
+    name: server:
+    if server.type == "remote" then
+      {
+        type = "remote";
+        url = server.url;
+      }
+    else if server.type == "streamable-http" then
+      {
+        type = "streamable-http";
+        url = server.url;
+      }
+    else
+      {
+        type = "stdio";
+        command = server.command;
+        args = server.args;
+      }
+      // lib.optionalAttrs (server.env != { }) { env = server.env; }
   ) enabledServers;
 
   # Pi MCP config — same servers, different format
   # remote → streamable-http SSE (supported by pi-mcp-adapter)
-  mcpPiJson = builtins.mapAttrs (name: server:
-    if server.type == "remote" then {
-      type = "streamable-http";
-      url = server.url;
-    } else {
-      command = server.command;
-      args = server.args;
-    } // lib.optionalAttrs (server.env != { }) { env = server.env; }
+  mcpPiJson = builtins.mapAttrs (
+    name: server:
+    if server.type == "remote" then
+      {
+        type = "streamable-http";
+        url = server.url;
+      }
+    else
+      {
+        command = server.command;
+        args = server.args;
+      }
+      // lib.optionalAttrs (server.env != { }) { env = server.env; }
   ) enabledServers;
 
-  mcpPiConfig = { mcpServers = mcpPiJson; };
+  mcpPiConfig = {
+    mcpServers = mcpPiJson;
+  };
 
   # Merge base config with generated MCP section
   fullOpenCodeConfig = baseOpenCodeConfig // {
@@ -94,35 +108,41 @@ in
       enable = mkBoolOpt true "Configure MCP servers for AI agents.";
 
       servers = mkOption {
-        type = types.attrsOf (types.submodule {
-          options = {
-            enable = mkEnableOption "this MCP server";
-            type = mkOption {
-              type = types.enum [ "stdio" "remote" "streamable-http" ];
-              description = "MCP transport type";
+        type = types.attrsOf (
+          types.submodule {
+            options = {
+              enable = mkEnableOption "this MCP server";
+              type = mkOption {
+                type = types.enum [
+                  "stdio"
+                  "remote"
+                  "streamable-http"
+                ];
+                description = "MCP transport type";
+              };
+              url = mkOption {
+                type = types.nullOr types.str;
+                default = null;
+                description = "URL for remote/streamable-http servers";
+              };
+              command = mkOption {
+                type = types.nullOr types.str;
+                default = null;
+                description = "Command for stdio servers";
+              };
+              args = mkOption {
+                type = types.listOf types.str;
+                default = [ ];
+                description = "Arguments for stdio servers";
+              };
+              env = mkOption {
+                type = types.attrsOf types.str;
+                default = { };
+                description = "Environment variables for stdio servers";
+              };
             };
-            url = mkOption {
-              type = types.nullOr types.str;
-              default = null;
-              description = "URL for remote/streamable-http servers";
-            };
-            command = mkOption {
-              type = types.nullOr types.str;
-              default = null;
-              description = "Command for stdio servers";
-            };
-            args = mkOption {
-              type = types.listOf types.str;
-              default = [ ];
-              description = "Arguments for stdio servers";
-            };
-            env = mkOption {
-              type = types.attrsOf types.str;
-              default = { };
-              description = "Environment variables for stdio servers";
-            };
-          };
-        });
+          }
+        );
         default = {
           k8s-cc = {
             enable = true;

@@ -12,24 +12,22 @@ let
   cfg = config.${namespace}.cli-apps.pi-coding;
   jsonFormat = pkgs.formats.json { };
   # Strip null values from attrs so optional fields don't clutter the JSON
-  stripNull = attrs: builtins.mapAttrs (n: v:
-    if builtins.isAttrs v then stripNull v
-    else v
-  ) (lib.filterAttrs (n: v: v != null) attrs);
+  stripNull =
+    attrs:
+    builtins.mapAttrs (n: v: if builtins.isAttrs v then stripNull v else v) (
+      lib.filterAttrs (n: v: v != null) attrs
+    );
 
   # Build package references for settings.json packages array
   packagesList = lib.pipe cfg.packages [
     (lib.filterAttrs (n: v: v.enable))
-    (lib.mapAttrsToList (n: v:
-      "npm:${n}" + lib.optionalString (v.version != null) "@${v.version}"
-    ))
+    (lib.mapAttrsToList (n: v: "npm:${n}" + lib.optionalString (v.version != null) "@${v.version}"))
   ];
 
   # Final settings JSON: merge user settings with managed packages list
-  settingsJson = builtins.toJSON (stripNull (
-    (if cfg.settings != null then cfg.settings else { })
-    // { packages = packagesList; }
-  ));
+  settingsJson = builtins.toJSON (
+    stripNull ((if cfg.settings != null then cfg.settings else { }) // { packages = packagesList; })
+  );
 
   # Wrapper for pi: isolates npm packages to ~/.pi/npm/ and ensures node is in PATH
   # Named pi-launcher to avoid binary name conflict with nixpkgs pi-coding-agent
@@ -56,43 +54,57 @@ in
       };
 
       systemPromptMode = mkOption {
-        type = types.enum [ "replace" "append" ];
+        type = types.enum [
+          "replace"
+          "append"
+        ];
         default = "append";
         description = "Whether SYSTEM.md replaces or appends to the default prompt.";
       };
     };
 
     settings = mkOption {
-      type = types.nullOr (types.submodule {
-        freeformType = jsonFormat.type;
-        options = {
-          defaultProvider = mkOption {
-            type = types.nullOr types.str;
-            default = null;
-            description = "Default provider (e.g., anthropic, openai).";
+      type = types.nullOr (
+        types.submodule {
+          freeformType = jsonFormat.type;
+          options = {
+            defaultProvider = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "Default provider (e.g., anthropic, openai).";
+            };
+            defaultModel = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "Default model ID.";
+            };
+            defaultThinkingLevel = mkOption {
+              type = types.nullOr (
+                types.enum [
+                  "off"
+                  "minimal"
+                  "low"
+                  "medium"
+                  "high"
+                  "xhigh"
+                ]
+              );
+              default = null;
+              description = "Default thinking level for reasoning-capable models.";
+            };
+            hideThinkingBlock = mkOption {
+              type = types.bool;
+              default = false;
+              description = "Hide thinking blocks in output.";
+            };
+            theme = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "Theme name (dark, light, or custom).";
+            };
           };
-          defaultModel = mkOption {
-            type = types.nullOr types.str;
-            default = null;
-            description = "Default model ID.";
-          };
-          defaultThinkingLevel = mkOption {
-            type = types.nullOr (types.enum [ "off" "minimal" "low" "medium" "high" "xhigh" ]);
-            default = null;
-            description = "Default thinking level for reasoning-capable models.";
-          };
-          hideThinkingBlock = mkOption {
-            type = types.bool;
-            default = false;
-            description = "Hide thinking blocks in output.";
-          };
-          theme = mkOption {
-            type = types.nullOr types.str;
-            default = null;
-            description = "Theme name (dark, light, or custom).";
-          };
-        };
-      });
+        }
+      );
       default = null;
       description = ''
         Settings to write to ~/.pi/agent/settings.json.
@@ -102,36 +114,40 @@ in
     };
 
     skills = mkOption {
-      type = types.attrsOf (types.submodule {
-        options = {
-          enable = mkEnableOption "this pi skill";
+      type = types.attrsOf (
+        types.submodule {
+          options = {
+            enable = mkEnableOption "this pi skill";
 
-          instructions = mkOption {
-            type = types.lines;
-            default = "";
-            description = "Markdown instructions loaded on-demand when the skill activates.";
+            instructions = mkOption {
+              type = types.lines;
+              default = "";
+              description = "Markdown instructions loaded on-demand when the skill activates.";
+            };
+
+            tools = mkOption {
+              type = types.attrsOf (
+                types.submodule {
+                  options = {
+                    text = mkOption {
+                      type = types.lines;
+                      description = "Shell script content for this tool.";
+                    };
+
+                    description = mkOption {
+                      type = types.str;
+                      default = "";
+                      description = "Description of this tool's purpose.";
+                    };
+                  };
+                }
+              );
+              default = { };
+              description = "Executable tools provided by this skill.";
+            };
           };
-
-          tools = mkOption {
-            type = types.attrsOf (types.submodule {
-              options = {
-                text = mkOption {
-                  type = types.lines;
-                  description = "Shell script content for this tool.";
-                };
-
-                description = mkOption {
-                  type = types.str;
-                  default = "";
-                  description = "Description of this tool's purpose.";
-                };
-              };
-            });
-            default = { };
-            description = "Executable tools provided by this skill.";
-          };
-        };
-      });
+        }
+      );
       default = { };
       description = ''
         Pi skills — capability packages with instructions and tools, loaded on-demand.
@@ -141,44 +157,53 @@ in
     };
 
     models = mkOption {
-      type = types.nullOr (types.submodule {
-        freeformType = jsonFormat.type;
-        options.providers = mkOption {
-          type = types.attrsOf (types.submodule {
-            freeformType = jsonFormat.type;
-            options = {
-              baseUrl = mkOption {
-                type = types.str;
-                description = "API base URL (e.g., http://localhost:11434/v1).";
-              };
-              api = mkOption {
-                type = types.enum [ "openai-completions" "anthropic-messages" ];
-                description = "API format.";
-              };
-              apiKey = mkOption {
-                type = types.nullOr types.str;
-                default = null;
-                description = ''
-                  API key. Use "$ENV_VAR" to pull from environment, or "!command" to
-                  execute a shell command at request time. Avoid hardcoding secrets in Nix.
-                '';
-              };
-              models = mkOption {
-                type = types.listOf (types.submodule {
-                  freeformType = jsonFormat.type;
-                  options.id = mkOption {
+      type = types.nullOr (
+        types.submodule {
+          freeformType = jsonFormat.type;
+          options.providers = mkOption {
+            type = types.attrsOf (
+              types.submodule {
+                freeformType = jsonFormat.type;
+                options = {
+                  baseUrl = mkOption {
                     type = types.str;
-                    description = "Model ID (e.g., llama3.1:8b).";
+                    description = "API base URL (e.g., http://localhost:11434/v1).";
                   };
-                });
-                description = "List of models from this provider.";
-              };
-            };
-          });
-          default = { };
-          description = "Provider configurations (ollama, vllm, lm-studio, etc.).";
-        };
-      });
+                  api = mkOption {
+                    type = types.enum [
+                      "openai-completions"
+                      "anthropic-messages"
+                    ];
+                    description = "API format.";
+                  };
+                  apiKey = mkOption {
+                    type = types.nullOr types.str;
+                    default = null;
+                    description = ''
+                      API key. Use "$ENV_VAR" to pull from environment, or "!command" to
+                      execute a shell command at request time. Avoid hardcoding secrets in Nix.
+                    '';
+                  };
+                  models = mkOption {
+                    type = types.listOf (
+                      types.submodule {
+                        freeformType = jsonFormat.type;
+                        options.id = mkOption {
+                          type = types.str;
+                          description = "Model ID (e.g., llama3.1:8b).";
+                        };
+                      }
+                    );
+                    description = "List of models from this provider.";
+                  };
+                };
+              }
+            );
+            default = { };
+            description = "Provider configurations (ollama, vllm, lm-studio, etc.).";
+          };
+        }
+      );
       default = null;
       description = ''
         Custom providers and models written to ~/.pi/agent/models.json.
@@ -187,18 +212,20 @@ in
     };
 
     packages = mkOption {
-      type = types.attrsOf (types.submodule {
-        options = {
-          enable = mkEnableOption "this pi package";
-          version = mkOption {
-            type = types.nullOr types.str;
-            default = null;
-            description = ''
-              Version to pin (e.g. "0.34.0"). Omit to let pi resolve to latest.
-            '';
+      type = types.attrsOf (
+        types.submodule {
+          options = {
+            enable = mkEnableOption "this pi package";
+            version = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = ''
+                Version to pin (e.g. "0.34.0"). Omit to let pi resolve to latest.
+              '';
+            };
           };
-        };
-      });
+        }
+      );
       default = { };
       description = ''
         Pi packages installed from npm. These are pinned by version when specified.
@@ -218,16 +245,18 @@ in
     };
 
     extensions = mkOption {
-      type = types.attrsOf (types.submodule {
-        options = {
-          enable = mkEnableOption "this pi extension";
+      type = types.attrsOf (
+        types.submodule {
+          options = {
+            enable = mkEnableOption "this pi extension";
 
-          text = mkOption {
-            type = types.lines;
-            description = "TypeScript source for the extension.";
+            text = mkOption {
+              type = types.lines;
+              description = "TypeScript source for the extension.";
+            };
           };
-        };
-      });
+        }
+      );
       default = { };
       description = ''
         Pi extensions — TypeScript modules that extend pi with custom tools,
@@ -242,105 +271,105 @@ in
 
     ${namespace}.cli-apps.pi-coding.agent.instructions = mkMerge [
       (mkDefault ''
-      # pi self-configuration guide
+        # pi self-configuration guide
 
-      Your config is managed by Nix (home-manager). To extend yourself, add skills under
-      `projectinitiative.cli-apps.pi-coding.skills.<name>` in any Nix module.
+        Your config is managed by Nix (home-manager). To extend yourself, add skills under
+        `projectinitiative.cli-apps.pi-coding.skills.<name>` in any Nix module.
 
-      ## Adding a skill
+        ## Adding a skill
 
-      ```
-      projectinitiative.cli-apps.pi-coding.skills.my-skill = {
-        enable = true;
-        instructions = "Markdown loaded when this skill activates.";
-        tools.my-tool.text = "#!/usr/bin/env bash\necho hello";
-      };
-      ```
+        ```
+        projectinitiative.cli-apps.pi-coding.skills.my-skill = {
+          enable = true;
+          instructions = "Markdown loaded when this skill activates.";
+          tools.my-tool.text = "#!/usr/bin/env bash\necho hello";
+        };
+        ```
 
-      Generates `~/.pi/skills/<name>/instructions.md` + `~/.pi/skills/<name>/tools/<tool>`.
+        Generates `~/.pi/skills/<name>/instructions.md` + `~/.pi/skills/<name>/tools/<tool>`.
 
-      ## Adding an extension
+        ## Adding an extension
 
-      ```
-      projectinitiative.cli-apps.pi-coding.extensions.my-ext = {
-        enable = true;
-        text = builtins.readFile ./path/to/my-extension.ts;
-      };
-      ```
+        ```
+        projectinitiative.cli-apps.pi-coding.extensions.my-ext = {
+          enable = true;
+          text = builtins.readFile ./path/to/my-extension.ts;
+        };
+        ```
 
-      Generates `~/.pi/agent/extensions/<name>.ts`. Run `/reload` in pi to activate.
+        Generates `~/.pi/agent/extensions/<name>.ts`. Run `/reload` in pi to activate.
 
-      ## Settings
+        ## Settings
 
-      ```
-      projectinitiative.cli-apps.pi-coding.settings = {
-        hideThinkingBlock = true;
-        defaultThinkingLevel = "high";
-        theme = "dark";
-      };
-      ```
+        ```
+        projectinitiative.cli-apps.pi-coding.settings = {
+          hideThinkingBlock = true;
+          defaultThinkingLevel = "high";
+          theme = "dark";
+        };
+        ```
 
-      Generates `~/.pi/agent/settings.json` with those values.
+        Generates `~/.pi/agent/settings.json` with those values.
 
-      ## Extending from another module
+        ## Extending from another module
 
-      Any Nix module can set these options — other agents can add pi skills or extensions
-      by setting their own `projectinitiative.cli-apps.pi-coding.skills.<name>` or
-      `projectinitiative.cli-apps.pi-coding.extensions.<name>` block.
+        Any Nix module can set these options — other agents can add pi skills or extensions
+        by setting their own `projectinitiative.cli-apps.pi-coding.skills.<name>` or
+        `projectinitiative.cli-apps.pi-coding.extensions.<name>` block.
 
-      ## Development workflow (faster iteration)
+        ## Development workflow (faster iteration)
 
-      Instead of rebuilding Nix for every change, use `pi-dev`:
+        Instead of rebuilding Nix for every change, use `pi-dev`:
 
-      ```bash
-      # Deploy an extension to the writable path for /reload testing
-      pi-dev dashboard-footer
+        ```bash
+        # Deploy an extension to the writable path for /reload testing
+        pi-dev dashboard-footer
 
-      # Watch mode: auto-deploys on file save
-      pi-dev peek --watch
+        # Watch mode: auto-deploys on file save
+        pi-dev peek --watch
 
-      # Deploy + open in editor
-      pi-dev permissions --edit
-      ```
+        # Deploy + open in editor
+        pi-dev permissions --edit
+        ```
 
-      Then `/reload` in pi to see changes. When stable, run `nh os switch` to lock it in.
+        Then `/reload` in pi to see changes. When stable, run `nh os switch` to lock it in.
 
-      ## Apply
+        ## Apply
 
-      Run `home-manager switch` then `/reload` in pi.
+        Run `home-manager switch` then `/reload` in pi.
       '')
       # keel — dev-node portfolio grounding (canonical copy: ~/development/keel/ENTRY.md)
       (mkAfter ''
-      # keel — project portfolio grounding (two instances: personal + church)
+        # keel — project portfolio grounding (two instances: personal + church)
 
-      Two keel instances exist. **Route grounding and write-backs by project estate:**
-      - **Personal estate** (`ProjectInitiative` org, this dev node + laptop) → keel at `~/development/keel`
-      - **Church estate** (`ACTs-Fellowship-Church` org, mostly on the on-prem node) → keel-church at `~/development/keel-church`
+        Two keel instances exist. **Route grounding and write-backs by project estate:**
+        - **Personal estate** (`ProjectInitiative` org, this dev node + laptop) → keel at `~/development/keel`
+        - **Church estate** (`ACTs-Fellowship-Church` org, mostly on the on-prem node) → keel-church at `~/development/keel-church`
 
-      Read the matching instance's `keel/projects/<id>.md` before working on a project; write records, DEC/OQ/RISK atoms, and events back into the **same instance**. Never mix estate records; cross-estate references are plain URLs, never atom ids. If unsure which estate a project belongs to, check both `keel/projects/` directories before inventing a record — and prefer keel-church for anything ACTs-Fellowship-Church-related.
+        Read the matching instance's `keel/projects/<id>.md` before working on a project; write records, DEC/OQ/RISK atoms, and events back into the **same instance**. Never mix estate records; cross-estate references are plain URLs, never atom ids. If unsure which estate a project belongs to, check both `keel/projects/` directories before inventing a record — and prefer keel-church for anything ACTs-Fellowship-Church-related.
 
-      Orientation for whichever keel applies (read-only, cheap):
-      0. If a git remote is configured, sync first:
-         `git -C <keel-dir> pull --ff-only`. On failure (offline, diverged),
-         note it and continue locally — advisory, never blocking.
-      1. Read `<keel-dir>/AGENTS.md` — the charter and rules of engagement.
-      2. Before working on any project, read its record:
-         `<keel-dir>/keel/projects/<id>.md` (id = directory name).
-      3. For portfolio questions ("what's stale", "what's open"), run
-         `<keel-dir>/tools/digest.sh all` — don't guess.
+        Orientation for whichever keel applies (read-only, cheap):
+        0. If a git remote is configured, sync first:
+           `git -C <keel-dir> pull --ff-only`. On failure (offline, diverged),
+           note it and continue locally — advisory, never blocking.
+        1. Read `<keel-dir>/AGENTS.md` — the charter and rules of engagement.
+        2. Before working on any project, read its record:
+           `<keel-dir>/keel/projects/<id>.md` (id = directory name).
+        3. For portfolio questions ("what's stale", "what's open"), run
+           `<keel-dir>/tools/digest.sh all` — don't guess.
 
-      Write-back (after meaningful work — keep it under a minute):
-      4. State changed → update the record (`keel/sop/update.md`).
-      5. A durable choice → `keel/decisions/DEC-NNNN-*.md`; an unknown with a working
-         default → `keel/open-questions/OQ-NNNN-*.md`; a fragility → `keel/risks/RISK-NNNN-*.md`.
-         Copy an existing file as template; ids are zero-padded, continue from highest existing.
-      6. Append one line to `keel/events/<year>.md`.
-      7. If a git remote is configured, commit all keel changes and `git push` —
-         unsynced records are lost context.
+        Write-back (after meaningful work — keep it under a minute):
+        4. State changed → update the record (`keel/sop/update.md`).
+        5. A durable choice → `keel/decisions/DEC-NNNN-*.md`; an unknown with a working
+           default → `keel/open-questions/OQ-NNNN-*.md`; a fragility → `keel/risks/RISK-NNNN-*.md`.
+           Copy an existing file as template; ids are zero-padded, continue from highest existing.
+        6. Append one line to `keel/events/<year>.md`.
+        7. If a git remote is configured, commit all keel changes and `git push` —
+           unsynced records are lost context.
 
-      Prime directive: keel is ADVISORY, NEVER BLOCKING. Best-effort records with honest
-      `confidence:`; never block delivery. Never edit `views/`. Never invent state you
-      didn't observe. Sync failures are noted, never fatal.
+        Prime directive: keel is ADVISORY, NEVER BLOCKING. Best-effort records with honest
+        `confidence:`; never block delivery. Never edit `views/`. Never invent state you
+        didn't observe. Sync failures are noted, never fatal.
       '')
     ];
 
@@ -357,7 +386,12 @@ in
       # SYSTEM.md — system prompt overrides
       // (optionalAttrs (cfg.agent.systemPrompt != null) {
         ".pi/agent/SYSTEM.md".text =
-          (if cfg.agent.systemPromptMode == "replace" then "<!-- pi: mode=replace -->\n" else "<!-- pi: mode=append -->\n")
+          (
+            if cfg.agent.systemPromptMode == "replace" then
+              "<!-- pi: mode=replace -->\n"
+            else
+              "<!-- pi: mode=append -->\n"
+          )
           + cfg.agent.systemPrompt;
       })
 
@@ -378,11 +412,13 @@ in
       })
 
       # Skills — capability packages loaded on-demand
-      // (foldl' (acc: skillName:
+      // (foldl' (
+        acc: skillName:
         let
           skill = cfg.skills.${skillName};
         in
-        acc // optionalAttrs skill.enable (
+        acc
+        // optionalAttrs skill.enable (
           {
             ".pi/skills/${skillName}/instructions.md".text = skill.instructions;
           }
@@ -397,11 +433,13 @@ in
       ) { } (attrNames cfg.skills))
 
       # Extensions — TypeScript modules that extend pi
-      // (foldl' (acc: extName:
+      // (foldl' (
+        acc: extName:
         let
           ext = cfg.extensions.${extName};
         in
-        acc // optionalAttrs ext.enable {
+        acc
+        // optionalAttrs ext.enable {
           ".pi/agent/extensions/${extName}.ts".text = ext.text;
         }
       ) { } (attrNames cfg.extensions));

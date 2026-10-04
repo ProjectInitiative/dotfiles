@@ -14,7 +14,8 @@ with lib.${namespace};
 let
   # Plain cross-compiled aarch64 kernel from nixpkgs (no Rockchip patches).
   # AVF applies its own 6.1 patches via boot.kernelPatches.
-  crossKernel = inputs.nixpkgs.legacyPackages.x86_64-linux.pkgsCross.aarch64-multiplatform.linuxPackages_6_1;
+  crossKernel =
+    inputs.nixpkgs.legacyPackages.x86_64-linux.pkgsCross.aarch64-multiplatform.linuxPackages_6_1;
 
   cfg = config.${namespace};
 in
@@ -33,9 +34,7 @@ in
 
   # Cross-compile the kernel on x86_64; use AVF's native kernel on aarch64.
   boot.kernelPackages = lib.mkOverride 40 (
-    if builtins.getEnv "BUILD_ARM_NATIVE" == "true"
-    then pkgs.linuxPackages_6_1
-    else crossKernel
+    if builtins.getEnv "BUILD_ARM_NATIVE" == "true" then pkgs.linuxPackages_6_1 else crossKernel
   );
 
   projectinitiative = {

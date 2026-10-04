@@ -66,6 +66,7 @@ in
         fd
         jq
         glow
+        pkgs.${namespace}.leaf
         herdr
         mtr
         ncdu

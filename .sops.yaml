@@ -58,7 +58,7 @@ creation_rules:
           - *ssh_capstan2
           - *ssh_capstan3
           - *ssh_astrolabe
-          - *ssh_chronometer 
+          - *ssh_chronometer
           - *ssh_sextant
           - *ssh_octant
           - *ssh_lightship_atx
@@ -120,10 +120,9 @@ creation_rules:
       - age:
           - *ssh_kylepzak
           - *ssh_thinkpad
-          - *ssh_chronometer 
+          - *ssh_chronometer
           - *ssh_sextant
           - *ssh_octant
-
 
   - path_regex: thinkpad/[^/]+\.yaml$
     # - path: thinkpad/secrets.enc.yaml

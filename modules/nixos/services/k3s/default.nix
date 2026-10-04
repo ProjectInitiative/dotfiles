@@ -26,11 +26,7 @@ let
   manifestModule =
     let
       mkTarget =
-        name:
-        if lib.hasSuffix ".yaml" name || lib.hasSuffix ".yml" name then
-          name
-        else
-          name + ".yaml";
+        name: if lib.hasSuffix ".yaml" name || lib.hasSuffix ".yml" name then name else name + ".yaml";
     in
     lib.types.submodule (
       {
@@ -84,21 +80,16 @@ let
               docName = "k3s-manifest-doc-${builtins.baseNameOf name}";
               yamlDocSeparator = builtins.toFile "yaml-doc-separator" "\n---\n";
 
-              mkYaml =
-                yamlName: value:
-                (pkgs.formats.yaml { }).generate yamlName value;
+              mkYaml = yamlName: value: (pkgs.formats.yaml { }).generate yamlName value;
 
               mkSource =
                 value:
                 if builtins.isList value then
                   pkgs.concatText name' (
-                    lib.concatMap (
-                      document:
-                      [
-                        yamlDocSeparator
-                        (mkYaml docName document)
-                      ]
-                    ) value
+                    lib.concatMap (document: [
+                      yamlDocSeparator
+                      (mkYaml docName document)
+                    ]) value
                   )
                 else
                   mkYaml name' value;
@@ -109,27 +100,16 @@ let
       }
     );
 
-  enabledManifests =
-    lib.filter
-      (manifest: manifest.enable)
-      (lib.attrValues cfg.manifests);
+  enabledManifests = lib.filter (manifest: manifest.enable) (lib.attrValues cfg.manifests);
 
   linkManifestEntry =
-    manifest:
-    "${pkgs.coreutils-full}/bin/ln -sfn ${manifest.source} ${manifestDir}/${manifest.target}";
+    manifest: "${pkgs.coreutils-full}/bin/ln -sfn ${manifest.source} ${manifestDir}/${manifest.target}";
 
-  linkImageEntry =
-    image:
-    "${pkgs.coreutils-full}/bin/ln -sfn ${image} ${imageDir}/${image.name}";
+  linkImageEntry = image: "${pkgs.coreutils-full}/bin/ln -sfn ${image} ${imageDir}/${image.name}";
 
   linkChartEntry =
     let
-      mkTarget =
-        name:
-        if lib.hasSuffix ".tgz" name then
-          name
-        else
-          name + ".tgz";
+      mkTarget = name: if lib.hasSuffix ".tgz" name then name else name + ".tgz";
     in
     name: value:
     "${pkgs.coreutils-full}/bin/ln -sfn ${value} ${chartDir}/${mkTarget (builtins.baseNameOf name)}";
@@ -141,45 +121,30 @@ let
       builtins.length enabledManifests > 0
     ) "${pkgs.coreutils-full}/bin/mkdir -p ${manifestDir}"}
 
-    ${lib.optionalString (
-      cfg.charts != { }
-    ) "${pkgs.coreutils-full}/bin/mkdir -p ${chartDir}"}
+    ${lib.optionalString (cfg.charts != { }) "${pkgs.coreutils-full}/bin/mkdir -p ${chartDir}"}
 
     ${lib.optionalString (
       builtins.length cfg.images > 0
     ) "${pkgs.coreutils-full}/bin/mkdir -p ${imageDir}"}
 
-    ${builtins.concatStringsSep "\n" (
-      map linkManifestEntry enabledManifests
-    )}
+    ${builtins.concatStringsSep "\n" (map linkManifestEntry enabledManifests)}
 
-    ${builtins.concatStringsSep "\n" (
-      lib.mapAttrsToList linkChartEntry cfg.charts
-    )}
+    ${builtins.concatStringsSep "\n" (lib.mapAttrsToList linkChartEntry cfg.charts)}
 
-    ${builtins.concatStringsSep "\n" (
-      map linkImageEntry cfg.images
-    )}
+    ${builtins.concatStringsSep "\n" (map linkImageEntry cfg.images)}
 
     ${lib.optionalString (cfg.containerdConfigTemplate != null) ''
       ${pkgs.coreutils-full}/bin/mkdir -p \
         "$(${pkgs.coreutils-full}/bin/dirname ${lib.escapeShellArg containerdConfigTemplateFile})"
 
       ${pkgs.coreutils-full}/bin/ln -sfn \
-        ${
-          pkgs.writeText
-            "config.toml.tmpl"
-            cfg.containerdConfigTemplate
-        } \
+        ${pkgs.writeText "config.toml.tmpl" cfg.containerdConfigTemplate} \
         ${lib.escapeShellArg containerdConfigTemplateFile}
     ''}
   '';
 
   normalizedExtraFlags =
-    if builtins.isList cfg.extraFlags then
-      cfg.extraFlags
-    else
-      [ cfg.extraFlags ];
+    if builtins.isList cfg.extraFlags then cfg.extraFlags else [ cfg.extraFlags ];
 
   startK3sScript =
     let
@@ -192,52 +157,43 @@ let
         })
         // cfg.extraKubeletConfig;
 
-      kubeletConfig =
-        (pkgs.formats.yaml { }).generate "k3s-kubelet-config" (
-          {
-            apiVersion = "kubelet.config.k8s.io/v1beta1";
-            kind = "KubeletConfiguration";
-          }
-          // kubeletParams
-        );
+      kubeletConfig = (pkgs.formats.yaml { }).generate "k3s-kubelet-config" (
+        {
+          apiVersion = "kubelet.config.k8s.io/v1beta1";
+          kind = "KubeletConfiguration";
+        }
+        // kubeletParams
+      );
 
-      kubeProxyConfig =
-        (pkgs.formats.yaml { }).generate "k3s-kubeProxy-config" (
-          {
-            apiVersion = "kubeproxy.config.k8s.io/v1alpha1";
-            kind = "KubeProxyConfiguration";
-          }
-          // cfg.extraKubeProxyConfig
-        );
+      kubeProxyConfig = (pkgs.formats.yaml { }).generate "k3s-kubeProxy-config" (
+        {
+          apiVersion = "kubeproxy.config.k8s.io/v1alpha1";
+          kind = "KubeProxyConfiguration";
+        }
+        // cfg.extraKubeProxyConfig
+      );
 
-      k3sCommand =
-        lib.concatStringsSep " \\\n  " (
-          [ "${cfg.package}/bin/k3s ${cfg.role}" ]
-          ++ lib.optional cfg.clusterInit "--cluster-init"
-          ++ lib.optional cfg.disableAgent "--disable-agent"
-          ++ lib.optional (
-            cfg.serverAddr != ""
-          ) "--server ${lib.escapeShellArg cfg.serverAddr}"
-          ++ lib.optional (
-            cfg.token != ""
-          ) "--token ${lib.escapeShellArg cfg.token}"
-          ++ lib.optional (
-            cfg.tokenFile != null
-          ) "--token-file ${lib.escapeShellArg (toString cfg.tokenFile)}"
-          ++ lib.optional (
-            cfg.configPath != null
-          ) "--config ${lib.escapeShellArg (toString cfg.configPath)}"
-          ++ lib.optional (
-            cfg.dataDir != "/var/lib/rancher/k3s"
-          ) "--data-dir ${lib.escapeShellArg (toString cfg.dataDir)}"
-          ++ lib.optional (
-            kubeletParams != { }
-          ) "--kubelet-arg=config=${lib.escapeShellArg (toString kubeletConfig)}"
-          ++ lib.optional (
-            cfg.extraKubeProxyConfig != { }
-          ) "--kube-proxy-arg=config=${lib.escapeShellArg (toString kubeProxyConfig)}"
-          ++ normalizedExtraFlags
-        );
+      k3sCommand = lib.concatStringsSep " \\\n  " (
+        [ "${cfg.package}/bin/k3s ${cfg.role}" ]
+        ++ lib.optional cfg.clusterInit "--cluster-init"
+        ++ lib.optional cfg.disableAgent "--disable-agent"
+        ++ lib.optional (cfg.serverAddr != "") "--server ${lib.escapeShellArg cfg.serverAddr}"
+        ++ lib.optional (cfg.token != "") "--token ${lib.escapeShellArg cfg.token}"
+        ++ lib.optional (
+          cfg.tokenFile != null
+        ) "--token-file ${lib.escapeShellArg (toString cfg.tokenFile)}"
+        ++ lib.optional (cfg.configPath != null) "--config ${lib.escapeShellArg (toString cfg.configPath)}"
+        ++ lib.optional (
+          cfg.dataDir != "/var/lib/rancher/k3s"
+        ) "--data-dir ${lib.escapeShellArg (toString cfg.dataDir)}"
+        ++ lib.optional (
+          kubeletParams != { }
+        ) "--kubelet-arg=config=${lib.escapeShellArg (toString kubeletConfig)}"
+        ++ lib.optional (
+          cfg.extraKubeProxyConfig != { }
+        ) "--kube-proxy-arg=config=${lib.escapeShellArg (toString kubeProxyConfig)}"
+        ++ normalizedExtraFlags
+      );
     in
     pkgs.writeShellScript "start-k3s" ''
       set -euo pipefail
@@ -503,9 +459,7 @@ in
     extraFlags = lib.mkOption {
       description = "Additional flags passed to the K3s command.";
 
-      type =
-        with lib.types;
-        either str (listOf str);
+      type = with lib.types; either str (listOf str);
 
       default = [ ];
 
@@ -660,9 +614,7 @@ in
     };
 
     charts = lib.mkOption {
-      type =
-        with lib.types;
-        attrsOf (either path package);
+      type = with lib.types; attrsOf (either path package);
 
       default = { };
 
@@ -710,9 +662,7 @@ in
     };
 
     images = lib.mkOption {
-      type =
-        with lib.types;
-        listOf package;
+      type = with lib.types; listOf package;
 
       default = [ ];
 
@@ -771,9 +721,7 @@ in
     };
 
     extraKubeletConfig = lib.mkOption {
-      type =
-        with lib.types;
-        attrsOf anything;
+      type = with lib.types; attrsOf anything;
 
       default = { };
 
@@ -792,17 +740,14 @@ in
     };
 
     extraKubeProxyConfig = lib.mkOption {
-      type =
-        with lib.types;
-        attrsOf anything;
+      type = with lib.types; attrsOf anything;
 
       default = { };
 
       example = {
         mode = "nftables";
 
-        clientConnection.kubeconfig =
-          "/var/lib/rancher/k3s/agent/kubeproxy.kubeconfig";
+        clientConnection.kubeconfig = "/var/lib/rancher/k3s/agent/kubeproxy.kubeconfig";
       };
 
       description = ''
@@ -816,47 +761,33 @@ in
 
   config = lib.mkIf cfg.enable {
     warnings =
-      lib.optional (
-        cfg.role != "server" && cfg.manifests != { }
-      ) ''
+      lib.optional (cfg.role != "server" && cfg.manifests != { }) ''
         k3s: Auto-deploying manifests are only installed on server nodes
         (`role = "server"`). They will be ignored by this node.
       ''
-      ++ lib.optional (
-        cfg.role != "server" && cfg.charts != { }
-      ) ''
+      ++ lib.optional (cfg.role != "server" && cfg.charts != { }) ''
         k3s: Helm charts are only made available on server nodes
         (`role = "server"`). They will be ignored by this node.
       ''
-      ++ lib.optional (
-        cfg.disableAgent && cfg.images != [ ]
-      ) ''
+      ++ lib.optional (cfg.disableAgent && cfg.images != [ ]) ''
         k3s: Images are only imported on nodes with an enabled agent.
         They will be ignored by this node.
       ''
-      ++ lib.optional (
-        cfg.role == "agent"
-        && cfg.configPath == null
-        && cfg.serverAddr == ""
-      ) ''
+      ++ lib.optional (cfg.role == "agent" && cfg.configPath == null && cfg.serverAddr == "") ''
         k3s: An agent should set `serverAddr` or provide a `server` key through
         `configPath`.
       ''
-      ++ lib.optional (
-        cfg.role == "agent"
-        && cfg.configPath == null
-        && cfg.tokenFile == null
-        && cfg.token == ""
-      ) ''
-        k3s: An agent should set `token`, `tokenFile`, or provide a token
-        through `configPath`.
-      '';
+      ++
+        lib.optional
+          (cfg.role == "agent" && cfg.configPath == null && cfg.tokenFile == null && cfg.token == "")
+          ''
+            k3s: An agent should set `token`, `tokenFile`, or provide a token
+            through `configPath`.
+          '';
 
     assertions = [
       {
-        assertion =
-          cfg.role != "agent"
-          || !cfg.disableAgent;
+        assertion = cfg.role != "agent" || !cfg.disableAgent;
 
         message = ''
           k3s: `disableAgent` must be false when `role = "agent"`.
@@ -864,9 +795,7 @@ in
       }
 
       {
-        assertion =
-          cfg.role != "agent"
-          || !cfg.clusterInit;
+        assertion = cfg.role != "agent" || !cfg.clusterInit;
 
         message = ''
           k3s: `clusterInit` must be false when `role = "agent"`.
@@ -874,12 +803,7 @@ in
       }
 
       {
-        assertion =
-          !(
-            cfg.role == "server"
-            && cfg.clusterInit
-            && cfg.serverAddr != ""
-          );
+        assertion = !(cfg.role == "server" && cfg.clusterInit && cfg.serverAddr != "");
 
         message = ''
           k3s: `clusterInit` and `serverAddr` must not both be set.
@@ -890,8 +814,7 @@ in
       }
 
       {
-        assertion =
-          !(cfg.token != "" && cfg.tokenFile != null);
+        assertion = !(cfg.token != "" && cfg.tokenFile != null);
 
         message = ''
           k3s: Configure either `token` or `tokenFile`, not both.
@@ -899,8 +822,7 @@ in
       }
 
       {
-        assertion =
-          !(cfg.configPath != null && cfg.clusterInit);
+        assertion = !(cfg.configPath != null && cfg.clusterInit);
 
         message = ''
           k3s: `clusterInit` should not be set alongside `configPath`.
@@ -911,8 +833,7 @@ in
       }
 
       {
-        assertion =
-          !(cfg.configPath != null && cfg.serverAddr != "");
+        assertion = !(cfg.configPath != null && cfg.serverAddr != "");
 
         message = ''
           k3s: `serverAddr` should not be set alongside `configPath`.
@@ -923,8 +844,7 @@ in
       }
 
       {
-        assertion =
-          !(cfg.configPath != null && cfg.token != "");
+        assertion = !(cfg.configPath != null && cfg.token != "");
 
         message = ''
           k3s: `token` should not be set alongside `configPath`.
@@ -935,8 +855,7 @@ in
       }
 
       {
-        assertion =
-          !(cfg.configPath != null && cfg.tokenFile != null);
+        assertion = !(cfg.configPath != null && cfg.tokenFile != null);
 
         message = ''
           k3s: `tokenFile` should not be set alongside `configPath`.
@@ -947,16 +866,17 @@ in
       }
     ];
 
-    environment.systemPackages =
-      [ cfg.package ]
-      ++ lib.optionals (cfg.role == "server") [
-        pkgs.etcd
-        k3sEtcdctl
-        k3sEtcdHealth
-        k3sEtcdStatus
-        k3sEtcdMembers
-        k3sEtcdRequireHealthy
-      ];
+    environment.systemPackages = [
+      cfg.package
+    ]
+    ++ lib.optionals (cfg.role == "server") [
+      pkgs.etcd
+      k3sEtcdctl
+      k3sEtcdHealth
+      k3sEtcdStatus
+      k3sEtcdMembers
+      k3sEtcdRequireHealthy
+    ];
 
     systemd.services.k3s = {
       description = "K3s service";
@@ -975,44 +895,36 @@ in
         "multi-user.target"
       ];
 
-      path =
-        lib.optional
-          config.boot.zfs.enabled
-          config.boot.zfs.package;
+      path = lib.optional config.boot.zfs.enabled config.boot.zfs.package;
 
-      serviceConfig =
-        {
-          # K3s agents do not use systemd readiness notification. Servers do.
-          Type =
-            if cfg.role == "agent" then
-              "exec"
-            else
-              "notify";
+      serviceConfig = {
+        # K3s agents do not use systemd readiness notification. Servers do.
+        Type = if cfg.role == "agent" then "exec" else "notify";
 
-          KillMode = "process";
-          Delegate = "yes";
+        KillMode = "process";
+        Delegate = "yes";
 
-          Restart = "always";
-          RestartSec = "5s";
+        Restart = "always";
+        RestartSec = "5s";
 
-          LimitNOFILE = 1048576;
-          LimitNPROC = "infinity";
-          LimitCORE = "infinity";
-          TasksMax = "infinity";
+        LimitNOFILE = 1048576;
+        LimitNPROC = "infinity";
+        LimitCORE = "infinity";
+        TasksMax = "infinity";
 
-          EnvironmentFile = cfg.environmentFile;
+        EnvironmentFile = cfg.environmentFile;
 
-          ExecStartPre = activateK3sContent;
-          ExecStart = startK3sScript;
-        }
-        // lib.optionalAttrs (cfg.role == "server") {
-          /*
-            A newly added embedded-etcd member may need additional time to
-            receive and apply its initial datastore snapshot before K3s sends
-            its systemd readiness notification.
-          */
-          TimeoutStartSec = "300s";
-        };
+        ExecStartPre = activateK3sContent;
+        ExecStart = startK3sScript;
+      }
+      // lib.optionalAttrs (cfg.role == "server") {
+        /*
+          A newly added embedded-etcd member may need additional time to
+          receive and apply its initial datastore snapshot before K3s sends
+          its systemd readiness notification.
+        */
+        TimeoutStartSec = "300s";
+      };
     };
   };
 

@@ -24,13 +24,13 @@ with lib.${namespace};
     ];
   };
   # ── Boot ────────────────────────────────────────────────────────────────
-  # 
-  boot.kernelParams = [ 
-    # Forces the headless generic video driver (simple-framebuffer) to keep 
-    # the video output pin permanently active. This prevents the server from 
-    # dropping the video signal when the Sipeed NanoKVM Lite is power-cycled 
+  #
+  boot.kernelParams = [
+    # Forces the headless generic video driver (simple-framebuffer) to keep
+    # the video output pin permanently active. This prevents the server from
+    # dropping the video signal when the Sipeed NanoKVM Lite is power-cycled
     # or disconnected remotely.
-    "video=Unknown-1:e" 
+    "video=Unknown-1:e"
   ];
   # systemd-boot for a standard EFI mini-pc
   boot.loader.systemd-boot.enable = true;
@@ -47,11 +47,10 @@ with lib.${namespace};
   };
 
   zramSwap = {
-      enable = true;
-      algorithm = "zstd"; # Best compression ratio for servers
-      memoryPercent = 15;
-    };
-
+    enable = true;
+    algorithm = "zstd"; # Best compression ratio for servers
+    memoryPercent = 15;
+  };
 
   # ── SSH (hardened, key-only — keys come from the kylepzak user module) ──
   services.openssh = {
@@ -106,7 +105,6 @@ with lib.${namespace};
         ];
       };
     };
-
 
     virtualization = {
       docker = enabled;

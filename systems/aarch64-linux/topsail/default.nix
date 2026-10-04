@@ -9,11 +9,15 @@
   lib,
   modulesPath,
   ...
-}: let
-  armBoot = if builtins.getEnv "BUILD_ARM_NATIVE" == "true"
-    then inputs.nixos-on-arm.bootModules
-    else inputs.nixos-on-arm.bootModulesCross;
-in {
+}:
+let
+  armBoot =
+    if builtins.getEnv "BUILD_ARM_NATIVE" == "true" then
+      inputs.nixos-on-arm.bootModules
+    else
+      inputs.nixos-on-arm.bootModulesCross;
+in
+{
   imports = armBoot.e52c;
 
   boot.supportedFilesystems.zfs = lib.mkForce false;

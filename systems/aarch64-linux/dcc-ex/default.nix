@@ -15,10 +15,13 @@
 with lib;
 with lib.${namespace};
 let
-  armBoot = if builtins.getEnv "BUILD_ARM_NATIVE" == "true"
-    then inputs.nixos-on-arm.bootModules
-    else inputs.nixos-on-arm.bootModulesCross;
-in {
+  armBoot =
+    if builtins.getEnv "BUILD_ARM_NATIVE" == "true" then
+      inputs.nixos-on-arm.bootModules
+    else
+      inputs.nixos-on-arm.bootModulesCross;
+in
+{
   imports = armBoot.renegade;
 
   # Enable JMRI Server from the dcc-ex flake

@@ -30,7 +30,10 @@ let
   # changes through the local API event stream.
   # Drop host-level accept-dns overrides so this module's policy cannot be
   # accidentally changed back to Tailscale's native DNS integration.
-  tailscale_flags = [ "--accept-dns=false" ] ++ filter (arg: !hasPrefix "--accept-dns=" arg) cfg.extraArgs;
+  tailscale_flags = [
+    "--accept-dns=false"
+  ]
+  ++ filter (arg: !hasPrefix "--accept-dns=" arg) cfg.extraArgs;
 in
 {
   # ===============================================================
@@ -80,10 +83,22 @@ in
     services.resolved.enable = true;
     systemd.services.tailscale-dns = {
       description = "Configure Tailscale split DNS without host DNS takeover";
-      wantedBy = [ "multi-user.target" "tailscaled.service" ];
-      bindsTo = [ "tailscaled.service" "systemd-resolved.service" ];
-      partOf = [ "tailscaled.service" "systemd-resolved.service" ];
-      after = [ "tailscaled.service" "systemd-resolved.service" ];
+      wantedBy = [
+        "multi-user.target"
+        "tailscaled.service"
+      ];
+      bindsTo = [
+        "tailscaled.service"
+        "systemd-resolved.service"
+      ];
+      partOf = [
+        "tailscaled.service"
+        "systemd-resolved.service"
+      ];
+      after = [
+        "tailscaled.service"
+        "systemd-resolved.service"
+      ];
       serviceConfig = {
         Type = "simple";
         Restart = "always";

@@ -9,9 +9,11 @@
 }:
 let
   nvme = "nvme-Inland_TN320_NVMe_SSD_IB23AK0512P00800-part1";
-  armBoot = if builtins.getEnv "BUILD_ARM_NATIVE" == "true"
-    then inputs.nixos-on-arm.bootModules
-    else inputs.nixos-on-arm.bootModulesCross;
+  armBoot =
+    if builtins.getEnv "BUILD_ARM_NATIVE" == "true" then
+      inputs.nixos-on-arm.bootModules
+    else
+      inputs.nixos-on-arm.bootModulesCross;
 in
 {
   imports = armBoot.rock5a ++ [

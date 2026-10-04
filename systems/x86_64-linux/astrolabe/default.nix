@@ -77,13 +77,13 @@ let
 
     hardware.amd-npu = {
       enable = true;
-      enableNPU = true;         # default; set false for GPU-only hosts (see "Other hardware")
-      enableFastFlowLM = true;  # LLM inference on NPU (requires enableNPU)
-      enableLemonade = true;    # OpenAI-compatible API server
-      enableROCm = true;        # ROCm GPU backends (llamacpp + sd-cpp)
-      useRocmNightly = true;    # build ROCm from rocm-systems develop branch
-      enableVulkan = true;      # Vulkan GPU backends (llamacpp + whispercpp)
-      enableImageGen = true;    # default true; set false to drop sd-cpp from closure
+      enableNPU = true; # default; set false for GPU-only hosts (see "Other hardware")
+      enableFastFlowLM = true; # LLM inference on NPU (requires enableNPU)
+      enableLemonade = true; # OpenAI-compatible API server
+      enableROCm = true; # ROCm GPU backends (llamacpp + sd-cpp)
+      useRocmNightly = true; # build ROCm from rocm-systems develop branch
+      enableVulkan = true; # Vulkan GPU backends (llamacpp + whispercpp)
+      enableImageGen = true; # default true; set false to drop sd-cpp from closure
       lemonade.user = "kylepzak";
       lemonade.host = "0.0.0.0";
       lemonade.maxLoadedModels = 4;
@@ -93,10 +93,10 @@ let
       XDG_CACHE_HOME = "/mnt/pool/ai/huggingface";
     };
 
-     environment.systemPackages = [
-       inputs.nix-amd-ai.packages.${pkgs.system}.llama-cpp-vulkan
-       inputs.nix-amd-ai.packages.${pkgs.system}.llama-cpp-rocm
-     ];
+    environment.systemPackages = [
+      inputs.nix-amd-ai.packages.${pkgs.system}.llama-cpp-vulkan
+      inputs.nix-amd-ai.packages.${pkgs.system}.llama-cpp-rocm
+    ];
 
     boot.extraModulePackages = [ config.boot.kernelPackages.r8125 ];
     boot.blacklistedKernelModules = [ "r8169" ];

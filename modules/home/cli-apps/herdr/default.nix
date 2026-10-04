@@ -17,12 +17,14 @@ let
   # Script that installs any missing plugins
   pluginsScript = pkgs.writeShellScriptBin "herdr-plugins" ''
     set -euo pipefail
-    ${lib.concatStringsSep "\n" (map (name: ''
-      if ! herdr plugin list 2>/dev/null | grep -q "^${name} "; then
-        echo "herdr: installing plugin ${name}..."
-        herdr plugin install ${name} --yes
-      fi
-    '') (attrNames cfg.plugins))}
+    ${lib.concatStringsSep "\n" (
+      map (name: ''
+        if ! herdr plugin list 2>/dev/null | grep -q "^${name} "; then
+          echo "herdr: installing plugin ${name}..."
+          herdr plugin install ${name} --yes
+        fi
+      '') (attrNames cfg.plugins)
+    )}
   '';
 in
 {
@@ -30,11 +32,13 @@ in
     enable = mkBoolOpt false "Whether to enable herdr terminal multiplexer configuration.";
 
     plugins = mkOption {
-      type = types.attrsOf (types.submodule {
-        options = {
-          enable = mkEnableOption "this herdr plugin";
-        };
-      });
+      type = types.attrsOf (
+        types.submodule {
+          options = {
+            enable = mkEnableOption "this herdr plugin";
+          };
+        }
+      );
       default = { };
       description = ''
         Herdr plugins to auto-install. Run herdr plugin list to see installed.
@@ -49,9 +53,12 @@ in
 
   config = mkIf cfg.enable {
 
-    home.packages = with pkgs; [
-      herdr
-    ] ++ optional hasPlugins pluginsScript;
+    home.packages =
+      with pkgs;
+      [
+        herdr
+      ]
+      ++ optional hasPlugins pluginsScript;
 
     home.file.".config/herdr/config.toml" = {
       source = "${inputs.self}/homes/dotfiles/herdr/config.toml";

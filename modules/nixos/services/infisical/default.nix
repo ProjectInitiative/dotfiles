@@ -22,8 +22,13 @@ let
 
   # Universal Auth credentials may be supplied directly (null) or pointed at
   # runtime files. Nothing is embedded in the repo.
-  clientIdFile = if cfg.clientIdFile != null then cfg.clientIdFile else "${cfg.credentialsDir}/client-id";
-  clientSecretFile = if cfg.clientSecretFile != null then cfg.clientSecretFile else "${cfg.credentialsDir}/client-secret";
+  clientIdFile =
+    if cfg.clientIdFile != null then cfg.clientIdFile else "${cfg.credentialsDir}/client-id";
+  clientSecretFile =
+    if cfg.clientSecretFile != null then
+      cfg.clientSecretFile
+    else
+      "${cfg.credentialsDir}/client-secret";
 
   authConfig =
     if cfg.authMethod == "universal-auth" then
@@ -48,7 +53,8 @@ let
     destination-path = s.path;
     config = {
       polling-interval = cfg.pollingInterval;
-    } // optionalAttrs (s.onChange != null) { execute.command = s.onChange; };
+    }
+    // optionalAttrs (s.onChange != null) { execute.command = s.onChange; };
   }) cfg.secrets;
 
   agentConfigFile = (pkgs.formats.yaml { }).generate "infisical-agent.yaml" (
@@ -83,24 +89,31 @@ in
       "gcp"
       "kubernetes"
     ]) "universal-auth" "Infisical authentication method.";
-    credentialsDir = mkOpt str "/var/lib/infisical" "Directory holding the universal-auth client-id/client-secret files.";
-    clientIdFile = mkOpt (nullOr path) null "Explicit path to the file containing the universal-auth client ID.";
-    clientSecretFile = mkOpt (nullOr path) null "Explicit path to the file containing the universal-auth client secret.";
+    credentialsDir =
+      mkOpt str "/var/lib/infisical"
+        "Directory holding the universal-auth client-id/client-secret files.";
+    clientIdFile =
+      mkOpt (nullOr path) null
+        "Explicit path to the file containing the universal-auth client ID.";
+    clientSecretFile =
+      mkOpt (nullOr path) null
+        "Explicit path to the file containing the universal-auth client secret.";
     removeClientSecretOnRead = mkBoolOpt false "Delete the client secret file after reading it.";
     authConfig = mkOpt attrs { } "Auth config used for non-universal auth methods.";
     pollingInterval = mkOpt str "5m" "How often the agent checks for secret changes.";
     secrets = mkOpt (listOf secretSubmodule) [ ] "Secrets to render to files.";
     extraConfig = mkOpt attrs { } "Extra attributes merged into the agent config.";
-    writablePaths = mkOpt (listOf str) [ ] "Extra paths the agent may write to, in addition to destination directories.";
+    writablePaths =
+      mkOpt (listOf str) [ ]
+        "Extra paths the agent may write to, in addition to destination directories.";
   };
 
   config = mkIf cfg.enable {
-    systemd.tmpfiles.rules =
-      [
-        "d /run/secrets 0700 root root -"
-        "d ${cfg.credentialsDir} 0700 root root -"
-      ]
-      ++ map (d: "d ${d} 0700 root root -") destinationDirs;
+    systemd.tmpfiles.rules = [
+      "d /run/secrets 0700 root root -"
+      "d ${cfg.credentialsDir} 0700 root root -"
+    ]
+    ++ map (d: "d ${d} 0700 root root -") destinationDirs;
 
     systemd.services.infisical-agent = {
       description = "Infisical Agent - render secrets to files at runtime";

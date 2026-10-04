@@ -173,7 +173,10 @@ in
         ];
         allowedTCPPortRanges = [
           # FTP Passive control
-          { from = 21100; to = 21102;}
+          {
+            from = 21100;
+            to = 21102;
+          }
         ];
         allowedUDPPorts = [
           # DNS

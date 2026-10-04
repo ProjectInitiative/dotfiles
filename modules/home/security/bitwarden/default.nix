@@ -129,20 +129,34 @@ in
     enable = mkBoolOpt false "Whether or not to enable Bitwarden-backed interactive secrets (rbw one-shots + jit-auth session shells).";
 
     email = mkOpt types.str "kylepzak" "Bitwarden account email used for `rbw`.";
-    serverUrl = mkOpt types.str "https://vault.bitwarden.com" "Bitwarden server URL (change for self-hosted vaultwarden).";
-    unlockTimeout = mkOpt types.int 5 "Seconds the vault stays unlocked after an rbw grab; 0 keeps it unlocked (discouraged).";
+    serverUrl =
+      mkOpt types.str "https://vault.bitwarden.com"
+        "Bitwarden server URL (change for self-hosted vaultwarden).";
+    unlockTimeout =
+      mkOpt types.int 5
+        "Seconds the vault stays unlocked after an rbw grab; 0 keeps it unlocked (discouraged).";
     noSync = mkOpt types.bool false "Skip vault sync before each rbw grab (faster, stale-tolerant).";
-    nonInteractive = mkOpt types.bool false "Never prompt for the master password; fail instead (RBW_NONINTERACTIVE=1).";
-    configFile = mkOpt (types.nullOr types.path) null "Custom rbw config file; when null a standard one is generated.";
+    nonInteractive =
+      mkOpt types.bool false
+        "Never prompt for the master password; fail instead (RBW_NONINTERACTIVE=1).";
+    configFile =
+      mkOpt (types.nullOr types.path) null
+        "Custom rbw config file; when null a standard one is generated.";
 
     rclone = {
-      enable = mkOpt types.bool true "Enable rclone helpers (rclone-load one-shot + rclone-auth session shell).";
-      configItem = mkOpt types.str "REPLACE-ME" "Bitwarden item (secure note) holding the raw rclone.conf.";
+      enable =
+        mkOpt types.bool true
+          "Enable rclone helpers (rclone-load one-shot + rclone-auth session shell).";
+      configItem =
+        mkOpt types.str "REPLACE-ME"
+          "Bitwarden item (secure note) holding the raw rclone.conf.";
     };
 
     kubernetes = {
       enable = mkOpt types.bool true "Enable the k8s-auth session shell (raw kubeconfig from Bitwarden).";
-      kubeconfigItem = mkOpt types.str "REPLACE-ME" "Bitwarden item (secure note) holding the raw kubeconfig.";
+      kubeconfigItem =
+        mkOpt types.str "REPLACE-ME"
+          "Bitwarden item (secure note) holding the raw kubeconfig.";
       argoCd = {
         enable = mkOpt types.bool true "Install the argocd-login one-shot helper.";
         item = mkOpt types.str "argocd-password" "Bitwarden item holding the Argo CD password.";
@@ -152,29 +166,30 @@ in
         enable = mkOpt types.bool true "Install the helm-registry-login one-shot helper.";
         item = mkOpt types.str "helm-registry" "Bitwarden item holding the registry secret.";
         field = mkOpt types.str "password" "Bitwarden field of the registry item.";
-        username = mkOpt types.str "" "Default registry username (HELM_REGISTRY_USER overrides at runtime).";
+        username =
+          mkOpt types.str ""
+            "Default registry username (HELM_REGISTRY_USER overrides at runtime).";
       };
     };
   };
 
   config = mkIf cfg.enable {
     home = {
-      packages =
-        [
-          pkgs.rbw
-          pkgs.pinentry-curses
-          pkgs.bitwarden-cli
-          jitAuth
-          unlockScript
-          lockScript
-          grabScript
-          runScript
-        ]
-        ++ optionals cfg.rclone.enable [ rcloneLoad ]
-        ++ optionals cfg.kubernetes.enable (
-          optionals cfg.kubernetes.argoCd.enable [ argocdLogin ]
-          ++ optionals cfg.kubernetes.helmRegistry.enable [ helmRegistryLogin ]
-        );
+      packages = [
+        pkgs.rbw
+        pkgs.pinentry-curses
+        pkgs.bitwarden-cli
+        jitAuth
+        unlockScript
+        lockScript
+        grabScript
+        runScript
+      ]
+      ++ optionals cfg.rclone.enable [ rcloneLoad ]
+      ++ optionals cfg.kubernetes.enable (
+        optionals cfg.kubernetes.argoCd.enable [ argocdLogin ]
+        ++ optionals cfg.kubernetes.helmRegistry.enable [ helmRegistryLogin ]
+      );
 
       # rbw reads these in every session: the vault re-locks itself after each
       # grab, and sync/prompt behavior is centrally controlled.
@@ -187,13 +202,12 @@ in
 
     xdg.configFile = {
       "rbw/config.json" = mkIf (cfg.configFile == null) {
-        text =
-          builtins.toJSON {
-            email = cfg.email;
-            baseserver = cfg.serverUrl;
-            pinentry = "pinentry-curses";
-            unlock_timeout = cfg.unlockTimeout;
-          };
+        text = builtins.toJSON {
+          email = cfg.email;
+          baseserver = cfg.serverUrl;
+          pinentry = "pinentry-curses";
+          unlock_timeout = cfg.unlockTimeout;
+        };
       };
     };
   };

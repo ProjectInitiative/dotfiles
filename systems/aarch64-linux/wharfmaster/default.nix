@@ -6,11 +6,15 @@
   modulesPath,
   lib,
   ...
-}: let
-  armBoot = if builtins.getEnv "BUILD_ARM_NATIVE" == "true"
-    then inputs.nixos-on-arm.bootModules
-    else inputs.nixos-on-arm.bootModulesCross;
-in {
+}:
+let
+  armBoot =
+    if builtins.getEnv "BUILD_ARM_NATIVE" == "true" then
+      inputs.nixos-on-arm.bootModules
+    else
+      inputs.nixos-on-arm.bootModulesCross;
+in
+{
 
   imports = armBoot.orangepi5ultra;
 

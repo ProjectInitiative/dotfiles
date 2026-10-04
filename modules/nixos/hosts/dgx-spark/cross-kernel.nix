@@ -33,7 +33,10 @@ let
       allowUnfree = true;
       allowUnsupportedSystem = true;
       cudaSupport = true;
-      cudaCapabilities = [ "12.0" "12.1" ];
+      cudaCapabilities = [
+        "12.0"
+        "12.1"
+      ];
     };
     overlays = [ linux617Overlay ];
   };

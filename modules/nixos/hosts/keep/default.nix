@@ -94,7 +94,9 @@ in
       address = mkOpt str "https://app.infisical.com" "Infisical instance URL.";
       projectId = mkOpt str "<INFISICAL_PROJECT_ID>" "Infisical project UUID (placeholder).";
       environment = mkOpt str "prod" "Infisical environment slug.";
-      credentialsDir = mkOpt str "/var/lib/infisical" "Directory holding the universal-auth client-id/client-secret files.";
+      credentialsDir =
+        mkOpt str "/var/lib/infisical"
+          "Directory holding the universal-auth client-id/client-secret files.";
       manageUserPassword = mkBoolOpt false "Render the user's hashed password via Infisical. Only enable once the agent is live, or activation will fail.";
     };
   };
@@ -366,7 +368,9 @@ in
       hosts.keep = {
         tailscaleAuthKeyFile = mkIf cfg.infisical.enable "/run/secrets/tailscale_auth_key";
         k8sTokenFile = mkIf cfg.infisical.enable "/run/secrets/k3s_token";
-        userPasswordFile = mkIf (cfg.infisical.enable && cfg.infisical.manageUserPassword) "/run/secrets/user_password";
+        userPasswordFile = mkIf (
+          cfg.infisical.enable && cfg.infisical.manageUserPassword
+        ) "/run/secrets/user_password";
       };
 
       # Tailscale is for remote access / ssh only. Cluster traffic is left to

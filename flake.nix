@@ -363,6 +363,9 @@
             chronometer = {
               system = "aarch64-linux";
             };
+            sacristy = {
+              system = "aarch64-linux";
+            };
           };
           modules =
             let
@@ -394,9 +397,9 @@
                       # cuda_compat package on aarch64-linux. Without it,
                       # nixpkgs tries to unpack cuda_compat with src = null
                       # while cross-building the Spark system.
-                      nixpkgs.overlays = lib.optional
-                        (config.nixpkgs.system == "aarch64-linux")
-                        inputs.nixos-dgx-spark.overlays.fixes;
+                      nixpkgs.overlays = lib.optional (
+                        config.nixpkgs.system == "aarch64-linux"
+                      ) inputs.nixos-dgx-spark.overlays.fixes;
                     }
                   )
                   disko.nixosModules.disko
@@ -463,6 +466,8 @@
             "pawl"
             # "cargohold"
             "lightship-atx"
+            # not deployed yet — church-site UPS monitor (NanoPi NEO3 Plus)
+            "sacristy"
           ];
         };
 
