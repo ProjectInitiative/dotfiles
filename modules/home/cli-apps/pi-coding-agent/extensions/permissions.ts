@@ -122,7 +122,13 @@ interface AuditEntry {
   timestamp: string;
   toolName: string;
   toolCallId: string;
-  action: "allowed" | "blocked" | "confirmed" | "denied" | "bypassed" | "logged";
+  action:
+    | "allowed"
+    | "blocked"
+    | "confirmed"
+    | "denied"
+    | "bypassed"
+    | "logged";
   reason?: string;
   summary: string;
 }
@@ -130,7 +136,13 @@ interface AuditEntry {
 const auditLog: AuditEntry[] = [];
 const MAX_AUDIT_LOG = 500;
 
-function addAuditEntry(action: AuditEntry["action"], toolName: string, toolCallId: string, summary: string, reason?: string) {
+function addAuditEntry(
+  action: AuditEntry["action"],
+  toolName: string,
+  toolCallId: string,
+  summary: string,
+  reason?: string,
+) {
   auditLog.push({
     timestamp: new Date().toISOString(),
     toolName,
@@ -144,16 +156,25 @@ function addAuditEntry(action: AuditEntry["action"], toolName: string, toolCallI
 
 // ─── Helper: Check if a command matches dangerous patterns ──────────────────
 
-function isDangerousCommand(command: string): { dangerous: boolean; reason?: string } {
+function isDangerousCommand(command: string): {
+  dangerous: boolean;
+  reason?: string;
+} {
   for (const pattern of DANGEROUS_BASH_PATTERNS) {
     if (pattern.test(command)) {
-      return { dangerous: true, reason: `Matches dangerous pattern: ${pattern}` };
+      return {
+        dangerous: true,
+        reason: `Matches dangerous pattern: ${pattern}`,
+      };
     }
   }
   return { dangerous: false };
 }
 
-function isProtectedPath(path: string): { protected: boolean; reason?: string } {
+function isProtectedPath(path: string): {
+  protected: boolean;
+  reason?: string;
+} {
   for (const pattern of PROTECTED_PATH_PATTERNS) {
     if (pattern.test(path)) {
       return { protected: true, reason: `Matches protected path: ${pattern}` };
@@ -162,7 +183,10 @@ function isProtectedPath(path: string): { protected: boolean; reason?: string } 
   return { protected: false };
 }
 
-function isProtectedWriteTarget(path: string): { protected: boolean; reason?: string } {
+function isProtectedWriteTarget(path: string): {
+  protected: boolean;
+  reason?: string;
+} {
   for (const pattern of PROTECTED_WRITE_TARGETS) {
     if (pattern.test(path)) {
       return { protected: true, reason: `Protected system path: ${pattern}` };
@@ -187,7 +211,13 @@ function isYoloActive(): boolean {
 
 export default function (pi: ExtensionAPI) {
   // ── Update status display ──────────────────────────────────────────────────
-  function updateStatus(ctx: { ui: { setStatus: (key: string, text: string | undefined) => void; notify: (msg: string, level: string) => void; theme: { fg: (color: string, text: string) => string } } }) {
+  function updateStatus(ctx: {
+    ui: {
+      setStatus: (key: string, text: string | undefined) => void;
+      notify: (msg: string, level: string) => void;
+      theme: { fg: (color: string, text: string) => string };
+    };
+  }) {
     const t = ctx.ui.theme;
     if (currentLevel === "off") {
       ctx.ui.setStatus("gate", t.fg("dim", "🔓 off"));
@@ -198,7 +228,10 @@ export default function (pi: ExtensionAPI) {
     } else if (currentLevel === "paranoid") {
       ctx.ui.setStatus("gate", t.fg("warning", "🔒 paranoid"));
     } else if (isYoloActive()) {
-      const remaining = yoloUntil > 0 ? Math.max(0, Math.ceil((yoloUntil - Date.now()) / 1000)) : 0;
+      const remaining =
+        yoloUntil > 0
+          ? Math.max(0, Math.ceil((yoloUntil - Date.now()) / 1000))
+          : 0;
       if (remaining > 0) {
         ctx.ui.setStatus("gate", t.fg("error", `🔥 YOLO ${remaining}s`));
       } else {
@@ -217,14 +250,30 @@ export default function (pi: ExtensionAPI) {
 
   // ── Show confirmation dialog ───────────────────────────────────────────────
   async function confirmTool(
-    ctx: { ui: { select: (prompt: string, options: string[], opts?: { timeout?: number }) => Promise<string | null>; notify: (msg: string, level: string) => void }; hasUI: boolean },
+    ctx: {
+      ui: {
+        select: (
+          prompt: string,
+          options: string[],
+          opts?: { timeout?: number },
+        ) => Promise<string | null>;
+        notify: (msg: string, level: string) => void;
+      };
+      hasUI: boolean;
+    },
     title: string,
     message: string,
     toolCallId: string,
     toolName: string,
   ): Promise<boolean> {
     if (!ctx.hasUI) {
-      addAuditEntry("blocked", toolName, toolCallId, message, "No UI for confirmation");
+      addAuditEntry(
+        "blocked",
+        toolName,
+        toolCallId,
+        message,
+        "No UI for confirmation",
+      );
       return false;
     }
 
@@ -241,21 +290,51 @@ export default function (pi: ExtensionAPI) {
         // Force status refresh on next interaction
       }, 1000);
       ctx.ui.notify("🔥 YOLO mode for 60s", "warning");
-      addAuditEntry("bypassed", toolName, toolCallId, message, "User allowed for 60s");
+      addAuditEntry(
+        "bypassed",
+        toolName,
+        toolCallId,
+        message,
+        "User allowed for 60s",
+      );
       return true;
     }
 
     const allowed = choice === "Allow once";
-    addAuditEntry(allowed ? "confirmed" : "denied", toolName, toolCallId, message, allowed ? "User allowed" : "User denied");
+    addAuditEntry(
+      allowed ? "confirmed" : "denied",
+      toolName,
+      toolCallId,
+      message,
+      allowed ? "User allowed" : "User denied",
+    );
     return allowed;
   }
 
   // ── Trust level cycling order ──────────────────────────────────────────────
-  const TRUST_LEVELS: TrustLevel[] = ["off", "audit", "normal", "paranoid", "yolo"];
+  const TRUST_LEVELS: TrustLevel[] = [
+    "off",
+    "audit",
+    "normal",
+    "paranoid",
+    "yolo",
+  ];
 
-  function cycleTrust(direction: 1 | -1, ctx: { ui: { notify: (msg: string, level: string) => void; setStatus: (key: string, text: string | undefined) => void; theme: { fg: (color: string, text: string) => string } } }) {
+  function cycleTrust(
+    direction: 1 | -1,
+    ctx: {
+      ui: {
+        notify: (msg: string, level: string) => void;
+        setStatus: (key: string, text: string | undefined) => void;
+        theme: { fg: (color: string, text: string) => string };
+      };
+    },
+  ) {
     const idx = TRUST_LEVELS.indexOf(currentLevel);
-    const next = TRUST_LEVELS[(idx + direction + TRUST_LEVELS.length) % TRUST_LEVELS.length]!;
+    const next =
+      TRUST_LEVELS[
+        (idx + direction + TRUST_LEVELS.length) % TRUST_LEVELS.length
+      ]!;
     currentLevel = next;
     clearYoloTimer();
     yoloUntil = 0;
@@ -265,12 +344,13 @@ export default function (pi: ExtensionAPI) {
 
   // ── Register /gate command ─────────────────────────────────────────────────
   pi.registerCommand("gate", {
-    description: "Set gate level: off, audit, normal, paranoid, yolo, yolo <secs>, status",
+    description:
+      "Set gate level: off, audit, normal, paranoid, yolo, yolo <secs>, status",
     getArgumentCompletions: (prefix: string): AutocompleteItem[] | null => {
       const levels = ["off", "audit", "normal", "paranoid", "yolo"];
-      const filtered = levels.filter(l => l.startsWith(prefix));
+      const filtered = levels.filter((l) => l.startsWith(prefix));
       return filtered.length > 0
-        ? filtered.map(l => ({ value: l, label: l }))
+        ? filtered.map((l) => ({ value: l, label: l }))
         : null;
     },
     handler: async (args, ctx) => {
@@ -278,7 +358,10 @@ export default function (pi: ExtensionAPI) {
       const arg = (args || "").trim().toLowerCase();
 
       if (!arg || arg === "status") {
-        const yoloRemaining = yoloUntil > 0 ? Math.max(0, Math.ceil((yoloUntil - Date.now()) / 1000)) : 0;
+        const yoloRemaining =
+          yoloUntil > 0
+            ? Math.max(0, Math.ceil((yoloUntil - Date.now()) / 1000))
+            : 0;
         const lines = [
           t.fg("accent", t.bold("Gate Status")),
           "",
@@ -287,8 +370,13 @@ export default function (pi: ExtensionAPI) {
           `  Stats:    ${toolCallCount} calls · ${allowedCount} allowed · ${blockedCount} blocked`,
           `  Audit:    ${auditLog.length} entries`,
           "",
-          t.fg("dim", "Commands: /gate off | audit | normal | paranoid | yolo | yolo <secs>"),
-        ].filter(Boolean).join("\n");
+          t.fg(
+            "dim",
+            "Commands: /gate off | audit | normal | paranoid | yolo | yolo <secs>",
+          ),
+        ]
+          .filter(Boolean)
+          .join("\n");
         ctx.ui.notify(lines, "info");
         return;
       }
@@ -332,12 +420,18 @@ export default function (pi: ExtensionAPI) {
           ctx.ui.notify("🔥 YOLO mode (unlimited)", "error");
         }
       } else {
-        ctx.ui.notify(`Unknown gate level: ${arg}. Try: off, audit, normal, paranoid, yolo, yolo <secs>`, "error");
+        ctx.ui.notify(
+          `Unknown gate level: ${arg}. Try: off, audit, normal, paranoid, yolo, yolo <secs>`,
+          "error",
+        );
         return;
       }
 
       if (prev !== currentLevel) {
-        ctx.ui.notify(`Gate level: ${formatLevel(currentLevel)}${currentLevel === "yolo" ? " 🔥" : ""}`, "info");
+        ctx.ui.notify(
+          `Gate level: ${formatLevel(currentLevel)}${currentLevel === "yolo" ? " 🔥" : ""}`,
+          "info",
+        );
       }
       updateStatus(ctx as any);
     },
@@ -361,12 +455,32 @@ export default function (pi: ExtensionAPI) {
       }
 
       const t = ctx.ui.theme;
-      const lines = [t.fg("accent", t.bold(`Audit Log (last ${auditLog.length} entries)`))];
+      const lines = [
+        t.fg("accent", t.bold(`Audit Log (last ${auditLog.length} entries)`)),
+      ];
       const recent = auditLog.slice(-20);
       for (const entry of recent) {
-        const icon = entry.action === "blocked" ? "🔴" : entry.action === "denied" ? "⛔" : entry.action === "confirmed" ? "✅" : entry.action === "bypassed" ? "🔥" : entry.action === "allowed" ? "🟢" : "⚪";
-        const color = entry.action === "blocked" || entry.action === "denied" ? "error" : entry.action === "bypassed" ? "warning" : "muted";
-        lines.push(t.fg(color as any, `  ${icon} ${entry.toolName}: ${entry.summary}`));
+        const icon =
+          entry.action === "blocked"
+            ? "🔴"
+            : entry.action === "denied"
+              ? "⛔"
+              : entry.action === "confirmed"
+                ? "✅"
+                : entry.action === "bypassed"
+                  ? "🔥"
+                  : entry.action === "allowed"
+                    ? "🟢"
+                    : "⚪";
+        const color =
+          entry.action === "blocked" || entry.action === "denied"
+            ? "error"
+            : entry.action === "bypassed"
+              ? "warning"
+              : "muted";
+        lines.push(
+          t.fg(color as any, `  ${icon} ${entry.toolName}: ${entry.summary}`),
+        );
         if (entry.reason) {
           lines.push(t.fg("dim", `       → ${entry.reason}`));
         }
@@ -382,7 +496,12 @@ export default function (pi: ExtensionAPI) {
     // ── Check YOLO bypass ──────────────────────────────────────────────────
     if (currentLevel === "off" || isYoloActive()) {
       if (currentLevel === "yolo" || yoloUntil > Date.now()) {
-        addAuditEntry("bypassed", event.toolName, event.toolCallId, `${event.toolName} call`);
+        addAuditEntry(
+          "bypassed",
+          event.toolName,
+          event.toolCallId,
+          `${event.toolName} call`,
+        );
         allowedCount++;
         // Refresh status display
         updateStatus(ctx as any);
@@ -392,7 +511,12 @@ export default function (pi: ExtensionAPI) {
 
     // ── Audit mode: log but never block ─────────────────────────────────────
     if (currentLevel === "audit") {
-      addAuditEntry("logged", event.toolName, event.toolCallId, summarizeCall(event));
+      addAuditEntry(
+        "logged",
+        event.toolName,
+        event.toolCallId,
+        summarizeCall(event),
+      );
       allowedCount++;
       return undefined;
     }
@@ -432,7 +556,10 @@ export default function (pi: ExtensionAPI) {
           );
           if (!allowed) {
             blockedCount++;
-            return { block: true, reason: `Dangerous command blocked: ${reason}` };
+            return {
+              block: true,
+              reason: `Dangerous command blocked: ${reason}`,
+            };
           }
           allowedCount++;
           return undefined;
@@ -446,7 +573,13 @@ export default function (pi: ExtensionAPI) {
 
         const pathCheck = isProtectedPath(path);
         if (pathCheck.protected) {
-          addAuditEntry("blocked", event.toolName, event.toolCallId, `write ${path}`, pathCheck.reason);
+          addAuditEntry(
+            "blocked",
+            event.toolName,
+            event.toolCallId,
+            `write ${path}`,
+            pathCheck.reason,
+          );
           blockedCount++;
           if (ctx.hasUI) {
             const t = (ctx as any).ui.theme;
@@ -469,7 +602,10 @@ export default function (pi: ExtensionAPI) {
           );
           if (!allowed) {
             blockedCount++;
-            return { block: true, reason: `Write to system path blocked: ${path}` };
+            return {
+              block: true,
+              reason: `Write to system path blocked: ${path}`,
+            };
           }
           allowedCount++;
           return undefined;
@@ -477,7 +613,11 @@ export default function (pi: ExtensionAPI) {
       }
 
       // Context-mode MCP tools: check for dangerous commands in code
-      if (event.toolName === "ctx_execute" || event.toolName === "ctx_batch_execute" || event.toolName === "ctx_execute_file") {
+      if (
+        event.toolName === "ctx_execute" ||
+        event.toolName === "ctx_batch_execute" ||
+        event.toolName === "ctx_execute_file"
+      ) {
         const code = event.input?.code || event.input?.command || "";
         if (code) {
           const { dangerous, reason } = isDangerousCommand(code);
@@ -491,7 +631,10 @@ export default function (pi: ExtensionAPI) {
             );
             if (!allowed) {
               blockedCount++;
-              return { block: true, reason: `Dangerous command blocked in ${event.toolName}: ${reason}` };
+              return {
+                block: true,
+                reason: `Dangerous command blocked in ${event.toolName}: ${reason}`,
+              };
             }
             allowedCount++;
             return undefined;
@@ -506,7 +649,13 @@ export default function (pi: ExtensionAPI) {
 
         const pathCheck = isProtectedPath(path);
         if (pathCheck.protected) {
-          addAuditEntry("blocked", event.toolName, event.toolCallId, `edit ${path}`, pathCheck.reason);
+          addAuditEntry(
+            "blocked",
+            event.toolName,
+            event.toolCallId,
+            `edit ${path}`,
+            pathCheck.reason,
+          );
           blockedCount++;
           if (ctx.hasUI) {
             (ctx as any).ui.notify(
@@ -528,7 +677,10 @@ export default function (pi: ExtensionAPI) {
           );
           if (!allowed) {
             blockedCount++;
-            return { block: true, reason: `Edit to system path blocked: ${path}` };
+            return {
+              block: true,
+              reason: `Edit to system path blocked: ${path}`,
+            };
           }
           allowedCount++;
           return undefined;
@@ -563,11 +715,16 @@ export default function (pi: ExtensionAPI) {
 
 function formatLevel(level: TrustLevel): string {
   switch (level) {
-    case "off": return "off (no gates)";
-    case "audit": return "audit (log only)";
-    case "normal": return "normal (selective)";
-    case "paranoid": return "paranoid (confirm all)";
-    case "yolo": return "yolo (let it rip)";
+    case "off":
+      return "off (no gates)";
+    case "audit":
+      return "audit (log only)";
+    case "normal":
+      return "normal (selective)";
+    case "paranoid":
+      return "paranoid (confirm all)";
+    case "yolo":
+      return "yolo (let it rip)";
   }
 }
 

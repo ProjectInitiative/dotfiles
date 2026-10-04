@@ -23,248 +23,313 @@ const FLEX_PROVIDERS = new Set(["neuralwatt"]);
  * 2. Auth.json (stored by /login)
  * 3. Environment variable named `<PROVIDER>_API_KEY` (uppercased)
  */
-function resolveApiKey(providerName: string, configKey: string | undefined): string | undefined {
-	if (configKey && configKey !== "placeholder") {
-		return configKey;
-	}
-	// Check auth.json (stored by /login)
-	const authPath = join(getAgentDir(), "auth.json");
-	try {
-		if (existsSync(authPath)) {
-			const auth = JSON.parse(readFileSync(authPath, "utf-8"));
-			const entry = auth[providerName];
-			if (entry?.type === "api_key" && entry?.key) {
-				return entry.key;
-			}
-		}
-	} catch {}
-	// Check environment variable
-	const envVar = `${providerName.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_API_KEY`;
-	if (typeof process !== "undefined" && process.env?.[envVar]) {
-		return process.env[envVar];
-	}
-	return undefined;
+function resolveApiKey(
+  providerName: string,
+  configKey: string | undefined,
+): string | undefined {
+  if (configKey && configKey !== "placeholder") {
+    return configKey;
+  }
+  // Check auth.json (stored by /login)
+  const authPath = join(getAgentDir(), "auth.json");
+  try {
+    if (existsSync(authPath)) {
+      const auth = JSON.parse(readFileSync(authPath, "utf-8"));
+      const entry = auth[providerName];
+      if (entry?.type === "api_key" && entry?.key) {
+        return entry.key;
+      }
+    }
+  } catch {}
+  // Check environment variable
+  const envVar = `${providerName.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_API_KEY`;
+  if (typeof process !== "undefined" && process.env?.[envVar]) {
+    return process.env[envVar];
+  }
+  return undefined;
 }
 
-async function discoverModels(baseUrl: string, apiKey?: string, retries = 2): Promise<any[]> {
-	const url = `${baseUrl.replace(/\/+$/, "")}/models`;
-	const headers: Record<string, string> = {};
-	if (apiKey) {
-		headers["Authorization"] = `Bearer ${apiKey}`;
-	}
-	for (let attempt = 1; attempt <= retries; attempt++) {
-		try {
-			const res = await fetch(url, { signal: AbortSignal.timeout(20_000), headers });
-			if (!res.ok) throw new Error(`GET ${url} returned ${res.status}`);
-			const data = await res.json();
-			return data.data ?? [];
-		} catch (err) {
-			if (attempt < retries && String(err).includes("terminated")) {
-				console.log(`[discovery] models fetch attempt ${attempt}/${retries} was terminated, retrying...`);
-				await new Promise(r => setTimeout(r, 1000));
-				continue;
-			}
-			throw err;
-		}
-	}
-	throw new Error("fetch failed after " + retries + " retries");
+async function discoverModels(
+  baseUrl: string,
+  apiKey?: string,
+  retries = 2,
+): Promise<any[]> {
+  const url = `${baseUrl.replace(/\/+$/, "")}/models`;
+  const headers: Record<string, string> = {};
+  if (apiKey) {
+    headers["Authorization"] = `Bearer ${apiKey}`;
+  }
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, {
+        signal: AbortSignal.timeout(20_000),
+        headers,
+      });
+      if (!res.ok) throw new Error(`GET ${url} returned ${res.status}`);
+      const data = await res.json();
+      return data.data ?? [];
+    } catch (err) {
+      if (attempt < retries && String(err).includes("terminated")) {
+        console.log(
+          `[discovery] models fetch attempt ${attempt}/${retries} was terminated, retrying...`,
+        );
+        await new Promise((r) => setTimeout(r, 1000));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error("fetch failed after " + retries + " retries");
 }
 
 /** LiteLLM keeps context metadata in /model/info rather than /v1/models. */
-async function discoverModelInfo(baseUrl: string, apiKey?: string): Promise<Map<string, any>> {
-	const url = new URL(`${baseUrl.replace(/\/+$/, "")}/../model/info`);
-	const headers: Record<string, string> = {};
-	if (apiKey) {
-		headers["Authorization"] = `Bearer ${apiKey}`;
-	}
-	const res = await fetch(url, { signal: AbortSignal.timeout(20_000), headers });
-	if (!res.ok) throw new Error(`GET ${url} returned ${res.status}`);
-	const data = await res.json();
-	return new Map((data.data ?? []).map((entry: any) => [entry.model_name, entry]));
+async function discoverModelInfo(
+  baseUrl: string,
+  apiKey?: string,
+): Promise<Map<string, any>> {
+  const url = new URL(`${baseUrl.replace(/\/+$/, "")}/../model/info`);
+  const headers: Record<string, string> = {};
+  if (apiKey) {
+    headers["Authorization"] = `Bearer ${apiKey}`;
+  }
+  const res = await fetch(url, {
+    signal: AbortSignal.timeout(20_000),
+    headers,
+  });
+  if (!res.ok) throw new Error(`GET ${url} returned ${res.status}`);
+  const data = await res.json();
+  return new Map(
+    (data.data ?? []).map((entry: any) => [entry.model_name, entry]),
+  );
 }
 
 export default async function (pi: ExtensionAPI) {
-	const modelsPath = join(getAgentDir(), "models.json");
+  const modelsPath = join(getAgentDir(), "models.json");
 
-	if (!existsSync(modelsPath)) {
-		console.log("[discovery] No models.json found");
-		return;
-	}
+  if (!existsSync(modelsPath)) {
+    console.log("[discovery] No models.json found");
+    return;
+  }
 
-	let config: any;
-	try {
-		config = JSON.parse(readFileSync(modelsPath, "utf-8"));
-	} catch (err) {
-		console.log(`[discovery] Failed to parse models.json: ${err}`);
-		return;
-	}
+  let config: any;
+  try {
+    config = JSON.parse(readFileSync(modelsPath, "utf-8"));
+  } catch (err) {
+    console.log(`[discovery] Failed to parse models.json: ${err}`);
+    return;
+  }
 
-	const providers = config.providers ?? {};
-	const entries = Object.entries(providers) as Array<[string, any]>;
+  const providers = config.providers ?? {};
+  const entries = Object.entries(providers) as Array<[string, any]>;
 
-	for (const [name, provider] of entries) {
-		if (!provider.baseUrl || !provider.api) continue;
-		if (provider.api !== "openai-completions") continue;
+  for (const [name, provider] of entries) {
+    if (!provider.baseUrl || !provider.api) continue;
+    if (provider.api !== "openai-completions") continue;
 
-		const apiKey = resolveApiKey(name, provider.apiKey);
+    const apiKey = resolveApiKey(name, provider.apiKey);
 
-		// Step 1: try discovery with api key first if available
-		let lastErr: unknown;
-		let models: any[] = [];
-		try {
-			if (apiKey) {
-				models = await discoverModels(provider.baseUrl, apiKey);
-			} else {
-				models = await discoverModels(provider.baseUrl);
-			}
-		} catch (err) {
-			lastErr = err;
-			if (apiKey && (String(err).includes("401") || String(err).includes("402"))) {
-				console.log(`[discovery] ${name}: ${String(err).includes("402") ? "402" : "401"} (auth required), retrying with api key`);
-				try {
-					models = await discoverModels(provider.baseUrl, apiKey);
-					lastErr = undefined;
-				} catch (err2) {
-					lastErr = err2;
-				}
-			}
-		}
+    // Step 1: try discovery with api key first if available
+    let lastErr: unknown;
+    let models: any[] = [];
+    try {
+      if (apiKey) {
+        models = await discoverModels(provider.baseUrl, apiKey);
+      } else {
+        models = await discoverModels(provider.baseUrl);
+      }
+    } catch (err) {
+      lastErr = err;
+      if (
+        apiKey &&
+        (String(err).includes("401") || String(err).includes("402"))
+      ) {
+        console.log(
+          `[discovery] ${name}: ${String(err).includes("402") ? "402" : "401"} (auth required), retrying with api key`,
+        );
+        try {
+          models = await discoverModels(provider.baseUrl, apiKey);
+          lastErr = undefined;
+        } catch (err2) {
+          lastErr = err2;
+        }
+      }
+    }
 
-		if (lastErr) {
-			console.log(`[discovery] ${name}: failed — ${lastErr}`);
-			try { pi.unregisterProvider(name); } catch {}
-			pi.registerProvider(name, {
-				baseUrl: provider.baseUrl,
-				apiKey: apiKey ?? "placeholder",
-				api: provider.api,
-				models: [{
-					id: `${name}/pending-discovery`,
-					name: `${name} (login to discover models)`,
-					reasoning: false,
-					input: ["text"],
-					cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-					contextWindow: 4096,
-					maxTokens: 1024,
-				}],
-			});
-			continue;
-		}
+    if (lastErr) {
+      console.log(`[discovery] ${name}: failed — ${lastErr}`);
+      try {
+        pi.unregisterProvider(name);
+      } catch {}
+      pi.registerProvider(name, {
+        baseUrl: provider.baseUrl,
+        apiKey: apiKey ?? "placeholder",
+        api: provider.api,
+        models: [
+          {
+            id: `${name}/pending-discovery`,
+            name: `${name} (login to discover models)`,
+            reasoning: false,
+            input: ["text"],
+            cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+            contextWindow: 4096,
+            maxTokens: 1024,
+          },
+        ],
+      });
+      continue;
+    }
 
-		if (models.length === 0) {
-			console.log(`[discovery] ${name}: no models found at ${provider.baseUrl}`);
-			try { pi.unregisterProvider(name); } catch {}
-			pi.registerProvider(name, {
-				baseUrl: provider.baseUrl,
-				apiKey: apiKey ?? "placeholder",
-				api: provider.api,
-				models: [{
-					id: `${name}/pending-discovery`,
-					name: `${name} (no models returned)`,
-					reasoning: false,
-					input: ["text"],
-					cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-					contextWindow: 4096,
-					maxTokens: 1024,
-				}],
-			});
-			continue;
-		}
+    if (models.length === 0) {
+      console.log(
+        `[discovery] ${name}: no models found at ${provider.baseUrl}`,
+      );
+      try {
+        pi.unregisterProvider(name);
+      } catch {}
+      pi.registerProvider(name, {
+        baseUrl: provider.baseUrl,
+        apiKey: apiKey ?? "placeholder",
+        api: provider.api,
+        models: [
+          {
+            id: `${name}/pending-discovery`,
+            name: `${name} (no models returned)`,
+            reasoning: false,
+            input: ["text"],
+            cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+            contextWindow: 4096,
+            maxTokens: 1024,
+          },
+        ],
+      });
+      continue;
+    }
 
-		let modelInfoByName = new Map<string, any>();
-		try {
-			modelInfoByName = await discoverModelInfo(provider.baseUrl, apiKey);
-		} catch (err) {
-			// Plain vLLM and other OpenAI-compatible servers do not expose this
-			// LiteLLM endpoint; their /v1/models metadata remains sufficient.
-			console.log(`[discovery] ${name}: no /model/info metadata — ${err}`);
-		}
+    let modelInfoByName = new Map<string, any>();
+    try {
+      modelInfoByName = await discoverModelInfo(provider.baseUrl, apiKey);
+    } catch (err) {
+      // Plain vLLM and other OpenAI-compatible servers do not expose this
+      // LiteLLM endpoint; their /v1/models metadata remains sufficient.
+      console.log(`[discovery] ${name}: no /model/info metadata — ${err}`);
+    }
 
-		const capByName = (m: any) => m["metadata"]?.["capabilities"] ?? {};
-		const pricing = (m: any) => m["metadata"]?.["pricing"] ?? {};
-		const modelInfo = (m: any) => modelInfoByName.get(m.id)?.model_info ?? {};
-		const ctx = (m: any) => {
-			const info = modelInfo(m);
-			return m["context_length"] ??
-				m["max_model_len"] ??
-				m["max_context_window"] ??
-				m["metadata"]?.["limits"]?.["max_context_length"] ??
-				m["meta"]?.["n_ctx"] ??
-				m["meta"]?.["n_ctx_train"] ??
-				info.max_input_tokens ??
-				info.max_tokens ??
-				128000;
-		};
-		const input = (m: any) => capByName(m)["vision"] ? ["text", "image"] : ["text"];
-		const providerReasoning = provider.reasoning === true;
+    const capByName = (m: any) => m["metadata"]?.["capabilities"] ?? {};
+    const pricing = (m: any) => m["metadata"]?.["pricing"] ?? {};
+    const modelInfo = (m: any) => modelInfoByName.get(m.id)?.model_info ?? {};
+    const ctx = (m: any) => {
+      const info = modelInfo(m);
+      return (
+        m["context_length"] ??
+        m["max_model_len"] ??
+        m["max_context_window"] ??
+        m["metadata"]?.["limits"]?.["max_context_length"] ??
+        m["meta"]?.["n_ctx"] ??
+        m["meta"]?.["n_ctx_train"] ??
+        info.max_input_tokens ??
+        info.max_tokens ??
+        128000
+      );
+    };
+    const input = (m: any) =>
+      capByName(m)["vision"] ? ["text", "image"] : ["text"];
+    const providerReasoning = provider.reasoning === true;
 
-		const buildModelDef = (m: any, suffix = "", flex = false) => {
-			const caps = capByName(m);
-			const p = pricing(m);
-			const meta = m["metadata"] ?? {};
-			const backendModel = modelInfoByName.get(m.id)?.litellm_params?.model
-				?.replace(/^[^/]+\//, "");
-			const isReasoning = caps["reasoning"] || caps["reasoning_effort"] || providerReasoning;
-			return {
-				id: m.id + suffix,
-				name: (meta["display_name"] ?? backendModel ?? m.id) + (suffix ? " (flex)" : ""),
-				reasoning: isReasoning,
-				thinkingLevelMap: isReasoning
-					? { off: null, minimal: "low", low: "low", medium: "medium", high: "high" }
-					: undefined,
-				input: input(m),
-				cost: {
-					input: ((p["input_per_million"] ?? 0) * (flex ? 0.65 : 1)) / 1_000_000,
-					output: ((p["output_per_million"] ?? 0) * (flex ? 0.65 : 1)) / 1_000_000,
-					cacheRead: ((p["cached_input_per_million"] ?? 0) * (flex ? 0.65 : 1)) / 1_000_000,
-					cacheWrite: 0,
-				},
-				contextWindow: ctx(m),
-				maxTokens: 16384,
-				compat: {
-					supportsDeveloperRole: false,
-				},
-			};
-		};
+    const buildModelDef = (m: any, suffix = "", flex = false) => {
+      const caps = capByName(m);
+      const p = pricing(m);
+      const meta = m["metadata"] ?? {};
+      const backendModel = modelInfoByName
+        .get(m.id)
+        ?.litellm_params?.model?.replace(/^[^/]+\//, "");
+      const isReasoning =
+        caps["reasoning"] || caps["reasoning_effort"] || providerReasoning;
+      return {
+        id: m.id + suffix,
+        name:
+          (meta["display_name"] ?? backendModel ?? m.id) +
+          (suffix ? " (flex)" : ""),
+        reasoning: isReasoning,
+        thinkingLevelMap: isReasoning
+          ? {
+              off: null,
+              minimal: "low",
+              low: "low",
+              medium: "medium",
+              high: "high",
+            }
+          : undefined,
+        input: input(m),
+        cost: {
+          input:
+            ((p["input_per_million"] ?? 0) * (flex ? 0.65 : 1)) / 1_000_000,
+          output:
+            ((p["output_per_million"] ?? 0) * (flex ? 0.65 : 1)) / 1_000_000,
+          cacheRead:
+            ((p["cached_input_per_million"] ?? 0) * (flex ? 0.65 : 1)) /
+            1_000_000,
+          cacheWrite: 0,
+        },
+        contextWindow: ctx(m),
+        maxTokens: 16384,
+        compat: {
+          supportsDeveloperRole: false,
+        },
+      };
+    };
 
-		const allModels = [
-			...models.map((m: any) => buildModelDef(m)),
-			...(FLEX_PROVIDERS.has(name)
-				? models.map((m: any) => buildModelDef(m, "-flex", true))
-				: []),
-		];
+    const allModels = [
+      ...models.map((m: any) => buildModelDef(m)),
+      ...(FLEX_PROVIDERS.has(name)
+        ? models.map((m: any) => buildModelDef(m, "-flex", true))
+        : []),
+    ];
 
-		// If maxConcurrency is set, register with the shared FIFO proxy
-		let effectiveBaseUrl = provider.baseUrl;
-		const maxConcurrency = provider.maxConcurrency;
-		if (typeof maxConcurrency === "number" && maxConcurrency > 0) {
-			const proxyBase = "http://127.0.0.1:3080";
-			const origUrl = new URL(provider.baseUrl);
-			effectiveBaseUrl = proxyBase + "/" + name + origUrl.pathname;
-			try {
-				await fetch(proxyBase + "/__register", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ id: name, target: provider.baseUrl, concurrency: maxConcurrency }),
-					signal: AbortSignal.timeout(5_000),
-				});
-				console.log(`[discovery] ${name}: registered with queue proxy (concurrency=${maxConcurrency})`);
-			} catch (err) {
-				console.log(`[discovery] ${name}: queue proxy registration failed — ${err}`);
-			}
-		}
+    // If maxConcurrency is set, register with the shared FIFO proxy
+    let effectiveBaseUrl = provider.baseUrl;
+    const maxConcurrency = provider.maxConcurrency;
+    if (typeof maxConcurrency === "number" && maxConcurrency > 0) {
+      const proxyBase = "http://127.0.0.1:3080";
+      const origUrl = new URL(provider.baseUrl);
+      effectiveBaseUrl = proxyBase + "/" + name + origUrl.pathname;
+      try {
+        await fetch(proxyBase + "/__register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: name,
+            target: provider.baseUrl,
+            concurrency: maxConcurrency,
+          }),
+          signal: AbortSignal.timeout(5_000),
+        });
+        console.log(
+          `[discovery] ${name}: registered with queue proxy (concurrency=${maxConcurrency})`,
+        );
+      } catch (err) {
+        console.log(
+          `[discovery] ${name}: queue proxy registration failed — ${err}`,
+        );
+      }
+    }
 
-		try { pi.unregisterProvider(name); } catch {}
-		pi.registerProvider(name, {
-			baseUrl: effectiveBaseUrl,
-			apiKey: apiKey ?? "placeholder",
-			api: provider.api,
-			models: allModels,
-		});
+    try {
+      pi.unregisterProvider(name);
+    } catch {}
+    pi.registerProvider(name, {
+      baseUrl: effectiveBaseUrl,
+      apiKey: apiKey ?? "placeholder",
+      api: provider.api,
+      models: allModels,
+    });
 
-		console.log(`[discovery] ${name}: registered ${allModels.length} models` + (effectiveBaseUrl !== provider.baseUrl ? ` via queue proxy` : ""));
-		// Debug: log the baseUrl being used
-		if (allModels.length > 0) {
-			console.log(`[discovery] ${name}: baseUrl = ${effectiveBaseUrl}`);
-		}
-	}
+    console.log(
+      `[discovery] ${name}: registered ${allModels.length} models` +
+        (effectiveBaseUrl !== provider.baseUrl ? ` via queue proxy` : ""),
+    );
+    // Debug: log the baseUrl being used
+    if (allModels.length > 0) {
+      console.log(`[discovery] ${name}: baseUrl = ${effectiveBaseUrl}`);
+    }
+  }
 }

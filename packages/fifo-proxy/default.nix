@@ -14,7 +14,11 @@
 # Usage:
 #   fifo-proxy [--port 3080] [--timeout 60000] [--default-target https://...]
 
-{ writeShellScriptBin, nodejs_latest, lib }:
+{
+  writeShellScriptBin,
+  nodejs_latest,
+  lib,
+}:
 
 writeShellScriptBin "fifo-proxy" ''
   exec ${lib.getExe nodejs_latest} -e '

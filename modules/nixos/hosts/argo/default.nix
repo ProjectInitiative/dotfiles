@@ -28,9 +28,9 @@ in
 
     # ── Sops: bypass for image builds (runtime auth via OpenBao/Vault) ──────
     sops.validateSopsFiles = lib.mkForce false;
-    sops.age.sshKeyPaths = lib.mkForce [];
+    sops.age.sshKeyPaths = lib.mkForce [ ];
     sops.age.keyFile = lib.mkForce "/dev/null";
-    sops.defaultSopsFile = lib.mkForce (builtins.toFile "empty-sops.yaml" ''{}'');
+    sops.defaultSopsFile = lib.mkForce (builtins.toFile "empty-sops.yaml" "{}");
 
     # ── SSH config (service enabled by kubevirt module) ─────────────────────
     services.openssh.settings = {
@@ -42,7 +42,10 @@ in
     # ── Users ───────────────────────────────────────────────────────────────
     users.users.kylepzak = {
       isNormalUser = true;
-      extraGroups = [ "wheel" "docker" ];
+      extraGroups = [
+        "wheel"
+        "docker"
+      ];
       openssh.authorizedKeys.keys = [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAplaceholder"
       ];
@@ -55,7 +58,12 @@ in
     security.sudo.extraRules = [
       {
         users = [ "kylepzak" ];
-        commands = [{ command = "ALL"; options = [ "NOPASSWD" ]; }];
+        commands = [
+          {
+            command = "ALL";
+            options = [ "NOPASSWD" ];
+          }
+        ];
       }
     ];
 

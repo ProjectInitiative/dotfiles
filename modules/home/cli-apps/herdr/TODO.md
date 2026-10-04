@@ -21,11 +21,13 @@ the path, then replicate with Nix).
 ### Release formats
 
 **herdr-mirror** (Rust, prebuilt binary):
+
 - `herdr-mirror-linux-x86_64` — single binary, no deps
 - `herdr-mirror-linux-aarch64`
 - SHA256SUMS available for verification
 
 **herdr-remote** (mixed Rust/Python):
+
 - Primarily a macOS app (Herdi.app) with a Python relay component
 - Has `herdr-push` sub-plugin for remote monitoring
 - Need to investigate the relay + TUI Python deps
@@ -41,10 +43,10 @@ herdr supports plugins via Zellij's WASM plugin system. Plugins are compiled to
 
 ### Community plugins identified:
 
-| Plugin | Language | Description |
-|--------|----------|-------------|
-| [**herdr-mirror**](https://github.com/nikok6/herdr-mirror) | Rust | Mirror remote herdr server workspaces/agents into local sidebar |
-| [**herdr-remote**](https://github.com/dcolinmorgan/herdr-remote) | Rust/JS | Remote herdr server integration |
+| Plugin                                                           | Language | Description                                                     |
+| ---------------------------------------------------------------- | -------- | --------------------------------------------------------------- |
+| [**herdr-mirror**](https://github.com/nikok6/herdr-mirror)       | Rust     | Mirror remote herdr server workspaces/agents into local sidebar |
+| [**herdr-remote**](https://github.com/dcolinmorgan/herdr-remote) | Rust/JS  | Remote herdr server integration                                 |
 
 ### Key questions:
 
