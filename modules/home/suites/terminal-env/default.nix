@@ -34,7 +34,9 @@ in
         herdr = {
           enable = true;
           plugins = {
-            mirror = { enable = true; };        # nikok6/herdr-mirror
+            mirror = {
+              enable = true;
+            }; # nikok6/herdr-mirror
           };
         };
         # QOL cli
