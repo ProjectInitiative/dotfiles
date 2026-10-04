@@ -12,7 +12,7 @@ keys:
     - &dinghy age1wfmdnez90tcqw4rzmehtjmhle8revyk9hlyxm03z6nlm77teg4cq7fmswu
     - &wharfmaster age14lyx3jvucynqqpdklza3j6j2wq7g3lhncgq0phkdpapg2yzh89uqrfy405
     - &dcc_ex age1m6sddcgxrrms5yx7ues7u4czuj6mvuzqyawt0jzcdexheaa8yuusy7pehz
-    - &vestry age1zj4sxkeqlas55dsngtq52tt2nc8tcd5f2vknqgl7qdnqw3n3hv9srd4mzv
+    - &anchor age1zj4sxkeqlas55dsngtq52tt2nc8tcd5f2vknqgl7qdnqw3n3hv9srd4mzv
   - &capstans:
     - &ssh_capstan1 age1katkdmh05xy9n5pmrkaznw0e5j4p96js88dzxy4l0zt06pfa4qzs0gsua5
     - &ssh_capstan2 age1daxggyz58h525ww5clnwwuwxu7tf5mlz8as8n7cy8dhv74u4qcqq0jagrp
@@ -98,13 +98,13 @@ creation_rules:
           - *ssh_capstan3
           - *test_vm
 
-  - path_regex: vestry/[^/]+\.yaml$
+  - path_regex: anchor/[^/]+\.yaml$
     # - path: capstan/secrets.enc.yaml
     key_groups:
       - age:
           - *ssh_kylepzak
           - *ssh_thinkpad
-          - *vestry
+          - *anchor
 
   - path_regex: astrolabe/[^/]+\.yaml$
     # - path: capstan/secrets.enc.yaml

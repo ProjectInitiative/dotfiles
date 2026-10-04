@@ -1,11 +1,11 @@
-# Sacristy — NanoPi NEO3 Plus (RK3528A) on-site at the church.
+# Watchman — NanoPi NEO3 Plus (RK3528A) on-site at the church.
 #
-# Sibling of vestry (also church-site): headless, minimal, dedicated to
+# Sibling of anchor (also church-site): headless, minimal, dedicated to
 # monitoring the site's UPS. Boots via the nixos-on-arm board modules
 # (U-Boot + patched RK3528 kernel), deployed like the other SBCs.
 #
 # Initial flash image:
-#   nix build .#nixosConfigurations.sacristy.config.system.build.rockchipImages
+#   nix build .#nixosConfigurations.watchman.config.system.build.rockchipImages
 # Serial console: UART0_M0 @ 0xff9f0000, 1500000 8n1 (3-pin header) —
 # documented in boot/nanopi-neo3-plus-boot.nix in nixos-on-arm.
 {
@@ -38,17 +38,17 @@ in
   };
 
   # No host sops key enrolled yet. Once the board is on-site and its host SSH
-  # key exists, follow the vestry pattern (own secrets.enc.yaml +
+  # key exists, follow the anchor pattern (own secrets.enc.yaml +
   # age.sshKeyPaths, sops-hostkey-tool for enrollment) and drop this override.
   enableCommonEncryption = lib.mkForce false;
 
   # No sops secret store for this host yet → skip the hashed password file
-  # too (vestry pattern). Login stays key-only SSH; sudo is NOPASSWD via the
+  # too (anchor pattern). Login stays key-only SSH; sudo is NOPASSWD via the
   # user module. Revisit when secrets are enrolled.
   ${namespace}.user.includePassword = false;
 
   networking = {
-    hostName = "sacristy";
+    hostName = "watchman";
     networkmanager.enable = true;
     useDHCP = lib.mkDefault true;
   };
@@ -104,12 +104,12 @@ in
   console.enable = true;
 
   # ── Home config: barebones — terminal env only ────────────────────────────
-  # Same trim as vestry: the shared kylepzak home pulls in browsers, AI,
+  # Same trim as anchor: the shared kylepzak home pulls in browsers, AI,
   # messengers, backup and digital-creation suites by default. This box is a
   # single-purpose UPS monitor, so keep just the standard terminal env.
   # includeSSH=false because there is no sops secret store for this host yet;
   # once secrets are enrolled (host key in .sops.yaml, re-encrypt), consider
-  # following the stormjib path (common encryption) or vestry (own
+  # following the stormjib path (common encryption) or anchor (own
   # secrets.enc.yaml) and re-enabling SSH key provisioning.
   home-manager.users.kylepzak.${namespace} = {
     users.kylepzak.includeSSH = false;

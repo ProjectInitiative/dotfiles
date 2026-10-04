@@ -363,7 +363,7 @@
             chronometer = {
               system = "aarch64-linux";
             };
-            sacristy = {
+            watchman = {
               system = "aarch64-linux";
             };
           };
@@ -467,7 +467,7 @@
             # "cargohold"
             "lightship-atx"
             # not deployed yet — church-site UPS monitor (NanoPi NEO3 Plus)
-            "sacristy"
+            "watchman"
           ];
         };
 

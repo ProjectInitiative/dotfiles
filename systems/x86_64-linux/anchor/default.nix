@@ -7,7 +7,7 @@
 with lib;
 with lib.${namespace};
 {
-  # Existing filesystems on the Vestry disk. Keep these UUIDs stable so
+  # Existing filesystems on the Anchor disk. Keep these UUIDs stable so
   # remote rebuilds do not depend on Disko partition labels.
   fileSystems."/" = {
     device = "/dev/disk/by-uuid/36d14db0-3771-42f0-9f8c-a044ea5a1174";
@@ -70,10 +70,10 @@ with lib.${namespace};
     firewall = {
       enable = true;
       allowedTCPPorts = [ 8080 ];
-  #     allowedUDPPortRanges = [
-  #       { from = 4000; to = 4007; }
-  # ];
-};
+      #     allowedUDPPortRanges = [
+      #       { from = 4000; to = 4007; }
+      # ];
+    };
   };
 
   systemd.network.networks."10-ethernet" = {

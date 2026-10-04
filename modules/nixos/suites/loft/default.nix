@@ -28,7 +28,12 @@ in
       s3 = {
         bucket = mkOpt types.str "nix-cache" "The name of the S3 bucket.";
         region = mkOpt types.str "us-east-1" "The AWS region of the bucket.";
-        endpoint = mkOpt types.str "http://s3.taildeab2.ts.net:3900" "The S3 endpoint URL.";
+        # NOTE: the `s3` tailscale device is the garage funnel/serve proxy, which
+        # only exposes the S3 API over HTTPS on 443. Port 3900 plaintext is
+        # refused there (verified 2026-02: `nix store ping` fails with curlCode 7).
+        # The funnel TLS endpoint and the mc-ingress-proxy VIP
+        # (http://100.90.143.3:3900) both authenticate fine.
+        endpoint = mkOpt types.str "https://s3.taildeab2.ts.net" "The S3 endpoint URL.";
       };
 
       publicKey =
