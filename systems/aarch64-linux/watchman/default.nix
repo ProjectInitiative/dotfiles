@@ -103,7 +103,7 @@ in
     };
     users.upsmon = {
       passwordFile = config.sops.secrets.upsmon_password.path;
-      upsmon = "master";
+      upsmon = "primary";
     };
     upsmon.monitor.church-ups = {
       user = "upsmon"; # passwordFile defaults to users.upsmon.passwordFile
