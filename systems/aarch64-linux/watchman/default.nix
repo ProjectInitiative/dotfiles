@@ -50,6 +50,10 @@ in
     ];
     secrets = {
       tailscale_auth_key = { };
+      # Local upsd/upsmon auth password (arbitrary random string, only ever
+      # compared between two local services). Generate one with:
+      #   openssl rand -base64 18
+      upsmon_password = { };
     };
   };
 
@@ -80,32 +84,33 @@ in
   };
 
   # ── UPS monitoring (NUT) ─────────────────────────────────────────────────
-  # TODO: enable once the UPS model and connection are known:
-  #   - USB-attached to this box → mode "standalone" + usbhid-ups (APC/Eaton/
-  #     MGE) or nutdrv_qx (many budget models); identify with lsusb, driver
-  #     list in ${nut}/share/driver.list.
-  #   - Monitored by another host → mode "netclient" and point
-  #     power.ups.upsmon.monitor at church-ups@<nut-server>.
-  # Shape (from nixos/modules/services/monitoring/ups.nix):
-  #   power.ups = {
-  #     enable = true;
-  #     mode = "standalone";
-  #     ups.church-ups = {
-  #       driver = "usbhid-ups";
-  #       port = "auto";
-  #     };
-  #     upsmon.monitor.church-ups = {
-  #       user = "upsmon";
-  #       # passwordFile must exist; generate with sops when secrets land
-  #       passwordFile = "/run/secrets/upsmon-password";
-  #     };
-  #   };
-  #   power.ups.users.upsmon.passwordFile = "/run/secrets/upsmon-password";
-  # If this host only *reports* (no shutdown duty), set monitor type "slave"
-  # or rely on Prometheus node_exporter + upsc instead.
+  # Cyber Power PR1500LCDRT2U, USB-attached to this box (lsusb: 0764:0601).
+  # usbhid-ups speaks CPS HID via its built-in cps-hid subdriver (the NUT
+  # DDL lists the near-identical PR1500RT2U on usbhid-ups); the vendorid
+  # pin makes sure nothing else on the bus can claim the match.
+  # Standalone mode = driver + upsd (localhost only) + upsmon with local
+  # shutdown duty (MINSUPPLIES 1, default SHUTDOWNCMD). If another church
+  # host ever needs to watch this UPS, switch mode to "netserver", add an
+  # upsd LISTEN entry for that interface, and set openFirewall.
+  # Verify after deploy: upsc church-ups@localhost
+  power.ups = {
+    enable = true;
+    mode = "standalone";
+    ups.church-ups = {
+      driver = "usbhid-ups";
+      port = "auto";
+      directives = [ "vendorid = 0764" ];
+    };
+    users.upsmon = {
+      passwordFile = config.sops.secrets.upsmon_password.path;
+      upsmon = "master";
+    };
+    upsmon.monitor.church-ups = {
+      user = "upsmon"; # passwordFile defaults to users.upsmon.passwordFile
+    };
+  };
 
-  # nut provides upsc/upscmd for ad-hoc checks; usbutils for `lsusb` to
-  # identify the UPS.
+  # nut gives upsc/upscmd for verification; usbutils for `lsusb`.
   environment.systemPackages = with pkgs; [
     nut
     usbutils
