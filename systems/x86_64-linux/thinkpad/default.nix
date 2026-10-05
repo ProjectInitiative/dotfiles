@@ -17,6 +17,11 @@ in
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
+
+    # Visage face authentication (trial — branch visage-trial, 2026-10-05).
+    # Hardware: Luxvisions 30c9:0050 hybrid RGB+IR module; /dev/video2 is the
+    # IR capture node (confirmed by visage scripts/check-hardware.sh).
+    inputs.visage.nixosModules.default
   ];
 
   # add rust based init
@@ -463,6 +468,46 @@ in
 
     openbao
   ];
+
+  # Visage face authentication (trial).
+  # Password fallback is guaranteed by the PAM control string — face success
+  # short-circuits, every failure path falls through to pam_unix.
+  services.visage = {
+    enable = true;
+    # Hybrid module exposes two capture nodes (video0 = RGB, video2 = IR);
+    # pin the IR node instead of trusting "first device" auto-detection.
+    camera = "/dev/video2";
+    pam.enable = true;
+    # CPU-only ONNX verify is ~1.4–2.3s measured; the stock 3s PAM timeout
+    # leaves under 700ms of headroom. Visage upstream raised to 6s for the
+    # same reason.
+    pam.timeoutSeconds = 6;
+    # Passive liveness FAILED its upstream hardware spoof validation (a
+    # phone-screen spoof displaced MORE than a live face; 13–17% false
+    # rejections at the 0.8 default). It adds no security in its current
+    # form — keep it off for the trial. Revisit when upstream ships a
+    # passing spoof test.
+    liveness.enable = false;
+  };
+
+  # GNOME's own PAM services don't derive from `login`, so wire face auth
+  # into them explicitly (same rule shape the visage module uses for
+  # sudo/login). polkit-1 deliberately left out for now — add the same rule
+  # if polkit prompts should be face-unlockable.
+  security.pam.services = {
+    gdm-password.rules.auth.visage = {
+      order = 900;
+      control = "[success=done default=ignore]";
+      modulePath = "${config.services.visage.package}/lib/security/pam_visage.so";
+      settings.timeout = 6;
+    };
+    gnome-shell.rules.auth.visage = {
+      order = 900;
+      control = "[success=done default=ignore]";
+      modulePath = "${config.services.visage.package}/lib/security/pam_visage.so";
+      settings.timeout = 6;
+    };
+  };
 
   # Enable fingerprint reader
   services.fprintd = {

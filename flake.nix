@@ -30,6 +30,9 @@
     # Hardware Configuration
     nixos-hardware.url = "github:nixos/nixos-hardware";
 
+    # Face authentication (trial) — Rust PAM face-auth daemon, see https://github.com/sovren-software/visage
+    visage.url = "github:sovren-software/visage";
+
     # Package pinning:
     # old nixpkgs just for bambu-studio
     nixpkgs-bambu.url = "github:NixOS/nixpkgs/4697fbbba609";
