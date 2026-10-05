@@ -119,16 +119,17 @@ in
   console.enable = true;
 
   # ── Home config: barebones — terminal env only ────────────────────────────
-  # Same trim as anchor: the shared kylepzak home pulls in browsers, AI,
-  # messengers, backup and digital-creation suites by default. This box is a
-  # single-purpose UPS monitor, so keep just the standard terminal env.
+  # Single-purpose UPS monitor: no dev tools, no AI, no interactive
+  # Bitwarden tooling. Lighthouse-style force-overrides (mkForce) beat the
+  # shared kylepzak home's defaults regardless of merge order; terminal-env
+  # stays because the shared home enables it and nothing here touches it.
   # includeSSH=false: this host's sops store only carries tailscale_auth_key
-  # (anchor keeps it false too). Add kylepzak_ssh_key to
-  # watchman/secrets.enc.yaml and flip this if you ever want the SSH key
-  # provisioned here.
+  # and upsmon_password. Add kylepzak_ssh_key to watchman/secrets.enc.yaml
+  # and flip this if you ever want the SSH key provisioned here.
   home-manager.users.kylepzak.${namespace} = {
     users.kylepzak.includeSSH = false;
     cli-apps.atuin.autoLogin = mkForce false;
+    security.bitwarden.enable = mkForce false;
 
     browsers = {
       firefox.enable = mkForce false;
@@ -138,8 +139,8 @@ in
       tor.enable = mkForce false;
     };
     suites = {
-      ai.enable = true;
-      development.enable = true;
+      ai.enable = mkForce false;
+      development.enable = mkForce false;
       backup.enable = mkForce false;
       messengers.enable = mkForce false;
       digital-creation.enable = mkForce false;
