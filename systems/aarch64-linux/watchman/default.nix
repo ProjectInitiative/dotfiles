@@ -40,8 +40,8 @@ in
   # Own sops store (anchor pattern): per-host secrets.enc.yaml encrypted to
   # the host SSH key + kylepzak/thinkpad. The common encrypted module stays
   # off — includeSSH/includePassword below keep kylepzak_ssh_key and
-  # user_password from ever being referenced, so tailscale_auth_key is the
-  # only secret this host needs.
+  # user_password from ever being referenced, so tailscale_auth_key and
+  # upsmon_password are the only secrets this host needs.
   enableCommonEncryption = mkForce false;
   sops = mkForce {
     defaultSopsFile = ./secrets.enc.yaml;
@@ -50,6 +50,10 @@ in
     ];
     secrets = {
       tailscale_auth_key = { };
+      # Local upsd/upsmon auth password (arbitrary random string, only ever
+      # compared between two local services). Generate with:
+      #   openssl rand -base64 18
+      upsmon_password = { };
     };
   };
 
@@ -96,15 +100,35 @@ in
   };
 
   # ── UPS monitoring (NUT) ─────────────────────────────────────────────────
-  # DISABLED for initial deploy (upsmon_password not in secrets.enc.yaml yet).
-  # Target UPS: Cyber Power PR1500LCDRT2U, USB (0764:0601) → usbhid-ups with
-  # "vendorid = 0764" (cps-hid subdriver). To re-enable: restore power.ups
-  # from git history (a868415 / ea9cfe4 — standalone mode, upsd localhost-
-  # only, upsmon "primary") and add an upsmon_password sops secret to
-  # secrets.enc.yaml. Verify with: upsc church-ups@localhost. See OQ-0015.
+  # Cyber Power PR1500LCDRT2U, USB-attached to this box (lsusb: 0764:0601).
+  # usbhid-ups speaks CPS HID via its built-in cps-hid subdriver (the NUT
+  # DDL lists the near-identical PR1500RT2U on usbhid-ups); the vendorid
+  # pin makes sure nothing else on the bus can claim the match.
+  # Standalone mode = driver + upsd (localhost only) + upsmon with local
+  # shutdown duty (MINSUPPLIES 1, default SHUTDOWNCMD). If another church
+  # host ever needs to watch this UPS, switch mode to "netserver", add an
+  # upsd LISTEN entry for that interface, and set openFirewall.
+  # Verify after deploy: upsc church-ups@localhost
+  power.ups = {
+    enable = true;
+    mode = "standalone";
+    ups.church-ups = {
+      driver = "usbhid-ups";
+      port = "auto";
+      directives = [ "vendorid = 0764" ];
+    };
+    users.upsmon = {
+      passwordFile = config.sops.secrets.upsmon_password.path;
+      upsmon = "primary";
+    };
+    upsmon.monitor.church-ups = {
+      user = "upsmon"; # passwordFile defaults to users.upsmon.passwordFile
+    };
+  };
 
-  # usbutils for `lsusb` (UPS reads 0764:0601 when NUT is re-enabled).
+  # nut gives upsc/upscmd for verification; usbutils for `lsusb`.
   environment.systemPackages = with pkgs; [
+    nut
     usbutils
   ];
 
