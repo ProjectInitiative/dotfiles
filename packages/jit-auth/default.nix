@@ -7,10 +7,12 @@
   kubectx,
   k9s,
   rclone,
+  sops,
   # Bitwarden item identifiers (UUID or name). Identifiers only — secret
   # contents never enter the store. Overridden from the module.
   k8sBitwardenItem ? "REPLACE-ME",
   rcloneBitwardenItem ? "REPLACE-ME",
+  sopsBitwardenItem ? "REPLACE-ME",
 }:
 
 # jit-auth — temporary authenticated development shells (k8s-auth, rclone-auth).
@@ -30,6 +32,8 @@
 # Wrapper sets:
 #   k8s-auth    kubectl kubectx kubens k9s  (KUBECONFIG=/proc/self/fd/N)
 #   rclone-auth rclone                      (RCLONE_CONFIG=/proc/self/fd/N)
+#   sops-auth   sops                        (SOPS_AGE_KEY_FILE=/proc/self/fd/N,
+#                                        secure note = raw age secret key)
 stdenv.mkDerivation {
   pname = "jit-auth";
   version = "0.3.0";
@@ -70,11 +74,22 @@ stdenv.mkDerivation {
       --subst-var-by bitwardenCli ${bitwarden-cli}
     chmod +x $out/bin/rclone-auth
 
+    substitute ${./frontend.sh.in} $out/bin/sops-auth \
+      --subst-var out \
+      --subst-var-by session_name sops \
+      --subst-var-by bw_item "${sopsBitwardenItem}" \
+      --subst-var-by cmd_name sops \
+      --subst-var-by config_env SOPS_AGE_KEY_FILE \
+      --subst-var-by real_bin ${sops}/bin/sops \
+      --subst-var-by wrappers "sops:${sops}/bin/sops" \
+      --subst-var-by bitwardenCli ${bitwarden-cli}
+    chmod +x $out/bin/sops-auth
+
     runHook postInstall
   '';
 
   meta = with lib; {
-    description = "Bitwarden-backed temporary authenticated shells (k8s-auth, rclone-auth)";
+    description = "Bitwarden-backed temporary authenticated shells (k8s-auth, rclone-auth, sops-auth)";
     license = licenses.mit;
     platforms = platforms.linux;
     mainProgram = "k8s-auth";

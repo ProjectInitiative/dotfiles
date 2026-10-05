@@ -13,6 +13,7 @@
 #   k8s-auth      # unlock once, config held in RAM by jit-auth-broker,
 #                 # PATH wrapper for kubectl, exit destroys everything
 #   rclone-auth   # same for rclone via RCLONE_CONFIG
+#   sops-auth     # same for sops: age key (secure note) -> SOPS_AGE_KEY_FILE
 #
 # One-shot grabs (nothing persists):
 #   eval "$(bw-grab password my-item -- MY_VAR)"
@@ -122,6 +123,7 @@ let
   jitAuth = pkgs.${namespace}.jit-auth.override {
     k8sBitwardenItem = cfg.kubernetes.kubeconfigItem;
     rcloneBitwardenItem = cfg.rclone.configItem;
+    sopsBitwardenItem = cfg.sops.keyItem;
   };
 in
 {
@@ -150,6 +152,15 @@ in
       configItem =
         mkOpt types.str "REPLACE-ME"
           "Bitwarden item (secure note) holding the raw rclone.conf.";
+    };
+
+    sops = {
+      enable =
+        mkOpt types.bool true
+          "Enable the sops-auth session shell (raw age secret key from Bitwarden).";
+      keyItem =
+        mkOpt types.str "REPLACE-ME"
+          "Bitwarden item (secure note) holding ONLY the age secret key line (AGE-SECRET-KEY-...)";
     };
 
     kubernetes = {

@@ -13,6 +13,9 @@ k8s-auth        unlock Bitwarden once -> broker owns ONE session-lifetime
                 mutable memfd -> $SHELL with wrappers for
                 kubectl/kubectx/kubens/k9s
 rclone-auth     same for the raw rclone.conf -> RCLONE_CONFIG (rclone wrapper)
+sops-auth       same for sops: secure note holds ONLY the age secret key
+                -> SOPS_AGE_KEY_FILE (sops wrapper); lets you edit any
+                .enc.yaml you are a recipient of, key never on disk
 ```
 
 Inside the session:
