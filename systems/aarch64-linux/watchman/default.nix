@@ -55,7 +55,23 @@ in
 
   # Key-only box (anchor keeps this false too): no hashed password file,
   # sudo is NOPASSWD via the user module.
-  ${namespace}.user.includePassword = false;
+  ${namespace} = {
+    user.includePassword = false;
+
+    # Tailscale — remote management path for the church site; auth key comes
+    # from sops (tailscale_auth_key — the module reads it automatically when
+    # ephemeral = false). Anchor posture: plain tailnet member — no subnet
+    # routes advertised, no routes accepted.
+    networking.tailscale = {
+      enable = true;
+      ephemeral = false;
+      extraArgs = [
+        "--accept-routes=false"
+        "--advertise-routes="
+        "--snat-subnet-routes=true"
+      ];
+    };
+  };
 
   networking = {
     hostName = "watchman";
@@ -99,9 +115,9 @@ in
   # Bitwarden tooling. Lighthouse-style force-overrides (mkForce) beat the
   # shared kylepzak home's defaults regardless of merge order; terminal-env
   # stays because the shared home enables it and nothing here touches it.
-  # includeSSH=false: this host's sops store only carries tailscale_auth_key
-  # and upsmon_password. Add kylepzak_ssh_key to watchman/secrets.enc.yaml
-  # and flip this if you ever want the SSH key provisioned here.
+  # includeSSH=false: this host's sops store only carries tailscale_auth_key.
+  # Add kylepzak_ssh_key to watchman/secrets.enc.yaml and flip this if you
+  # ever want the SSH key provisioned here.
   home-manager.users.kylepzak.${namespace} = {
     users.kylepzak.includeSSH = false;
     cli-apps.atuin.autoLogin = mkForce false;
