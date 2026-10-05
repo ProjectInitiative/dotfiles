@@ -37,14 +37,24 @@ in
     ubootOnly = true;
   };
 
-  # No host sops key enrolled yet. Once the board is on-site and its host SSH
-  # key exists, follow the anchor pattern (own secrets.enc.yaml +
-  # age.sshKeyPaths, sops-hostkey-tool for enrollment) and drop this override.
-  enableCommonEncryption = lib.mkForce false;
+  # Own sops store (anchor pattern): per-host secrets.enc.yaml encrypted to
+  # the host SSH key + kylepzak/thinkpad. The common encrypted module stays
+  # off — includeSSH/includePassword below keep kylepzak_ssh_key and
+  # user_password from ever being referenced, so tailscale_auth_key is the
+  # only secret this host needs.
+  enableCommonEncryption = mkForce false;
+  sops = mkForce {
+    defaultSopsFile = ./secrets.enc.yaml;
+    age.sshKeyPaths = [
+      "/etc/ssh/ssh_host_ed25519_key"
+    ];
+    secrets = {
+      tailscale_auth_key = { };
+    };
+  };
 
-  # No sops secret store for this host yet → skip the hashed password file
-  # too (anchor pattern). Login stays key-only SSH; sudo is NOPASSWD via the
-  # user module. Revisit when secrets are enrolled.
+  # Key-only box (anchor keeps this false too): no hashed password file,
+  # sudo is NOPASSWD via the user module.
   ${namespace}.user.includePassword = false;
 
   networking = {
@@ -107,10 +117,10 @@ in
   # Same trim as anchor: the shared kylepzak home pulls in browsers, AI,
   # messengers, backup and digital-creation suites by default. This box is a
   # single-purpose UPS monitor, so keep just the standard terminal env.
-  # includeSSH=false because there is no sops secret store for this host yet;
-  # once secrets are enrolled (host key in .sops.yaml, re-encrypt), consider
-  # following the stormjib path (common encryption) or anchor (own
-  # secrets.enc.yaml) and re-enabling SSH key provisioning.
+  # includeSSH=false: this host's sops store only carries tailscale_auth_key
+  # (anchor keeps it false too). Add kylepzak_ssh_key to
+  # watchman/secrets.enc.yaml and flip this if you ever want the SSH key
+  # provisioned here.
   home-manager.users.kylepzak.${namespace} = {
     users.kylepzak.includeSSH = false;
     cli-apps.atuin.autoLogin = mkForce false;

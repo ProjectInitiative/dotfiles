@@ -466,8 +466,6 @@
             "pawl"
             # "cargohold"
             "lightship-atx"
-            # not deployed yet — church-site UPS monitor (NanoPi NEO3 Plus)
-            "watchman"
           ];
         };
 
