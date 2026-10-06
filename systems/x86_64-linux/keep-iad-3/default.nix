@@ -17,7 +17,9 @@
     # TODO: set to the head of the private interconnect (or tailnet) once known.
     k8sServerAddr = "";
 
-    networkType = "standard";
+    # "wireguard" = flannel wireguard-native: cluster comms stay encrypted even
+    # though the OVH vRack is private (DEC-0035). UDP 51871 opened by the role.
+    networkType = "wireguard";
     k8sEnable = false;
 
     # TODO after provisioning
@@ -27,15 +29,18 @@
 
     publicIngress = false;
 
-    # Infisical Agent placeholders. Populate the universal-auth credentials at
-    # /var/lib/infisical/client-id and client-secret, then set the real project
-    # ID. As a joiner, the agent renders the K3S_TOKEN the node needs.
+    # Infisical Agent placeholders. Set the real project ID. Seed the
+    # universal-auth credentials (/var/lib/infisical/client-id + client-secret)
+    # AND the initial password hash (/var/lib/infisical-secrets/user_password)
+    # at provision time via `nixos-anywhere --extra-files` (OQ-0021) — the
+    # agent re-renders the tailscale/k3s/user secret files from then on.
     infisical = {
       enable = true;
       projectId = "<INFISICAL_PROJECT_ID>";
       environment = "prod";
       credentialsDir = "/var/lib/infisical";
-      # manageUserPassword = true;  # enable once the agent is delivering secrets
+      # Password sudo (DEC-0035): render USER_PASSWORD_HASH for wheelNeedsPassword.
+      manageUserPassword = true;
     };
   };
 }
