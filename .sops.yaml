@@ -2,9 +2,8 @@ keys:
   - &sensitive_not_secret age13xqt963jl65rsvu85vzrtv69mych5qmm5pjcvpf7huq6auufv4kq9he0xx
   - &users:
     - &kylepzak age1fepmpsw6v9juhx3nkq5es0mhjs40xtmajn3fl9jxe779flmjh5wq0palxn
-    - &ssh_thinkpad age14hqndcn28shcmyqafh53ykqsz26rs6hre94nfwr9xm5laln8d9qs3mp3lt
     - &cutter age1vf7xhw0czsg77utrm9p2xqnu5c2l82c4jtm6qvhhanldtr2hz3vs057hsv
-    - &ssh_kylepzak age1n8d7jwfy7k9c3xg58n4m4vwc384mqxqqjsrae4tlusln9gmuh5fq2j0jec
+    - &master_key age1sx8wt64d47hgqcvz2k5j9zxcew69prcjm05pfgwtrzu6nv98fptsjxd9rd
     - &bcachefs_test age1l057emzajvutettkmsv8tw86wenxghn3z2aerae07tne9ay0ugkqusz877
     - &test_vm age1gfamaev28ur53f09qllqhs7fqv74yd0unye4yaduhf436cl8usys640ld5
     - &stormjib age19n0mkj63z9tuccjxxzupkx98yzm7m4j2egs3f58pmea2yj90vfusl57nrl
@@ -36,22 +35,19 @@ creation_rules:
   - path_regex: sensitive/[^/]+\.yaml$
     key_groups:
       - age:
-          - *ssh_kylepzak
-          - *ssh_thinkpad
+          - *master_key
           - *sensitive_not_secret
 
   - path_regex: homes/dotfiles/config$
     key_groups:
       - age:
-          - *ssh_kylepzak
-          - *ssh_thinkpad
+          - *master_key
 
   - path_regex: secrets/[^/]+\.yaml$
     key_groups:
       - age:
           - *kylepzak
-          - *ssh_kylepzak
-          - *ssh_thinkpad
+          - *master_key
           - *cutter
           - *bcachefs_test
           - *test_vm
@@ -75,16 +71,14 @@ creation_rules:
     key_groups:
       - age:
           - *kylepzak
-          - *ssh_kylepzak
-          - *ssh_thinkpad
+          - *master_key
           - *ssh_capstan3
 
   - path_regex: nix-signing/[^/]+\.yaml$
     key_groups:
       - age:
           - *kylepzak
-          - *ssh_kylepzak
-          - *ssh_thinkpad
+          - *master_key
           - *ssh_capstan1
           - *ssh_astrolabe
 
@@ -92,8 +86,7 @@ creation_rules:
     # - path: capstan/secrets.enc.yaml
     key_groups:
       - age:
-          - *ssh_kylepzak
-          - *ssh_thinkpad
+          - *master_key
           - *ssh_capstan1
           - *ssh_capstan2
           - *ssh_capstan3
@@ -103,32 +96,28 @@ creation_rules:
     # - path: capstan/secrets.enc.yaml
     key_groups:
       - age:
-          - *ssh_kylepzak
-          - *ssh_thinkpad
+          - *master_key
           - *anchor
 
   - path_regex: watchman/[^/]+\.yaml$
     # - path: capstan/secrets.enc.yaml
     key_groups:
       - age:
-          - *ssh_kylepzak
-          - *ssh_thinkpad
+          - *master_key
           - *watchman
 
   - path_regex: astrolabe/[^/]+\.yaml$
     # - path: capstan/secrets.enc.yaml
     key_groups:
       - age:
-          - *ssh_kylepzak
-          - *ssh_thinkpad
+          - *master_key
           - *ssh_astrolabe
 
   - path_regex: dgx-spark/[^/]+\.yaml$
     # - path: capstan/secrets.enc.yaml
     key_groups:
       - age:
-          - *ssh_kylepzak
-          - *ssh_thinkpad
+          - *master_key
           - *ssh_chronometer
           - *ssh_sextant
           - *ssh_octant
@@ -137,14 +126,12 @@ creation_rules:
     # - path: thinkpad/secrets.enc.yaml
     key_groups:
       - age:
-          - *ssh_kylepzak
-          - *ssh_thinkpad
+          - *master_key
 
   - path_regex: lightship/[^/]+\.yaml$
     key_groups:
       - age:
-          - *ssh_kylepzak
-          - *ssh_thinkpad
+          - *master_key
           - *ssh_lightship_atx
           - *ssh_lightship_dfw
           - *ssh_lightship_dal
@@ -153,8 +140,7 @@ creation_rules:
     # - path: lighthouse/secrets.enc.yaml
     key_groups:
       - age:
-          - *ssh_kylepzak
-          - *ssh_thinkpad
+          - *master_key
           - *ssh_lighthouse_den1
           - *ssh_lighthouse_yul1
           - *ssh_lighthouse_yul2
