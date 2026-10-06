@@ -85,6 +85,11 @@ stdenv.mkDerivation {
       --subst-var-by bitwardenCli ${bitwarden-cli}
     chmod +x $out/bin/sops-auth
 
+    # jit-auth-ls — introspection helper: lists the generated frontends and
+    # their configuration state. Self-locating (no substitution); prints
+    # identifiers only, never secret contents.
+    install -Dm755 ${./jit-auth-ls} $out/bin/jit-auth-ls
+
     runHook postInstall
   '';
 

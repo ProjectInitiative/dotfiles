@@ -18,6 +18,10 @@ sops-auth       same for sops: secure note holds ONLY the age secret key
                 .enc.yaml you are a recipient of, key never on disk
 ```
 
+`jit-auth-ls` lists the installed session frontends (what each wraps,
+which env var carries the credential, whether its Bitwarden item is
+configured) plus the one-shot helpers found on PATH.
+
 Inside the session:
 
 - The vault cache (`data.json`) lives in RAM: `BITWARDENCLI_APPDATA_DIR`

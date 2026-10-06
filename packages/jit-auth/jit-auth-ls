@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# jit-auth-ls — list the available jit-auth session frontends and one-shot
+# helpers, with their configuration state.
+#
+# Introspection, not a manifest: the session frontends are thin JIT_*
+# templates installed next to this script, so the listing is derived from
+# the installed files themselves — add a frontend to the package and it
+# appears here automatically. Identifiers (item UUIDs, env var names) are
+# shown; secret CONTENT never appears anywhere in this output.
+#
+# Self-locates via its own resolved path, so it works from the Nix store,
+# `nix run`, and a plain checkout alike.
+set -euo pipefail
+
+SELF_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+
+if [ -n "${JIT_AUTH_SESSION:-}" ]; then
+  echo "currently inside a '${JIT_AUTH_SESSION}' auth session"
+  echo
+fi
+
+# ── Session frontends: every *-auth installed next to this script ─────────
+frontends=()
+for f in "$SELF_DIR"/*-auth; do
+  [ -x "$f" ] && frontends+=("$f")
+done
+
+if [ ${#frontends[@]} -eq 0 ]; then
+  echo "no jit-auth session frontends found in $SELF_DIR"
+  exit 0
+fi
+
+echo "jit-auth session shells (bw unlock -> broker memfd -> PATH wrappers;"
+echo "secret lives only in per-session RAM, exit destroys it):"
+printf '  %-14s %-26s %-18s %s\n' "COMMAND" "WRAPS" "CREDENTIAL ENV" "BW ITEM"
+for f in "${frontends[@]}"; do
+  name="$(basename "$f")"
+  cmd="$(sed -n 's/^export JIT_CMD_NAME="\(.*\)"$/\1/p' "$f")"
+  env_var="$(sed -n 's/^export JIT_CONFIG_ENV="\(.*\)"$/\1/p' "$f")"
+  item="$(sed -n 's/^export JIT_BW_ITEM="\(.*\)"$/\1/p' "$f")"
+  wrappers="$(
+    sed -n 's/^export JIT_WRAPPERS="\(.*\)"$/\1/p' "$f" |
+      tr ' ' '\n' | cut -d: -f1 | paste -sd' ' -
+  )"
+  if [ -z "$item" ] || [ "$item" = "REPLACE-ME" ]; then
+    status="NOT CONFIGURED (set item in module)"
+  else
+    status="configured (item ${item:0:8}…)"
+  fi
+  printf '  %-14s %-26s %-18s %s\n' "$name" "${wrappers:-$cmd}" "${env_var:-?}" "$status"
+done
+
+# ── One-shot helpers: installed by security.bitwarden, detected via PATH ──
+oneshots=()
+for helper in bw-grab bw-run rclone-load argocd-login helm-registry-login; do
+  command -v "$helper" >/dev/null 2>&1 && oneshots+=("$helper")
+done
+if [ ${#oneshots[@]} -gt 0 ]; then
+  echo
+  echo "one-shot helpers (secret exported to one command, nothing persists):"
+  echo "  ${oneshots[*]}"
+fi
+
+echo
+echo "usage: run any COMMAND above to open an authenticated shell"
+echo "       (vault cache is shared tmpfs: bw login once per boot, bw unlock after)"
