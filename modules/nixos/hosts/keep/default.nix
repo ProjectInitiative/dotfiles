@@ -43,7 +43,8 @@ let
     ];
     allowedUDPPorts = [
       53 # dns
-      8472 # flannel vxlan
+      8472 # flannel vxlan (networkType "standard")
+      51871 # flannel wireguard-native (networkType "wireguard", DEC-0035)
     ];
   };
 
@@ -85,7 +86,11 @@ in
     k8sTokenFile = mkOpt (nullOr path) null "Runtime path to the k3s node token (joiners only).";
     userPasswordFile = mkOpt (nullOr path) null "Runtime path to the user's hashed password file.";
 
-    sudoRequiresPassword = mkBoolOpt false "Require a password for sudo. Only useful when userPasswordFile is set.";
+    # DEC-0035 (keel): password-gated sudo is mandatory on these public-facing
+    # nodes. The hash arrives via the Infisical agent to a persistent on-disk
+    # path; initial provisioning must seed that file (nixos-anywhere
+    # --extra-files, see OQ-0021) so the first-boot users activation finds it.
+    sudoRequiresPassword = mkBoolOpt true "Require a password for sudo.";
     lockKernelModules = mkBoolOpt false "Disable kernel module loading after boot. Test carefully against k3s before enabling.";
 
     # Infisical Agent wiring. Placeholders only; fill these in when ready.
@@ -129,9 +134,10 @@ in
 
     users.users.root.hashedPassword = mkForce "!";
 
-    # No embedded secrets means no stored password by default; sudo is then
-    # gated only by the SSH key + tailnet ACLs. Turn this on once a password
-    # file is delivered at runtime.
+    # Password sudo (DEC-0035): wheelNeedsPassword is always true here. The
+    # hash is delivered at runtime (Infisical agent); until userPasswordFile
+    # is set the user has a locked password ("!"), and the agent's rendered
+    # file takes over once infisical.manageUserPassword is enabled.
     security.sudo.wheelNeedsPassword = mkForce cfg.sudoRequiresPassword;
     security.sudo-rs.wheelNeedsPassword = mkForce cfg.sudoRequiresPassword;
 
@@ -330,6 +336,12 @@ in
       };
     };
 
+    # tailscaled-autoconnect polls NeedsLogin and re-reads the auth key file
+    # every 0.5s (so it tolerates the Infisical agent rendering the key after
+    # boot), but its default Type=notify start timeout (90s) is shorter than
+    # first-boot agent rendering can take on a cold VPS — widen it.
+    systemd.services.tailscaled-autoconnect.serviceConfig.TimeoutStartSec = "15min";
+
     # Everything under the projectinitiative namespace for this host. It must
     # live in a single dynamic attr; Nix rejects two `${namespace}.x` paths.
     ${namespace} = {
@@ -338,8 +350,13 @@ in
       # Turn off the shared user module; this host defines its own stripped user.
       user.enable = mkForce false;
 
-      # Infisical agent renders node secrets to /run/secrets at runtime. No
-      # secret material is ever embedded in the Nix store.
+      # Infisical agent renders node secrets to a PERSISTENT on-disk path at
+      # runtime (no secret material is ever embedded in the Nix store).
+      # Not /run: hashedPasswordFile is consumed by the users activation
+      # script that runs before any network service, and /run is wiped at
+      # boot — under /var/lib every boot after the first render already has
+      # the files in place. Seed them initially with nixos-anywhere
+      # --extra-files (OQ-0021 has the exact file list).
       services.infisical = mkIf cfg.infisical.enable {
         enable = true;
         address = cfg.infisical.address;
@@ -349,15 +366,15 @@ in
         secrets = [
           {
             name = "TAILSCALE_AUTH_KEY";
-            path = "/run/secrets/tailscale_auth_key";
+            path = "/var/lib/infisical-secrets/tailscale_auth_key";
           }
           {
             name = "K3S_TOKEN";
-            path = "/run/secrets/k3s_token";
+            path = "/var/lib/infisical-secrets/k3s_token";
           }
           {
             name = "USER_PASSWORD_HASH";
-            path = "/run/secrets/user_password";
+            path = "/var/lib/infisical-secrets/user_password";
           }
         ];
       };
@@ -366,11 +383,11 @@ in
       # password is deliberately opt-in: pointing hashedPasswordFile at a file
       # that does not exist yet can break activation on first boot.
       hosts.keep = {
-        tailscaleAuthKeyFile = mkIf cfg.infisical.enable "/run/secrets/tailscale_auth_key";
-        k8sTokenFile = mkIf cfg.infisical.enable "/run/secrets/k3s_token";
+        tailscaleAuthKeyFile = mkIf cfg.infisical.enable "/var/lib/infisical-secrets/tailscale_auth_key";
+        k8sTokenFile = mkIf cfg.infisical.enable "/var/lib/infisical-secrets/k3s_token";
         userPasswordFile = mkIf (
           cfg.infisical.enable && cfg.infisical.manageUserPassword
-        ) "/run/secrets/user_password";
+        ) "/var/lib/infisical-secrets/user_password";
       };
 
       # Tailscale is for remote access / ssh only. Cluster traffic is left to

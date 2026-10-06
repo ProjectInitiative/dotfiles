@@ -16,8 +16,11 @@
     role = "server";
     isFirstK8sNode = true;
 
-    # Cluster networking is left to the fast private interconnect.
-    networkType = "standard";
+    # Cluster networking is left to the fast private interconnect (OVH vRack).
+    # "wireguard" = flannel wireguard-native: cluster comms stay encrypted even
+    # though the vRack is private (DEC-0035). The role opens UDP 51871 on the
+    # cluster interfaces for this.
+    networkType = "wireguard";
 
     # Provision first, enable after confirming the internal network layout.
     k8sEnable = false;
@@ -31,15 +34,18 @@
     # No public ingress until hardening tests pass.
     publicIngress = false;
 
-    # Infisical Agent placeholders. Populate the universal-auth credentials at
-    # /var/lib/infisical/client-id and client-secret on the node, then set the
-    # real project ID. The agent renders the tailscale/k3s/user secret files.
+    # Infisical Agent placeholders. Set the real project ID. Seed the
+    # universal-auth credentials (/var/lib/infisical/client-id + client-secret)
+    # AND the initial password hash (/var/lib/infisical-secrets/user_password)
+    # at provision time via `nixos-anywhere --extra-files` (OQ-0021) — the
+    # agent re-renders the tailscale/k3s/user secret files from then on.
     infisical = {
       enable = true;
       projectId = "<INFISICAL_PROJECT_ID>";
       environment = "prod";
       credentialsDir = "/var/lib/infisical";
-      # manageUserPassword = true;  # enable once the agent is delivering secrets
+      # Password sudo (DEC-0035): render USER_PASSWORD_HASH for wheelNeedsPassword.
+      manageUserPassword = true;
     };
   };
 }
