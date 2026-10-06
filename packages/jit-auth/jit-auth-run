@@ -13,13 +13,13 @@
 #
 # Lifecycle: unlock Bitwarden once -> fetch config once -> hand it to a
 # jit-auth-broker owning ONE session-lifetime mutable memfd -> spawn $SHELL
-# with session PATH wrappers (kubectl, kubectx, kubens, k9s, rclone) -> each
-# wrapped invocation receives a descriptor to that SAME memfd over
+# with session PATH wrappers (kubectl, kubectx, kubens, k9s, rclone, sops) ->
+# each wrapped invocation receives a descriptor to that SAME memfd over
 # SCM_RIGHTS (independent per-client offsets), so kubectx/kubens mutations
 # persist across commands while the config exists only in anonymous RAM.
-# On exit: broker dies, memfd closes, session dir (socket/wrapper/fifo) is
-# removed. The config never exists as a named file; BW_SESSION never reaches
-# the shell.
+# On exit: broker dies, memfd closes, session dir (socket/wrapper/fifo/vault
+# cache) is removed. The config never exists as a named file; BW_SESSION
+# never reaches the shell.
 #
 # SECURITY POSTURE: session scoping only — not a defense against hostile code
 # already running as the same Unix UID (ptrace / /proc / injection defeat it).
@@ -50,6 +50,21 @@ SOCKET="$RUNTIME_BASE/broker.sock"
 BIN_DIR="$RUNTIME_BASE/bin"
 mkdir -p "$BIN_DIR"
 chmod 700 "$RUNTIME_BASE"
+
+# Bitwarden CLI state lives in RAM, never on disk: BITWARDENCLI_APPDATA_DIR
+# (where bw keeps data.json — its encrypted vault cache) is pointed at a
+# tmpfs-backed dir inside the session runtime dir. $XDG_RUNTIME_DIR is a
+# tmpfs on Linux, so the cache vanishes on exit (cleanup's rm -rf) and on
+# reboot regardless. Each session gets its own dir: concurrent sessions do
+# not share or clobber each other's downloaded vault, and a manual `bw`
+# inside the session shell inherits the env var, so ad-hoc vault reads also
+# stay out of persistent storage. Trade-off: every session re-downloads the
+# vault over the network (2FA/lock as configured) — accepted by design; no
+# stale encrypted copies accumulate anywhere.
+# (macOS has no /run/user; a hdiutil ram:// disk would be needed there. This
+# fleet is Linux-only — see the module's platforms.)
+export BITWARDENCLI_APPDATA_DIR="$RUNTIME_BASE/bw-appdata"
+mkdir -p "$BITWARDENCLI_APPDATA_DIR"
 
 cleanup() {
   # Broker dies first so nothing can serve credentials afterwards (its memfd

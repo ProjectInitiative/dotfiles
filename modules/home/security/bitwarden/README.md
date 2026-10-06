@@ -20,6 +20,12 @@ sops-auth       same for sops: secure note holds ONLY the age secret key
 
 Inside the session:
 
+- The vault cache (`data.json`) lives in RAM: `BITWARDENCLI_APPDATA_DIR` is
+  pointed at a tmpfs dir inside the session runtime dir, destroyed on exit
+  and on reboot. The encrypted vault is re-downloaded per session and never
+  lands on persistent storage (macOS hosts would need a `hdiutil ram://`
+  disk instead — this module is Linux-only).
+
 - `$PATH` gains a session-local wrapper dir, so plain `kubectl`, `kx`, `kn`,
   `k9s`, `rclone` work in scripts, `make`, `python subprocess`, `sh -c`, ... —
   transparently.
