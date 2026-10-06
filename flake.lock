@@ -2310,15 +2310,15 @@
         "nixpkgs": "nixpkgs_12"
       },
       "locked": {
-        "lastModified": 1789603357,
-        "narHash": "sha256-35JLpCwtlbSu/x2cQKwUEXMEke3t2PvKLKKzIwce2BA=",
-        "owner": "sovren-software",
+        "lastModified": 1791257826,
+        "narHash": "sha256-jjLZkS3Il647HiYMSmo/ANDx/ahvo0lOIgPVBzK2i24=",
+        "owner": "ProjectInitiative",
         "repo": "visage",
-        "rev": "0066bcdc690a1a6c301b84b716571a6ef6d9703c",
+        "rev": "97ce4e499a20989bb5e85209d17da4420253535f",
         "type": "github"
       },
       "original": {
-        "owner": "sovren-software",
+        "owner": "ProjectInitiative",
         "repo": "visage",
         "type": "github"
       }
