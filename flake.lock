@@ -2310,11 +2310,11 @@
         "nixpkgs": "nixpkgs_12"
       },
       "locked": {
-        "lastModified": 1791292746,
+        "lastModified": 1791295541,
         "narHash": "sha256-jjLZkS3Il647HiYMSmo/ANDx/ahvo0lOIgPVBzK2i24=",
         "owner": "ProjectInitiative",
         "repo": "visage",
-        "rev": "c88d9b3fe2f6705556a728c25b3acb4a12257846",
+        "rev": "5bdbb3a6bb490cc154ba31095bc797a685b77e6f",
         "type": "github"
       },
       "original": {
