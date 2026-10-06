@@ -29,9 +29,11 @@ Inside the session:
   jit-auth sessions and in-session `bw` calls. The vault is downloaded once
   per boot — the first session after a reboot does a full `bw login` (2FA
   as configured), later sessions only `bw unlock` (master password) against
-  the warm cache. On reboot the tmpfs empties; nothing lands on persistent
-  storage. (macOS hosts would need a `hdiutil ram://` disk instead — this
-  module is Linux-only.) Session SECRETS remain per-session (broker memfd).
+  the warm cache, and no `bw sync` runs unless `JIT_AUTH_SYNC=1` (freshness
+  is per-boot by design). On reboot the tmpfs empties; nothing lands on
+  persistent storage. (macOS hosts would need a `hdiutil ram://` disk
+  instead — this module is Linux-only.) Session SECRETS remain per-session
+  (broker memfd).
 
 - `$PATH` gains a session-local wrapper dir, so plain `kubectl`, `kx`, `kn`,
   `k9s`, `rclone` work in scripts, `make`, `python subprocess`, `sh -c`, ... —

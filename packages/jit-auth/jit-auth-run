@@ -100,8 +100,14 @@ else
 fi
 [ -n "$BW_SESSION" ] || { unset BW_SESSION; fail "failed to unlock Bitwarden"; }
 
-# One sync per session entry; the vault is not needed again this session.
-bw sync --session "$BW_SESSION" >/dev/null 2>&1 || { unset BW_SESSION; fail "Bitwarden sync failed"; }
+# Vault freshness is once per boot by design: the shared tmpfs cache is
+# downloaded by the first session's `bw login`, and later sessions reuse it
+# as-is. Set JIT_AUTH_SYNC=1 to force a re-sync for this session (costs
+# ~3-5s: one extra Node startup + network + full vault rewrite); secrets
+# changed elsewhere mid-boot are not visible until then.
+if [ "${JIT_AUTH_SYNC:-0}" = "1" ]; then
+  bw sync --session "$BW_SESSION" >/dev/null 2>&1 || { unset BW_SESSION; fail "Bitwarden sync failed"; }
+fi
 
 # Single extraction point: adjust here if the secret lives in a custom field.
 bw_fetch_config() { bw get notes "$BW_ITEM" --session "$BW_SESSION"; }
