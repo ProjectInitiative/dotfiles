@@ -20,11 +20,14 @@ sops-auth       same for sops: secure note holds ONLY the age secret key
 
 Inside the session:
 
-- The vault cache (`data.json`) lives in RAM: `BITWARDENCLI_APPDATA_DIR` is
-  pointed at a tmpfs dir inside the session runtime dir, destroyed on exit
-  and on reboot. The encrypted vault is re-downloaded per session and never
-  lands on persistent storage (macOS hosts would need a `hdiutil ram://`
-  disk instead — this module is Linux-only).
+- The vault cache (`data.json`) lives in RAM: `BITWARDENCLI_APPDATA_DIR`
+  points at a fixed tmpfs dir (`/run/user/<uid>/bitwarden`) shared by all
+  jit-auth sessions and in-session `bw` calls. The vault is downloaded once
+  per boot — the first session after a reboot does a full `bw login` (2FA
+  as configured), later sessions only `bw unlock` (master password) against
+  the warm cache. On reboot the tmpfs empties; nothing lands on persistent
+  storage. (macOS hosts would need a `hdiutil ram://` disk instead — this
+  module is Linux-only.) Session SECRETS remain per-session (broker memfd).
 
 - `$PATH` gains a session-local wrapper dir, so plain `kubectl`, `kx`, `kn`,
   `k9s`, `rclone` work in scripts, `make`, `python subprocess`, `sh -c`, ... —
