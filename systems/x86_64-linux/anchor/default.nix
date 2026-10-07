@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   namespace,
   ...
 }:
@@ -111,6 +112,27 @@ with lib.${namespace};
       podman = enabled;
     };
   };
+
+  # ── UPS monitoring (NUT, reporting-only) ────────────────────────────────
+  # Cyber Power PR1500LCDRT2U, USB-attached (lsusb: 0764:0601) — the MDF UPS.
+  # Driver + upsd only: anchor never shuts anything down (upsmon disabled);
+  # upsc now, Grafana scrape later. Self-tests via upscmd will want a upsd
+  # user + password later — anchor's own sops file is the place for it.
+  # Verify after deploy: upsc church-ups@localhost
+  power.ups = {
+    enable = true;
+    mode = "standalone";
+    ups.church-ups = {
+      driver = "usbhid-ups";
+      port = "auto";
+      directives = [ "vendorid = 0764" ];
+    };
+    upsmon.enable = false;
+  };
+
+  environment.systemPackages = with pkgs; [
+    nut
+  ];
 
   # ── Home config: barebones — terminal env only ──────────────────────────
   # The shared kylepzak home (homes/x86_64-linux/kylepzak) pulls in browsers,

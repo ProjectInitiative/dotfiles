@@ -366,7 +366,10 @@
             chronometer = {
               system = "aarch64-linux";
             };
-            watchman = {
+            watchman-idf = {
+              system = "aarch64-linux";
+            };
+            watchman-mdf = {
               system = "aarch64-linux";
             };
           };
@@ -469,6 +472,9 @@
             "pawl"
             # "cargohold"
             "lightship-atx"
+            # watchman-mdf: hardware arriving week of 2026-10-06 (Unifi alarm
+            # bridge will live there) — deploy-enable when it lands.
+            "watchman-mdf"
           ];
         };
 

@@ -12,7 +12,10 @@ keys:
     - &wharfmaster age14lyx3jvucynqqpdklza3j6j2wq7g3lhncgq0phkdpapg2yzh89uqrfy405
     - &dcc_ex age1m6sddcgxrrms5yx7ues7u4czuj6mvuzqyawt0jzcdexheaa8yuusy7pehz
     - &anchor age1zj4sxkeqlas55dsngtq52tt2nc8tcd5f2vknqgl7qdnqw3n3hv9srd4mzv
-    - &watchman age1pr9x8t7r4m7l9nnu7rvunhvgalylaetmmyhv88szl46g62t7uf4svjwl0d
+    - &watchman_idf age1pr9x8t7r4m7l9nnu7rvunhvgalylaetmmyhv88szl46g62t7uf4svjwl0d
+    # watchman-mdf: enroll via `nix run .#sops-hostkey-tool -- fetch-remote
+    # kylepzak@watchman-mdf` when the MDF device lands, then add its alias
+    # here and re-encrypt the shared file (sops updatekeys).
   - &capstans:
     - &ssh_capstan1 age1katkdmh05xy9n5pmrkaznw0e5j4p96js88dzxy4l0zt06pfa4qzs0gsua5
     - &ssh_capstan2 age1daxggyz58h525ww5clnwwuwxu7tf5mlz8as8n7cy8dhv74u4qcqq0jagrp
@@ -100,11 +103,13 @@ creation_rules:
           - *anchor
 
   - path_regex: watchman/[^/]+\.yaml$
-    # - path: capstan/secrets.enc.yaml
+    # Shared watchman-estate file (watchman-idf + watchman-mdf) — capstan
+    # pattern. Add *watchman_mdf once its host key is enrolled.
     key_groups:
       - age:
           - *master_key
-          - *watchman
+          - *watchman_idf
+          # - *watchman_mdf
 
   - path_regex: astrolabe/[^/]+\.yaml$
     # - path: capstan/secrets.enc.yaml
