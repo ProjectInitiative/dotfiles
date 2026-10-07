@@ -16,22 +16,35 @@ Context: keel `OQ-0020-pikvm-nixos-conversion`.
 | janus | janus-gateway-pikvm 1.4.2-2 |
 | extras | kvmd-fan 0.33, kvmd-webterm 0.52 |
 
-## ⚠️ Key finding: the "8-host kvmd patches" are pure configuration
+## ⚠️ Key finding: the "8-host kvmd patches" are real but tiny (CORRECTED 2026-10-07)
 
-`pacman -Qkk kvmd` reports 8 altered files — all of them are **just**
-`/etc/kvmd/htpasswd` + `/etc/kvmd/override.yaml` (mtime/size/hash mismatch
-because the BliSwitch installer rewrote them). **No kvmd source files are
-modified.** The 8-host BliSwitch v2 switching works entirely through:
+> First version of this doc claimed "config-only, no source patches" — that was
+> WRONG: `pacman -Qkk` writes warnings to **stderr**, and the first check ran it
+> through `2>/dev/null`. Corrected after the owner pointed at the installer.
 
-1. kvmd's **stock `xh_hk4401` GPIO driver** driven by `override.yaml`
-   (driver `hk`, `protocol: 1`, device `/dev/bliswitch`, 8 channels × led/button,
-   `view.table` menu: Capstan1, Capstan2, Capstan3, Astrolabe, Chronometer,
-   Sextant, Octant, INPUT 8).
-2. A udev rule producing the stable `/dev/bliswitch` symlink (CH340, rev 0254).
+The live box runs `/root/bliswitch/install-bliswitch-v2.sh` (plus
+`patch-xh_hk4401-8port.py`, `check-bliswitch-v2.sh`, `override-bliswitch-v2.yaml`,
+README). The installer:
 
-→ This **disproves** the OQ-0020 assumption that kvmd needs an overlay/fork with
-the owner's patches. A `services.kvmd.settings` override + udev rules is
-sufficient. No source patching, no janus patching observed on this box.
+1. writes the `/dev/bliswitch` udev rule,
+2. locates `kvmd.plugins.ugpio.xh_hk4401`, backs it up
+   (`xh_hk4401.py.bliswitch-v2-backup.<ts>`, still present),
+3. patches the driver in place (3 lines, see below) and py_compiles it.
+
+The patch (backup→current diff, kvmd 4.215 / python3.14):
+
+```diff
+-        return valid_number.mk(min=0, max=3, name="XH-HK4401 channel")
++        return valid_number.mk(min=0, max=7, name="XH-HK4401 channel")
+-            found = re.findall((b"AG0[1-4]gA" if self.__protocol == 1 else b"G0[1-4]gA\x00"), data)
++            found = re.findall((b"AG0[1-8]gA" if self.__protocol == 1 else b"G0[1-8]gA\x00"), data)
+-        assert 0 <= channel <= 3
++        assert 0 <= channel <= 7
+```
+
+kvmd 4.217 (hatch01) carries the identical stock strings → same patch applies
+as a `postPatch`/`substituteInPlace` in the package. Everything else (8-channel
+scheme, view table, htpasswd/override.yaml) is config as described below.
 
 ## Enabled kvmd services (live)
 
