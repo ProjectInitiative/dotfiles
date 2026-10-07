@@ -1,0 +1,12 @@
+### /etc/udev/rules.d/1-e52c-kvm.rules
+KERNEL=="ttyUSB*", KERNELS=="1-1.2.1", SYMLINK+="e52c"
+### /etc/udev/rules.d/10-ezcoo-kvm.rules
+#ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="ezcoo"
+KERNEL=="ttyUSB*", KERNELS=="1-1.4", SYMLINK+="ezcoo"
+### /etc/udev/rules.d/11-pikvm-atx-kvm.rules
+ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="0232", ATTRS{idProduct}=="0232", SYMLINK+="pikvmatx"
+
+### /etc/udev/rules.d/99-bliswitch-v2.rules
+# BliSwitch v2 USB serial controller (QinHeng CH340)
+# Creates: /dev/bliswitch
+SUBSYSTEM=="tty", ENV{ID_VENDOR_ID}=="1a86", ENV{ID_MODEL_ID}=="7523", ENV{ID_MODEL}=="USB2.0-Ser_", ENV{ID_REVISION}=="0254", SYMLINK+="bliswitch"

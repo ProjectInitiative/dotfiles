@@ -1,0 +1,42 @@
+# You can write down any information and it will be available
+# at the address /api/info?legacy=0
+# To change PiKVM's hostname, use "hostnamectl hostname <new>".
+
+server:
+    host: "@auto"
+---FAN---
+[server]
+unix = /run/kvmd/fan.sock
+unix_rm = 1
+unix_mode = 666
+---ROUTE---
+default via 172.16.1.1 dev eth0 proto static 
+default via 192.168.1.254 dev eth0.2 proto dhcp src 192.168.1.220 metric 30 
+172.16.1.0/24 dev eth0 proto kernel scope link src 172.16.1.85 
+192.168.1.0/24 dev eth0.2 proto kernel scope link src 192.168.1.220 metric 30 
+192.168.1.254 dev eth0.2 proto dhcp scope link src 192.168.1.220 metric 30 
+---JANUS---
+janus.jcfg
+janus.plugin.ustreamer.jcfg
+janus.transport.websockets.jcfg
+---NGINX---
+/etc/kvmd/nginx/kvmd.ctx-server.conf
+/etc/kvmd/nginx/ssl.conf
+/etc/kvmd/nginx/nginx.conf.mako
+/etc/kvmd/nginx/loc-bigpost.conf
+/etc/kvmd/nginx/loc-websocket.conf
+/etc/kvmd/nginx/loc-nobuffering.conf
+/etc/kvmd/nginx/loc-nocache.conf
+/etc/kvmd/nginx/certbot.ctx-server.conf
+/etc/kvmd/nginx/kvmd.ctx-http.conf
+/etc/kvmd/nginx/mime-types.conf
+---SERVICES---
+  kvmd-fan.service        loaded active running PiKVM - A small fan controller daemon
+  kvmd-janus.service      loaded active running PiKVM - Janus WebRTC Gateway
+  kvmd-media.service      loaded active running PiKVM - Media proxy server
+  kvmd-nginx.service      loaded active running PiKVM - HTTP entrypoint
+  kvmd-oled.service       loaded active running PiKVM - A small OLED daemon
+  kvmd-pst.service        loaded active running PiKVM - The KVMD persistent storage manager
+  kvmd-watchdog.service   loaded active running PiKVM - RTC-based hardware watchdog
+  kvmd-webterm.service    loaded active running PiKVM - Web terminal (ttyd)
+  kvmd.service            loaded active running PiKVM - The main daemon
