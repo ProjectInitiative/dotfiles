@@ -38,8 +38,11 @@ let
   #   1. pin validator max 3 -> 7
   #   2. RX regex  G0[1-4] -> G0[1-8] (both protocol framings)
   #   3. TX assert channel <= 3 -> <= 7
+  # NOTE: appended to patchPhase, NOT postPatch — hatch01's package overrides
+  # patchPhase directly, and a custom patchPhase never runs postPatch hooks
+  # (proven: a postPatch-based first attempt built successfully but unpatched).
   kvmd8port = pkgs.kvmd.overrideAttrs (old: {
-    postPatch = (old.postPatch or "") + ''
+    patchPhase = (old.patchPhase or "") + ''
       substituteInPlace kvmd/plugins/ugpio/xh_hk4401.py \
         --replace-fail 'valid_number.mk(min=0, max=3, name="XH-HK4401 channel")' \
                        'valid_number.mk(min=0, max=7, name="XH-HK4401 channel")' \
