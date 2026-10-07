@@ -112,6 +112,20 @@ in
         usbutils
       ];
 
+      # Deploy trust: paths pushed from the build hosts (nix-copy-closure /
+      # deploy-rs) must be accepted by the local daemon. Same grant the
+      # common encrypted module gives hosts with common encryption on —
+      # these boxes keep common encryption off, so the grant lives here.
+      nix.settings = {
+        trusted-users = [
+          "root"
+          "kylepzak"
+        ];
+        trusted-public-keys = [
+          "tugboat:r+QK20NgKO/RisjxQ8rtxctsc5kQfY5DFCgGqvbmNYc="
+        ];
+      };
+
       console.enable = true;
 
       # ── Home config: barebones — terminal env only ────────────────────────

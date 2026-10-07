@@ -134,6 +134,19 @@ with lib.${namespace};
     nut
   ];
 
+  # Deploy trust: paths pushed from the build hosts must be accepted by the
+  # local daemon (common encryption is off here, so the usual grant from the
+  # common encrypted module doesn't apply).
+  nix.settings = {
+    trusted-users = [
+      "root"
+      "kylepzak"
+    ];
+    trusted-public-keys = [
+      "tugboat:r+QK20NgKO/RisjxQ8rtxctsc5kQfY5DFCgGqvbmNYc="
+    ];
+  };
+
   # ── Home config: barebones — terminal env only ──────────────────────────
   # The shared kylepzak home (homes/x86_64-linux/kylepzak) pulls in browsers,
   # AI, messengers, backup and digital-creation suites by default. This box is
