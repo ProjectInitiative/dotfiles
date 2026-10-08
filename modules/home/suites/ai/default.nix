@@ -14,6 +14,30 @@ let
 
   jsonFormat = pkgs.formats.json { };
 
+  # TensorFold GLM accepts per-request reasoning_effort. Its native levels are
+  # low, high, and max; minimal aliases low and medium aliases high.
+  glmReasoningOverride = {
+    reasoning = true;
+    thinkingLevelMap = {
+      off = "none";
+      minimal = "low";
+      low = "low";
+      medium = "medium";
+      high = "high";
+      max = "max";
+    };
+    input = [
+      "text"
+      "image"
+    ];
+    maxTokens = 32768;
+    compat = {
+      supportsDeveloperRole = false;
+      supportsReasoningEffort = true;
+      maxTokensField = "max_tokens";
+    };
+  };
+
   # Build github-mcp-server wrapper that reads GITHUB_TOKEN from sops at runtime
   githubMcpWrapper = pkgs.writeShellScriptBin "github-mcp-server" ''
     export GITHUB_TOKEN="$(cat /run/secrets/github_pat)"
@@ -208,10 +232,12 @@ in
           providers.ai = {
             baseUrl = "http://ai.taildeab2.ts.net/v1";
             api = "openai-completions";
+            modelOverrides.dgx-spark = glmReasoningOverride;
           };
           providers.ai-direct = {
             baseUrl = "http://ai-direct.taildeab2.ts.net/v1";
             api = "openai-completions";
+            modelOverrides.dgx-spark = glmReasoningOverride;
           };
           # astrolabe: disabled until local llama-server comes back up
           # providers.astrolabe = {
