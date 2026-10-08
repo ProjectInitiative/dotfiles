@@ -2311,7 +2311,7 @@
       },
       "locked": {
         "lastModified": 1791295541,
-        "narHash": "sha256-jjLZkS3Il647HiYMSmo/ANDx/ahvo0lOIgPVBzK2i24=",
+        "narHash": "sha256-7MC8BDZjwcYILIjGSnLoJ67rfTq7sGVqfrp7IPS9Muc=",
         "owner": "ProjectInitiative",
         "repo": "visage",
         "rev": "5bdbb3a6bb490cc154ba31095bc797a685b77e6f",
