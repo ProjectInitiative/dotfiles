@@ -370,6 +370,12 @@ in
         Prime directive: keel is ADVISORY, NEVER BLOCKING. Best-effort records with honest
         `confidence:`; never block delivery. Never edit `views/`. Never invent state you
         didn't observe. Sync failures are noted, never fatal.
+
+        ## Communication preferences (Kyle — applies to ALL projects, both estates)
+
+        - Every copy-paste command must be a **single line** — no backslash
+          line-continuations, no multi-line command blocks. One line survives
+          terminal formatting and is easier to read and paste.
       '')
     ];
 
