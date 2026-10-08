@@ -92,6 +92,21 @@ in
     };
 
   networking = {
+    # General DNS for resolved: the shared tailscale module provides tailnet
+    # split-DNS (tailscale0 -> Quad100), but this host uses scripted
+    # networking + dhcpcd, whose lease-DNS path (resolvconf) is force-disabled
+    # by services.resolved.enable in nixpkgs (resolved.nix sets
+    # networking.resolvconf.enable = false) — so DHCP-provided DNS
+    # (192.168.21.1) is silently discarded and general lookups SERVFAIL.
+    # Static global DNS in resolved.conf is the durable fix (verified 2026-10-08
+    # after vlan21 lost all DNS until a hand-run `resolvectl dns vlan21`).
+    # Longer term: migrate to systemd-networkd like the rest of the estate
+    # (networkd pushes lease DNS to resolved natively) — OQ-0022.
+    nameservers = [
+      "192.168.21.1" # router/lease resolver — local (.lan) names
+      "1.1.1.1"
+      "8.8.8.8"
+    ];
     firewall = {
       # allowedTCPPorts = [ 5353 ];
       allowedUDPPorts = [ 5353 ];
