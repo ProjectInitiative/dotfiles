@@ -84,6 +84,11 @@ in
             "--snat-subnet-routes=true"
           ];
         };
+
+        # Eternal Terminal — resilient remote shell for the IDF/MDF rooms
+        # (survives NAT/connection changes where plain SSH drops). Server on
+        # the default port 2022, firewall opened by the service module.
+        services.eternal-terminal = enabled;
       };
 
       networking = {
