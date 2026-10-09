@@ -1504,11 +1504,11 @@
         "nixpkgs": "nixpkgs_8"
       },
       "locked": {
-        "lastModified": 1788891696,
-        "narHash": "sha256-d8z96BPGH9RzdxifCW6VpJhPVw2NC1P/SvhTmlfcmx8=",
+        "lastModified": 1791516836,
+        "narHash": "sha256-L0PMlKTR734GJ4NoXzd9aiZzHe4wCqbgUlnNQl2s4OA=",
         "owner": "ProjectInitiative",
         "repo": "nixos-on-arm",
-        "rev": "c1aedaf0f6e4aef46cb811ab030d18fc2504036e",
+        "rev": "a57d5c63b89089e2a819847a8b6704c70729b690",
         "type": "github"
       },
       "original": {
@@ -1768,11 +1768,11 @@
     },
     "nixpkgs_8": {
       "locked": {
-        "lastModified": 1779560665,
-        "narHash": "sha256-tpyBcxPpcQb8ukyNF7DoCwfSY3VPsxHoYwj00Cayv5o=",
+        "lastModified": 1791456040,
+        "narHash": "sha256-H83yz/do+hjOO0uujHyH8RgtIQP2v7Mw+cLwcZK/xKc=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "64c08a7ca051951c8eae34e3e3cb1e202fe36786",
+        "rev": "e7439b6b14ad3cc35d05608ebca9bce01a25f5f8",
         "type": "github"
       },
       "original": {
