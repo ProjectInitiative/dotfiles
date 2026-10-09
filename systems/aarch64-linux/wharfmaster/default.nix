@@ -132,51 +132,6 @@ in
   # network-online.target; any managed interface reaching routable suffices.
   systemd.network.wait-online.anyInterface = true;
 
-  # ── TEMPORARY: headless migration safety net — REMOVE once verified ────
-  # One-shot per boot of this generation: after 3 min, if vlan21 never
-  # reaches the gateway, switch back to the previous (dhcpcd) generation in
-  # a transient unit — the box self-heals with no console access. On first
-  # success it stamps /var/lib/network-rollback-watchdog/ok and never acts
-  # again. Delete this whole service in the follow-up commit.
-  systemd.services.network-rollback-watchdog = {
-    description = "Auto-rollback to previous generation if vlan21 stays unreachable";
-    # Deliberately NOT gated on network-online.target: if networkd is broken,
-    # wait-online could stall and delay this service. The 180s sleep is the wait.
-    wantedBy = [ "multi-user.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-    };
-    script = ''
-      stamp=/var/lib/network-rollback-watchdog/ok
-      [ -f "$stamp" ] && exit 0
-      sleep 180
-      ok=no
-      for i in 1 2 3 4 5 6; do
-        if ping -c 1 -W 3 192.168.21.1 >/dev/null 2>&1; then ok=yes; break; fi
-        sleep 15
-      done
-      if [ "$ok" = yes ]; then
-        mkdir -p /var/lib/network-rollback-watchdog
-        touch "$stamp"
-        exit 0
-      fi
-      prev=""
-      for d in $(ls -d /nix/var/nix/profiles/system-*-link 2>/dev/null | sort -V | tac); do
-        if [ "$(readlink -f "$d")" != "$(readlink -f /run/current-system)" ]; then
-          prev="$d"
-          break
-        fi
-      done
-      if [ -n "$prev" ] && [ -x "$prev/bin/switch-to-configuration" ]; then
-        echo "network-rollback-watchdog: vlan21 unreachable — rolling back to $prev" | logger -t watchdog
-        systemd-run --no-block --unit=network-rollback \
-          --description="networkd migration auto-rollback" \
-          "$prev/bin/switch-to-configuration" switch
-      fi
-    '';
-  };
-
   # NFS mount for frigate camera feed storage offloaded to dinghy's bcachefs pool
   fileSystems."/mnt/dinghy/frigate" = {
     device = "dinghy.taildeab2.ts.net:/frigate";
