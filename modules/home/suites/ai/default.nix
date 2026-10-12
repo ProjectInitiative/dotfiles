@@ -178,6 +178,14 @@ in
             type = "remote";
             url = "http://mcp-system-mcp-lb-mc.taildeab2.ts.net/sse";
           };
+          # REA: Reverse Engineer Anything — stdio MCP server from the
+          # nix-packaged rea-agents; spawns lazily on first tool call.
+          rea = {
+            enable = true;
+            type = "stdio";
+            command = lib.getExe pkgs.${namespace}.rea-agents;
+            args = [ "mcp" ];
+          };
         };
         description = "MCP server configurations. Each attr name is the MCP server identifier.";
       };
@@ -196,6 +204,7 @@ in
       ++ [ pkgs.${namespace}.ketch ]
       ++ [ pkgs.${namespace}."fifo-proxy" ]
       ++ (optional cfg.mcp.enable pkgs.${namespace}.mcp-proxy-runner)
+      ++ (optional cfg.mcp.enable pkgs.${namespace}.rea-agents)
       ++ (optional cfg.mcp.enable githubMcpWrapper)
       ++ (optional cfg.mcp.enable uv)
       ++ (optionals cfg.mcp.enable [

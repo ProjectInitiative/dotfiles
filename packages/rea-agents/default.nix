@@ -3,6 +3,7 @@
   buildNpmPackage,
   fetchFromGitHub,
   gitUpdater,
+  pkgs,
 }:
 
 buildNpmPackage (finalAttrs: {
@@ -13,12 +14,14 @@ buildNpmPackage (finalAttrs: {
     owner = "morluto";
     repo = "rea";
     tag = "rea-agents-${finalAttrs.version}";
-    hash = "";
+    hash = "sha256-aAbOYpsT6QhlLAZDtVHZ1Acz6uIqrVEd4p49s/2FJgc=";
   };
 
-  npmDeps = fetchNpmDeps {
+  # NOTE: snowfall's package callPackage scope does not expose top-level
+  # fetchNpmDeps as a formal arg — resolve it off pkgs instead.
+  npmDeps = pkgs.fetchNpmDeps {
     inherit (finalAttrs) src;
-    hash = "";
+    hash = "sha256-XuiMtaM/MPDkhjiHCr9dGC7WlsRBmsWepuNHRxAs3Nw=";
   };
 
   # The repo ships prebuilt skills/bridges; the turbo "build" script only
