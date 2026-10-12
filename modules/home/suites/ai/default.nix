@@ -239,6 +239,11 @@ in
             api = "openai-completions";
             modelOverrides.dgx-spark = glmReasoningOverride;
           };
+          providers.ai-gated = {
+            baseUrl = "http://ai-gated.taildeab2.ts.net/v1";
+            api = "openai-completions";
+            modelOverrides.dgx-spark = glmReasoningOverride;
+          };
           # astrolabe: disabled until local llama-server comes back up
           # providers.astrolabe = {
           #   baseUrl = "http://100.81.89.107:8080/v1";
