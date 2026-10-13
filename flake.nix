@@ -30,8 +30,11 @@
     # Hardware Configuration
     nixos-hardware.url = "github:nixos/nixos-hardware";
 
-    # Face authentication (trial) — Rust PAM face-auth daemon, see https://github.com/sovren-software/visage
-    visage.url = "github:ProjectInitiative/visage";
+    # Face authentication (trial) — Rust PAM face-auth daemon.
+    # Fork branch fix-stack = upstream main + the two lock-screen wedge fixes:
+    #   PR #127 deadline-bounded PAM retry (first unlock after lid-open)
+    #   + D-Bus activation file (ServiceUnknown race after resume, #123)
+    visage.url = "github:ProjectInitiative/visage/fix-stack";
 
     # Package pinning:
     # old nixpkgs just for bambu-studio
