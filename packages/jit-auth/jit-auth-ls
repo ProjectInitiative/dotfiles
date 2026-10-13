@@ -30,24 +30,33 @@ if [ ${#frontends[@]} -eq 0 ]; then
   exit 0
 fi
 
-echo "jit-auth session shells (bw unlock -> broker memfd -> PATH wrappers;"
-echo "secret lives only in per-session RAM, exit destroys it):"
-printf '  %-14s %-26s %-18s %s\n' "COMMAND" "WRAPS" "CREDENTIAL ENV" "BW ITEM"
+echo "jit-auth session shells (bw unlock -> per-slot broker memfds -> PATH wrappers;"
+echo "secrets live only in per-session RAM, exit destroys them):"
+printf '  %-14s %-30s %-22s %s\n' "COMMAND" "WRAPS" "CREDENTIAL ENV" "BW ITEM(S)"
 for f in "${frontends[@]}"; do
   name="$(basename "$f")"
-  cmd="$(sed -n 's/^export JIT_CMD_NAME="\(.*\)"$/\1/p' "$f")"
-  env_var="$(sed -n 's/^export JIT_CONFIG_ENV="\(.*\)"$/\1/p' "$f")"
-  item="$(sed -n 's/^export JIT_BW_ITEM="\(.*\)"$/\1/p' "$f")"
+  secrets="$(sed -n 's/^export JIT_SECRETS="\(.*\)"$/\1/p' "$f")"
+  bindings="$(sed -n 's/^export JIT_BINDINGS="\(.*\)"$/\1/p' "$f")"
   wrappers="$(
     sed -n 's/^export JIT_WRAPPERS="\(.*\)"$/\1/p' "$f" |
       tr ' ' '\n' | cut -d: -f1 | paste -sd' ' -
   )"
-  if [ -z "$item" ] || [ "$item" = "REPLACE-ME" ]; then
+  # Distinct credential env var names across all bindings (identifiers only).
+  env_vars="$(
+    printf '%s\n' "$bindings" | tr ' ' '\n' | grep -v '^$' | cut -d: -f2 |
+      cut -d= -f1 | sort -u | paste -sd, -
+  )"
+  # Distinct non-REPLACE-ME item ids across all slots.
+  items="$(
+    printf '%s\n' "$secrets" | tr ' ' '\n' | grep -v '^$' | cut -d: -f2 |
+      sort -u | tr '\n' ' '
+  )"
+  if [ -z "${items// /}" ] || [[ "$secrets" == *REPLACE-ME* ]]; then
     status="NOT CONFIGURED (set item in module)"
   else
-    status="configured (item ${item:0:8}…)"
+    status="configured (${items% })"
   fi
-  printf '  %-14s %-26s %-18s %s\n' "$name" "${wrappers:-$cmd}" "${env_var:-?}" "$status"
+  printf '  %-14s %-30s %-22s %s\n' "$name" "${wrappers:-?}" "${env_vars:-?}" "$status"
 done
 
 # ── One-shot helpers: installed by security.bitwarden, detected via PATH ──

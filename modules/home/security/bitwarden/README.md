@@ -16,6 +16,15 @@ rclone-auth     same for the raw rclone.conf -> RCLONE_CONFIG (rclone wrapper)
 sops-auth       same for sops: secure note holds ONLY the age secret key
                 -> SOPS_AGE_KEY_FILE (sops wrapper); lets you edit any
                 .enc.yaml you are a recipient of, key never on disk
+bao-auth        openbao: secure note holds ONLY the raw token -> BAO_TOKEN
+                (injected literally into the wrapped `bao` process);
+                the internal BAO_ADDR is static config (module option),
+                not a secret, and is exported into the session shell
+bao-k8s-auth    COMBO shell: TWO secret slots (openbao token + kubeconfig),
+                ONE unlock, one Bitwarden fetch per item, and BOTH wrapper
+                sets (bao + kubectl/kubectx/kubens/k9s) on PATH. exit
+                destroys everything. Add more combos the same way: one
+                make_frontend call in packages/jit-auth/default.nix.
 ```
 
 `jit-auth-ls` lists the installed session frontends (what each wraps,
@@ -36,19 +45,25 @@ Inside the session:
   (broker memfd).
 
 - `$PATH` gains a session-local wrapper dir, so plain `kubectl`, `kx`, `kn`,
-  `k9s`, `rclone` work in scripts, `make`, `python subprocess`, `sh -c`, ... —
-  transparently.
-- The broker holds the config as **one anonymous, RAM-only memfd for the
-  whole session**. Every invocation receives a fresh open-file description of
-  that SAME memfd over `SCM_RIGHTS`: independent per-client offsets
+  `k9s`, `rclone`, `bao` work in scripts, `make`, `python subprocess`,
+  `sh -c`, ... — transparently.
+- The broker holds each secret as **one anonymous, RAM-only memfd for the
+  whole session** (one broker per secret slot; combo shells run several).
+  Every invocation receives a fresh open-file description of that SAME
+  memfd over `SCM_RIGHTS`: independent per-client offsets
   (concurrency-safe) but shared mutable content — so `kx`/`kn` rewrites
   persist across commands and `k9s` sees them. No named file anywhere ever
-  contains the config; nothing is discoverable by crawling
+  contains a secret; nothing is discoverable by crawling
   `$XDG_RUNTIME_DIR`.
-- `BW_SESSION`, `KUBECONFIG_RAW`, `RCLONE_CONFIG_RAW` and a global
-  `KUBECONFIG` are never exported into the shell. Only the wrapped tool
-  process itself temporarily receives `KUBECONFIG=/proc/self/fd/N`.
-  Bitwarden is queried **once per session entry**, not per command.
+- Secrets the tool's CLI contract demands as a VALUE (e.g. `BAO_TOKEN`)
+  are injected literally into the wrapped process env only
+  (`--env-value` binding mode) — never exported into the session shell,
+  never on disk. Everything else (kubeconfig, rclone.conf, age key)
+  travels as an fd path (`/proc/self/fd/N`) and is never in any env.
+- `BW_SESSION`, `KUBECONFIG_RAW`, `RCLONE_CONFIG_RAW`, `BAO_TOKEN` and
+  global `KUBECONFIG` are never exported into the shell. Only the wrapped
+  tool process itself receives its credential (fd path or literal value).
+  Bitwarden is queried **once per session entry per item**, not per command.
 - `exit` kills the broker (its memfd — the only copy — closes with it),
   removes the session dir (socket + wrappers), and the credential is gone.
   Traps cover INT/TERM. A new `k8s-auth` starts fresh from the vault.
@@ -71,6 +86,8 @@ projectinitiative.security.bitwarden = {
   enable = true;
   kubernetes.kubeconfigItem = "<BW item UUID or name>";  # REPLACE-ME
   rclone.configItem = "<BW item UUID or name>";          # REPLACE-ME
+  bao.tokenItem = "<BW item UUID or name>";              # REPLACE-ME: secure note = raw OpenBao token
+  bao.address = "https://bao.internal:8200";             # static, not a secret
 };
 ```
 

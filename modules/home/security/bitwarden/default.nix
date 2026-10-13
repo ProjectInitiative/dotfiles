@@ -14,6 +14,10 @@
 #                 # PATH wrapper for kubectl, exit destroys everything
 #   rclone-auth   # same for rclone via RCLONE_CONFIG
 #   sops-auth     # same for sops: age key (secure note) -> SOPS_AGE_KEY_FILE
+#   bao-auth      # same for openbao: token (secure note) -> BAO_TOKEN,
+#                 # internal BAO_ADDR is static config, not a secret
+#   bao-k8s-auth  # COMBO shell: openbao + k8s slots, ONE unlock, both
+#                 # wrapper sets on PATH
 #
 # One-shot grabs (nothing persists):
 #   eval "$(bw-grab password my-item -- MY_VAR)"
@@ -124,6 +128,8 @@ let
     k8sBitwardenItem = cfg.kubernetes.kubeconfigItem;
     rcloneBitwardenItem = cfg.rclone.configItem;
     sopsBitwardenItem = cfg.sops.keyItem;
+    baoBitwardenItem = cfg.bao.tokenItem;
+    baoAddress = cfg.bao.address;
   };
 in
 {
@@ -161,6 +167,18 @@ in
       keyItem =
         mkOpt types.str "REPLACE-ME"
           "Bitwarden item (secure note) holding ONLY the age secret key line (AGE-SECRET-KEY-...)";
+    };
+
+    bao = {
+      enable =
+        mkOpt types.bool true
+          "Enable the bao-auth and bao-k8s-auth session shells (OpenBao token from Bitwarden).";
+      tokenItem =
+        mkOpt types.str "REPLACE-ME"
+          "Bitwarden item (secure note) holding ONLY the raw OpenBao token.";
+      address =
+        mkOpt types.str ""
+          "Internal OpenBao address (BAO_ADDR), e.g. https://bao.internal:8200. Not a secret — safe for the store.";
     };
 
     kubernetes = {

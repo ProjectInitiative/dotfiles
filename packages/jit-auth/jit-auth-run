@@ -1,52 +1,66 @@
 #!/usr/bin/env bash
-# jit-auth-run — generic authenticated-session shell used by k8s-auth and
-# rclone-auth (parameters arrive via JIT_* environment variables set by the
-# thin Nix-built frontends).
+# jit-auth-run — generic authenticated-session shell (parameters arrive via
+# JIT_* environment variables set by the thin Nix-built frontends).
 #
-#   JIT_SESSION_NAME   short label (k8s, rclone) for messages/prompt
-#   JIT_BW_ITEM        Bitwarden item (UUID or name) holding the raw config
-#   JIT_CMD_NAME       wrapped command name (kubectl, rclone)
-#   JIT_CONFIG_ENV     env var the real tool reads (KUBECONFIG, RCLONE_CONFIG)
-#   JIT_REAL_BIN       absolute path to the real Nix-store binary (existence check)
+#   JIT_SESSION_NAME   short label (k8s, rclone, bao, ...) for messages/prompt
+#   JIT_SECRETS        space-separated "slot:BW_ITEM" pairs; EACH slot is one
+#                      Bitwarden secure note and gets its own broker + memfd.
+#                      This is what makes combo sessions (openbao + k8s, ...)
+#                      possible: unlock once, fetch every item once, wrap all.
 #   JIT_WRAPPERS       space-separated "cmd:/abs/path" pairs to wrap via PATH
+#   JIT_BINDINGS       space-separated "cmd:VAR=slot" pairs binding each
+#                      wrapped command to its credential slot(s):
+#                        VAR=slot   -> cmd receives VAR=/proc/self/fd/N
+#                                      (mutable shared memfd; kubectl-style)
+#                        VAR=+slot  -> cmd receives VAR=<literal content>
+#                                      (value-mode secrets, e.g. BAO_TOKEN)
+#                      All bindings for one cmd must reference the SAME slot.
+#   JIT_REQUIRED_ENV   optional space-separated env var names that must be
+#                      set (non-secret static config, e.g. BAO_ADDR) — the
+#                      frontend exports them; this is a fail-fast check only.
 #   JIT_BROKER         path to jit-auth-broker
 #
-# Lifecycle: unlock Bitwarden once -> fetch config once -> hand it to a
-# jit-auth-broker owning ONE session-lifetime mutable memfd -> spawn $SHELL
-# with session PATH wrappers (kubectl, kubectx, kubens, k9s, rclone, sops) ->
-# each wrapped invocation receives a descriptor to that SAME memfd over
-# SCM_RIGHTS (independent per-client offsets), so kubectx/kubens mutations
-# persist across commands while the config exists only in anonymous RAM.
-# On exit: broker dies, memfd closes, session dir (socket/wrapper/fifo/vault
-# cache) is removed. The config never exists as a named file; BW_SESSION
-# never reaches the shell.
+# Lifecycle: unlock Bitwarden once -> fetch EVERY item once -> hand each one
+# to a jit-auth-broker (each owns ONE session-lifetime mutable memfd) ->
+# spawn $SHELL with session PATH wrappers -> each wrapped invocation receives
+# descriptors to the relevant SAME memfd over SCM_RIGHTS (independent
+# offsets, shared mutable content), so kubectx/kubens rewrites persist for
+# the session while configs exist only in anonymous RAM. On exit: brokers
+# die, memfds close, session dir (sockets/wrappers/fifo) is removed. No
+# config ever exists as a named file; BW_SESSION never reaches the shell.
 #
 # SECURITY POSTURE: session scoping only — not a defense against hostile code
 # already running as the same Unix UID (ptrace / /proc / injection defeat it).
 # Purpose: no persistent credentials, no named credential files, no globally
-# exported credentials, no accidental cross-session reuse. See
+# exported credentials, no accidental cross-session reuse. Literal-mode
+# secrets (VAR=+slot) necessarily appear in the wrapped tool process env —
+# that is what the tool's own CLI contract requires — but never in the
+# session shell env and never on disk. See
 # modules/home/security/bitwarden/README.md.
 
 set -euo pipefail
 
 SESSION="${JIT_SESSION_NAME:?JIT_SESSION_NAME not set}"
-BW_ITEM="${JIT_BW_ITEM:-}"
-CMD_NAME="${JIT_CMD_NAME:?JIT_CMD_NAME not set}"
-CONFIG_ENV="${JIT_CONFIG_ENV:?JIT_CONFIG_ENV not set}"
-REAL_BIN="${JIT_REAL_BIN:?JIT_REAL_BIN not set}"
+SECRETS="${JIT_SECRETS:?JIT_SECRETS not set}"
 WRAPPERS="${JIT_WRAPPERS:?JIT_WRAPPERS not set}"
+BINDINGS="${JIT_BINDINGS:-}"
 BROKER="${JIT_BROKER:?JIT_BROKER not set}"
 
 msg() { printf '%s\n' "$*"; }
 fail() { printf 'error: %s\n' "$*" >&2; exit 1; }
 
-[ -n "$BW_ITEM" ] || fail "$SESSION auth is not configured: set the Bitwarden item in the module options"
-[ -x "$REAL_BIN" ] || fail "wrapped binary not found: $REAL_BIN"
+[ -n "$SECRETS" ] || fail "$SESSION auth is not configured: set the Bitwarden item(s) in the module options"
+[ -n "$WRAPPERS" ] || fail "$SESSION auth is not configured: no wrapped commands"
+[ -n "$BINDINGS" ] || fail "$SESSION auth is not configured: no credential bindings"
 [ -d "${XDG_RUNTIME_DIR:-}" ] || fail "XDG_RUNTIME_DIR is not set"
 command -v bw >/dev/null 2>&1 || fail "bitwarden CLI (bw) not found in PATH"
 
+# Fail fast on missing static (non-secret) config the session depends on.
+for var in ${JIT_REQUIRED_ENV:-}; do
+  [ -n "${!var:-}" ] || fail "$var is not set (static session config — set it in the module options)"
+done
+
 RUNTIME_BASE="$XDG_RUNTIME_DIR/jit-auth-$SESSION-$$"
-SOCKET="$RUNTIME_BASE/broker.sock"
 BIN_DIR="$RUNTIME_BASE/bin"
 mkdir -p "$BIN_DIR"
 chmod 700 "$RUNTIME_BASE"
@@ -60,21 +74,65 @@ chmod 700 "$RUNTIME_BASE"
 # session just `bw unlock`s (master password only) against the warm cache.
 # On reboot the tmpfs empties and the next session re-logins — no encrypted
 # vault copies persist anywhere. The vault cache is shared; the SECRETS are
-# not: each session's config still lives only in its broker memfd, exactly
+# not: each session's configs still live only in broker memfds, exactly
 # as before. (macOS has no /run/user; a hdiutil ram:// disk would be needed
 # there. This fleet is Linux-only — see the module's platforms.)
 export BITWARDENCLI_APPDATA_DIR="${BITWARDENCLI_APPDATA_DIR:-/run/user/$(id -u)/bitwarden}"
 mkdir -p "$BITWARDENCLI_APPDATA_DIR" || fail "cannot create tmpfs vault cache dir (is /run/user/<uid> mounted?)"
 chmod 700 "$BITWARDENCLI_APPDATA_DIR" 2>/dev/null || true
 
-cleanup() {
-  # Broker dies first so nothing can serve credentials afterwards (its memfd
-  # — the only copy of the config — closes with it), then the session dir
-  # (socket, wrappers, lifecycle fifo) goes away with the directory.
-  if [ -n "${BROKER_PID:-}" ]; then
-    kill "$BROKER_PID" 2>/dev/null || true
-    wait "$BROKER_PID" 2>/dev/null || true
+declare -A SLOT_ITEM SLOT_CONFIG SLOT_PID SLOT_SOCKET
+
+# ── Parse secret slots ────────────────────────────────────────────────────
+for entry in $SECRETS; do
+  slot="${entry%%:*}"
+  item="${entry#*:}"
+  [ -n "$slot" ] && [ "$slot" != "$entry" ] || fail "malformed JIT_SECRETS entry: $entry (want slot:BW_ITEM)"
+  [ -n "$item" ] && [ "$item" != "REPLACE-ME" ] || fail "slot '$slot' has no Bitwarden item (set it in the module options)"
+  # shellcheck disable=SC2199
+  [ -z "${SLOT_ITEM[$slot]+x}" ] || fail "duplicate secret slot: $slot"
+  SLOT_ITEM[$slot]="$item"
+done
+[ "${#SLOT_ITEM[@]}" -gt 0 ] || fail "no secret slots configured"
+
+# ── Parse bindings: cmd:VAR=slot (fd path) or cmd:VAR=+slot (literal) ─────
+declare -A CMD_SLOT CMD_ARGS
+for entry in $BINDINGS; do
+  cmd="${entry%%:*}"
+  rest="${entry#*:}"
+  var="${rest%%=*}"
+  spec="${rest#*=}"
+  [ -n "$cmd" ] && [ "$cmd" != "$entry" ] || fail "malformed JIT_BINDINGS entry: $entry (want cmd:VAR=slot)"
+  [[ "$var" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || fail "invalid env var name in binding: $var"
+  if [[ "$spec" == +* ]]; then
+    mode="--env-value"
+    slot="${spec#+}"
+  else
+    mode="--env"
+    slot="$spec"
   fi
+  [ -n "${SLOT_ITEM[$slot]+x}" ] || fail "binding '$entry' references unknown slot: $slot"
+  [ -z "${CMD_SLOT[$cmd]+x}" ] || [ "${CMD_SLOT[$cmd]}" = "$slot" ] || \
+    fail "command '$cmd' has bindings across multiple slots; split it or merge the slots"
+  CMD_SLOT[$cmd]="$slot"
+  CMD_ARGS[$cmd]+="$mode $var "
+done
+for cmd in "${!CMD_SLOT[@]}"; do
+  [ -n "${CMD_ARGS[$cmd]:-}" ] || fail "command '$cmd' has no env bindings"
+done
+
+# ── Lifecycle traps ───────────────────────────────────────────────────────
+BROKER_PIDS=()
+cleanup() {
+  # Brokers die first so nothing can serve credentials afterwards (their
+  # memfds — the only copies of the configs — close with them), then the
+  # session dir (sockets, wrappers, lifecycle fifo) goes away.
+  for pid in "${BROKER_PIDS[@]:-}"; do
+    kill "$pid" 2>/dev/null || true
+  done
+  for pid in "${BROKER_PIDS[@]:-}"; do
+    wait "$pid" 2>/dev/null || true
+  done
   rm -rf "$RUNTIME_BASE"
 }
 trap cleanup EXIT
@@ -109,51 +167,78 @@ if [ "${JIT_AUTH_SYNC:-0}" = "1" ]; then
   bw sync --session "$BW_SESSION" >/dev/null 2>&1 || { unset BW_SESSION; fail "Bitwarden sync failed"; }
 fi
 
-# Single extraction point: adjust here if the secret lives in a custom field.
-bw_fetch_config() { bw get notes "$BW_ITEM" --session "$BW_SESSION"; }
+# Single extraction point: adjust here if a secret lives in a custom field.
+bw_fetch_config() { bw get notes "$1" --session "$BW_SESSION"; }
 
-CONFIG="$(bw_fetch_config)" || { unset BW_SESSION; fail "failed to retrieve $SESSION configuration from Bitwarden"; }
-[ -n "$CONFIG" ] || { unset BW_SESSION; fail "failed to retrieve $SESSION configuration from Bitwarden"; }
-unset BW_SESSION  # the auth shell never sees the vault session key
+# Fetch every slot's secret exactly once (Bitwarden is queried once per
+# session entry per item, not per command).
+for slot in "${!SLOT_ITEM[@]}"; do
+  CONFIG="$(bw_fetch_config "${SLOT_ITEM[$slot]}")" || { unset BW_SESSION; fail "failed to retrieve slot '$slot' from Bitwarden"; }
+  [ -n "$CONFIG" ] || { unset BW_SESSION; fail "failed to retrieve slot '$slot' from Bitwarden (empty)"; }
+  SLOT_CONFIG[$slot]="$CONFIG"
+done
+unset CONFIG BW_SESSION  # the auth shell never sees the vault session key
 # (No `bw lock` needed: without BW_SESSION the CLI holds no unlocked state.)
 
-# Broker: config arrives on fd 3 (process-substitution pipe — the plaintext
-# never exists as a named file). The broker materializes it into ONE
+# ── Brokers: one per slot ─────────────────────────────────────────────────
+# Each config arrives on fd 3 (process-substitution pipe — the plaintext
+# never exists as a named file). Each broker materializes it into ONE
 # session-lifetime mutable memfd and serves descriptors to it; the lifecycle
-# fifo keeps the broker alive only while this script lives (EOF on exit
-# stops it even if cleanup breaks).
+# fifo keeps the brokers alive only while this script lives (EOF on exit
+# stops them even if cleanup breaks).
 LIFECYCLE="$RUNTIME_BASE/lifecycle"
 mkfifo "$LIFECYCLE"
 exec {LIFE_FD}<>"$LIFECYCLE"
-"$BROKER" serve --socket "$SOCKET" --root-pid "$$" < "$LIFECYCLE" \
-  >/dev/null \
-  3< <(printf '%s' "$CONFIG") &
-BROKER_PID=$!
+for slot in "${!SLOT_CONFIG[@]}"; do
+  SOCKET="$RUNTIME_BASE/$slot.sock"
+  "$BROKER" serve --socket "$SOCKET" --root-pid "$$" < "$LIFECYCLE" \
+    >/dev/null \
+    3< <(printf '%s' "${SLOT_CONFIG[$slot]}") &
+  SLOT_PID[$slot]=$!
+  BROKER_PIDS+=("$!")
+  SLOT_SOCKET[$slot]="$SOCKET"
+done
 
 for _ in $(seq 1 50); do
-  [ -S "$SOCKET" ] && break
-  kill -0 "$BROKER_PID" 2>/dev/null || fail "jit-auth helper failed to start"
+  ready=1
+  for slot in "${!SLOT_SOCKET[@]}"; do
+    [ -S "${SLOT_SOCKET[$slot]}" ] || { ready=0; break; }
+  done
+  [ "$ready" = 1 ] && break
+  alive=0
+  for slot in "${!SLOT_SOCKET[@]}"; do
+    kill -0 "${SLOT_PID[$slot]}" 2>/dev/null && alive=1
+  done
+  [ "$alive" = 1 ] || fail "jit-auth helper failed to start"
   sleep 0.1
 done
-[ -S "$SOCKET" ] || fail "jit-auth helper failed to start"
+for slot in "${!SLOT_SOCKET[@]}"; do
+  [ -S "${SLOT_SOCKET[$slot]}" ] || fail "jit-auth helper failed to start"
+done
 
-# Session-local PATH wrappers: children resolve the tool via normal PATH
-# lookup and land here; each invocation requests a descriptor to the SAME
-# session memfd and execs the real Nix-store binary with
-# <CONFIG_ENV>=/proc/self/fd/<fd>. Wrappers contain only store paths and the
-# socket location — no secrets, no recursion (paths are absolute).
+# ── Session-local PATH wrappers ───────────────────────────────────────────
+# Children resolve the tool via normal PATH lookup and land here; each
+# invocation requests a descriptor to the SAME session memfd (fd-path mode)
+# or the literal content (value mode) and execs the real Nix-store binary.
+# Wrappers contain only store paths and socket locations — no secrets, no
+# recursion (paths are absolute).
 for entry in $WRAPPERS; do
   name="${entry%%:*}"
   bin="${entry#*:}"
+  [ "$name" != "$entry" ] || fail "malformed JIT_WRAPPERS entry: $entry (want cmd:/abs/path)"
   [ -x "$bin" ] || fail "wrapped binary not found: $bin"
+  [ -n "${CMD_ARGS[$name]+x}" ] || fail "wrapper '$name' has no JIT_BINDINGS entry"
+  slot="${CMD_SLOT[$name]}"
   cat > "$BIN_DIR/$name" <<WRAPPER_EOF
 #!/usr/bin/env bash
-exec "$BROKER" client --socket "$SOCKET" --env "$CONFIG_ENV" -- "$bin" "\$@"
+exec "$BROKER" client --socket "${SLOT_SOCKET[$slot]}" ${CMD_ARGS[$name]}-- "$bin" "\$@"
 WRAPPER_EOF
   chmod 700 "$BIN_DIR/$name"
 done
 
-unset CONFIG  # drop our copy; the broker's memfd owns the only plaintext
+for slot in "${!SLOT_CONFIG[@]}"; do
+  unset "SLOT_CONFIG[$slot]"  # drop our copies; the broker memfds own the only plaintexts
+done
 
 export PATH="$BIN_DIR:$PATH"
 export JIT_AUTH_SESSION="$SESSION"

@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """jit-auth-broker — session credential holder for jit-auth shells.
 
-The broker owns ONE memfd per session, created at startup and populated once
-from its input fd. That anonymous, RAM-only file is the authoritative MUTABLE
-session state. On every authorized client request the broker opens a fresh
-open-file description on the same memfd (os.open on /proc/self/fd/<fd> yields
-a NEW file description — independent offset — referencing the SAME underlying
+The broker owns ONE memfd, created at startup and populated once from its
+input fd. That anonymous, RAM-only file is the authoritative MUTABLE session
+state. On every authorized client request the broker opens a fresh open-file
+description on the same memfd (os.open on /proc/self/fd/<fd> yields a NEW
+file description — independent offset — referencing the SAME underlying
 data) and passes it to the client over SCM_RIGHTS.
+
+A session shell may run SEVERAL brokers — one per secret slot (e.g. a
+kubeconfig AND an OpenBao token) — each with its own socket and memfd; the
+auth script binds each wrapped command to the slot(s) it needs.
 
 Consequences:
   * concurrent clients never interfere: each request got its own description,
@@ -195,7 +199,32 @@ def cmd_client(args) -> None:
     except OSError:
         die("failed to prepare credential descriptor")
     env = dict(os.environ)
-    env[args.env] = f"/proc/self/fd/{fd}"
+    if args.env_value:
+        # Literal mode: tools that need the secret as a VALUE (e.g. BAO_TOKEN)
+        # rather than a path. We hold our own open-file description with an
+        # independent offset, so reading to EOF cannot disturb other clients;
+        # rewind afterwards so a same-invocation --env path binding still
+        # points at offset 0. The value lives only in this process + child env.
+        chunks = []
+        while True:
+            try:
+                chunk = os.read(fd, 65536)
+            except OSError as e:
+                die(f"cannot read credential: {e}")
+            if not chunk:
+                break
+            chunks.append(chunk)
+        value = b"".join(chunks).rstrip(b"\n").decode()
+        if not value:
+            die("credential content is empty")
+        for var in args.env_value:
+            env[var] = value
+        try:
+            os.lseek(fd, 0, os.SEEK_SET)
+        except OSError:
+            pass
+    for var in args.env:
+        env[var] = f"/proc/self/fd/{fd}"
     try:
         os.execvpe(args.cmd[0], args.cmd, env)
     except OSError:
@@ -213,7 +242,10 @@ def main() -> None:
 
     p_client = sub.add_parser("client")
     p_client.add_argument("--socket", required=True)
-    p_client.add_argument("--env", required=True)
+    # --env VAR       -> VAR points at the session memfd (/proc/self/fd/N)
+    # --env-value VAR -> VAR is set to the memfd CONTENT as a literal string
+    p_client.add_argument("--env", action="append", default=[])
+    p_client.add_argument("--env-value", action="append", default=[])
     p_client.add_argument("cmd", nargs=argparse.REMAINDER)
 
     args = parser.parse_args()
@@ -224,6 +256,8 @@ def main() -> None:
         if not cmd:
             die("client mode requires -- <command>")
         args.cmd = cmd
+        if not args.env and not args.env_value:
+            die("client mode requires at least one --env or --env-value")
         cmd_client(args)
     else:
         cmd_serve(args)
