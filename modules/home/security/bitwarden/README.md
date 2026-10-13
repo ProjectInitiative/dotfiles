@@ -88,6 +88,7 @@ projectinitiative.security.bitwarden = {
   rclone.configItem = "<BW item UUID or name>";          # REPLACE-ME
   bao.tokenItem = "<BW item UUID or name>";              # REPLACE-ME: secure note = raw OpenBao token
   bao.address = "https://bao.internal:8200";             # static, not a secret
+  bao.namespace = "";                                    # optional: BAO_NAMESPACE, unset = not exported
 };
 ```
 

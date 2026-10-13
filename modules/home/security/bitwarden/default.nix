@@ -130,6 +130,7 @@ let
     sopsBitwardenItem = cfg.sops.keyItem;
     baoBitwardenItem = cfg.bao.tokenItem;
     baoAddress = cfg.bao.address;
+    baoNamespace = cfg.bao.namespace;
   };
 in
 {
@@ -179,6 +180,9 @@ in
       address =
         mkOpt types.str ""
           "Internal OpenBao address (BAO_ADDR), e.g. https://bao.internal:8200. Not a secret — safe for the store.";
+      namespace =
+        mkOpt types.str ""
+          "Optional OpenBao namespace (BAO_NAMESPACE). Exported into the session shell only when set.";
     };
 
     kubernetes = {

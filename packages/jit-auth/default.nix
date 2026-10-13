@@ -18,6 +18,8 @@
   # Internal OpenBao address (BAO_ADDR). An identifier, not a secret — safe
   # for the store; the TOKEN is the secret and lives in Bitwarden.
   baoAddress ? "",
+  # Optional OpenBao namespace (BAO_NAMESPACE). Exported only when set.
+  baoNamespace ? "",
 }:
 
 # jit-auth — temporary authenticated development shells (session frontends).
@@ -47,7 +49,7 @@
 #   bao-k8s-auth  bao + kubectl kubectx kubens k9s (both slots, one unlock)
 stdenv.mkDerivation {
   pname = "jit-auth";
-  version = "0.4.0";
+  version = "0.4.1";
 
   src = ./.;
 
@@ -59,7 +61,12 @@ stdenv.mkDerivation {
     let
       k8sWrappers = "kubectl:${kubectl}/bin/kubectl kubectx:${kubectx}/bin/kubectx kubens:${kubectx}/bin/kubens k9s:${k9s}/bin/k9s";
       k8sBindings = "kubectl:KUBECONFIG=k8s kubectx:KUBECONFIG=k8s kubens:KUBECONFIG=k8s k9s:KUBECONFIG=k8s";
-      baoAddrLine = lib.optionalString (baoAddress != "") ''export BAO_ADDR="${baoAddress}"'';
+      baoStaticEnv = lib.concatStringsSep "\n" (
+        lib.filter (l: l != "") [
+          (lib.optionalString (baoAddress != "") ''export BAO_ADDR="${baoAddress}"'')
+          (lib.optionalString (baoNamespace != "") ''export BAO_NAMESPACE="${baoNamespace}"'')
+        ]
+      );
     in
     ''
       runHook preInstall
@@ -107,14 +114,14 @@ stdenv.mkDerivation {
         "bao:${openbao}/bin/bao" \
         "bao:BAO_TOKEN=+bao" \
         "BAO_ADDR" \
-        ${lib.escapeShellArg baoAddrLine}
+        ${lib.escapeShellArg baoStaticEnv}
 
       make_frontend bao-k8s-auth bao-k8s \
         "bao:${baoBitwardenItem} k8s:${k8sBitwardenItem}" \
         "bao:${openbao}/bin/bao ${k8sWrappers}" \
         "bao:BAO_TOKEN=+bao ${k8sBindings}" \
         "BAO_ADDR" \
-        ${lib.escapeShellArg baoAddrLine}
+        ${lib.escapeShellArg baoStaticEnv}
 
       # jit-auth-ls — introspection helper: lists the generated frontends and
       # their configuration state. Self-locating (no substitution); prints
