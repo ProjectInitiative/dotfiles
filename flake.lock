@@ -2310,15 +2310,16 @@
         "nixpkgs": "nixpkgs_12"
       },
       "locked": {
-        "lastModified": 1791295541,
-        "narHash": "sha256-jjLZkS3Il647HiYMSmo/ANDx/ahvo0lOIgPVBzK2i24=",
+        "lastModified": 1791913707,
+        "narHash": "sha256-iE70NwtdtMFfM6o3h1yCTx5Alpe6Fm7jhpoZc8e5NGU=",
         "owner": "ProjectInitiative",
         "repo": "visage",
-        "rev": "5bdbb3a6bb490cc154ba31095bc797a685b77e6f",
+        "rev": "622e443606b8f1c82f1e2bff0bc1181596cb6beb",
         "type": "github"
       },
       "original": {
         "owner": "ProjectInitiative",
+        "ref": "fix-stack",
         "repo": "visage",
         "type": "github"
       }
