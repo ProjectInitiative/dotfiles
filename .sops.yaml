@@ -2,6 +2,10 @@ keys:
   - &sensitive_not_secret age13xqt963jl65rsvu85vzrtv69mych5qmm5pjcvpf7huq6auufv4kq9he0xx
   - &users:
     - &kylepzak age1fepmpsw6v9juhx3nkq5es0mhjs40xtmajn3fl9jxe779flmjh5wq0palxn
+    # 2026-10-13: ssh_thinkpad removed in 28ce7b7 — broke sops decryption on
+    # thinkpad after reboot (no /run/secrets, dangling ~/.ssh/id_ed25519).
+    # Re-added; keep it in the secrets/ rule below.
+    - &ssh_thinkpad age14hqndcn28shcmyqafh53ykqsz26rs6hre94nfwr9xm5laln8d9qs3mp3lt
     - &cutter age1vf7xhw0czsg77utrm9p2xqnu5c2l82c4jtm6qvhhanldtr2hz3vs057hsv
     - &master_key age1sx8wt64d47hgqcvz2k5j9zxcew69prcjm05pfgwtrzu6nv98fptsjxd9rd
     - &bcachefs_test age1l057emzajvutettkmsv8tw86wenxghn3z2aerae07tne9ay0ugkqusz877
@@ -51,6 +55,7 @@ creation_rules:
     key_groups:
       - age:
           - *kylepzak
+          - *ssh_thinkpad
           - *master_key
           - *cutter
           - *bcachefs_test
@@ -82,6 +87,7 @@ creation_rules:
     key_groups:
       - age:
           - *kylepzak
+          - *ssh_thinkpad
           - *master_key
           - *ssh_capstan1
           - *ssh_astrolabe
