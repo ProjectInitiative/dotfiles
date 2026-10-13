@@ -201,4 +201,51 @@ leftover_brokers="$(pgrep -f "jit-auth-broker serve --socket $XDG_RUNTIME_DIR/ji
 [ "$leftover_brokers" -le "$before_brokers" ] || fail_test "$leftover_brokers jit-auth broker(s) still running (baseline $before_brokers)"
 pass "brokers gone after exit (their memfds died with them)"
 
+# 8. dynamic composer: auth bao k8s — two apps, one session, one unlock.
+# Fragments embed REAL store binaries, so this session runs real kubectl/bao
+# through the wrappers; the fake-tool mechanics are covered by part 1.
+cat > "$work/session-combo.sh" <<'EOF'
+kp="$(command -v kubectl || true)"
+bp="$(command -v bao || true)"
+case "$kp" in *jit-auth-bao-k8s*) ;; *) echo "KUBECTL_NOT_WRAPPED:$kp" ;; esac
+case "$bp" in *jit-auth-bao-k8s*) ;; *) echo "BAO_NOT_WRAPPED:$bp" ;; esac
+bao version | grep -q 'Bao v' || echo BAO_VERSION_FAILED
+true
+EOF
+chmod +x "$work/session-combo.sh"
+fetches_before="$(wc -l < "$work/fetch.log")"
+out2="$(PATH="$work/fakebin:$JIT_BIN:$PATH" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" SHELL="$work/session-combo.sh" "$JIT_BIN/auth" bao k8s 2>&1)" || fail_test "auth bao k8s failed: $out2"
+echo "$out2" | grep -q KUBECTL_NOT_WRAPPED && fail_test "auth combo: kubectl not wrapped: $out2"
+echo "$out2" | grep -q BAO_NOT_WRAPPED && fail_test "auth combo: bao not wrapped: $out2"
+echo "$out2" | grep -q BAO_VERSION_FAILED && fail_test "auth combo: real bao failed through wrapper"
+delta=$(( $(wc -l < "$work/fetch.log") - fetches_before ))
+[ "$delta" -eq 2 ] || fail_test "auth combo fetched $delta items, expected 2"
+pass "auth bao k8s composes both apps into one session (wrappers resolved, real bao versioned, 2 fetches)"
+
+combo_dirs="$(find "$XDG_RUNTIME_DIR" -maxdepth 3 -type d -name 'jit-auth-bao-k8s-*' -newer "$work" 2>/dev/null || true)"
+[ -z "$combo_dirs" ] || fail_test "combo session runtime dirs left behind: $combo_dirs"
+if grep -rl 'fake-bao-token' "$XDG_RUNTIME_DIR" >/dev/null 2>&1; then
+  fail_test "a named file in XDG_RUNTIME_DIR contains the bao token (combo run)"
+fi
+pass "combo session cleanup: dirs gone, token never in a named file"
+
+# 9. unknown app rejected with a helpful list
+out_bogus="$($JIT_BIN/auth bogus-not-an-app 2>&1 || true)"
+if echo "$out_bogus" | grep -q "unknown jit-auth app" && echo "$out_bogus" | grep -q "bao"; then
+  pass "auth rejects unknown apps (with available-app list)"
+else
+  fail_test "auth did not reject an unknown app: $out_bogus"
+fi
+
+# 10. single-app alias shortcut (k8s-auth == auth k8s)
+cat > "$work/session-single.sh" <<'EOF'
+kp="$(command -v kubectl || true)"
+case "$kp" in *jit-auth-k8s*) ;; *) echo "KUBECTL_NOT_WRAPPED:$kp" ;; esac
+true
+EOF
+chmod +x "$work/session-single.sh"
+out3="$(PATH="$work/fakebin:$JIT_BIN:$PATH" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" SHELL="$work/session-single.sh" "$JIT_BIN/k8s-auth" 2>&1)" || fail_test "k8s-auth alias failed: $out3"
+echo "$out3" | grep -q KUBECTL_NOT_WRAPPED && fail_test "k8s-auth alias: kubectl not wrapped: $out3"
+pass "single-app alias k8s-auth works (kubectl wrapped, real binary)"
+
 echo "ALL TESTS PASSED"

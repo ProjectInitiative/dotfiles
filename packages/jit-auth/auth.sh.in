@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+# auth — jit-auth dynamic session composer.
+#
+#   auth <app> [<app> ...]     combine any registered apps into ONE session:
+#                              single bw unlock, one fetch per item, ALL
+#                              wrapper sets on PATH; exit destroys all of it.
+#   <app>-auth                 single-app shortcut (execs `auth <app>`).
+#
+# Apps are registered by build-time fragment files in auth-fragments/<app>.sh
+# (one jit_auth_register call each — identifiers and store paths only, never
+# secret contents). This script merges the selected fragments' slots,
+# wrappers and bindings, rejects collisions, exports their static (non-secret)
+# env, then execs jit-auth-run.
+set -euo pipefail
+
+SELF_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+FRAG_DIR="$SELF_DIR/auth-fragments"
+
+# Real bw appended (not prepended) so test/PATH shims can shadow it.
+export PATH="$PATH:@bitwardenCli@/bin"
+export JIT_BROKER="@out@/bin/jit-auth-broker"
+
+usage() {
+  echo "usage: auth <app> [<app> ...]" >&2
+  echo "       combine any subset of apps into one authenticated shell" >&2
+  echo "  available apps:" >&2
+  local f
+  for f in "$FRAG_DIR"/*.sh; do
+    [ -f "$f" ] || continue
+    echo "    $(basename "$f" .sh)" >&2
+  done
+  exit 64
+}
+
+[ "$#" -ge 1 ] || usage
+
+declare -A SEEN_APP SEEN_SLOT SEEN_CMD
+APPS=()
+SECRETS=()
+WRAPPERS=()
+BINDINGS=()
+REQUIRED=""
+
+# Called by each sourced fragment.
+jit_auth_register() {
+  local app="$1" secrets="$2" wrappers="$3" bindings="$4" required_env="$5" static_env="$6"
+  [ -z "${SEEN_APP[$app]+x}" ] || return 0 # same app listed twice: idempotent
+  local entry slot cmd
+  for entry in $secrets; do
+    slot="${entry%%:*}"
+    [ -z "${SEEN_SLOT[$slot]+x}" ] || {
+      echo "error: app '$app' reuses secret slot '$slot'" >&2
+      exit 1
+    }
+    SEEN_SLOT[$slot]=1
+  done
+  for entry in $wrappers; do
+    cmd="${entry%%:*}"
+    [ -z "${SEEN_CMD[$cmd]+x}" ] || {
+      echo "error: duplicate wrapped command '$cmd' (app '$app'); pick one app that wraps it" >&2
+      exit 1
+    }
+    SEEN_CMD[$cmd]=1
+  done
+  SEEN_APP[$app]=1
+  APPS+=("$app")
+  SECRETS+=("$secrets")
+  WRAPPERS+=("$wrappers")
+  BINDINGS+=("$bindings")
+  [ -n "$required_env" ] && REQUIRED+="$required_env "
+  [ -n "$static_env" ] && eval "$static_env" # export lines generated at build time
+  return 0
+}
+
+for app in "$@"; do
+  frag="$FRAG_DIR/$app.sh"
+  [ -f "$frag" ] || {
+    echo "error: unknown jit-auth app '$app'" >&2
+    usage
+  }
+  # shellcheck disable=SC1090
+  source "$frag"
+done
+
+export JIT_SESSION_NAME="$(IFS=-; echo "${APPS[*]}")" # e.g. bao-k8s
+export JIT_SECRETS="${SECRETS[*]}"
+export JIT_WRAPPERS="${WRAPPERS[*]}"
+export JIT_BINDINGS="${BINDINGS[*]}"
+export JIT_REQUIRED_ENV="${REQUIRED% }"
+
+exec "@out@/bin/jit-auth-run"

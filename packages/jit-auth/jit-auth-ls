@@ -1,52 +1,51 @@
 #!/usr/bin/env bash
-# jit-auth-ls — list the available jit-auth session frontends and one-shot
-# helpers, with their configuration state.
+# jit-auth-ls — list the registered jit-auth apps and one-shot helpers, with
+# their configuration state.
 #
-# Introspection, not a manifest: the session frontends are thin JIT_*
-# templates installed next to this script, so the listing is derived from
-# the installed files themselves — add a frontend to the package and it
-# appears here automatically. Identifiers (item UUIDs, env var names) are
-# shown; secret CONTENT never appears anywhere in this output.
+# Introspection, not a manifest: app listings are derived from the build-time
+# registry fragments in auth-fragments/ next to this script. Identifiers
+# (item UUIDs, env var names) are shown; secret CONTENT never appears.
 #
 # Self-locates via its own resolved path, so it works from the Nix store,
 # `nix run`, and a plain checkout alike.
 set -euo pipefail
 
 SELF_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+FRAG_DIR="$SELF_DIR/auth-fragments"
 
 if [ -n "${JIT_AUTH_SESSION:-}" ]; then
   echo "currently inside a '${JIT_AUTH_SESSION}' auth session"
   echo
 fi
 
-# ── Session frontends: every *-auth installed next to this script ─────────
-frontends=()
-for f in "$SELF_DIR"/*-auth; do
-  [ -x "$f" ] && frontends+=("$f")
-done
-
-if [ ${#frontends[@]} -eq 0 ]; then
-  echo "no jit-auth session frontends found in $SELF_DIR"
+if [ ! -d "$FRAG_DIR" ]; then
+  echo "no jit-auth app registry found in $SELF_DIR"
   exit 0
 fi
 
 echo "jit-auth session shells (bw unlock -> per-slot broker memfds -> PATH wrappers;"
 echo "secrets live only in per-session RAM, exit destroys them):"
-printf '  %-14s %-30s %-22s %s\n' "COMMAND" "WRAPS" "CREDENTIAL ENV" "BW ITEM(S)"
-for f in "${frontends[@]}"; do
-  name="$(basename "$f")"
-  secrets="$(sed -n 's/^export JIT_SECRETS="\(.*\)"$/\1/p' "$f")"
-  bindings="$(sed -n 's/^export JIT_BINDINGS="\(.*\)"$/\1/p' "$f")"
-  wrappers="$(
-    sed -n 's/^export JIT_WRAPPERS="\(.*\)"$/\1/p' "$f" |
-      tr ' ' '\n' | cut -d: -f1 | paste -sd' ' -
+echo
+echo "  compose:  auth <app> [<app>...]   # any subset, ONE unlock"
+echo "  shortcut: <app>-auth              # single app"
+echo
+printf '  %-10s %-30s %-22s %s\n' "APP" "WRAPS" "CREDENTIAL ENV" "BW ITEM(S)"
+for f in "$FRAG_DIR"/*.sh; do
+  [ -f "$f" ] || continue
+  # Stub the register call and source the fragment in a subshell to extract
+  # its fields exactly as the composer would see them.
+  line="$(jit_auth_register() { printf '%s\t%s\t%s\t%s\n' "$1" "$2" "$3" "$4"; }; source "$f")"
+  app="$(printf '%s' "$line" | cut -f1)"
+  secrets="$(printf '%s' "$line" | cut -f2)"
+  wrappers="$(printf '%s' "$line" | cut -f3)"
+  bindings="$(printf '%s' "$line" | cut -f4)"
+  cmds="$(
+    printf '%s\n' "$wrappers" | tr ' ' '\n' | grep -v '^$' | cut -d: -f1 | paste -sd' ' -
   )"
-  # Distinct credential env var names across all bindings (identifiers only).
   env_vars="$(
     printf '%s\n' "$bindings" | tr ' ' '\n' | grep -v '^$' | cut -d: -f2 |
       cut -d= -f1 | sort -u | paste -sd, -
   )"
-  # Distinct non-REPLACE-ME item ids across all slots.
   items="$(
     printf '%s\n' "$secrets" | tr ' ' '\n' | grep -v '^$' | cut -d: -f2 |
       sort -u | tr '\n' ' '
@@ -56,7 +55,7 @@ for f in "${frontends[@]}"; do
   else
     status="configured (${items% })"
   fi
-  printf '  %-14s %-30s %-22s %s\n' "$name" "${wrappers:-?}" "${env_vars:-?}" "$status"
+  printf '  %-10s %-30s %-22s %s\n' "$app" "$cmds" "$env_vars" "$status"
 done
 
 # ── One-shot helpers: installed by security.bitwarden, detected via PATH ──
@@ -69,7 +68,3 @@ if [ ${#oneshots[@]} -gt 0 ]; then
   echo "one-shot helpers (secret exported to one command, nothing persists):"
   echo "  ${oneshots[*]}"
 fi
-
-echo
-echo "usage: run any COMMAND above to open an authenticated shell"
-echo "       (vault cache is shared tmpfs: bw login once per boot, bw unlock after)"

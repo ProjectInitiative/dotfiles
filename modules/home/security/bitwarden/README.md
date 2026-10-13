@@ -6,26 +6,30 @@ to a named file on disk, git, or the Nix store.
 
 ## Commands
 
-### Auth session shells (bw CLI + jit-auth broker)
+### Auth session shells (bw CLI + jit-auth broker) — dynamic composer
 
 ```text
-k8s-auth        unlock Bitwarden once -> broker owns ONE session-lifetime
-                mutable memfd -> $SHELL with wrappers for
-                kubectl/kubectx/kubens/k9s
-rclone-auth     same for the raw rclone.conf -> RCLONE_CONFIG (rclone wrapper)
-sops-auth       same for sops: secure note holds ONLY the age secret key
-                -> SOPS_AGE_KEY_FILE (sops wrapper); lets you edit any
-                .enc.yaml you are a recipient of, key never on disk
-bao-auth        openbao: secure note holds ONLY the raw token -> BAO_TOKEN
-                (injected literally into the wrapped `bao` process);
-                the internal BAO_ADDR is static config (module option),
-                not a secret, and is exported into the session shell
-bao-k8s-auth    COMBO shell: TWO secret slots (openbao token + kubeconfig),
-                ONE unlock, one Bitwarden fetch per item, and BOTH wrapper
-                sets (bao + kubectl/kubectx/kubens/k9s) on PATH. exit
-                destroys everything. Add more combos the same way: one
-                make_frontend call in packages/jit-auth/default.nix.
+auth <app> [<app>...]   ONE bw unlock, one fetch per item, ALL wrapper
+                        sets on PATH — any subset, composed at runtime:
+
+  auth k8s              kubectl/kubectx/kubens/k9s, KUBECONFIG from vault
+  auth bao              bao: BAO_TOKEN injected literally into the wrapped
+                        process; BAO_ADDR (+optional BAO_NAMESPACE) are
+                        static config (module options), not secrets
+  auth bao k8s          openbao + kubernetes in ONE shell, ONE unlock
+  auth bao k8s rclone sops   any combination — add more apps freely
+
+<app>-auth              single-app shortcut (k8s-auth == auth k8s, etc.)
+
+exit (or Ctrl-D) kills every broker; all secrets are gone.
 ```
+
+Apps are registered by build-time fragments (`auth-fragments/<app>.sh`,
+generated from the package's registry + module item options). Adding a new
+app = one registry entry in `packages/jit-auth/default.nix` (secrets slot,
+wrapped commands, bindings) — it then appears in `auth`, `<app>-auth`, and
+`jit-auth-ls` automatically. The composer rejects unknown apps, duplicate
+secret slots, and duplicate wrapped command names.
 
 `jit-auth-ls` lists the installed session frontends (what each wraps,
 which env var carries the credential, whether its Bitwarden item is
@@ -77,6 +81,7 @@ rclone-load <BW_ITEM> args...         whole rclone.conf, one command lifetime
 argocd-login                          password from the vault
 helm-registry-login <REGISTRY>        registry secret from the vault
 bw-unlock / bw-lock                   manual vault control
+jit-auth-ls                           list registered apps + one-shots
 ```
 
 ## Configuration
