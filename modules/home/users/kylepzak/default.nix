@@ -65,6 +65,11 @@ in
           kubernetes.kubeconfigItem = "3ab9fe60-6a48-477b-bf2d-b4d10040ae6c";
           rclone.configItem = "9e164eb1-f3de-4608-97fe-b4d100407013";
           sops.keyItem = "d9b150b5-16cc-4984-9230-b4da003f8e37";
+          bao = {
+            tokenItem = "db6764da-f16c-4325-ae2a-b4e201561ca8";
+            address = "http://openbao-ts.taildeab2.ts.net";
+            namespace = "production";
+          };
         };
       };
 
