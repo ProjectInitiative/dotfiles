@@ -235,6 +235,36 @@ export default async function (pi: ExtensionAPI) {
       capByName(m)["vision"] ? ["text", "image"] : ["text"];
     const providerReasoning = provider.reasoning === true;
 
+    // Litellm /model/info carries per-level reasoning-effort flags
+    // (explicit false = unsupported; null = litellm "unset" = default-supported).
+    // Models discovered via plain OpenAI-compatible servers have no such info
+    // and keep the conservative default map. Without this, litellm providers
+    // whose metadata knows the model reasons (e.g. chatgpt/codex) never get
+    // reasoning_effort from clients and silently run at the backend default.
+    const buildThinkingLevelMap = (m: any, isReasoning: boolean) => {
+      if (!isReasoning) return undefined;
+      const info = modelInfo(m);
+      if (info.supports_reasoning !== true) {
+        return {
+          off: null,
+          minimal: "low",
+          low: "low",
+          medium: "medium",
+          high: "high",
+        };
+      }
+      const map: Record<string, string | null> = {
+        off: info.supports_none_reasoning_effort === false ? null : "none",
+        minimal: info.supports_minimal_reasoning_effort === false ? null : "minimal",
+        low: info.supports_low_reasoning_effort === false ? null : "low",
+        medium: "medium",
+        high: "high",
+      };
+      if (info.supports_xhigh_reasoning_effort === true) map["xhigh"] = "xhigh";
+      if (info.supports_max_reasoning_effort === true) map["max"] = "max";
+      return map;
+    };
+
     const buildModelDef = (m: any, suffix = "", flex = false) => {
       const caps = capByName(m);
       const p = pricing(m);
@@ -243,22 +273,15 @@ export default async function (pi: ExtensionAPI) {
         .get(m.id)
         ?.litellm_params?.model?.replace(/^[^/]+\//, "");
       const isReasoning =
-        caps["reasoning"] || caps["reasoning_effort"] || providerReasoning;
+        caps["reasoning"] || caps["reasoning_effort"] || providerReasoning ||
+        modelInfo(m).supports_reasoning === true;
       return {
         id: m.id + suffix,
         name:
           (meta["display_name"] ?? backendModel ?? m.id) +
           (suffix ? " (flex)" : ""),
         reasoning: isReasoning,
-        thinkingLevelMap: isReasoning
-          ? {
-              off: null,
-              minimal: "low",
-              low: "low",
-              medium: "medium",
-              high: "high",
-            }
-          : undefined,
+        thinkingLevelMap: buildThinkingLevelMap(m, isReasoning),
         input: input(m),
         cost: {
           input:
