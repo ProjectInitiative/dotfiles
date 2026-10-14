@@ -152,8 +152,11 @@ in
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        ExecStart = "${config.hardware.nvidia.package}/bin/nvidia-smi -lgc ${toString cfg.gpuClockLimit.minClock},${toString cfg.gpuClockLimit.maxClock}";
-        ExecStop = "${config.hardware.nvidia.package}/bin/nvidia-smi -rgc";
+        # Use the active-system profile rather than the driver derivation
+        # directly: the cross/native driver package path can change between
+        # generations, while this profile is the stable NixOS runtime path.
+        ExecStart = "/run/current-system/sw/bin/nvidia-smi -lgc ${toString cfg.gpuClockLimit.minClock},${toString cfg.gpuClockLimit.maxClock}";
+        ExecStop = "/run/current-system/sw/bin/nvidia-smi -rgc";
       };
     };
     # ------------------------------------------------------------------
