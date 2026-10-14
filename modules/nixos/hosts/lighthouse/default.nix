@@ -161,11 +161,14 @@ in
 
       firewall = {
         enable = true;
-        allowPing = true;
-        # Submariner globalnet health-check replies arrive untracked on lo
-        # (dst 242.x.255.254 after reverse-SNAT) and would be refused otherwise.
+        allowPing = false;
+        # Submariner healthcheck only: the remote cluster's gateway pings the
+        # node's healthcheck IP (242.1.255.254) and the request is DNAT'd to the
+        # node's CNI IP in prerouting, so INPUT sees it with src in the remote
+        # global CIDR (242.0.0.0/16). nixos-fw drops it otherwise; allowPing
+        # would be too broad. Everything else stays refused.
         extraInputRules = ''
-          ip saddr 242.0.0.0/8 accept comment "submariner globalnet"
+          ip saddr 242.0.0.0/16 icmp type echo-request accept comment "submariner healthcheck"
         '';
         allowedTCPPorts = [
           # only SSH through tailscale

@@ -109,6 +109,9 @@ in
       firewall = {
         enable = true;
         allowPing = true;
+        # Submariner dataplane (DEC-0041):
+        #   4800 = route-agent vx-submariner overlay
+        #   500/4500 = libreswan IKE / IPsec NAT-T
         # extraCommands = ''
         #   # Log all dropped packets
         #   iptables -A INPUT -j LOG --log-prefix "FIREWALL_DROP_INPUT: "
@@ -159,10 +162,24 @@ in
         allowedUDPPorts = [
           53 # k8s DNS access
           8472 # k3s VXLAN overlay: required if using multi-node for inter-node networking
+          4800 # submariner route-agent vx-submariner overlay (DEC-0041)
+          500 # submariner libreswan IKE (DEC-0041)
+          4500 # submariner libreswan IPsec NAT-T (DEC-0041)
         ]
         ++ lib.optionals (cfg.networkType == "cilium") [
           51871 # WireGuard encryption tunnel endpoint
         ];
+        # Globalnet return traffic (remote-cluster egress IPs in 240.0.0.0/8)
+        # and vxlan VTEP traffic arrive untracked on the input path; without
+        # this the cross-cluster healthcheck and service traffic stall (DEC-0041).
+        extraInputRules = ''
+          ip saddr 240.0.0.0/8 accept comment "submariner globalnet/vxlan"
+        '';
+        # Strict reverse-path filtering drops decapsulated overlay traffic
+        # (pod/globalnet sources arriving inside vxlan) before conntrack, which
+        # silently breaks cross-cluster dataplane. Loose mode keeps the check
+        # but only requires that a route exists (verified empirically). DEC-0041.
+        checkReversePath = "loose";
 
       };
     };
