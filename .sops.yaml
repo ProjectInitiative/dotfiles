@@ -136,9 +136,14 @@ creation_rules:
           - *ssh_octant
 
   - path_regex: thinkpad/[^/]+\.yaml$
+    # 2026-10-13: 28ce7b7 re-encrypted this file to *master_key only, dropping
+    # *ssh_thinkpad — sops-install-secrets then aborted at boot (all-or-nothing),
+    # which broke /run/secrets and ssh on thinkpad. Host key must stay enrolled.
     # - path: thinkpad/secrets.enc.yaml
     key_groups:
       - age:
+          - *ssh_thinkpad
+          - *kylepzak
           - *master_key
 
   - path_regex: lightship/[^/]+\.yaml$
