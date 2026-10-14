@@ -121,9 +121,41 @@ in
     k8sServerAddr =
       mkOpt types.str ""
         "Address of the server node to connect to (not needed for the first node).";
+    gpuClockLimit = {
+      enable = mkBoolOpt false "Whether to persistently cap the NVIDIA graphics clock";
+      minClock = mkOption {
+        type = types.ints.between 0 10000;
+        default = 0;
+        description = "Minimum NVIDIA graphics clock in MHz.";
+      };
+      maxClock = mkOption {
+        type = types.ints.between 0 10000;
+        default = 2200;
+        description = "Maximum NVIDIA graphics clock in MHz.";
+      };
+    };
   };
 
   config = mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = cfg.gpuClockLimit.maxClock >= cfg.gpuClockLimit.minClock;
+        message = "${namespace}.hosts.dgx-spark.gpuClockLimit.maxClock must be greater than or equal to minClock";
+      }
+    ];
+
+    systemd.services.dgx-spark-gpu-clock-limit = mkIf cfg.gpuClockLimit.enable {
+      description = "Limit NVIDIA DGX Spark graphics clock (${toString cfg.gpuClockLimit.minClock}-${toString cfg.gpuClockLimit.maxClock} MHz)";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "nvidia-persistenced.service" ];
+      wants = [ "nvidia-persistenced.service" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        ExecStart = "${config.hardware.nvidia.package}/bin/nvidia-smi -lgc ${toString cfg.gpuClockLimit.minClock},${toString cfg.gpuClockLimit.maxClock}";
+        ExecStop = "${config.hardware.nvidia.package}/bin/nvidia-smi -rgc";
+      };
+    };
     # ------------------------------------------------------------------
     # NVIDIA DGX Spark hardware support (from nixos-dgx-spark flake):
     #   - custom NVIDIA 6.17 kernel built from NV-Kernels source (GB10)

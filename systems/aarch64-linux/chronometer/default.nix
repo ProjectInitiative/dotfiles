@@ -45,6 +45,10 @@ in
     k8sServerAddr = "https://172.16.1.50:6443";
     k8sNodeIp = "172.16.4.55";
     k8sNodeIface = "mgmnt.10";
+    gpuClockLimit = {
+      enable = true;
+      maxClock = 2200;
+    };
   };
 
   # Disko layout — DGX Spark reference layout: ESP + swap + ext4 root
