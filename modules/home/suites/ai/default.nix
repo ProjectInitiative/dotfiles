@@ -312,7 +312,11 @@ in
           };
           "@hypabolic/pi-hypa" = {
             enable = true;
-            version = "0.1.10";
+            # 1.0.x fixes: rewritten bash commands emitted a bare `hypa` name that
+            # bash could not resolve when ~/.local/bin is not on PATH —
+            # "line 1: hypa: command not found" (exit 127) on rewritten commands.
+            # qualifyRewrittenHypaCommand now fully-qualifies the resolved binary.
+            version = "1.0.8";
           };
           # Local model auto-discovery (Ollama, vLLM, LM Studio, etc.)
           # Not needed today — kept for future laptop with local models
