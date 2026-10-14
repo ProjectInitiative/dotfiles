@@ -161,7 +161,12 @@ in
 
       firewall = {
         enable = true;
-        allowPing = false;
+        allowPing = true;
+        # Submariner globalnet health-check replies arrive untracked on lo
+        # (dst 242.x.255.254 after reverse-SNAT) and would be refused otherwise.
+        extraInputRules = ''
+          ip saddr 242.0.0.0/8 accept comment "submariner globalnet"
+        '';
         allowedTCPPorts = [
           # only SSH through tailscale
           # 22
