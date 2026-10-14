@@ -507,6 +507,9 @@ in
       firewall.allowedTCPPorts = [
         5201 # iperf
       ];
+      # Submariner inter-node vxlan + encap ports (route-agent vx-submariner uses udp 4800;
+      # libreswan uses 500/4500 which the default module already permits via allowedUDPPorts upstream)
+      firewall.allowedUDPPorts = [ 4800 4500 500 ];
       # Disable DHCP globally
       useDHCP = false;
 
