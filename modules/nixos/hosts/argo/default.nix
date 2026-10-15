@@ -41,27 +41,12 @@ in
     };
 
     # ── Users ───────────────────────────────────────────────────────────────
-    users.users.kylepzak = {
-      isNormalUser = true;
-      extraGroups = [
-        "wheel"
-        "docker"
-      ];
-      openssh.authorizedKeys.keyFiles = [ inputs.ssh-pub-keys ];
-      initialPassword = "changeme";
-    };
-    users.users.root.openssh.authorizedKeys.keyFiles = [ inputs.ssh-pub-keys ];
-
-    security.sudo.extraRules = [
-      {
-        users = [ "kylepzak" ];
-        commands = [
-          {
-            command = "ALL";
-            options = [ "NOPASSWD" ];
-          }
-        ];
-      }
+    # Standard estate user module (kylepzak, keys from ssh-pub-keys input,
+    # NOPASSWD sudo via wheelNeedsPassword=false). includePassword=false
+    # because this VM has no sops age key (bootstrap via cloud-init).
+    users.users.kylepzak.extraGroups = [
+      "wheel"
+      "docker"
     ];
 
     # ── Development Environment ─────────────────────────────────────────────
@@ -76,7 +61,10 @@ in
     ];
 
     ${namespace} = {
-      user.enable = false;
+      user = {
+        enable = true;
+        includePassword = false;
+      };
       settings.stateVersion = "26.05";
 
       system = {
