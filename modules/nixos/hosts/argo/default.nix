@@ -5,6 +5,7 @@
   pkgs,
   namespace,
   modulesPath,
+  inputs,
   ...
 }:
 with lib;
@@ -46,14 +47,10 @@ in
         "wheel"
         "docker"
       ];
-      openssh.authorizedKeys.keys = [
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAplaceholder"
-      ];
+      openssh.authorizedKeys.keyFiles = [ inputs.ssh-pub-keys ];
       initialPassword = "changeme";
     };
-    users.users.root.openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAplaceholder"
-    ];
+    users.users.root.openssh.authorizedKeys.keyFiles = [ inputs.ssh-pub-keys ];
 
     security.sudo.extraRules = [
       {
@@ -108,6 +105,48 @@ in
     };
 
     # ── Nix ─────────────────────────────────────────────────────────────────
+    # ── Storage ────────────────────────────────────────────────────────────
+    # kubevirt virtio disks: vda = 32Gi root (disposable), vdb = 1Ti data
+    # (JuiceFS blank DV, serial "argodata" -> stable by-id path).
+    # /data holds everything precious; /nix is a bind so heavy builds never
+    # touch the root fs and survive root rebuilds/re-imports.
+    fileSystems = {
+      "/data" = {
+        device = "/dev/disk/by-id/virtio-argodata";
+        fsType = "ext4";
+        autoFormat = true;
+        autoResize = true;
+        neededForBoot = false;
+      };
+      "/nix" = {
+        device = "/data/nix";
+        fsType = "none";
+        options = [ "bind" "x-systemd.requires=data.mount" ];
+        depends = [ "/data" ];
+      };
+    };
+    # create /data/nix before the bind mount on a freshly formatted disk
+    systemd.services.argo-data-prepare = {
+      description = "Prepare argo data disk layout";
+      requiredBy = [ "nix.mount" ];
+      after = [ "data.mount" ];
+      before = [ "nix.mount" ];
+      unitConfig.ConditionPathIsMountPoint = "/data";
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = ''
+        mkdir -p /data/nix
+      '';
+    };
+
+    nix.gc = {
+      automatic = true;
+      dates = "weekly";
+      options = "--delete-older-than 30d";
+    };
+
     nix.settings.trusted-users = [ "kylepzak" ];
   };
 }
