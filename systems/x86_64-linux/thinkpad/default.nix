@@ -574,10 +574,22 @@ in
   # Install firmware for Intel SOF devices
   hardware.firmware = [ pkgs.sof-firmware ];
 
+  # Intel Iris Xe (ADL GT2) graphics: VA-API drivers so Firefox can use
+  # hardware video decoding (about:support showed all codecs SWDEC,
+  # HARDWARE_VIDEO_DECODING unavailable / FEATURE_FAILURE_VIDEO_DECODING_TEST_FAILED).
+  hardware.graphics = {
+    enable = true;
+    extraPackages = with pkgs; [ intel-media-driver ];
+  };
+
   # Force snd_hda_intel instead of SOF
   boot.extraModprobeConfig = ''
     options snd-intel-dspcfg dsp_driver=1
   '';
+
+  # Prefer s2idle over S3 (deep): resume from the T16's S3 path is slow
+  # (xHC reinit + NVS restore every wake); s2idle tested noticeably faster.
+  boot.kernelParams = [ "mem_sleep_default=s2idle" ];
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
