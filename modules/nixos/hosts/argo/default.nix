@@ -113,9 +113,15 @@ in
         depends = [ "/data" ];
       };
     };
-    # create /data/nix before the bind mount on a freshly formatted disk
+    # create /data/nix and SEED the store before the bind mount on a
+    # freshly formatted disk. Seeding is mandatory: binding an empty dir
+    # over /nix hides the image's store and bricks the boot (all units
+    # exec from /nix/store). Self-healing: if /data/nix does not contain
+    # the current system closure (fresh disk, or a re-imported image with
+    # a new closure), the stale store is wiped and re-seeded from the
+    # image. Runs before nix.mount, while /nix still shows the image store.
     systemd.services.argo-data-prepare = {
-      description = "Prepare argo data disk layout";
+      description = "Prepare argo data disk layout (seed nix store before bind)";
       requiredBy = [ "nix.mount" ];
       after = [ "data.mount" ];
       before = [ "nix.mount" ];
@@ -126,6 +132,17 @@ in
       };
       script = ''
         mkdir -p /data/nix
+        # /run/booted-system exists before local-fs completes (created in
+        # stage-2 init); /run/current-system only after activation. It
+        # resolves to /nix/store/HASH-... ; the seeded copy keeps the same
+        # relative layout under /data/nix (store/HASH-...)
+        sys=$(readlink -f /run/booted-system 2>/dev/null || readlink -f /run/current-system)
+        rel=''${sys#/nix}
+        if [ ! -e "/data/nix$rel" ]; then
+          echo "argo-data-prepare: seeding nix store to /data/nix (one-time, may take several minutes)"
+          rm -rf /data/nix/*
+          cp -a /nix/. /data/nix/
+        fi
       '';
     };
 
