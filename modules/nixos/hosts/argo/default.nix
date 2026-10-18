@@ -146,15 +146,25 @@ in
           sleep 1
         done
         $SW/mkdir -p /data/nix
-        sys=$($SW/sed -n 's/^init=\(\/nix\/store\/[^ ]*\).*/\1/p' /proc/cmdline)
+        # /proc/cmdline starts with BOOT_IMAGE=..., so don't anchor ^init=.
+        # Fail hard if unparsable — binding an empty dir over /nix bricks the
+        # guest, so no-seed-info means no-bind.
+        sys=$($SW/sed -n 's/.*[ ]init=\(\/nix\/store\/[^ ]*\).*/\1/p' /proc/cmdline)
+        if [ -z "$sys" ]; then
+          echo "argo-nix-store-rotate: could not parse init= from cmdline, NOT binding /nix"
+          exit 1
+        fi
         rel=''${sys#/nix}
         if [ ! -e "/data/nix$rel" ]; then
           echo "argo-nix-store-rotate: seeding nix store to /data/nix (one-time, may take several minutes)"
           $SW/rm -rf /data/nix/*
-          $SW/cp -a /nix/. /data/nix/
+          if ! $SW/cp -a /nix/. /data/nix/; then
+            echo "argo-nix-store-rotate: SEED FAILED, not binding /nix (guest keeps image store)"
+            exit 1
+          fi
         fi
         $SW/mountpoint -q /nix || $RW/mount --bind /data/nix /nix
-        echo "argo-nix-store-rotate: /nix now served from the data disk"
+        echo "argo-nix-store-rotate: /nix now served from the data disk ($($SW/ls /data/nix/store | $SW/wc -l) store paths)"
       '';
     };
 
