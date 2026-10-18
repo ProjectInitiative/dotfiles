@@ -96,57 +96,65 @@ in
     # ── Storage ────────────────────────────────────────────────────────────
     # kubevirt virtio disks: vda = 32Gi root (disposable), vdb = 1Ti data
     # (JuiceFS blank DV, serial "argodata" -> stable by-id path).
-    # /data holds everything precious; /nix is a bind so heavy builds never
-    # touch the root fs and survive root rebuilds/re-imports.
+    # /data holds everything precious. The nix store is MIRRORED to
+    # /data/nix and bind-mounted over /nix at stage-2 (argo-nix-store-rotate
+    # below) so heavy builds never touch the root fs and survive root
+    # re-imports. Deliberately NOT a fileSystems entry: /nix is hardcoded
+    # into NixOS pathsNeededForBoot, so a fileSystems bind gets mounted by
+    # the INITRD (sysroot-nix.mount) before any seeding can run, hiding the
+    # image's store and freezing the boot ("Failed to isolate default
+    # target: Unit data.mount not found"). A stage-2 oneshot can flip the
+    # bind safely at any point: until then /nix shows the image store, and
+    # the seeded copy is byte-identical, so units execing across the flip
+    # get the same binaries either way.
     fileSystems = {
       "/data" = {
         device = "/dev/disk/by-id/virtio-argodata";
         fsType = "ext4";
         autoFormat = true;
         autoResize = true;
-        # The /nix bind below requires data.mount; without neededForBoot the
-        # initrd references a data.mount that doesn't exist and systemd
-        # freezes at "Failed to isolate default target".
         neededForBoot = true;
         options = [ "nofail" ];
       };
-      "/nix" = {
-        device = "/data/nix";
-        fsType = "none";
-        options = [ "bind" "x-systemd.requires=data.mount" ];
-        depends = [ "/data" ];
-      };
     };
-    # create /data/nix and SEED the store before the bind mount on a
-    # freshly formatted disk. Seeding is mandatory: binding an empty dir
-    # over /nix hides the image's store and bricks the boot (all units
-    # exec from /nix/store). Self-healing: if /data/nix does not contain
-    # the current system closure (fresh disk, or a re-imported image with
-    # a new closure), the stale store is wiped and re-seeded from the
-    # image. Runs before nix.mount, while /nix still shows the image store.
-    systemd.services.argo-data-prepare = {
-      description = "Prepare argo data disk layout (seed nix store before bind)";
-      requiredBy = [ "nix.mount" ];
-      after = [ "data.mount" ];
-      before = [ "nix.mount" ];
-      unitConfig.ConditionPathIsMountPoint = "/data";
+    # Seed /data/nix with the booting nix store, then bind it over /nix.
+    # Self-healing: if the data disk's store lacks the booting system
+    # closure (fresh disk, wiped data, or a re-imported image with a new
+    # closure), the stale copy is wiped and re-seeded from the image.
+    # Self-healing: if the data disk's store lacks the booting system
+    # closure (fresh disk, wiped data, or a re-imported image with a new
+    # closure), the stale copy is wiped and re-seeded from the image.
+    # Runs late (after multi-user) and self-guards on the /data mount —
+    # the flip is safe at any point because the seeded copy is identical
+    # to the image store, so units execing across it get the same bytes.
+    systemd.services.argo-nix-store-rotate = {
+      description = "Seed /data/nix with the booting nix store and bind over /nix";
+      after = [ "local-fs.target" "multi-user.target" ];
+      wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
+        StandardOutput = "journal+console";
+        StandardError = "journal+console";
       };
       script = ''
-        mkdir -p /data/nix
-        # /run/booted-system exists before local-fs completes (created in
-        # stage-2 init); /run/current-system only after activation. It
-        # resolves to /nix/store/HASH-... ; the seeded copy keeps the same
-        # relative layout under /data/nix (store/HASH-...)
-        sys=$(readlink -f /run/booted-system 2>/dev/null || readlink -f /run/current-system)
+        SW=/run/current-system/sw/bin
+        RW=/run/wrappers/bin
+        n=0
+        while ! $SW/mountpoint -q /data; do
+          n=$((n+1)); [ $n -gt 120 ] && echo "argo-nix-store-rotate: /data never mounted, skipping" && exit 0
+          sleep 1
+        done
+        $SW/mkdir -p /data/nix
+        sys=$($SW/sed -n 's/^init=\(\/nix\/store\/[^ ]*\).*/\1/p' /proc/cmdline)
         rel=''${sys#/nix}
         if [ ! -e "/data/nix$rel" ]; then
-          echo "argo-data-prepare: seeding nix store to /data/nix (one-time, may take several minutes)"
-          rm -rf /data/nix/*
-          cp -a /nix/. /data/nix/
+          echo "argo-nix-store-rotate: seeding nix store to /data/nix (one-time, may take several minutes)"
+          $SW/rm -rf /data/nix/*
+          $SW/cp -a /nix/. /data/nix/
         fi
+        $SW/mountpoint -q /nix || $RW/mount --bind /data/nix /nix
+        echo "argo-nix-store-rotate: /nix now served from the data disk"
       '';
     };
 
