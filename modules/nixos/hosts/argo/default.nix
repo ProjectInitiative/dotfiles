@@ -104,7 +104,11 @@ in
         fsType = "ext4";
         autoFormat = true;
         autoResize = true;
-        neededForBoot = false;
+        # The /nix bind below requires data.mount; without neededForBoot the
+        # initrd references a data.mount that doesn't exist and systemd
+        # freezes at "Failed to isolate default target".
+        neededForBoot = true;
+        options = [ "nofail" ];
       };
       "/nix" = {
         device = "/data/nix";
