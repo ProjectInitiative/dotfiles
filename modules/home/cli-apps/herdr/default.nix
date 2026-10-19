@@ -19,9 +19,11 @@ let
     set -euo pipefail
     ${lib.concatStringsSep "\n" (
       map (name: ''
-        if ! herdr plugin list 2>/dev/null | grep -q "^${name} "; then
+        # `herdr plugin list` prints ids as "- <id> (...)"; accept both that
+        # and a bare "<id> ..." line so an installed plugin isn't reinstalled.
+        if ! herdr plugin list 2>/dev/null | grep -qE "^(- )?${name} "; then
           echo "herdr: installing plugin ${name}..."
-          herdr plugin install ${name} --yes
+          herdr plugin install ${cfg.plugins.${name}.repo} --yes
         fi
       '') (attrNames cfg.plugins)
     )}
@@ -36,6 +38,14 @@ in
         types.submodule {
           options = {
             enable = mkEnableOption "this herdr plugin";
+            repo = mkOption {
+              type = types.str;
+              description = ''
+                Source repo passed to `herdr plugin install`, in
+                `owner/repo[/subdir]` form. `herdr plugin list` prints the
+                attribute key (plugin id), but `install` requires the repo.
+              '';
+            };
           };
         }
       );

@@ -36,7 +36,8 @@ in
           plugins = {
             mirror = {
               enable = true;
-            }; # nikok6/herdr-mirror
+              repo = "nikok6/herdr-mirror";
+            };
           };
         };
         # QOL cli

@@ -107,10 +107,23 @@ in
     ];
     # GTX 1080/1080 Ti support uses the proprietary NVIDIA kernel module;
     # the open kernel module does not support Pascal GPUs.
+    #
+    # 595.71.05 (nixpkgs 26.05 "stable") cannot build against Linux 7.2,
+    # which removed strncpy() from include/linux/string.h; nixpkgs#554125
+    # is still open, so pin the fixed 595.99.02 release from the upstream
+    # workaround in NixOS/nixpkgs#554125 / discourse topic 79845.
+    # Drop this override once nvidiaPackages.stable >= 595.99.02.
     hardware.nvidia = mkIf cfg.nvidiaSupport {
       open = false;
       modesetting.enable = true;
-      package = config.boot.kernelPackages.nvidiaPackages.stable;
+      package = config.boot.kernelPackages.nvidiaPackages.mkDriver {
+        version = "595.99.02";
+        sha256_64bit = "sha256-6HR3lYv3YwcFSTJL1a1slI66btIQ5EAFs+/4SUD24ew=";
+        sha256_aarch64 = "sha256-CCqHZTN2KNOZ4yZp2rDcuRJp9pHfRw47k4m4dWnS/2w=";
+        openSha256 = "sha256-T36x/jx8yQ8l3LFp1rZIrTfcSwbGy8YSAvXOUSptpb4=";
+        settingsSha256 = "sha256-GYCcnxfKPrTCrsmd25sMyzfC5cqJQJx0c31haooyTYM=";
+        persistencedSha256 = "sha256-VyKtF/HdHPQrHHK6opSO69M72LmnGZtauuchj9uuje8=";
+      };
     };
     services.xserver.videoDrivers = mkIf cfg.nvidiaSupport [ "nvidia" ];
     boot.blacklistedKernelModules = mkIf cfg.nvidiaSupport [ "nouveau" ];
@@ -121,8 +134,6 @@ in
         k8s_token = {
           sopsFile = ./secrets.enc.yaml;
         };
-        jfs_backup_meta_password = { };
-        jfs_backup_rsa_passphrase = { };
       }
     ];
 
@@ -224,18 +235,6 @@ in
           endpoint:
             - "http://172.16.1.50:31872"
     '';
-
-    fileSystems."/jfs-cache" = mkIf cfg.allFeatures {
-      device = "tmpfs";
-      fsType = "tmpfs";
-      options = [
-        "size=8G" # Set the size limit (adjust as needed)
-        "mode=1777" # Permissions (1777 is standard for /tmp)
-        "nosuid" # Disable setuid programs
-        "nodev" # Disable device files
-        # "noexec"        # Optional: Disable execution of binaries
-      ];
-    };
 
     fileSystems."/mnt/local-provisioner" = mkIf cfg.allFeatures {
       device = "/mnt/pool/k8s";
@@ -403,31 +402,6 @@ in
           ]; # Default exclusions
           reportTime = "08:00"; # Send report at 8 AM
           checkReadOnlyMounts = [ cfg.mountpoint ];
-        };
-
-        juicefs = mkIf cfg.allFeatures {
-          enable = true;
-          mounts = {
-            backup = {
-              enable = true;
-              mountPoint = "/mnt/jfs/backup";
-              metaUrl = "redis://172.16.1.18:6380/1";
-              metaPasswordFile = sops.secrets.jfs_backup_meta_password.path;
-              rsaPassphraseFile = sops.secrets.jfs_backup_rsa_passphrase.path;
-              cacheDir = "/jfs-cache";
-              region = "da";
-              maxUploads = 20;
-
-              # Add any additional options as needed
-              # extraoptions = {
-              #   "heartbeat" = "12";
-              #   "attr-cache" = "1";
-              #   "entry-cache" = "1";
-              #   "dir-entry-cache" = "1";
-              # };
-            };
-
-          };
         };
 
         k8s = mkIf cfg.allFeatures {
