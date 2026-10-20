@@ -221,6 +221,34 @@ in
     # the k3s service PATH as well.
     systemd.services.k3s.path = optionals cfg.enableNvidiaContainerRuntime [ pkgs.runc ];
 
+    # For tailscale networking, extraFlags resolves --node-ip via
+    # `tailscale ip -4` at ExecStart time. A nixos-rebuild switch restarts
+    # tailscaled in the same batch as k3s, so a fresh k3s can race the
+    # reconnect and expand --node-ip to "" -> "invalid node-ip: invalid ip
+    # format ''" fatal (k3s then self-heals via Restart=always ~30s later,
+    # but the switch exits 4). Gate the start on tailscale actually having
+    # an IPv4; on boot k3s waits for it too, which is correct since k3s
+    # cannot form a correct node identity without it.
+    # NOTE: leaf paths (not a systemd.services.k3s attrset) so this merges
+    # with the .path assignment above and nixpkgs' rancher module.
+    systemd.services.k3s.after = mkIf (cfg.networkType == "tailscale") [ "tailscaled.service" ];
+    systemd.services.k3s.wants = mkIf (cfg.networkType == "tailscale") [ "tailscaled.service" ];
+    systemd.services.k3s.serviceConfig.ExecStartPre = mkIf (cfg.networkType == "tailscale") [
+      (pkgs.writeShellScript "k3s-wait-tailscale-ip" ''
+        for i in $(seq 1 90); do
+          ip="$(${pkgs.tailscale}/bin/tailscale ip -4 2>/dev/null || true)"
+          if [ -n "$ip" ]; then
+            echo "tailscale IPv4 available: $ip"
+            exit 0
+          fi
+          echo "waiting for tailscale IPv4 (attempt $i/90)..."
+          sleep 2
+        done
+        echo "tailscale IPv4 not available after 180s; letting systemd retry" >&2
+        exit 1
+      '')
+    ];
+
     # Add systemd service to install Cilium after k3s starts (first node only)
     systemd.services.cilium-install = mkIf (cfg.networkType == "cilium" && cfg.isFirstNode) {
       description = "Install Cilium CNI";

@@ -139,7 +139,11 @@ in
     # 1. STORAGE QUIRKS: :u = No UAS, :k = No Link Power Management (LPM)
     # Applied to JMicron (152d, 1058) and OWC (7825)
     "usb-storage.quirks=152d:0561:u,1058:0a10:u,7825:a2a4:u"
-    "usbcore.quirks=152d:0561:k,1058:0a10:k,7825:a2a4:k"
+    # usbcore :l = USB_QUIRK_NO_LPM (usbcore letter for LPM-off; 'k' is
+    # RESET_RESUME). LPM negotiation through the HAT's VL817 hub is the
+    # classic cause of "device not accepting address, error -71" on these
+    # JMicron bridges (RISK-0033).
+    "usbcore.quirks=152d:0561:k,1058:0a10:k,7825:a2a4:k,152d:0561:l,1058:0a10:l"
 
     # 2. DMA & IOMMU: Fixes buffer exhaustion on 8GB Pi4/Mainline
     "swiotlb=131072"
@@ -447,10 +451,22 @@ in
       console-info.ip-display.enable = true;
       logging = {
         enable = true;
-        ramLogging = true;
+        # ramLogging was enabled to reduce eMMC wear, but it left dinghy with
+        # ZERO persistent logs (journald.conf ended up with both
+        # Storage=persistent and Storage=volatile; volatile won) — this cost
+        # us the diagnostic record during RISK-0033 (HAT bridge flakiness).
+        # Persistent logging with a cap is the right trade-off; the heavy
+        # telemetry lives on the pool via loki anyway.
+        ramLogging = false;
       };
     };
   };
+
+  # Cap persistent journal size on the eMMC (default is 10% of fs).
+  services.journald.extraConfig = ''
+    Storage=persistent
+    SystemMaxUse=2G
+  '';
 
   # NFS Server configuration using the /export root strategy
   services.nfs.server = {
