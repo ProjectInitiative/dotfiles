@@ -394,6 +394,44 @@ in
         extensions.remote-providers.enable = true;
         extensions.tool-renderer.text = builtins.readFile "${inputs.self}/modules/home/cli-apps/pi-coding-agent/extensions/tool-renderer.ts";
         extensions.tool-renderer.enable = true;
+
+        # context-mode — npm pi-package that ships a NATIVE omp adapter
+        # (package.json "omp" manifest; OQ-0040 follow-up). Loaded from the
+        # store as a symlink so its relative imports resolve inside the
+        # package; its SQLite engine picks bun:sqlite/node:sqlite — the
+        # native better-sqlite3 fallback is never reached, so no node_modules
+        # or compilation is needed. Under omp the ctx_* tools come via native
+        # MCP (server.bundle.mjs under nixpkgs bun) — pi keeps its own
+        # extension-based bridge and is untouched.
+        extensions.context-mode = {
+          enable = true;
+          source = "${pkgs.${namespace}.context-mode}/build/adapters/omp/plugin.js";
+        };
+
+        mcp.extraServers.context-mode = {
+          enable = true;
+          type = "stdio";
+          command = "${pkgs.bun}/bin/bun";
+          args = [ "${pkgs.${namespace}.context-mode}/server.bundle.mjs" ];
+        };
+
+        # 8 bundled skills. ctx-upgrade is an npm-imperative flow (no-op on
+        # NixOS); kept so the agent doesn't invent its own upgrade path.
+        skills = lib.genAttrs
+          [
+            "context-mode"
+            "ctx-doctor"
+            "ctx-index"
+            "ctx-insight"
+            "ctx-purge"
+            "ctx-search"
+            "ctx-stats"
+            "ctx-upgrade"
+          ]
+          (name: {
+            enable = true;
+            source = "${pkgs.${namespace}.context-mode}/skills/${name}";
+          });
       };
 
       tools.aider = mkIf cfg.agent.aider.enable enabled;

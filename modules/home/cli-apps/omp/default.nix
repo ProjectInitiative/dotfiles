@@ -63,7 +63,7 @@ let
       else
         { type = "stdio"; inherit (server) command; inherit (server) args; }
         // lib.optionalAttrs (server.env != { }) { inherit (server) env; }
-  ) cfg.mcp.servers;
+  ) (cfg.mcp.servers // cfg.mcp.extraServers);
 
   mcpJson = {
     "$schema" = "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json";
@@ -165,6 +165,16 @@ in
           mcp.servers here to share one server definition across agents.
         '';
       };
+
+      extraServers = mkOption {
+        type = types.attrsOf (types.submodule serverSubmodule);
+        default = { };
+        description = ''
+          omp-ONLY MCP servers, merged into ~/.omp/agent/mcp.json but NOT
+          shared back to pi's mcp.json (e.g. context-mode: pi loads it via
+          its own package extension, omp via native MCP).
+        '';
+      };
     };
 
     skills = mkOption {
@@ -177,6 +187,16 @@ in
               type = types.lines;
               default = "";
               description = "Markdown instructions loaded on-demand when the skill activates.";
+            };
+
+            source = mkOption {
+              type = types.nullOr types.path;
+              default = null;
+              description = ''
+                Store path to a skill DIRECTORY. Generates a recursive symlink
+                (e.g. a package's skills/<name>). Takes precedence over
+                instructions when set.
+              '';
             };
 
             tools = mkOption {
@@ -214,8 +234,21 @@ in
             enable = mkEnableOption "this omp extension";
 
             text = mkOption {
-              type = types.lines;
-              description = "TypeScript source for the extension.";
+              type = types.nullOr types.lines;
+              default = null;
+              description = "TypeScript source for the extension (written as <name>.ts).";
+            };
+
+            source = mkOption {
+              type = types.nullOr types.path;
+              default = null;
+              description = ''
+                Store path to an extension entry file. Generates a SYMLINK —
+                omp resolves the entry's realpath before importing, so the
+                extension's RELATIVE imports (e.g. into an npm package tree
+                in the same store path) keep resolving. Use for package-
+                shipped adapters; use text for self-contained sources.
+              '';
             };
           };
         }
@@ -341,7 +374,7 @@ in
         ".omp/agent/mcp.json".text = builtins.toJSON mcpJson;
       })
 
-      # Skills
+      # Skills — dir symlink when source is set, else generated files
       // (foldl' (
         acc: skillName:
           let
@@ -349,27 +382,37 @@ in
           in
           acc
           // optionalAttrs skill.enable (
-            {
-              ".omp/agent/skills/${skillName}/instructions.md".text = skill.instructions;
-            }
-            // mapAttrs' (toolName: tool: {
-              name = ".omp/agent/skills/${skillName}/tools/${toolName}";
-              value = {
-                executable = true;
-                text = tool.text;
-              };
-            }) skill.tools
+            if skill.source != null then
+              {
+                ".omp/agent/skills/${skillName}".source = skill.source;
+              }
+            else
+              {
+                ".omp/agent/skills/${skillName}/instructions.md".text = skill.instructions;
+              }
+              // mapAttrs' (toolName: tool: {
+                name = ".omp/agent/skills/${skillName}/tools/${toolName}";
+                value = {
+                  executable = true;
+                  text = tool.text;
+                };
+              }) skill.tools
           )
       ) { } (attrNames cfg.skills))
 
-      # Extensions
+      # Extensions — .text written as <name>.ts; .source symlinked as
+      # <name>.js (realpath-resolved by omp, keeping relative imports inside
+      # the source package's store path)
       // (foldl' (
         acc: extName:
           let
             ext = cfg.extensions.${extName};
           in
           acc
-          // optionalAttrs ext.enable {
+          // optionalAttrs (ext.enable && ext.source != null) {
+            ".omp/agent/extensions/${extName}.js".source = ext.source;
+          }
+          // optionalAttrs (ext.enable && ext.source == null && ext.text != null) {
             ".omp/agent/extensions/${extName}.ts".text = ext.text;
           }
       ) { } (attrNames cfg.extensions));
