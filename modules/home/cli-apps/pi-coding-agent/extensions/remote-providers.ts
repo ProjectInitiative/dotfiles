@@ -13,13 +13,16 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { join } from "node:path";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { execSync } from "node:child_process";
 import { URL } from "node:url";
 /** Providers that support -flex variants (NeuralWatt) */
 const FLEX_PROVIDERS = new Set(["neuralwatt"]);
 
 /**
  * Resolve an API key for a provider, checking multiple sources in order:
- * 1. The provider config value from models.json
+ * 1. The provider config value from models.json — including pi's "!command"
+ *    form, which the extension reads raw (pi only resolves it in its own
+ *    request path, not here). Command failure or empty output falls through.
  * 2. Auth.json (stored by /login)
  * 3. Environment variable named `<PROVIDER>_API_KEY` (uppercased)
  */
@@ -28,7 +31,22 @@ function resolveApiKey(
   configKey: string | undefined,
 ): string | undefined {
   if (configKey && configKey !== "placeholder") {
-    return configKey;
+    if (configKey.startsWith("!")) {
+      try {
+        const out = execSync(configKey.slice(1), {
+          encoding: "utf-8",
+          stdio: ["ignore", "pipe", "ignore"],
+          timeout: 5_000,
+        });
+        const key = out.trim();
+        if (key) return key;
+      } catch {
+        // Command failed (file missing, non-zero exit) — fall through to
+        // auth.json so a manually saved key still works.
+      }
+    } else {
+      return configKey;
+    }
   }
   // Check auth.json (stored by /login)
   const authPath = join(getAgentDir(), "auth.json");
