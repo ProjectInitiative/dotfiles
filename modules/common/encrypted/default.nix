@@ -123,6 +123,13 @@ in
             mcp_grafana_sa_token = {
               mode = "0400";
             };
+            # LiteLLM virtual key for agents hitting the authenticated gateway
+            # (ai.taildeab2.ts.net). File content is just the sk-... key — pi's
+            # providers.ai.apiKey reads it via "!cat /run/secrets/...".
+            litellm_virtual_key = {
+              owner = "kylepzak";
+              mode = "0400";
+            };
             # TODO: move this to user key
             kylepzak_atuin_key = {
               owner = "kylepzak";
