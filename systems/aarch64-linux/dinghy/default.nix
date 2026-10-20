@@ -407,6 +407,16 @@ in
         };
       };
 
+      # Agent access to Loki logs / Grafana dashboards over MCP (SSE).
+      # Token is a Grafana service account scoped to datasources:query on
+      # the Loki datasource UID only.
+      mcp-grafana = {
+        enable = true;
+        grafanaUrl = "http://127.0.0.1:3000";
+        openFirewall = true;
+        tokenFile = "/run/secrets/mcp_grafana_sa_token";
+      };
+
       bcachefsFileOptions = {
         enable = true;
         jobs = {
