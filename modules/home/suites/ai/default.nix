@@ -178,6 +178,14 @@ in
             type = "remote";
             url = "http://mcp-system-mcp-lb-mc.taildeab2.ts.net/sse";
           };
+          # Grafana MCP on dinghy — Loki LogQL log query for any host, plus
+          # dashboards/alerts read access (token RBAC-scoped on the Grafana
+          # side).
+          grafana = {
+            enable = true;
+            type = "remote";
+            url = "http://dinghy.taildeab2.ts.net:8000/sse";
+          };
           # REA: Reverse Engineer Anything — stdio MCP server from the
           # nix-packaged rea-agents; spawns lazily on first tool call.
           rea = {
