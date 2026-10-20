@@ -13,6 +13,10 @@
     # NixPkgs Master
     ai-tools.url = "github:nixos/nixpkgs/master";
 
+    # omp (Oh My Pi) coding agent — parallel trial with pi (keel OQ-0040).
+    # NOT following our nixpkgs: omp builds with bun2nix against its own pin.
+    omp.url = "github:can1357/oh-my-pi";
+
     nix-amd-ai.url = "github:ProjectInitiative/nix-amd-ai";
     # nix-amd-ai.url = "path:/home/kylepzak/development/nix-amd-ai";
 

@@ -126,6 +126,11 @@ in
       pi-coding = {
         enable = mkBoolOpt true "Install pi-coding-agent.";
       };
+      # omp (Oh My Pi) — parallel trial with pi (keel OQ-0040). Purely
+      # additive: writes only ~/.omp/ while pi keeps ~/.pi/. Flip false to end.
+      omp = {
+        enable = mkBoolOpt true "Install omp (Oh My Pi) in parallel with pi.";
+      };
     };
 
     mcp = {
@@ -325,6 +330,62 @@ in
             version = "0.5.1";
           };
         };
+      };
+
+      # omp (Oh My Pi) — parallel trial (OQ-0040). Mirrors the pi-coding block
+      # above; extension sources are shared (same .ts files), MCP servers come
+      # from the same `mcp.servers` single source of truth. omp covers
+      # pi-subagents/pi-web-access/pi-mcp-adapter/crossbar natively, so no npm
+      # packages are needed here — zero lockfiles in the omp path.
+      cli-apps.omp = mkIf cfg.agent.omp.enable {
+        enable = true;
+
+        settings = {
+          hideThinkingBlock = false;
+          toolPendingBg = "#18181e";
+          toolSuccessBg = "#18181e";
+          toolErrorBg = "#211818";
+          toolTitle = "accent";
+        };
+
+        # Same providers as pi's models.json — GLM reasoning overrides ported
+        # verbatim to YAML. Verify with `omp models ai`.
+        models = {
+          providers.lemonade = {
+            baseUrl = "http://100.81.89.107:13305/v1";
+            api = "openai-completions";
+          };
+          providers.ai = {
+            baseUrl = "http://ai.taildeab2.ts.net/v1";
+            api = "openai-completions";
+            modelOverrides.dgx-spark = glmReasoningOverride;
+          };
+          providers.ai-direct = {
+            baseUrl = "http://ai-direct.taildeab2.ts.net/v1";
+            api = "openai-completions";
+            modelOverrides.dgx-spark = glmReasoningOverride;
+          };
+          providers.ai-gated = {
+            baseUrl = "http://ai-gated.taildeab2.ts.net/v1";
+            api = "openai-completions";
+            modelOverrides.dgx-spark = glmReasoningOverride;
+          };
+        };
+
+        # Single source of truth: the same servers pi-mcp-adapter gets.
+        # omp transports: stdio | http | sse (remote /sse → sse).
+        mcp.servers = enabledServers;
+
+        # Same extension sources as pi — omp rewrites @earendil-works/*
+        # imports onto its bundled copies (extension-loading.md).
+        extensions.permissions.text = builtins.readFile "${inputs.self}/modules/home/cli-apps/pi-coding-agent/extensions/permissions.ts";
+        extensions.permissions.enable = true;
+        extensions.dashboard-footer.text = builtins.readFile "${inputs.self}/modules/home/cli-apps/pi-coding-agent/extensions/dashboard-footer.ts";
+        extensions.dashboard-footer.enable = true;
+        extensions.remote-providers.text = builtins.readFile "${inputs.self}/modules/home/cli-apps/pi-coding-agent/extensions/remote-providers.ts";
+        extensions.remote-providers.enable = true;
+        extensions.tool-renderer.text = builtins.readFile "${inputs.self}/modules/home/cli-apps/pi-coding-agent/extensions/tool-renderer.ts";
+        extensions.tool-renderer.enable = true;
       };
 
       tools.aider = mkIf cfg.agent.aider.enable enabled;
