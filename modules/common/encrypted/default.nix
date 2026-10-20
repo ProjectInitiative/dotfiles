@@ -117,6 +117,12 @@ in
               # TESTING PURPOSES ONLY - so nix repl can read
               # mode = "444";
             };
+            # Grafana service-account token for mcp-grafana (agent log access).
+            # Value lives in secrets.enc.yaml; file content must be a systemd
+            # EnvironmentFile line: GRAFANA_SERVICE_ACCOUNT_TOKEN=<token>
+            mcp_grafana_sa_token = {
+              mode = "0400";
+            };
             # TODO: move this to user key
             kylepzak_atuin_key = {
               owner = "kylepzak";
