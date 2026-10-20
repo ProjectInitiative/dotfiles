@@ -126,6 +126,11 @@ in
       pi-coding = {
         enable = mkBoolOpt true "Install pi-coding-agent.";
       };
+      # omp (Oh My Pi) — parallel trial with pi (keel OQ-0040). Purely
+      # additive: writes only ~/.omp/ while pi keeps ~/.pi/. Flip false to end.
+      omp = {
+        enable = mkBoolOpt true "Install omp (Oh My Pi) in parallel with pi.";
+      };
     };
 
     mcp = {
@@ -333,6 +338,100 @@ in
             version = "0.5.1";
           };
         };
+      };
+
+      # omp (Oh My Pi) — parallel trial (OQ-0040). Mirrors the pi-coding block
+      # above; extension sources are shared (same .ts files), MCP servers come
+      # from the same `mcp.servers` single source of truth. omp covers
+      # pi-subagents/pi-web-access/pi-mcp-adapter/crossbar natively, so no npm
+      # packages are needed here — zero lockfiles in the omp path.
+      cli-apps.omp = mkIf cfg.agent.omp.enable {
+        enable = true;
+
+        settings = {
+          hideThinkingBlock = false;
+          toolPendingBg = "#18181e";
+          toolSuccessBg = "#18181e";
+          toolErrorBg = "#211818";
+          toolTitle = "accent";
+        };
+
+        # Same providers as pi's models.json — GLM reasoning overrides ported
+        # verbatim to YAML. Verify with `omp models ai`.
+        models = {
+          providers.lemonade = {
+            baseUrl = "http://100.81.89.107:13305/v1";
+            api = "openai-completions";
+          };
+          providers.ai = {
+            baseUrl = "http://ai.taildeab2.ts.net/v1";
+            api = "openai-completions";
+            modelOverrides.dgx-spark = glmReasoningOverride;
+          };
+          providers.ai-direct = {
+            baseUrl = "http://ai-direct.taildeab2.ts.net/v1";
+            api = "openai-completions";
+            modelOverrides.dgx-spark = glmReasoningOverride;
+          };
+          providers.ai-gated = {
+            baseUrl = "http://ai-gated.taildeab2.ts.net/v1";
+            api = "openai-completions";
+            modelOverrides.dgx-spark = glmReasoningOverride;
+          };
+        };
+
+        # Single source of truth: the same servers pi-mcp-adapter gets.
+        # omp transports: stdio | http | sse (remote /sse → sse).
+        mcp.servers = enabledServers;
+
+        # Same extension sources as pi — omp rewrites @earendil-works/*
+        # imports onto its bundled copies (extension-loading.md).
+        extensions.permissions.text = builtins.readFile "${inputs.self}/modules/home/cli-apps/pi-coding-agent/extensions/permissions.ts";
+        extensions.permissions.enable = true;
+        extensions.dashboard-footer.text = builtins.readFile "${inputs.self}/modules/home/cli-apps/pi-coding-agent/extensions/dashboard-footer.ts";
+        extensions.dashboard-footer.enable = true;
+        extensions.remote-providers.text = builtins.readFile "${inputs.self}/modules/home/cli-apps/pi-coding-agent/extensions/remote-providers.ts";
+        extensions.remote-providers.enable = true;
+        extensions.tool-renderer.text = builtins.readFile "${inputs.self}/modules/home/cli-apps/pi-coding-agent/extensions/tool-renderer.ts";
+        extensions.tool-renderer.enable = true;
+
+        # context-mode — npm pi-package that ships a NATIVE omp adapter
+        # (package.json "omp" manifest; OQ-0040 follow-up). Loaded from the
+        # store as a symlink so its relative imports resolve inside the
+        # package; its SQLite engine picks bun:sqlite/node:sqlite — the
+        # native better-sqlite3 fallback is never reached, so no node_modules
+        # or compilation is needed. Under omp the ctx_* tools come via native
+        # MCP (server.bundle.mjs under nixpkgs bun) — pi keeps its own
+        # extension-based bridge and is untouched.
+        extensions.context-mode = {
+          enable = true;
+          source = "${pkgs.${namespace}.context-mode}/build/adapters/omp/plugin.js";
+        };
+
+        mcp.extraServers.context-mode = {
+          enable = true;
+          type = "stdio";
+          command = "${pkgs.bun}/bin/bun";
+          args = [ "${pkgs.${namespace}.context-mode}/server.bundle.mjs" ];
+        };
+
+        # 8 bundled skills. ctx-upgrade is an npm-imperative flow (no-op on
+        # NixOS); kept so the agent doesn't invent its own upgrade path.
+        skills = lib.genAttrs
+          [
+            "context-mode"
+            "ctx-doctor"
+            "ctx-index"
+            "ctx-insight"
+            "ctx-purge"
+            "ctx-search"
+            "ctx-stats"
+            "ctx-upgrade"
+          ]
+          (name: {
+            enable = true;
+            source = "${pkgs.${namespace}.context-mode}/skills/${name}";
+          });
       };
 
       tools.aider = mkIf cfg.agent.aider.enable enabled;
