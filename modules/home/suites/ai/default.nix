@@ -264,11 +264,15 @@ in
           providers.ai-direct = {
             baseUrl = "http://ai-direct.taildeab2.ts.net/v1";
             api = "openai-completions";
+            # Second LB to the same authenticated ai-proxy pods — same key.
+            apiKey = "!cat /run/secrets/litellm_virtual_key 2>/dev/null";
             modelOverrides.dgx-spark = glmReasoningOverride;
           };
-          providers.ai-gated = {
-            baseUrl = "http://ai-gated.taildeab2.ts.net/v1";
+          providers.ai-test = {
+            baseUrl = "http://ai-test.taildeab2.ts.net/v1";
             api = "openai-completions";
+            # Unauthenticated canary test proxy (ai-proxy-test) — deliberately
+            # no key; renamed from ai-gated 2026-10-20.
             modelOverrides.dgx-spark = glmReasoningOverride;
           };
           # astrolabe: disabled until local llama-server comes back up
@@ -378,11 +382,15 @@ in
           providers.ai-direct = {
             baseUrl = "http://ai-direct.taildeab2.ts.net/v1";
             api = "openai-completions";
+            # Second LB to the same authenticated ai-proxy pods — same key.
+            apiKey = "!cat /run/secrets/litellm_virtual_key 2>/dev/null";
             modelOverrides.dgx-spark = glmReasoningOverride;
           };
-          providers.ai-gated = {
-            baseUrl = "http://ai-gated.taildeab2.ts.net/v1";
+          providers.ai-test = {
+            baseUrl = "http://ai-test.taildeab2.ts.net/v1";
             api = "openai-completions";
+            # Unauthenticated canary test proxy (ai-proxy-test) — deliberately
+            # no key; renamed from ai-gated 2026-10-20.
             modelOverrides.dgx-spark = glmReasoningOverride;
           };
         };
