@@ -442,6 +442,9 @@ in
     flashrom
     kicad
 
+    # Parametric 3D CAD, built from pinned upstream source (v0.15.0)
+    pkgs.${namespace}.solidcraft
+
     multipath-tools
     usbutils
     android-tools
