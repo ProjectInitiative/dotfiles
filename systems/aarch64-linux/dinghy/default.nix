@@ -542,6 +542,14 @@ in
   systemd.services.storage-mount = {
     description = "Mount the bcachefs storage pool";
 
+    # Mount-once semantics: a nixos-rebuild switch must NEVER restart this
+    # unit — ExecStop unmounts the pool and a restart fails + drops the
+    # drives. ExecStart embeds store paths, so any package bump would change
+    # the unit and trigger a restart without this. Unit-file changes are
+    # staged instead and take effect on the next boot.
+    restartIfChanged = false;
+    stopIfChanged = false;
+
     # Run after the main system is up and running.
     after = [ "rockpi-quad.service" ];
     # Be part of the local filesystem setup target.
