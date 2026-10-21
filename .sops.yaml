@@ -65,6 +65,7 @@ creation_rules:
           - *ssh_capstan1
           - *ssh_capstan2
           - *ssh_capstan3
+          - *ssh_argo
           - *ssh_astrolabe
           - *ssh_chronometer
           - *ssh_sextant
