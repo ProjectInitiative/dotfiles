@@ -168,6 +168,48 @@ in
       '';
     };
 
+    # Same pattern as /nix: seed /data/home from the image's /home once,
+    # then bind /data/home over /home so ~ survives root re-imports.
+    # Runs BEFORE multi-user (unlike the /nix flip) so home-manager and
+    # anything else reading ~ at target-start sees the data-disk home and
+    # never the (stale) image home. /data is x-initrd.mount'ed, so it is
+    # present this early; the seed is a no-op once the marker exists and
+    # the bind is idempotent every boot.
+    systemd.services.argo-home-disk = {
+      description = "Seed /data/home with the booting /home and bind over /home";
+      after = [ "local-fs.target" ];
+      before = [ "multi-user.target" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        StandardOutput = "journal+console";
+        StandardError = "journal+console";
+      };
+      script = ''
+        SW=/run/current-system/sw/bin
+        RW=/run/wrappers/bin
+        n=0
+        while ! $SW/mountpoint -q /data; do
+          n=$((n+1)); [ $n -gt 120 ] && echo "argo-home-disk: /data never mounted, skipping" && exit 0
+          sleep 1
+        done
+        $SW/mkdir -p /data/home
+        # Seed once: copy the image home before anything binds over it.
+        if [ ! -e /data/home/.home-seeded ]; then
+          echo "argo-home-disk: seeding /home to /data/home (one-time)"
+          if $SW/cp -a /home/. /data/home/; then
+            $SW/touch /data/home/.home-seeded
+          else
+            echo "argo-home-disk: SEED FAILED, not binding /home (guest keeps image home)"
+            exit 1
+          fi
+        fi
+        $SW/mountpoint -q /home || $RW/mount --bind /data/home /home
+        echo "argo-home-disk: /home now served from the data disk"
+      '';
+    };
+
     nix.gc = {
       automatic = true;
       dates = "weekly";
