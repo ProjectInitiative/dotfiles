@@ -27,11 +27,15 @@ in
     # Bootloader & fileSystems handled by NixOS kubevirt module (GRUB on /dev/vda)
     # services.qemuGuest, services.openssh, services.cloud-init also from kubevirt
 
-    # ── Sops: bypass for image builds (runtime auth via OpenBao/Vault) ──────
-    sops.validateSopsFiles = lib.mkForce false;
-    sops.age.sshKeyPaths = lib.mkForce [ ];
-    sops.age.keyFile = lib.mkForce "/dev/null";
-    sops.defaultSopsFile = lib.mkForce (builtins.toFile "empty-sops.yaml" "{}");
+    # ── Sops ─────────────────────────────────────────────────────────────────
+    # The image's baked /etc/ssh/ssh_host_ed25519_key is enrolled as an age
+    # recipient (&ssh_argo) in .sops.yaml, so sops-nix renders secrets at boot
+    # normally (including /run/secrets/sensitive_not_secret_age_key, which the
+    # home-manager activation build env requires). Do NOT re-add the old
+    # "sops bypass for image builds" (mkForce-empty keys) — that was what left
+    # /run/secrets missing and bricked home-manager activation (OQ-0041).
+    # Caveat: an image rebuild bakes a NEW host key → re-enroll via
+    # sops-hostkey-tool fetch-remote + .sops.yaml + sops updatekeys.
 
     # ── SSH config (service enabled by kubevirt module) ─────────────────────
     services.openssh.settings = {
