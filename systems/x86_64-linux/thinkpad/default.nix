@@ -590,9 +590,8 @@ in
     options snd-intel-dspcfg dsp_driver=1
   '';
 
-  # Prefer s2idle over S3 (deep): resume from the T16's S3 path is slow
-  # (xHC reinit + NVS restore every wake); s2idle tested noticeably faster.
-  boot.kernelParams = [ "mem_sleep_default=s2idle" ];
+  # Prefer deep (S3) sleep; s2idle may be causing suspend/resume instability.
+  boot.kernelParams = [ "mem_sleep_default=deep" ];
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
