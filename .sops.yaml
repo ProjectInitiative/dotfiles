@@ -26,7 +26,7 @@ keys:
     - &ssh_capstan2 age1daxggyz58h525ww5clnwwuwxu7tf5mlz8as8n7cy8dhv74u4qcqq0jagrp
     - &ssh_capstan3 age1wwtevxuhkfh6nyl23axkx0s3pnywrw95tj85qrg03fhh6jkmf5nsfknx09
   # argo VM (KubeVirt estate image); baked host key from the image build
-  - &ssh_argo age1a2y06mqvz7u0upr60y5qvcxp7z6mgn7w5z3vqpck9a6y7j726f5qqvst7k
+  - &ssh_argo age1k2cfu372getglk46f09m6szydwzavwusmnshuuvpjqffsmyxf5sqnf3aax
   - &ssh_astrolabe age15p00q78suah3sfrnw7duxwsdslcmlcl57e7f5a9e320gncxc54rqg3fl0w
   - &ssh_chronometer age1pae46sxrwachnsnz6lhk3896e335uhzr4avr9wezze8pt3plq4jqh90h4r
   - &ssh_sextant age1y8c7qe33a4rkuswjhlh8g2pzkqnny9cwhgjn0580awktp75hks3qvetgnx
