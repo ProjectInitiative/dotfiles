@@ -37,6 +37,15 @@ in
     # Caveat: an image rebuild bakes a NEW host key → re-enroll via
     # sops-hostkey-tool fetch-remote + .sops.yaml + sops updatekeys.
 
+    # ── Services that the kubevirt image format normally provides ──────────
+    # The live nixosConfigurations.argo build does NOT include the
+    # nixos-generators format module, which is what enables qemu-guest-agent,
+    # sshd and cloud-init for the image. Without these the live system boots
+    # with no remote access at all (learned 2026-10-22: a switch to this
+    # closure stopped sshd + qemu-ga and bricked remote access).
+    services.qemu-guest-agent.enable = true;
+    services.openssh.enable = true;
+
     # ── SSH config (service enabled by kubevirt module) ─────────────────────
     services.openssh.settings = {
       PasswordAuthentication = false;
