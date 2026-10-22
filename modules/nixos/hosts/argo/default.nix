@@ -43,8 +43,12 @@ in
     # sshd and cloud-init for the image. Without these the live system boots
     # with no remote access at all (learned 2026-10-22: a switch to this
     # closure stopped sshd + qemu-ga and bricked remote access).
-    services.qemu-guest-agent.enable = true;
+    services.qemuGuest.enable = true;
     services.openssh.enable = true;
+    # The image got its network config from cloud-init's fallback DHCP; the
+    # live closure has no cloud-init, so DHCP must be explicit or enp1s0
+    # never gets an address.
+    networking.useDHCP = true;
 
     # ── SSH config (service enabled by kubevirt module) ─────────────────────
     services.openssh.settings = {
