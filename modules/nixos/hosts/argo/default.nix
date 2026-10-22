@@ -168,6 +168,18 @@ in
           fi
         fi
         $SW/mountpoint -q /nix || $RW/mount --bind /data/nix /nix
+        # The bind HIDES the inode nix-daemon.socket is listening on: the
+        # socket unit starts at sockets.target (before this unit), binds to
+        # the image's /nix, and after the flip the path points at the stale
+        # seeded socket file -> ECONNREFUSED for every nix client (incl.
+        # nixos-rebuild --target-host and nix copy --to). Re-bind the socket
+        # to the new /nix. The service must be stopped first or the socket
+        # unit refuses to restart ("socket service already active").
+        if $SW/systemctl is-active --quiet nix-daemon.socket; then
+          $SW/systemctl stop nix-daemon.service 2>/dev/null || true
+          $SW/systemctl restart nix-daemon.socket 2>/dev/null || true
+          echo "argo-nix-store-rotate: nix-daemon.socket re-bound to the data-disk /nix"
+        fi
         echo "argo-nix-store-rotate: /nix now served from the data disk ($($SW/ls /data/nix/store | $SW/wc -l) store paths)"
       '';
     };
