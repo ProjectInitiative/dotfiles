@@ -27,11 +27,15 @@ in
     # Bootloader & fileSystems handled by NixOS kubevirt module (GRUB on /dev/vda)
     # services.qemuGuest, services.openssh, services.cloud-init also from kubevirt
 
-    # ── Sops: bypass for image builds (runtime auth via OpenBao/Vault) ──────
-    sops.validateSopsFiles = lib.mkForce false;
-    sops.age.sshKeyPaths = lib.mkForce [ ];
-    sops.age.keyFile = lib.mkForce "/dev/null";
-    sops.defaultSopsFile = lib.mkForce (builtins.toFile "empty-sops.yaml" "{}");
+    # ── Sops ─────────────────────────────────────────────────────────────────
+    # The image's baked /etc/ssh/ssh_host_ed25519_key is enrolled as an age
+    # recipient (&ssh_argo) in .sops.yaml, so sops-nix renders secrets at boot
+    # normally (including /run/secrets/sensitive_not_secret_age_key, which the
+    # home-manager activation build env requires). Do NOT re-add the old
+    # "sops bypass for image builds" (mkForce-empty keys) — that was what left
+    # /run/secrets missing and bricked home-manager activation (OQ-0041).
+    # Caveat: an image rebuild bakes a NEW host key → re-enroll via
+    # sops-hostkey-tool fetch-remote + .sops.yaml + sops updatekeys.
 
     # ── SSH config (service enabled by kubevirt module) ─────────────────────
     services.openssh.settings = {
@@ -165,6 +169,48 @@ in
         fi
         $SW/mountpoint -q /nix || $RW/mount --bind /data/nix /nix
         echo "argo-nix-store-rotate: /nix now served from the data disk ($($SW/ls /data/nix/store | $SW/wc -l) store paths)"
+      '';
+    };
+
+    # Same pattern as /nix: seed /data/home from the image's /home once,
+    # then bind /data/home over /home so ~ survives root re-imports.
+    # Runs BEFORE multi-user (unlike the /nix flip) so home-manager and
+    # anything else reading ~ at target-start sees the data-disk home and
+    # never the (stale) image home. /data is x-initrd.mount'ed, so it is
+    # present this early; the seed is a no-op once the marker exists and
+    # the bind is idempotent every boot.
+    systemd.services.argo-home-disk = {
+      description = "Seed /data/home with the booting /home and bind over /home";
+      after = [ "local-fs.target" ];
+      before = [ "multi-user.target" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        StandardOutput = "journal+console";
+        StandardError = "journal+console";
+      };
+      script = ''
+        SW=/run/current-system/sw/bin
+        RW=/run/wrappers/bin
+        n=0
+        while ! $SW/mountpoint -q /data; do
+          n=$((n+1)); [ $n -gt 120 ] && echo "argo-home-disk: /data never mounted, skipping" && exit 0
+          sleep 1
+        done
+        $SW/mkdir -p /data/home
+        # Seed once: copy the image home before anything binds over it.
+        if [ ! -e /data/home/.home-seeded ]; then
+          echo "argo-home-disk: seeding /home to /data/home (one-time)"
+          if $SW/cp -a /home/. /data/home/; then
+            $SW/touch /data/home/.home-seeded
+          else
+            echo "argo-home-disk: SEED FAILED, not binding /home (guest keeps image home)"
+            exit 1
+          fi
+        fi
+        $SW/mountpoint -q /home || $RW/mount --bind /data/home /home
+        echo "argo-home-disk: /home now served from the data disk"
       '';
     };
 
