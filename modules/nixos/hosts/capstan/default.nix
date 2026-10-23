@@ -343,14 +343,41 @@ in
         tpm = mkIf cfg.allFeatures enabled;
 
         # filesystem level options
+        # 2026-10-23: cache.nvme1 was 90%+ full with ~400-900GB/node of
+        # pending compression+rebalance (RISK-0031). Changes:
+        # - promote_target -> cache.ssd1: read promotion lands on the SATA
+        #   SSD (its intended role) instead of filling the NVMe.
+        # - metadata_target -> cache.nvme1: metadata writes on NVMe
+        #   (matches capstan3's existing live value).
+        # - background_compression zstd:15 -> zstd:1: drains the queued
+        #   recompression backlog cheaply. Revert to zstd:15 once
+        #   `bcachefs fs usage /mnt/pool` shows pending reconcile at 0.
         bcachefs-fs-options = mkIf cfg.allFeatures {
           settings = {
             "27cac550-3836-765c-d107-51d27ab4a6e1" = {
               foreground_target = "cache.nvme1";
               background_target = "hdd";
-              promote_target = "cache";
+              promote_target = "cache.ssd1";
+              metadata_target = "cache.nvme1";
+              background_compression = "zstd:1";
             };
           };
+        };
+
+        # monthly data scrub (upstream NixOS default cadence — weekly was
+        # extra read load on an already saturated pool; bcachefs 1.39.x
+        # also auto-scrubs journal entries during recovery). Telegram
+        # notifications off until the sops tokens are wired per node.
+        # mkForce: the bcachefs-utils suite (enabled on capstan2/3) sets a
+        # twice-monthly schedule + duplicated mountpoint list; monthly and a
+        # single target are what we want here.
+        bcachefsScrubAuto = mkIf cfg.allFeatures {
+          enable = true;
+          targetMountPoints = lib.mkForce [ cfg.mountpoint ];
+          schedule = lib.mkForce "monthly";
+          notifyOnStart = false;
+          notifyOnSuccess = false;
+          notifyOnFailure = false;
         };
 
         # specific file settings

@@ -94,12 +94,15 @@ in
 
     schedule = mkOption {
       type = types.str;
-      default = "weekly";
+      default = "monthly";
       example = "*-*-1,15 03:00:00";
       description = mdDoc ''
         When to run the scrubs automatically. Applies to all targeted mounts.
         Uses systemd.time OnCalendar= format. Timers include randomized delay.
         See `man systemd.time` for detailed syntax.
+        Monthly matches the upstream NixOS bcachefs.autoScrub
+        recommendation; scrubs are intense sequential reads and 1.39+
+        already auto-scrubs journal entries at recovery.
       '';
     };
 
