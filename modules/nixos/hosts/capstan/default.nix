@@ -349,9 +349,9 @@ in
         #   SSD (its intended role) instead of filling the NVMe.
         # - metadata_target -> cache.nvme1: metadata writes on NVMe
         #   (matches capstan3's existing live value).
-        # - background_compression zstd:15 -> zstd:1: drains the queued
-        #   recompression backlog cheaply. Revert to zstd:15 once
-        #   `bcachefs fs usage /mnt/pool` shows pending reconcile at 0.
+        # NOTE: do NOT change background_compression here — any level
+        # change re-queues the ENTIRE pool for recompression at the new
+        # level. Leave zstd:15 and let the existing reconcile drain.
         bcachefs-fs-options = mkIf cfg.allFeatures {
           settings = {
             "27cac550-3836-765c-d107-51d27ab4a6e1" = {
@@ -359,7 +359,6 @@ in
               background_target = "hdd";
               promote_target = "cache.ssd1";
               metadata_target = "cache.nvme1";
-              background_compression = "zstd:1";
             };
           };
         };
