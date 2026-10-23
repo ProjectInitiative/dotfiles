@@ -318,7 +318,7 @@ in
         packages = {
           pi-subagents = {
             enable = true;
-            version = "0.34.0";
+            version = "0.81.0";
           };
           pi-web-access = {
             enable = true;
@@ -330,7 +330,11 @@ in
           };
           pi-mcp-adapter = {
             enable = true;
-            version = "2.11.0";
+            # 6.x: pi-ai/pi-tui/typebox moved to peerDependencies (fixes the
+            # "host-provided extension packages" warning) and coexists with
+            # pi's builtin mcp extension (pi-builtin-mcp.ts). Still reads
+            # ~/.pi/agent/mcp.json with directTools.
+            version = "6.0.0";
           };
           "@hypabolic/pi-hypa" = {
             enable = true;

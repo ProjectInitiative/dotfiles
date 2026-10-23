@@ -18,13 +18,16 @@ in
 
   config = mkIf cfg.enable {
 
+    # sops-hostkey-tool is intentionally NOT here: it is a provisioning CLI
+    # (guestfish/qemu image manipulation) and dragged libguestfs + guestfs-tools
+    # + qemu_kvm into every device toplevel, hanging builds without KVM.
+    # It lives in packages/sops-hostkey-tool and the dotfiles devshell instead.
     home = {
       packages = with pkgs; [
         age
         sops
         ssh-to-age
         git-agecrypt
-        pkgs.${namespace}.sops-hostkey-tool
       ];
 
       shellAliases = {
