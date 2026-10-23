@@ -17,5 +17,5 @@ with lib.${namespace};
   # Both thin files enable the SAME modules/nixos/hosts/argo module, so the
   # image and the live config cannot drift.
   projectinitiative.hosts.argo = enabled;
-  networking.hostName = "argo";
+  networking.hostName = mkForce "argo";
 }

@@ -622,6 +622,78 @@ in
     };
   };
 
+  # --- SATA bridge watchdog (RISK-0033) ---
+
+  # The Radxa HAT's second JMS56x bridge intermittently fails USB
+  # enumeration (error -71 SET_ADDRESS loop behind the VL817 hub); when it
+  # does, the bcachefs pool is missing 2/4 members and storage-mount fails.
+  # This watchdog publishes the failure signature to the node-exporter
+  # textfile collector (dinghy_sata_healthy 0) and to journald with a
+  # distinctive tag for alloy->loki pickup, so recurrence is LOUD at 3am
+  # instead of discovered via missing frigate recordings.
+  systemd.services.sata-bridge-watchdog = {
+    description = "Watch for dinghy SATA bridge enumeration failure";
+    after = [ "multi-user.target" ];
+    wants = [ "prometheus-node-exporter.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = pkgs.writeShellScript "sata-bridge-watchdog" ''
+        set -u
+        TEXTFILE_DIR=/var/lib/prometheus-node-exporter
+        mkdir -p "$TEXTFILE_DIR"
+
+        EXPECTED=4
+        # Count SATA disks on USB transport (excludes mmcblk0 eMMC).
+        DISKS=$(${pkgs.util-linux}/bin/lsblk -dn -o NAME,TRAN | ${pkgs.gnugrep}/bin/grep -c usb || true)
+
+        # Fresh enumeration-failure signature in this boot's kernel log.
+        ENUM_ERRORS=$(journalctl -k -b --no-pager 2>/dev/null | ${pkgs.gnugrep}/bin/grep -c "device not accepting address" || true)
+
+        if [ "$DISKS" -eq "$EXPECTED" ]; then
+          HEALTHY=1
+        else
+          HEALTHY=0
+        fi
+
+        cat > "$TEXTFILE_DIR/dinghy_sata.prom" <<EOF
+        # HELP dinghy_sata_disks SATA disks visible on USB transport
+        # TYPE dinghy_sata_disks gauge
+        dinghy_sata_disks $DISKS
+        # HELP dinghy_sata_expected Expected SATA disk count for the pool
+        # TYPE dinghy_sata_expected gauge
+        dinghy_sata_expected $EXPECTED
+        # HELP dinghy_sata_healthy 1 if all pool disks enumerated
+        # TYPE dinghy_sata_healthy gauge
+        dinghy_sata_healthy $HEALTHY
+        # HELP dinghy_sata_enum_errors USB enumeration errors this boot
+        # TYPE dinghy_sata_enum_errors gauge
+        dinghy_sata_enum_errors $ENUM_ERRORS
+        EOF
+        chown node-exporter:node-exporter "$TEXTFILE_DIR/dinghy_sata.prom" 2>/dev/null || true
+
+        # Loud journald marker for alloy/loki alerting.
+        if [ "$HEALTHY" -eq 0 ]; then
+          echo "dinghy-sata-watchdog: DEGRADED — only $DISKS/$EXPECTED USB disks; enum_errors=$ENUM_ERRORS" | ${pkgs.util-linux}/bin/logger -t dinghy-sata-watchdog -p daemon.alert
+        elif [ "$ENUM_ERRORS" -gt 0 ]; then
+          echo "dinghy-sata-watchdog: OK but $ENUM_ERRORS enumeration errors this boot — bridge is flaking" | ${pkgs.util-linux}/bin/logger -t dinghy-sata-watchdog -p daemon.warning
+        else
+          echo "dinghy-sata-watchdog: OK ($DISKS/$EXPECTED disks, no enum errors)" | ${pkgs.util-linux}/bin/logger -t dinghy-sata-watchdog -p daemon.info
+        fi
+      '';
+    };
+  };
+
+  systemd.timers.sata-bridge-watchdog = {
+    description = "Periodic SATA bridge watchdog";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "2min";
+      OnUnitActiveSec = "5min";
+      AccuracySec = "30s";
+      Persistent = true;
+    };
+  };
+
   # --- Late-boot MDADM RAID Assembly and Mount ---
 
   # This service runs late in the boot process, after the system is up.
