@@ -370,6 +370,9 @@
             sextant = {
               system = "aarch64-linux";
             };
+            cutter = {
+              system = "aarch64-linux";
+            };
             chronometer = {
               system = "aarch64-linux";
             };
