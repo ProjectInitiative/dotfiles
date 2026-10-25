@@ -363,17 +363,24 @@ in
         projectId = cfg.infisical.projectId;
         environment = cfg.infisical.environment;
         credentialsDir = cfg.infisical.credentialsDir;
+        # All node secrets live in the /KEEP folder of the Infisical project
+        # (folders organize the project; the machine identity is scoped to
+        # read only this folder). secretPath is the folder, name is the
+        # secret key within it.
         secrets = [
           {
             name = "TAILSCALE_AUTH_KEY";
+            secretPath = "/KEEP";
             path = "/var/lib/infisical-secrets/tailscale_auth_key";
           }
           {
             name = "K3S_TOKEN";
+            secretPath = "/KEEP";
             path = "/var/lib/infisical-secrets/k3s_token";
           }
           {
             name = "USER_PASSWORD_HASH";
+            secretPath = "/KEEP";
             path = "/var/lib/infisical-secrets/user_password";
           }
         ];
