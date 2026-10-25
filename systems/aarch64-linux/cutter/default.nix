@@ -45,6 +45,26 @@ in
   fileSystems."/mnt/internal".options = [ "nofail" ];
   fileSystems."/mnt/shared".options = [ "nofail" ];
 
+  # nixpkgs 6.1 stable (>= 6.1.18x) already contains the upstream removal of
+  # __virtio_clear_bit(vdev, VIRTIO_F_ACCESS_PLATFORM) in virtballoon_validate,
+  # so the AOSP android-16.0.0_r2 arm64-balloon.patch series fails with
+  # "previously applied" on that hunk. Use a sanitized copy with that one
+  # hunk dropped; everything else is unchanged. If another AVF hunk gets
+  # backported to 6.1.y, regenerate: fetch
+  # android-16.0.0_r2 build/debian/kernel/patches/avf/arm64-balloon.patch,
+  # drop the offending hunk, update this file.
+  boot.kernelPatches = lib.mkForce [
+    {
+      name = "avf";
+      patch = ./patches/arm64-balloon-6.1.189.patch;
+      structuredExtraConfig = with lib.kernel; {
+        SND_VIRTIO = module;
+        SND = yes;
+        SOUND = yes;
+      };
+    }
+  ];
+
   projectinitiative = {
 
     settings = {
