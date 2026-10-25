@@ -37,6 +37,14 @@ in
     if builtins.getEnv "BUILD_ARM_NATIVE" == "true" then pkgs.linuxPackages_6_1 else crossKernel
   );
 
+  # koiTerminal (unlike upstream GrapheneOS Terminal) only materializes the
+  # "android" virtiofs share (from /storage/emulated); the "internal" share
+  # ($APP_DATA_DIR/files) is dropped by ConfigJson.SharedPathJson. Without
+  # nofail the guest drops to emergency mode on the failed /mnt/internal
+  # mount. Matches outlawsanzhang/nixos-avf-koiTerminal.
+  fileSystems."/mnt/internal".options = [ "nofail" ];
+  fileSystems."/mnt/shared".options = [ "nofail" ];
+
   projectinitiative = {
 
     settings = {
