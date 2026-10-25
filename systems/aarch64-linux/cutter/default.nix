@@ -45,6 +45,12 @@ in
   fileSystems."/mnt/internal".options = [ "nofail" ];
   fileSystems."/mnt/shared".options = [ "nofail" ];
 
+  # koiTerminal's serial console keyboard requires console_in in vm_config.json
+  # (ConfigJson maps a missing key to false -> setVmConsoleInputSupported(false),
+  # leaving the ttyS0 console read-only). The koiTerminal nixos-avf fork sets
+  # this; upstream nix-community does not.
+  avf.vmConfig.console_in = true;
+
   # nixpkgs 6.1 stable (>= 6.1.18x) already contains the upstream removal of
   # __virtio_clear_bit(vdev, VIRTIO_F_ACCESS_PLATFORM) in virtballoon_validate,
   # so the AOSP android-16.0.0_r2 arm64-balloon.patch series fails with
