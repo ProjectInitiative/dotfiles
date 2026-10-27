@@ -524,7 +524,7 @@ let
                 to = 0;
               };
               model = {
-                # LLM hosts (sextant/chronometer/octant) are excluded — they run near-full by design; see high_ram_usage_llm
+                # LLM hosts (sextant/chronometer/octant) are excluded — they run near-full by design; failure mode is OOM (see oom_kill rule)
                 expr = ''((node_memory_MemTotal_bytes{instance!~".*astrolabe.*|sextant:.*|chronometer:.*|octant:.*"} - node_memory_MemAvailable_bytes{instance!~".*astrolabe.*|sextant:.*|chronometer:.*|octant:.*"}) / node_memory_MemTotal_bytes{instance!~".*astrolabe.*|sextant:.*|chronometer:.*|octant:.*"}) * 100'';
                 refId = "A";
               };
@@ -554,59 +554,6 @@ let
           annotations.summary = "🧠 Node: {{ or .Labels.instance \"Unknown\" }}\nUsage: <b>{{ with $values.B }}{{ .Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>";
           testScenarios = {
             "high_ram" = {
-              metric = "node_memory_MemAvailable_bytes";
-              labels = { };
-              value = 0;
-            };
-          };
-        }
-        {
-          uid = "high_ram_usage_llm";
-          title = "High RAM Usage (LLM Host)";
-          condition = "C";
-          noDataState = "OK";
-          execErrState = "Error";
-          data = [
-            {
-              refId = "A";
-              datasourceUid = "prometheus_ds";
-              relativeTimeRange = {
-                from = 600;
-                to = 0;
-              };
-              model = {
-                # LLM hosts (DGX Sparks) legitimately run near-full RAM — the
-                # allocator owns memory by design. Only page at 98% held 30m:
-                # that means the host is actually wedged, not "model loaded".
-                expr = ''((node_memory_MemTotal_bytes{instance=~"sextant:9100|chronometer:9100|octant:9100"} - node_memory_MemAvailable_bytes{instance=~"sextant:9100|chronometer:9100|octant:9100"}) / node_memory_MemTotal_bytes{instance=~"sextant:9100|chronometer:9100|octant:9100"}) * 100'';
-                refId = "A";
-              };
-            }
-            {
-              refId = "B";
-              datasourceUid = "__expr__";
-              model = {
-                expression = "A";
-                type = "reduce";
-                reducer = "last";
-                refId = "B";
-              };
-            }
-            {
-              refId = "C";
-              datasourceUid = "__expr__";
-              model = {
-                expression = "$B > 98";
-                type = "math";
-                refId = "C";
-              };
-            }
-          ];
-          for = "30m";
-          labels.severity = "warning";
-          annotations.summary = "🧠 LLM Host: {{ or .Labels.instance \"Unknown\" }}\nUsage: <b>{{ with $values.B }}{{ .Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>\n(LLM host — high usage is expected; fired means 98%+ held for 30m)";
-          testScenarios = {
-            "high_ram_llm" = {
               metric = "node_memory_MemAvailable_bytes";
               labels = { };
               value = 0;
