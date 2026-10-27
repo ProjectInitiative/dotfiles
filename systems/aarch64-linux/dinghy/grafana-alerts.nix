@@ -1116,27 +1116,14 @@ in
                 # not credentials; the token stays env/sops-sourced.
                 chatid = "21388583";
                 parseMode = "HTML";
+                # NOTE: no $-prefixed template variables allowed here — Grafana
+                # provisioning strips $word sequences as (unset) env references
+                # before storing the setting, which breaks the Go template
+                # ({{- range , := .Alerts -}} -> "unexpected ',' in range").
                 message = ''
-                  {{- range $index, $alert := .Alerts -}}
-                    {{- if gt $index 0 }}
-
-      ---------------------------------------
-
-      {{ end -}}
-                    {{- if eq .Status "firing" -}}
-                      {{- if eq .Labels.report "daily" -}}
-                        {{ .Annotations.summary }}
-                      {{- else -}}
-                        <b>🔥 ALARM 🔥: {{ .Labels.alertname }}</b>
-      {{ .Annotations.summary }}
-                      {{- end -}}
-                    {{- else -}}
-                      {{- if ne .Labels.report "daily" -}}
-                        <b>✅ RESOLVED: {{ .Labels.alertname }}</b>
-      {{ .Annotations.summary }}
-                      {{- end -}}
-                    {{- end -}}
-                  {{- end -}}
+                  {{ range .Alerts }}{{ if eq .Status "firing" }}{{ if eq .Labels.report "daily" }}{{ .Annotations.summary }}{{ else }}<b>🔥 ALARM 🔥: {{ .Labels.alertname }}</b>
+                  {{ .Annotations.summary }}{{ end }}{{ else }}{{ if ne .Labels.report "daily" }}<b>✅ RESOLVED: {{ .Labels.alertname }}</b>
+                  {{ .Annotations.summary }}{{ end }}{{ end }}{{ end }}
                 '';
               };
             }
