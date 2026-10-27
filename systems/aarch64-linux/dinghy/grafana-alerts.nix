@@ -524,7 +524,8 @@ let
                 to = 0;
               };
               model = {
-                expr = ''((node_memory_MemTotal_bytes{instance!~".*astrolabe.*"} - node_memory_MemAvailable_bytes{instance!~".*astrolabe.*"}) / node_memory_MemTotal_bytes{instance!~".*astrolabe.*"}) * 100'';
+                # LLM hosts (sextant/chronometer/octant) are excluded — they run near-full by design; see high_ram_usage_llm
+                expr = ''((node_memory_MemTotal_bytes{instance!~".*astrolabe.*|sextant:.*|chronometer:.*|octant:.*"} - node_memory_MemAvailable_bytes{instance!~".*astrolabe.*|sextant:.*|chronometer:.*|octant:.*"}) / node_memory_MemTotal_bytes{instance!~".*astrolabe.*|sextant:.*|chronometer:.*|octant:.*"}) * 100'';
                 refId = "A";
               };
             }
@@ -556,6 +557,112 @@ let
               metric = "node_memory_MemAvailable_bytes";
               labels = { };
               value = 0;
+            };
+          };
+        }
+        {
+          uid = "high_ram_usage_llm";
+          title = "High RAM Usage (LLM Host)";
+          condition = "C";
+          noDataState = "OK";
+          execErrState = "Error";
+          data = [
+            {
+              refId = "A";
+              datasourceUid = "prometheus_ds";
+              relativeTimeRange = {
+                from = 600;
+                to = 0;
+              };
+              model = {
+                # LLM hosts (DGX Sparks) legitimately run near-full RAM — the
+                # allocator owns memory by design. Only page at 98% held 30m:
+                # that means the host is actually wedged, not "model loaded".
+                expr = ''((node_memory_MemTotal_bytes{instance=~"sextant:9100|chronometer:9100|octant:9100"} - node_memory_MemAvailable_bytes{instance=~"sextant:9100|chronometer:9100|octant:9100"}) / node_memory_MemTotal_bytes{instance=~"sextant:9100|chronometer:9100|octant:9100"}) * 100'';
+                refId = "A";
+              };
+            }
+            {
+              refId = "B";
+              datasourceUid = "__expr__";
+              model = {
+                expression = "A";
+                type = "reduce";
+                reducer = "last";
+                refId = "B";
+              };
+            }
+            {
+              refId = "C";
+              datasourceUid = "__expr__";
+              model = {
+                expression = "$B > 98";
+                type = "math";
+                refId = "C";
+              };
+            }
+          ];
+          for = "30m";
+          labels.severity = "warning";
+          annotations.summary = "🧠 LLM Host: {{ or .Labels.instance \"Unknown\" }}\nUsage: <b>{{ with $values.B }}{{ .Value | printf \"%.1f\" }}%{{ else }}N/A{{ end }}</b>\n(LLM host — high usage is expected; fired means 98%+ held for 30m)";
+          testScenarios = {
+            "high_ram_llm" = {
+              metric = "node_memory_MemAvailable_bytes";
+              labels = { };
+              value = 0;
+            };
+          };
+        }
+        {
+          uid = "oom_kill";
+          title = "OOM Kill Detected";
+          condition = "C";
+          noDataState = "OK";
+          execErrState = "Error";
+          data = [
+            {
+              refId = "A";
+              datasourceUid = "prometheus_ds";
+              relativeTimeRange = {
+                from = 600;
+                to = 0;
+              };
+              model = {
+                # The real memory failure mode: the kernel started killing.
+                # up{job=nodes} guard keeps this quiet when the node itself is
+                # down (node_down covers that case).
+                expr = ''increase(node_vmstat_oom_kill[10m]) > 0 and on(instance) up{job="nodes"} == 1'';
+                refId = "A";
+              };
+            }
+            {
+              refId = "B";
+              datasourceUid = "__expr__";
+              model = {
+                expression = "A";
+                type = "reduce";
+                reducer = "last";
+                refId = "B";
+              };
+            }
+            {
+              refId = "C";
+              datasourceUid = "__expr__";
+              model = {
+                expression = "$B > 0";
+                type = "math";
+                refId = "C";
+              };
+            }
+          ];
+          for = "1m";
+          labels.severity = "critical";
+          annotations.summary = "💀 OOM kill on {{ or .Labels.instance \"Unknown\" }}\nOOM kills (10m): <b>{{ with $values.B }}{{ printf \"%.0f\" .Value }}{{ else }}N/A{{ end }}</b>";
+          testScenarios = {
+            "oom_kill" = {
+              metric = "node_vmstat_oom_kill";
+              labels = { };
+              value = 5;
             };
           };
         }
