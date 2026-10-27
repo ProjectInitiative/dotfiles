@@ -1110,7 +1110,11 @@ in
               type = "telegram";
               settings = {
                 bottoken = "$__env{TELEGRAM_BOT_TOKEN}";
-                chatid = "$__env{TELEGRAM_CHAT_ID}";
+                # Inline, not $__env: Grafana expands env vars textually BEFORE
+                # YAML parsing, so a numeric chat id becomes a YAML number and
+                # provisioning fails (Config.chatid is a string). Chat IDs are
+                # not credentials; the token stays env/sops-sourced.
+                chatid = "21388583";
                 parseMode = "HTML";
                 message = ''
                   {{- range $index, $alert := .Alerts -}}
