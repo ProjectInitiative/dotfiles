@@ -689,8 +689,12 @@ let
                 to = 0;
               };
               model = {
-                # bool makes the failed up sample evaluate to 1; absent handles a missing target.
-                expr = "up{job=\"garage\"} == bool 0 or absent(up{job=\"garage\"}) or absent(garage_cluster_available{job=\"garage\"})";
+                # min by (job): with 3 garage targets (node Tailscale IPs +
+                # pinned NodePort 30826), only fire when ALL are down — a
+                # single node losing its NodePort listener is not an outage.
+                # bool makes the failed up sample evaluate to 1; absent handles
+                # a missing target.
+                expr = "min by (job) (up{job=\"garage\"}) == bool 0 or absent(up{job=\"garage\"}) or absent(garage_cluster_available{job=\"garage\"})";
                 refId = "A";
               };
             }

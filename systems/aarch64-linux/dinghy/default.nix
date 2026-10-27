@@ -291,8 +291,15 @@ in
             };
             garage = {
               targets = [
-                "172.16.4.50:31630" # vip (HA endpoint)
-                # The VIP routes to the active Garage service and load-balances internally.
+                # Tailscale MagicDNS names + pinned metrics NodePort (30826).
+                # The old 172.16.4.50:31630 VIP target broke when the Service
+                # was recreated and the auto-assigned NodePort re-randomized.
+                # Pinned in homelab garage-nodeport.yaml. All three targets
+                # must be down for garage_metrics_unavailable to fire (see the
+                # min-by-job expr in grafana-alerts.nix).
+                "chronometer.taildeab2.ts.net:30826"
+                "sextant.taildeab2.ts.net:30826"
+                "octant.taildeab2.ts.net:30826"
               ];
             };
             # A job for scraping smartctl data if it's on a different port/host
