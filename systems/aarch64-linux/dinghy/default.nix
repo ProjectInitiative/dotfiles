@@ -291,15 +291,12 @@ in
             };
             garage = {
               targets = [
-                # Tailscale MagicDNS names + pinned metrics NodePort (30826).
-                # The old 172.16.4.50:31630 VIP target broke when the Service
-                # was recreated and the auto-assigned NodePort re-randomized.
-                # Pinned in homelab garage-nodeport.yaml. All three targets
-                # must be down for garage_metrics_unavailable to fire (see the
-                # min-by-job expr in grafana-alerts.nix).
-                "chronometer.taildeab2.ts.net:30826"
-                "sextant.taildeab2.ts.net:30826"
-                "octant.taildeab2.ts.net:30826"
+                # Tailscale LB (proxy-group) — stable name, no pinned host.
+                # Old target 172.16.4.50:31630 died when the Service was
+                # recreated and its auto-assigned NodePort re-randomized.
+                # Requires the tailnet ACL grant for s3-internal to include
+                # port 3903 (metrics), not just 3900.
+                "s3-internal.taildeab2.ts.net:3903"
               ];
             };
             # A job for scraping smartctl data if it's on a different port/host
