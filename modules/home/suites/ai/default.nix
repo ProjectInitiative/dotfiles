@@ -74,7 +74,9 @@ let
       // lib.optionalAttrs (server.env != { }) { env = server.env; }
   ) enabledServers;
 
-  # Pi MCP config — same servers, different format
+  # Pi MCP config — same servers, different format. Keep each server available
+  # through pi-mcp-adapter's single `mcp` proxy tool instead of injecting every
+  # server's tool schemas directly into model context.
   # remote → streamable-http SSE (supported by pi-mcp-adapter)
   mcpPiJson = builtins.mapAttrs (
     name: server:
@@ -82,13 +84,13 @@ let
       {
         type = "streamable-http";
         url = server.url;
-        directTools = true;
+        directTools = false;
       }
     else
       {
         command = server.command;
         args = server.args;
-        directTools = true;
+        directTools = false;
       }
       // lib.optionalAttrs (server.env != { }) { env = server.env; }
   ) enabledServers;
@@ -466,7 +468,7 @@ in
     home.file = {
       ".config/opencode/opencode.json".source = generatedOpenCodeConfig;
       # pi-mcp-adapter 6.x reads ~/.pi/agent/mcp-adapter.json.
-      # Keep every Nix-enabled server active with direct tools at startup.
+      # Keep every Nix-enabled server available through the mcp proxy.
       ".pi/agent/mcp-adapter.json".source = generatedMcpConfig;
       # Disable pi-web-access curator (no browser available — SSH/headless terminal)
       ".pi/web-search.json".text = builtins.toJSON { workflow = "auto-summary"; };
