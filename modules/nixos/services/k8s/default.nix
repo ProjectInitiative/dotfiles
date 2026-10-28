@@ -185,7 +185,8 @@ in
     };
 
     environment.systemPackages =
-      (optionals (cfg.networkType == "cilium") [
+      [ pkgs.iptables ]
+      ++ (optionals (cfg.networkType == "cilium") [
         pkgs.cilium-cli
         pkgs.procps
         pkgs.cni-plugins
@@ -413,11 +414,26 @@ in
       };
     };
 
-    # Enable Wireguard kernel module if wireguard is selected
+    # Tailscale ProxyGroup VIP/DNAT handling uses the legacy iptables mangle
+    # table and MARK targets inside the ingress proxy pods. Keep the kernel
+    # tables/modules available on every k8s node; the proxy pods may land on
+    # any node in the ProxyGroup.
+    boot.kernelModules = [
+      "ip_tables"
+      "iptable_mangle"
+      "iptable_nat"
+      "xt_mark"
+      "xt_connmark"
+      "xt_nat"
+      "xt_MASQUERADE"
+      "nf_conntrack"
+      "nf_nat"
+    ] ++ optionals (cfg.networkType == "wireguard") [ "wireguard" ];
+
+    # Enable Wireguard kernel module if wireguard was selected.
     boot.extraModulePackages = optionals (cfg.networkType == "wireguard") [
       config.boot.kernelPackages.wireguard
     ];
-    boot.kernelModules = optionals (cfg.networkType == "wireguard") [ "wireguard" ];
 
     # Add GPU drivers if GPU support is enabled
     hardware.opengl.enable = mkIf cfg.gpuSupport true;
