@@ -463,7 +463,8 @@ in
     # Generate configs with MCP servers injected from config
     home.file = {
       ".config/opencode/opencode.json".source = generatedOpenCodeConfig;
-      ".config/mcp/mcp.json".source = generatedMcpConfig;
+      # pi-mcp-adapter reads ~/.pi/agent/mcp.json.
+      ".pi/agent/mcp.json".source = generatedMcpConfig;
       # Disable pi-web-access curator (no browser available — SSH/headless terminal)
       ".pi/web-search.json".text = builtins.toJSON { workflow = "auto-summary"; };
     };
