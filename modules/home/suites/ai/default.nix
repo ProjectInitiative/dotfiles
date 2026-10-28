@@ -82,11 +82,13 @@ let
       {
         type = "streamable-http";
         url = server.url;
+        directTools = true;
       }
     else
       {
         command = server.command;
         args = server.args;
+        directTools = true;
       }
       // lib.optionalAttrs (server.env != { }) { env = server.env; }
   ) enabledServers;
@@ -463,8 +465,9 @@ in
     # Generate configs with MCP servers injected from config
     home.file = {
       ".config/opencode/opencode.json".source = generatedOpenCodeConfig;
-      # pi-mcp-adapter reads ~/.pi/agent/mcp.json.
-      ".pi/agent/mcp.json".source = generatedMcpConfig;
+      # pi-mcp-adapter 6.x reads ~/.pi/agent/mcp-adapter.json.
+      # Keep every Nix-enabled server active with direct tools at startup.
+      ".pi/agent/mcp-adapter.json".source = generatedMcpConfig;
       # Disable pi-web-access curator (no browser available — SSH/headless terminal)
       ".pi/web-search.json".text = builtins.toJSON { workflow = "auto-summary"; };
     };
