@@ -168,6 +168,30 @@ in
     # use latest kernel - required by bcachefs
     boot.kernelPackages = pkgs.linuxPackages_latest;
 
+    # Tailscale ProxyGroup ingress requires the legacy IPv4 iptables mangle
+    # table. Linux 7.2's default kernel configuration omits these modules,
+    # so enable them in the same kernel build rather than changing the kernel
+    # version or relying on boot.kernelModules alone.
+    boot.kernelPatches = [
+      {
+        name = "legacy-iptables-for-tailscale-proxy";
+        patch = null;
+        structuredExtraConfig = with lib.kernel; {
+          # Linux 7.2 gates all iptables-legacy tables behind this bool.
+          NETFILTER_XTABLES_LEGACY = yes;
+          IP_NF_IPTABLES_LEGACY = module;
+          IP_NF_IPTABLES = module;
+          IP_NF_FILTER = module;
+          IP_NF_NAT = module;
+          IP_NF_MANGLE = module;
+          IP_NF_TARGET_MASQUERADE = module;
+          NETFILTER_XT_TARGET_MARK = module;
+          NETFILTER_XT_TARGET_CONNMARK = module;
+          NETFILTER_XT_TARGET_MASQUERADE = module;
+        };
+      }
+    ];
+
     boot.binfmt = {
       emulatedSystems = [
         "aarch64-linux"
