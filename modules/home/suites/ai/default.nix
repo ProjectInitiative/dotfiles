@@ -235,6 +235,10 @@ in
         settings = {
           # Always show thinking blocks — no hiding/collapsing.
           hideThinkingBlock = false;
+          # pi-mcp-adapter replaces Pi's built-in MCP implementation. Disable
+          # the built-in declaratively so the adapter does not try to mutate
+          # the Nix-managed, read-only ~/.pi/agent/settings.json at startup.
+          extensions = [ "-builtin:mcp" ];
           # Subtle tool backgrounds — near-invisible so boxes don't pop
           # Matches terminal background (#18181e on dark theme)
           toolPendingBg = "#18181e";
