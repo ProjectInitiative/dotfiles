@@ -182,6 +182,19 @@ in
             type = "remote";
             url = "http://mcp-system-mcp-lb-cc.taildeab2.ts.net/sse";
           };
+          # Write-capable agent lanes (agent-access RBAC: jobsmith in llm-test,
+          # full namespaced access in agent-sandbox). The MCP tool layer also
+          # enforces --allow-namespaces llm-test,agent-sandbox.
+          k8s-mc-jobs = {
+            enable = true;
+            type = "remote";
+            url = "http://mcp-system-mcp-lb-mc-jobs.taildeab2.ts.net/sse";
+          };
+          k8s-cc-jobs = {
+            enable = true;
+            type = "remote";
+            url = "http://mcp-system-mcp-lb-cc-jobs.taildeab2.ts.net/sse";
+          };
           k8s-mc = {
             enable = true;
             type = "remote";
