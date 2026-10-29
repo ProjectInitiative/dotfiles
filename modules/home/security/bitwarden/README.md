@@ -12,7 +12,7 @@ to a named file on disk, git, or the Nix store.
 auth <app> [<app>...]   ONE bw unlock, one fetch per item, ALL wrapper
                         sets on PATH — any subset, composed at runtime:
 
-  auth k8s              kubectl/kubectx/kubens/k9s, KUBECONFIG from vault
+  auth k8s              kubectl/kubectx/kubens/k9s/virtctl, KUBECONFIG from vault
   auth bao              bao: BAO_TOKEN injected literally into the wrapped
                         process; BAO_ADDR (+optional BAO_NAMESPACE) are
                         static config (module options), not secrets

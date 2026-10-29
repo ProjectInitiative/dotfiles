@@ -11,7 +11,7 @@
 #
 # Session flow:
 #   k8s-auth      # unlock once, config held in RAM by jit-auth-broker,
-#                 # PATH wrapper for kubectl, exit destroys everything
+#                 # PATH wrapper for kubectl/virtctl, exit destroys everything
 #   rclone-auth   # same for rclone via RCLONE_CONFIG
 #   sops-auth     # same for sops: age key (secure note) -> SOPS_AGE_KEY_FILE
 #   bao-auth      # same for openbao: token (secure note) -> BAO_TOKEN,

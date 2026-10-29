@@ -6,6 +6,7 @@
   kubectl,
   kubectx,
   k9s,
+  kubevirt,
   rclone,
   sops,
   openbao,
@@ -44,7 +45,7 @@
 #                          --env-value VAR -> VAR=<literal content>.
 #
 # App registry (secrets slot, wrapped commands, bindings):
-#   k8s     kubectl kubectx kubens k9s  (KUBECONFIG=/proc/self/fd/N)
+#   k8s     kubectl kubectx kubens k9s virtctl  (KUBECONFIG=/proc/self/fd/N)
 #   rclone  rclone                      (RCLONE_CONFIG=/proc/self/fd/N)
 #   sops    sops                        (SOPS_AGE_KEY_FILE=/proc/self/fd/N,
 #                                        secure note = raw age secret key)
@@ -52,8 +53,8 @@
 #                                        optional BAO_NAMESPACE static)
 # e.g. `auth bao k8s` = openbao + k8s in one shell with ONE unlock.
 let
-  k8sWrappers = "kubectl:${kubectl}/bin/kubectl kubectx:${kubectx}/bin/kubectx kubens:${kubectx}/bin/kubens k9s:${k9s}/bin/k9s";
-  k8sBindings = "kubectl:KUBECONFIG=k8s kubectx:KUBECONFIG=k8s kubens:KUBECONFIG=k8s k9s:KUBECONFIG=k8s";
+  k8sWrappers = "kubectl:${kubectl}/bin/kubectl kubectx:${kubectx}/bin/kubectx kubens:${kubectx}/bin/kubens k9s:${k9s}/bin/k9s virtctl:${kubevirt}/bin/virtctl";
+  k8sBindings = "kubectl:KUBECONFIG=k8s kubectx:KUBECONFIG=k8s kubens:KUBECONFIG=k8s k9s:KUBECONFIG=k8s virtctl:KUBECONFIG=k8s";
   baoStaticEnv = lib.concatStringsSep "\n" (
     lib.filter (l: l != "") [
       (lib.optionalString (baoAddress != "") ''export BAO_ADDR="${baoAddress}"'')
