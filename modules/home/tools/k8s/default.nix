@@ -24,6 +24,7 @@ in
         kubecolor
         kubectl
         kubectx
+        kubevirt
         # kubeseal
         # krew
         pkgs.${namespace}.karmadactl
