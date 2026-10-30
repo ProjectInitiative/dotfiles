@@ -28,6 +28,33 @@ in
           passwordPath = mkIf (osConfig != null) osConfig.sops.secrets.kylepzak_atuin_password.path;
           keyPath = mkIf (osConfig != null) osConfig.sops.secrets.kylepzak_atuin_key.path;
 
+          # Atuin Threads: encrypted capture + cross-machine sync of AI agent
+          # sessions (Claude Code, opencode, pi, ...). See docs/atuin.md.
+          daemon.enable = true;
+          threads.enable = true;
+
+          # Local-only terminal output capture (never synced).
+          outputCapture.enable = true;
+
+          # Built-in MCP server (read-only history/output/threads tools) and
+          # command-history hooks, registered only with the agents installed
+          # via suites.development on this machine.
+          ai.mcp = {
+            enable = true;
+            agents = [
+              "claude-code"
+              "opencode"
+              "pi"
+            ];
+          };
+          ai.agentHooks = {
+            enable = true;
+            agents = [
+              "claude-code"
+              "opencode"
+              "pi"
+            ];
+          };
         };
         zoxide = enabled;
         zellij = enabled;

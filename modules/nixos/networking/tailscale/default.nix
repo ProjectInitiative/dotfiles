@@ -111,6 +111,26 @@ in
             # Route only the tailnet domain to Quad100. The search domain
             # preserves single-label lookups such as `s3`.
             ${pkgs.systemd}/bin/resolvectl domain tailscale0 '~${cfg.tailnetDomain}' '${cfg.tailnetDomain}'
+            # Explicitly drop tailscale0 as a default-route DNS server. If
+            # this is ever left on (tailscaled has been observed resetting
+            # link config without it), ALL public DNS is sent to Quad100 —
+            # which only resolves tailnet names, so every lookup SERVFAILs
+            # and the host loses DNS entirely until this service is fixed.
+            ${pkgs.systemd}/bin/resolvectl default-route tailscale0 no
+          fi
+
+          # The tailnet resolver only knows tailnet names, so public lookups
+          # need a server on a non-tailscale interface. Give the interface
+          # holding the default route a public recursive resolver. Re-applied
+          # on every event below, so DHCP/networkd churn is corrected too.
+          local wan
+          wan=$(${pkgs.iproute2}/bin/ip route show default 2>/dev/null \
+            | ${pkgs.gnugrep}/bin/grep -v tailscale0 \
+            | ${pkgs.gnugrep}/bin/head -n1 \
+            | ${pkgs.gnused}/bin/sed -n 's/.*dev \([^ ]*\).*/\1/p')
+          if [ -n "$wan" ]; then
+            ${pkgs.systemd}/bin/resolvectl dns "$wan" 1.1.1.1 8.8.8.8
+            ${pkgs.systemd}/bin/resolvectl domain "$wan" '~.'
           fi
         }
 

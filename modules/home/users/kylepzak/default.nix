@@ -209,7 +209,8 @@ in
         # ".config/helix/languages.toml".source = helixLanguagesConfig;
         ".alacritty.toml".source = "${inputs.self}/homes/dotfiles/alacritty.toml";
         ".config/ghostty".source = "${inputs.self}/homes/dotfiles/ghostty";
-        ".config/atuin/config.toml".source = "${inputs.self}/homes/dotfiles/atuin/config.toml";
+        # atuin config is now generated declaratively by
+        # projectinitiative.cli-apps.atuin (modules/home/cli-apps/atuin).
         ".config/direnv/direnv.toml".source = "${inputs.self}/homes/dotfiles/direnv.toml";
         ".config/direnv/lib/devenv.sh".source = "${inputs.self}/homes/dotfiles/direnv/lib/devenv.sh";
         # ".config/opencode/tui.json".source = "${inputs.self}/homes/dotfiles/opencode/tui.json";
