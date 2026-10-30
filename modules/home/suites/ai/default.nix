@@ -185,7 +185,10 @@ in
           k8s-mc = {
             enable = true;
             type = "remote";
-            url = "http://mcp-system-mcp-lb-mc.taildeab2.ts.net/sse";
+            # Standalone Tailscale LB (single dedicated node) rather than the
+            # HA ProxyGroup VIP — fallback path while the ProxyGroup
+            # AdvertiseServices issue (Tailscale #19782) is unresolved.
+            url = "http://mcp-mc-direct.taildeab2.ts.net/sse";
           };
           # Grafana MCP on dinghy — Loki LogQL log query for any host, plus
           # dashboards/alerts read access (token RBAC-scoped on the Grafana

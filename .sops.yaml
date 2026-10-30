@@ -94,6 +94,7 @@ creation_rules:
           - *master_key
           - *ssh_capstan1
           - *ssh_astrolabe
+          - *ssh_argo
 
   - path_regex: capstan/[^/]+\.yaml$
     # - path: capstan/secrets.enc.yaml
@@ -120,7 +121,6 @@ creation_rules:
           - *master_key
           - *watchman_mdf
           - *watchman_idf
-          # - *watchman_mdf
 
   - path_regex: astrolabe/[^/]+\.yaml$
     # - path: capstan/secrets.enc.yaml
