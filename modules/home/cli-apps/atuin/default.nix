@@ -4,6 +4,7 @@
   lib,
   pkgs,
   namespace,
+  inputs,
   ...
 }:
 with lib;
@@ -61,6 +62,8 @@ let
 
   resumeFlag = optionalString cfg.ai.bindResume " --bind-ai-resume";
 
+  tomlFormat = pkgs.formats.toml { };
+
   # Idempotent agent integration. `atuin mcp install <agent>` and
   # `atuin hook install <agent>` merge into the agents' own config files
   # (they never overwrite the whole file), and rewrite the nix store path
@@ -70,12 +73,12 @@ let
       if ! ${cfg.package}/bin/atuin mcp install ${agent} >/dev/null; then
         echo "atuin: failed to register MCP server for ${agent}" >&2
       fi
-    '') (optional cfg.ai.mcp.enable cfg.ai.mcp.agents)
+    '') (optionals cfg.ai.mcp.enable cfg.ai.mcp.agents)
     ++ map (agent: ''
       if ! ${cfg.package}/bin/atuin hook install ${agent} >/dev/null; then
         echo "atuin: failed to install hooks for ${agent}" >&2
       fi
-    '') (optional cfg.ai.agentHooks.enable cfg.ai.agentHooks.agents)
+    '') (optionals cfg.ai.agentHooks.enable cfg.ai.agentHooks.agents)
   );
 
   loginScript = pkgs.writeShellScript "atuin-login" ''
@@ -83,6 +86,9 @@ let
     key=$(${pkgs.coreutils}/bin/cat ${cfg.keyPath} | ${pkgs.coreutils}/bin/tr -d $'\n\r')
     ${cfg.package}/bin/atuin login -u ${cfg.username} -p $(${pkgs.coreutils}/bin/cat ${cfg.passwordPath}) -k "$key"
   '';
+  # Snowfall passes nixpkgs lib to home modules, so lib.hm / config.lib.hm
+  # are absent; take the DAG helpers from the home-manager input directly.
+  hmDag = inputs.home-manager.lib.hm.dag;
 in
 {
   options.${namespace}.cli-apps.atuin = with types; {
@@ -176,7 +182,7 @@ in
     # Declarative config.toml (replaces the raw file symlink from
     # modules/home/users/kylepzak). Secrets (key/session) stay outside the
     # store in ~/.local/share/atuin as before.
-    xdg.configFile."atuin/config.toml".text = generators.toTOML { } atuinSettings;
+    xdg.configFile."atuin/config.toml".source = tomlFormat.generate "atuin-config" atuinSettings;
 
     # Enable blesh if bash is enabled
     # https://github.com/akinomyoga/ble.sh/wiki/Manual-A1-Installation#user-content-nixpkgs
@@ -200,11 +206,11 @@ in
     # instead of overwriting, and refresh the nix store path atuin is invoked
     # with. This is the officially supported way to keep the registration
     # current; there is no declarative config format for these agent files.
-    home.activation.atuinAgentIntegration = lib.hm.dag.entryAfter [ "writeBoundary" ] agentIntegration;
+    home.activation.atuinAgentIntegration = hmDag.entryAfter [ "writeBoundary" ] agentIntegration;
 
     # Pick up config.toml changes in a running daemon (it reloads some
     # settings itself; a restart covers the rest). No-op if not running.
-    home.activation.atuinDaemonRestart = lib.hm.dag.entryAfter [ "atuinAgentIntegration" ] ''
+    home.activation.atuinDaemonRestart = hmDag.entryAfter [ "atuinAgentIntegration" ] ''
       ${cfg.package}/bin/atuin daemon restart >/dev/null 2>&1 || true
     '';
 
