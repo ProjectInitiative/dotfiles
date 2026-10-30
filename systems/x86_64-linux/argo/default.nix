@@ -14,7 +14,16 @@ with lib.${namespace};
 
   projectinitiative = {
     hosts = {
-      argo = enabled;
+      # nixFromDataDisk: the LIVE VM binds /nix from /data/nix in the
+      # INITRD (ordered after /data), so stage-1 sops sees the store
+      # rebuilds write into — no extra VM disk, no stage-2 flip. The baked
+      # image (x86_64-kubevirt/argo-image) keeps the default bootstrap
+      # bind-flip because the fstab bind would hide the image store before
+      # seeding could run (fresh /data = no init).
+      argo = {
+        enable = true;
+        nixFromDataDisk = true;
+      };
     };
   };
 

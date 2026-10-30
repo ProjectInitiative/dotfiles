@@ -16,6 +16,20 @@ in
 {
   options.${namespace}.hosts.argo = with types; {
     enable = mkBoolOpt false "Whether or not to enable the argo VM configuration.";
+    # false (default): legacy image-bootstrap mode — /nix stays the image's
+    #   root-fs store and argo-nix-store-rotate seeds /data/nix + bind-flips
+    #   it over /nix at stage-2. Used by the baked qcow2, because the fstab
+    #   bind would be mounted by the INITRD before any seeding could run,
+    #   and an empty /data/nix under a fresh data disk means no init.
+    # true (live VM): /nix is a REAL initrd-mounted bind of /data/nix.
+    #   The initrd already mounts /data (neededForBoot); ordering the bind
+    #   after it means stage-1 sops-install-secrets sees the same store
+    #   rebuilds write into — fixing the 2026-10-30 failure where the
+    #   stage-2-only flip left the initrd on the frozen image store.
+    #   Requires /data/nix to already contain the booting closure (it does:
+    #   the rotate unit has kept it seeded since the image). Recovery if
+    #   /data is ever wiped: grub-rollback to a pre-bind generation.
+    nixFromDataDisk = mkBoolOpt false "Mount /nix as an initrd bind of /data/nix (ordered after /data).";
   };
 
   imports = [
@@ -113,38 +127,63 @@ in
     # ── Storage ────────────────────────────────────────────────────────────
     # kubevirt virtio disks: vda = 32Gi root (disposable), vdb = 1Ti data
     # (JuiceFS blank DV, serial "argodata" -> stable by-id path).
-    # /data holds everything precious. The nix store is MIRRORED to
-    # /data/nix and bind-mounted over /nix at stage-2 (argo-nix-store-rotate
-    # below) so heavy builds never touch the root fs and survive root
-    # re-imports. Deliberately NOT a fileSystems entry: /nix is hardcoded
-    # into NixOS pathsNeededForBoot, so a fileSystems bind gets mounted by
-    # the INITRD (sysroot-nix.mount) before any seeding can run, hiding the
-    # image's store and freezing the boot ("Failed to isolate default
-    # target: Unit data.mount not found"). A stage-2 oneshot can flip the
-    # bind safely at any point: until then /nix shows the image store, and
-    # the seeded copy is byte-identical, so units execing across the flip
-    # get the same binaries either way.
-    fileSystems = {
-      "/data" = {
-        device = "/dev/disk/by-id/virtio-argodata";
-        fsType = "ext4";
-        autoFormat = true;
-        autoResize = true;
-        neededForBoot = true;
-        options = [ "nofail" ];
-      };
-    };
-    # Seed /data/nix with the booting nix store, then bind it over /nix.
-    # Self-healing: if the data disk's store lacks the booting system
-    # closure (fresh disk, wiped data, or a re-imported image with a new
-    # closure), the stale copy is wiped and re-seeded from the image.
+    # /data holds everything precious (and, in live mode, the nix store).
+    #
+    # Legacy mode (nixFromDataDisk = false, baked image): the nix store is
+    # MIRRORED to /data/nix and bind-mounted over /nix at stage-2
+    # (argo-nix-store-rotate below) so heavy builds never touch the root
+    # fs and survive root re-imports. Deliberately NOT a fileSystems
+    # entry: /nix is hardcoded into NixOS pathsNeededForBoot, so a
+    # fileSystems bind gets mounted by the INITRD (sysroot-nix.mount)
+    # before any seeding can run, hiding the image's store and freezing
+    # the boot ("Failed to isolate default target: Unit data.mount not
+    # found"). A stage-2 oneshot can flip the bind safely at any point:
+    # until then /nix shows the image store, and the seeded copy is
+    # byte-identical, so units execing across the flip get the same
+    # binaries either way.
+    fileSystems = mkMerge [
+      {
+        "/data" = {
+          device = "/dev/disk/by-id/virtio-argodata";
+          fsType = "ext4";
+          autoFormat = true;
+          autoResize = true;
+          neededForBoot = true;
+          options = [ "nofail" ];
+        };
+      }
+      (mkIf cfg.nixFromDataDisk {
+        # Live VM: initrd-mounted bind. systemd orders a bind after its
+        # source path's mount (and we require it explicitly), so /data is
+        # up BEFORE /nix flips — the initrd's sops-install-secrets then
+        # reads the LIVE store and finds the booting closure's secrets
+        # file (fixes the 2026-10-30 "manifest is not valid: failed
+        # reading ...-secrets.enc.yaml" -> /run/secrets missing ->
+        # home-manager activation failure). nofail degrades to the image
+        # store (old behavior) instead of freezing if /data is missing.
+        # This is safe to boot ONLY while /data/nix holds the booting
+        # closure — true since the rotate unit has kept it seeded; on a
+        # wiped /data, grub-rollback to a pre-bind generation to recover.
+        "/nix" = {
+          device = "/data/nix";
+          fsType = "none";
+          neededForBoot = true;
+          options = [ "bind" "nofail" "noatime" "x-systemd.requires-mounts-for=/data" ];
+        };
+      })
+    ];
+    # Legacy image-bootstrap store handling (nixFromDataDisk = false only):
+    # seed /data/nix with the booting nix store, then bind it over /nix.
+    # The live VM instead binds /nix from /data/nix in the INITRD (see
+    # above), where this unit is disabled — no flip needed, and the
+    # nix-daemon.socket rebind hack below is unnecessary there.
     # Self-healing: if the data disk's store lacks the booting system
     # closure (fresh disk, wiped data, or a re-imported image with a new
     # closure), the stale copy is wiped and re-seeded from the image.
     # Runs late (after multi-user) and self-guards on the /data mount —
     # the flip is safe at any point because the seeded copy is identical
     # to the image store, so units execing across it get the same bytes.
-    systemd.services.argo-nix-store-rotate = {
+    systemd.services.argo-nix-store-rotate = mkIf (!cfg.nixFromDataDisk) {
       description = "Seed /data/nix with the booting nix store and bind over /nix";
       after = [ "local-fs.target" "multi-user.target" ];
       wantedBy = [ "multi-user.target" ];
