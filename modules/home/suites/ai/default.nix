@@ -206,6 +206,18 @@ in
             command = lib.getExe pkgs.${namespace}.rea-agents;
             args = [ "mcp" ];
           };
+          # Atuin's built-in MCP server: read-only shell history, captured
+          # output and agent-threads search. opencode.json is a read-only
+          # HM-managed file, so this must be declared here rather than left
+          # to `atuin mcp install opencode` (which would fail on the store
+          # symlink). claude-code and pi are mutable-file agents handled by
+          # cli-apps.atuin's activation installer instead.
+          atuin = {
+            enable = true;
+            type = "stdio";
+            command = lib.getExe pkgs.atuin;
+            args = [ "mcp" ];
+          };
         };
         description = "MCP server configurations. Each attr name is the MCP server identifier.";
       };

@@ -37,13 +37,14 @@ in
           outputCapture.enable = true;
 
           # Built-in MCP server (read-only history/output/threads tools) and
-          # command-history hooks, registered only with the agents installed
-          # via suites.development on this machine.
+          # command-history hooks, registered only with agents whose config
+          # files atuin can merge into. opencode is NOT here: its config is a
+          # read-only HM-managed symlink, so its atuin MCP entry is declared
+          # in suites.ai's mcp.servers instead.
           ai.mcp = {
             enable = true;
             agents = [
               "claude-code"
-              "opencode"
               "pi"
             ];
           };

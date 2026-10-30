@@ -65,20 +65,29 @@ let
   tomlFormat = pkgs.formats.toml { };
 
   # Idempotent agent integration. `atuin mcp install <agent>` and
-  # `atuin hook install <agent>` merge into the agents' own config files
-  # (they never overwrite the whole file), and rewrite the nix store path
-  # each run so it never goes stale or dangling after a GC.
+  # `atuin hook install <agent>` shell out to the agent's own CLI, so the
+  # agent binaries must be on PATH (hm-activate has a minimal environment).
+  installer = agent: kind: ''
+    if ! log=$(
+      export PATH="$HOME/.nix-profile/bin:/etc/profiles/per-user/$USER/bin:$PATH"
+      ${cfg.package}/bin/atuin ${kind} install ${agent} 2>&1
+    ); then
+      echo "atuin: failed to ${kind} install ${agent}: $log" >&2
+    fi
+  '';
+
   agentIntegration = concatStringsSep "\n" (
-    map (agent: ''
-      if ! ${cfg.package}/bin/atuin mcp install ${agent} >/dev/null; then
-        echo "atuin: failed to register MCP server for ${agent}" >&2
-      fi
-    '') (optionals cfg.ai.mcp.enable cfg.ai.mcp.agents)
-    ++ map (agent: ''
-      if ! ${cfg.package}/bin/atuin hook install ${agent} >/dev/null; then
-        echo "atuin: failed to install hooks for ${agent}" >&2
-      fi
-    '') (optionals cfg.ai.agentHooks.enable cfg.ai.agentHooks.agents)
+    map (
+      agent:
+      concatStringsSep "\n" (
+        (optionals (cfg.ai.mcp.enable && elem agent cfg.ai.mcp.agents) [
+          (installer agent "mcp")
+        ])
+        ++ (optionals (cfg.ai.agentHooks.enable && elem agent cfg.ai.agentHooks.agents) [
+          (installer agent "hook")
+        ])
+      )
+    ) (unique (cfg.ai.mcp.agents ++ cfg.ai.agentHooks.agents))
   );
 
   loginScript = pkgs.writeShellScript "atuin-login" ''
