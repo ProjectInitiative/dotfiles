@@ -148,9 +148,17 @@ let
         mountpoint = bcachefsMountpoint;
         extraFormatArgs = [
           "--compression=lz4"
-          "--foreground_target=nvme"
+          # 2026-10-30 repartition rev3 (docs/bcachefs-nvme-repartition-runbook.md):
+          # nvme1n1 -> ~1.4T bcachefs member (label cache.nvme1, group cache,
+          # unchanged) + ~480G ext4 jfs-cache; SPCC untouched (cache.ssd1).
+          # One flash group plays write pool AND promote pool (canonical
+          # caching config): fresh data already sits on the promote target so
+          # promotion self-suppresses (no duplicate NVMe writes), while
+          # migrated data gets one flash copy per eviction cycle. Runtime
+          # targets set by the runbook via set-fs-option.
+          "--foreground_target=cache"
+          "--promote_target=cache"
           "--background_target=hdd"
-          "--promote_target=ssd"
           "--metadata_replicas=2"
           "--metadata_replicas_required=1"
           "--data_replicas=2"
@@ -174,6 +182,16 @@ lib.recursiveUpdate commonSystemConfig {
 
   # --- Full System Configuration ---
   disko = lib.recursiveUpdate coreDiskoConfig bcachefsDiskoConfig;
+
+  # JuiceFS node-local cache partition (nvme1n1 p3, partlabel jfs-cache —
+  # see docs/bcachefs-nvme-repartition-runbook.md in the homelab repo).
+  # nofail: hosts without the partition yet boot fine; mkfs is done by the
+  # runbook, not autoFormat, so an unformatted disk can never be clobbered.
+  fileSystems."/mnt/jfs-cache" = {
+    device = "/dev/disk/by-partlabel/jfs-cache";
+    fsType = "ext4";
+    options = [ "nofail" "noatime" ];
+  };
 
   ${namespace}.hosts.capstan = {
     enable = true;
