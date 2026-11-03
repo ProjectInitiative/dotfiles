@@ -72,6 +72,9 @@ in
       "cilium"
     ]) "standard" "Network k3s uses for cluster communication.";
     publicIngress = mkBoolOpt false "Open 80/443 on the public interface (only after hardening sign-off).";
+    provisioningPublicSsh =
+      mkBoolOpt false
+        "TEMPORARY: open SSH 22 on the public interface during provisioning. Flip off and redeploy once tailscale is verified.";
     clusterInterface =
       mkOpt str ""
         "Private interconnect interface to allow cluster ports on (e.g. ens4).";
@@ -320,15 +323,21 @@ in
       useNetworkd = true;
       networkmanager.enable = mkForce false;
 
-      # Default deny. Public surface is empty (or 80/443 once sign-off is
+      # Default deny. Public surface is EMPTY (or 80/443 once sign-off is
       # given); every cluster port lives on the tailnet/private interconnect.
+      # provisioningPublicSsh: TEMPORARY install-day hatch — opens 22 on the
+      # public interface so OVH-default-key SSH works before tailscale is
+      # verified. Flip to false and redeploy after first tailnet login
+      # (DEC-0029 runbook, verification step 3).
       firewall = mkForce {
         enable = true;
         allowPing = false;
-        allowedTCPPorts = optionals cfg.publicIngress [
-          80
-          443
-        ];
+        allowedTCPPorts =
+          (optionals cfg.publicIngress [
+            80
+            443
+          ])
+          ++ optionals cfg.provisioningPublicSsh [ 22 ];
         allowedUDPPorts = [
           41641 # tailscale direct connection
         ];
