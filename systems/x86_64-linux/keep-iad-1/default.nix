@@ -34,6 +34,13 @@
     # No public ingress until hardening tests pass.
     publicIngress = false;
 
+    # TEMPORARY install-day hatch (DEC-0029): public 22 so OVH-default-key SSH
+    # works for provisioning + verification BEFORE tailscale is confirmed.
+    # After first successful `ssh kylepzak@<tailscale>` + `sudo -v`, set to
+    # false and redeploy (deploy-rs or nixos-rebuild). Key-only auth +
+    # fail2ban aggressive keep the window low-risk.
+    provisioningPublicSsh = true;
+
     # Infisical Agent placeholders. Set the real project ID. Seed the
     # universal-auth credentials (/var/lib/infisical/client-id + client-secret)
     # AND the initial password hash (/var/lib/infisical-secrets/user_password)

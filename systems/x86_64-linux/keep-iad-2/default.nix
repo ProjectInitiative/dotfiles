@@ -29,6 +29,10 @@
 
     publicIngress = false;
 
+    # TEMPORARY install-day hatch (DEC-0029): flip false + redeploy after
+    # tailscale login is verified.
+    provisioningPublicSsh = true;
+
     # Infisical Agent placeholders. Set the real project ID. Seed the
     # universal-auth credentials (/var/lib/infisical/client-id + client-secret)
     # AND the initial password hash (/var/lib/infisical-secrets/user_password)
