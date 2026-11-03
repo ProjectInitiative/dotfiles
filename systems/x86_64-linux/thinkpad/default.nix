@@ -443,11 +443,16 @@ in
     kicad
 
     # Storytold ArtCraft family — built from pinned upstream source.
-    # solidcraft: parametric 3D CAD (tangency-labs); the craft-* apps: the
-    # clean-room suite (AutoCAD/Excel/PowerPoint/Pro Tools/Word-style etc.).
-    # All need cargo >= 1.96 (craft-libs manifests), hence the pinned 1.99
-    # toolchain inside each package.
+    # solidcraft: parametric 3D CAD (tangency-labs, its own project — not part
+    # of the storytold ArtCraft suite); the craft-* apps: the clean-room
+    # crafting suite (AutoCAD/Excel/PowerPoint/Pro Tools/Word-style etc.).
+    # The craft apps need cargo >= 1.96 (craft-libs manifests), hence the
+    # pinned 1.99 toolchain inside each package. The 7 creative apps
+    # (pdfcraft, photocraft, vectorcraft, designcraft, filmcraft,
+    # effectcraft, lightcraft) stay build-only (nix build ~/dotfiles#<app>).
     pkgs.${namespace}.solidcraft
+    pkgs.${namespace}.pdfcraft
+    pkgs.${namespace}.soundcraft
     pkgs.${namespace}.cadcraft
     pkgs.${namespace}.gridcraft
     pkgs.${namespace}.deckcraft
