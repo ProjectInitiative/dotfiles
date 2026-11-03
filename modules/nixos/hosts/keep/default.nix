@@ -349,7 +349,17 @@ in
     # every 0.5s (so it tolerates the Infisical agent rendering the key after
     # boot), but its default Type=notify start timeout (90s) is shorter than
     # first-boot agent rendering can take on a cold VPS — widen it.
-    systemd.services.tailscaled-autoconnect.serviceConfig.TimeoutStartSec = "15min";
+    # tailscaled-autoconnect races the Infisical agent: nixpkgs' unit runs with
+    # errexit and NO Restart — if it fires before the agent has rendered
+    # /var/lib/infisical-secrets/tailscale_auth_key, `cat` fails and the unit
+    # dies forever (upstream assumes sops-style activation-time secrets).
+    # Restart=on-failure makes it retry until the agent renders; the widened
+    # start timeout accommodates the agent's boot-time auth+render latency.
+    systemd.services.tailscaled-autoconnect = {
+      serviceConfig.TimeoutStartSec = "15min";
+      serviceConfig.Restart = mkForce "on-failure";
+      serviceConfig.RestartSec = "10s";
+    };
 
     # Everything under the projectinitiative namespace for this host. It must
     # live in a single dynamic attr; Nix rejects two `${namespace}.x` paths.
