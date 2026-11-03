@@ -48,7 +48,7 @@
     # agent re-renders the tailscale/k3s/user secret files from then on.
     infisical = {
       enable = true;
-      projectId = "<INFISICAL_PROJECT_ID>";
+      projectId = "4d361021-9235-415b-9ad7-fd8d74615bf8";
       environment = "prod";
       credentialsDir = "/var/lib/infisical";
       # Password sudo (DEC-0035): render USER_PASSWORD_HASH for wheelNeedsPassword.
