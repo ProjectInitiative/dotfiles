@@ -14,9 +14,13 @@
     ai-tools.url = "github:nixos/nixpkgs/master";
 
     # Official rust-lang toolchains (rust-bin), for packages needing a newer
-    # cargo/rustc than this nixpkgs pin carries (craft-* apps: craft-libs'
-    # workspace manifests need cargo >= 1.96; nixpkgs here is 1.95.0).
+    # cargo/rustc than this nixpkgs pin carries.
     rust-overlay.url = "github:oxalica/rust-overlay";
+
+    # storytold ArtCraft suite (15 apps) + solidcraft — pinned-source builds
+    # with the dbus.lib + desktop-integration fixes. Consumed via
+    # inputs.artcraft.packages.${system}.<name>; see systems/.../thinkpad.
+    artcraft.url = "github:ProjectInitiative/artcraft-nix";
 
     # omp (Oh My Pi) coding agent — parallel trial with pi (keel OQ-0040).
     # NOT following our nixpkgs: omp builds with bun2nix against its own pin.

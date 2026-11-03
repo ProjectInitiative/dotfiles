@@ -442,25 +442,19 @@ in
     flashrom
     kicad
 
-    # Storytold ArtCraft family — built from pinned upstream source.
-    # solidcraft: parametric 3D CAD (tangency-labs, its own project — not part
-    # of the storytold ArtCraft suite); the craft-* apps: the clean-room
-    # crafting suite (AutoCAD/Excel/PowerPoint/Pro Tools/Word-style etc.).
-    # The craft apps need cargo >= 1.96 (craft-libs manifests), hence the
-    # pinned 1.99 toolchain inside each package. The 7 creative apps
-    # (pdfcraft, photocraft, vectorcraft, designcraft, filmcraft,
-    # effectcraft, lightcraft) stay build-only (nix build ~/dotfiles#<app>).
-    pkgs.${namespace}.solidcraft
-    pkgs.${namespace}.pdfcraft
-    pkgs.${namespace}.soundcraft
-    pkgs.${namespace}.cadcraft
-    pkgs.${namespace}.gridcraft
-    pkgs.${namespace}.deckcraft
-    pkgs.${namespace}.soundcraft
-    pkgs.${namespace}.wordcraft
-    pkgs.${namespace}.figcraft
-    pkgs.${namespace}.texturecraft
-    pkgs.${namespace}.materialcraft
+    # Storytold ArtCraft suite (15 apps) + solidcraft — all from the
+    # ProjectInitiative/artcraft-nix flake (pinned-source builds, dbus.lib
+    # fix, desktop entries + icons). solidcraft is tangency-labs' own 3D CAD
+    # project, not a storytold app. Installed here: solidcraft, pdfcraft,
+    # soundcraft, and the office trio (wordcraft/deckcraft/gridcraft).
+    # The rest stay build-only in that flake. Add via
+    #   inputs.artcraft.packages.${pkgs.system}.<name>
+    inputs.artcraft.packages.${pkgs.system}.solidcraft
+    inputs.artcraft.packages.${pkgs.system}.pdfcraft
+    inputs.artcraft.packages.${pkgs.system}.soundcraft
+    inputs.artcraft.packages.${pkgs.system}.wordcraft
+    inputs.artcraft.packages.${pkgs.system}.deckcraft
+    inputs.artcraft.packages.${pkgs.system}.gridcraft
 
     multipath-tools
     usbutils
