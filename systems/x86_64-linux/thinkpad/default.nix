@@ -442,8 +442,20 @@ in
     flashrom
     kicad
 
-    # Parametric 3D CAD, built from pinned upstream source (v0.15.0)
+    # Storytold ArtCraft family — built from pinned upstream source.
+    # solidcraft: parametric 3D CAD (tangency-labs); the craft-* apps: the
+    # clean-room suite (AutoCAD/Excel/PowerPoint/Pro Tools/Word-style etc.).
+    # All need cargo >= 1.96 (craft-libs manifests), hence the pinned 1.99
+    # toolchain inside each package.
     pkgs.${namespace}.solidcraft
+    pkgs.${namespace}.cadcraft
+    pkgs.${namespace}.gridcraft
+    pkgs.${namespace}.deckcraft
+    pkgs.${namespace}.soundcraft
+    pkgs.${namespace}.wordcraft
+    pkgs.${namespace}.figcraft
+    pkgs.${namespace}.texturecraft
+    pkgs.${namespace}.materialcraft
 
     multipath-tools
     usbutils

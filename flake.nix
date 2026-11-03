@@ -13,6 +13,11 @@
     # NixPkgs Master
     ai-tools.url = "github:nixos/nixpkgs/master";
 
+    # Official rust-lang toolchains (rust-bin), for packages needing a newer
+    # cargo/rustc than this nixpkgs pin carries (craft-* apps: craft-libs'
+    # workspace manifests need cargo >= 1.96; nixpkgs here is 1.95.0).
+    rust-overlay.url = "github:oxalica/rust-overlay";
+
     # omp (Oh My Pi) coding agent — parallel trial with pi (keel OQ-0040).
     # NOT following our nixpkgs: omp builds with bun2nix against its own pin.
     omp.url = "github:can1357/oh-my-pi";
@@ -323,6 +328,7 @@
           # flake.overlays.default
           # thaw.overlays.default
           # drift.overlays.default
+          rust-overlay.overlays.default
         ];
         # modules = {
         #   nixos = lib.snowfall.module.create-modules {
