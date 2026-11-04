@@ -449,9 +449,11 @@ in
     # soundcraft, and the office trio (wordcraft/deckcraft/gridcraft).
     # The rest stay build-only in that flake. Add via
     #   inputs.artcraft.packages.${pkgs.system}.<name>
+    inputs.artcraft.packages.${pkgs.system}.photocraft
+    inputs.artcraft.packages.${pkgs.system}.filmcraft
+    inputs.artcraft.packages.${pkgs.system}.soundcraft
     inputs.artcraft.packages.${pkgs.system}.solidcraft
     inputs.artcraft.packages.${pkgs.system}.pdfcraft
-    inputs.artcraft.packages.${pkgs.system}.soundcraft
     inputs.artcraft.packages.${pkgs.system}.wordcraft
     inputs.artcraft.packages.${pkgs.system}.deckcraft
     inputs.artcraft.packages.${pkgs.system}.gridcraft
