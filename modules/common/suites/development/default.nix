@@ -71,7 +71,6 @@ in
             enable = true;
             lint.enable = false;
           };
-          aider = enabled;
         };
         security = {
           gpg = enabled;

@@ -124,9 +124,6 @@ in
       claude = {
         enable = mkBoolOpt true "Install claude-code agent.";
       };
-      aider = {
-        enable = mkBoolOpt true "Install aider agent.";
-      };
       pi-coding = {
         enable = mkBoolOpt true "Install pi-coding-agent.";
       };
@@ -220,7 +217,6 @@ in
       ++ (optional cfg.agent.antigravity.enable antigravity-cli)
       ++ (optional cfg.agent.qwen.enable qwen-code)
       ++ (optional cfg.agent.claude.enable claude-code)
-      ++ (optional cfg.agent.aider.enable pkgs.aider-chat)
       ++ [ pkgs.${namespace}.ketch ]
       ++ [ pkgs.${namespace}."fifo-proxy" ]
       ++ (optional cfg.mcp.enable pkgs.${namespace}.mcp-proxy-runner)
@@ -464,7 +460,6 @@ in
           });
       };
 
-      tools.aider = mkIf cfg.agent.aider.enable enabled;
     };
 
     # Generate configs with MCP servers injected from config
