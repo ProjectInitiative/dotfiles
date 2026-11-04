@@ -209,6 +209,7 @@
     # Reference copy pinned at vendor/nixos-dgx-spark (rev 07dfbef).
     nixos-dgx-spark = {
       url = "github:graham33/nixos-dgx-spark/07dfbef281c41f9289d461a22f36450c1f6dd7ac";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
   };
