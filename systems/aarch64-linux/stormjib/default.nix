@@ -130,6 +130,65 @@ in
     settings.PermitRootLogin = "yes";
   };
 
+  # ── Docker + omada-controller (carried over from the OpenWrt router) ──
+  projectinitiative.virtualization.docker.enable = true;
+
+  virtualisation.oci-containers = {
+    backend = "docker";
+    containers.omada-controller = {
+      image = "mbentley/omada-controller:latest";
+      autoStart = true;
+      environment.TZ = "America/Chicago";
+      volumes = [
+        "/var/lib/omada-controller/data:/opt/tplink/EAPController/data"
+        "/var/lib/omada-controller/logs:/opt/tplink/EAPController/logs"
+      ];
+      ports = [
+        "8043:8043/tcp" # mgmt HTTPS
+        "8088:8088/tcp" # mgmt HTTP
+        "8843:8843/tcp" # portal HTTPS
+        "27001:27001/udp" # discovery
+        "29810:29810/udp" # device adoption
+        "29811-29816:29811-29816/tcp" # device inform/upgrade
+      ];
+    };
+  };
+
+  # Omada ports reachable from internal networks only (mirrors OpenWrt's
+  # Allow-omada-controller src=lan rule) — scoped to LAN + VLAN subinterfaces
+  # so nothing is exposed on the WAN NIC.
+  networking.firewall.interfaces =
+    let
+      internalIfaces = [
+        "enP4p65s0"
+        "enP4p65s0.18"
+        "enP4p65s0.20"
+        "enP4p65s0.21"
+      ];
+    in
+    builtins.listToAttrs (
+      map (iface: {
+        name = iface;
+        value = {
+          allowedTCPPorts = [
+            8043
+            8088
+            8843
+            29811
+            29812
+            29813
+            29814
+            29815
+            29816
+          ];
+          allowedUDPPorts = [
+            27001
+            29810
+          ];
+        };
+      }) internalIfaces
+    );
+
   environment.systemPackages = with pkgs; [
     ethtool
     pciutils

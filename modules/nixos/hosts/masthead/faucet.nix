@@ -46,7 +46,7 @@ let
   '';
 in
 {
-  config = mkIf cfg.enable {
+  config = mkIf (cfg.enable && cfg.openflow.enable) {
     services.faucet = {
       enable = true;
       configFile = faucetYaml;

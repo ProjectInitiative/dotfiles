@@ -60,6 +60,7 @@ in
     };
 
     openflow = {
+      enable = mkBoolOpt false "Enable the OpenFlow/faucet data-path controller (Brocade 6610). Not needed for plain routed WAN.";
       was111Port = mkOption {
         type = types.str;
         default = "1/1/1";
@@ -110,7 +111,8 @@ in
       };
       dhcpRangeEnd = mkOption {
         type = types.nullOr types.str;
-        default = "172.16.1.250";
+        # .249 mirrors OpenWrt (start 100, limit 150); .250 is the static reservation
+        default = "172.16.1.249";
       };
       reservations = mkOption {
         type = types.listOf (
@@ -147,6 +149,9 @@ in
           };
         }
       );
+      # Parity with the live OpenWrt router (2026-11-07): VLANs 1/18/20/21,
+      # DHCP .100-.249 @ 12h on each, no inter-VLAN isolation (everything sat in
+      # one accept-all "lan" zone on OpenWrt). Flip `isolated` to tighten later.
       default = [
         {
           id = 18;
@@ -156,11 +161,31 @@ in
           primaryIp = "172.16.18.2";
           backupIp = "172.16.18.3";
           dhcpRangeStart = "172.16.18.100";
-          dhcpRangeEnd = "172.16.18.250";
-          isolated = true;
+          dhcpRangeEnd = "172.16.18.249";
+          isolated = false;
         }
-        # { id = 20; name = "homenet"; network = "192.168.20.0/24";  virtualIp = "192.168.20.1";  primaryIp = "192.168.20.2";  backupIp = "192.168.20.3";  dhcpRangeStart = "192.168.20.100"; dhcpRangeEnd = "192.168.20.250"; }
-        # { id = 21; name = "iot";     network = "192.168.21.0/24";  virtualIp = "192.168.21.1";  primaryIp = "192.168.21.2";  backupIp = "192.168.21.3";  dhcpRangeStart = "192.168.21.100"; dhcpRangeEnd = "192.168.21.250"; }
+        {
+          id = 20;
+          name = "homenet";
+          network = "192.168.20.0/24";
+          virtualIp = "192.168.20.1";
+          primaryIp = "192.168.20.2";
+          backupIp = "192.168.20.3";
+          dhcpRangeStart = "192.168.20.100";
+          dhcpRangeEnd = "192.168.20.249";
+          isolated = false;
+        }
+        {
+          id = 21;
+          name = "iot";
+          network = "192.168.21.0/24";
+          virtualIp = "192.168.21.1";
+          primaryIp = "192.168.21.2";
+          backupIp = "192.168.21.3";
+          dhcpRangeStart = "192.168.21.100";
+          dhcpRangeEnd = "192.168.21.249";
+          isolated = false;
+        }
       ];
     };
 

@@ -67,7 +67,10 @@ in
             }
           ];
         };
-      };
+      }
+      # Per-VLAN gateway VIPs — DHCP clients point at virtualIp, so every VLAN
+      # needs a VRRP instance or .1 is unclaimed on that subnet.
+      // (listToAttrs (imap0 (idx: vlan: mkVlanVrrpInstance vlan idx) cfg.vlans));
     };
 
     # ── Notify Scripts ────────────────────────────────────────────

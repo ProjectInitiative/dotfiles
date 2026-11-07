@@ -24,7 +24,10 @@ in
 
   config = mkIf cfg.enable {
     ${namespace}.hosts.masthead = {
-      enable = false;
+      # Cutover switch: stormjib replaces the OpenWrt router (2026-11-07).
+      # Running solo as backup role is fine — a lone VRRP node with no peer
+      # becomes MASTER and claims the VIPs after ~3s.
+      enable = true;
       routerRole = "backup";
     };
   };

@@ -36,7 +36,10 @@ in
 
       dhcp.kea = {
         enable = true;
-        failover = { };
+        # Solo operation until topsail deploys: a hot-standby secondary with no
+        # reachable peer delays DHCP service until Kea gives up on the partner.
+        # Set back to `{ }` when topsail exists.
+        failover = null;
       };
     };
 
