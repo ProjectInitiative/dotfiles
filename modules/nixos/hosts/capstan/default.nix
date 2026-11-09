@@ -534,19 +534,19 @@ in
         allowedTCPPorts = [
           5201 # iperf
         ];
-        # Argo root-disk JuiceFS ring (homelab draft PR #317): Mount Pods
-        # use host networking and advertise bond0/13911. Admit only the
-        # three capstan peers, not the whole LAN or the pod CIDRs. This does
-        # not activate the ring or touch the running Argo VM.
+        # JuiceFS cache rings on the capstans use host networking on bond0.
+        # Reserve TCP/13911-13920 for separate volume-scoped rings (root
+        # 13911, data 13912); admit only capstan peers, never the LAN/pod CIDRs.
+        # Opening the range does not activate additional rings or touch the VM.
         extraCommands = mkIf (!config.networking.nftables.enable) (
           concatMapStringsSep "\n" (peerIp: ''
-            iptables -w -C nixos-fw -i bond0 -p tcp -s ${peerIp} --dport 13911 -j nixos-fw-accept 2>/dev/null || \
-              iptables -w -I nixos-fw 1 -i bond0 -p tcp -s ${peerIp} --dport 13911 -j nixos-fw-accept
+            iptables -w -C nixos-fw -i bond0 -p tcp -s ${peerIp} --dport 13911:13920 -j nixos-fw-accept 2>/dev/null || \
+              iptables -w -I nixos-fw 1 -i bond0 -p tcp -s ${peerIp} --dport 13911:13920 -j nixos-fw-accept
           '') [ "172.16.4.51" "172.16.4.52" "172.16.4.53" ]
         );
         extraInputRules = mkIf config.networking.nftables.enable (
           concatMapStringsSep "\n" (peerIp: ''
-            iifname "bond0" ip saddr ${peerIp} tcp dport 13911 accept comment "Argo root cache ring peer"
+            iifname "bond0" ip saddr ${peerIp} tcp dport 13911-13920 accept comment "capstan JuiceFS cache ring peer"
           '') [ "172.16.4.51" "172.16.4.52" "172.16.4.53" ]
         );
       };
