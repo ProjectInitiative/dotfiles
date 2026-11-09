@@ -526,6 +526,10 @@ in
       };
 
     };
+    # Dedicated cache directory for the Argo data ring. Root keeps the existing
+    # /mnt/jfs-cache/argo cache; never let two mounts manage the same path.
+    systemd.tmpfiles.rules = [ "d /mnt/jfs-cache/argo-data 0755 root root -" ];
+
     # Traditional networking configuration (minimal)
     # Submariner ports (4800/500/4500) and globalnet input rules come from the
     # shared services.k8s module.
