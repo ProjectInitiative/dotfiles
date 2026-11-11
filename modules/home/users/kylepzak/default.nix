@@ -193,7 +193,7 @@ in
       # (BAO_ADDR/BAO_TOKEN/BAO_NAMESPACE set by the session shell). Helpers
       # run in a subshell so the pulled creds never leak into the session env.
       juicefs-dev-env() {
-        bao kv get -namespace="''${BAO_NAMESPACE:-production}" -mount=k8s -format=json juicefs-dev/config | jq -r 'to_entries[] | "export \(.key | gsub("-"; "_") | ascii_upcase)=\(.value | @sh)"'
+        bao kv get -namespace="''${BAO_NAMESPACE:-production}" -mount=k8s -format=json juicefs-dev/config | jq -r '(.data.data // .data) | to_entries[] | "export \(.key | gsub("-"; "_") | ascii_upcase)=\(.value | @sh)"'
       }
 
       juicefs-dev-status() {
