@@ -230,7 +230,11 @@ in
           [ -n "''${PASSPHRASE:-}" ] && export JFS_RSA_PASSPHRASE="$PASSPHRASE"
           local mp="''${1:-''${JFS_DEV_MOUNTPOINT:-/mnt/juicefs-dev}}"
           mkdir -p "$mp"
-          ACCESS_KEY="$ACCESS_KEY" SECRET_KEY="$SECRET_KEY" exec juicefs mount --writeback "$METAURL" "$mp"
+          # Writeback is opt-in (JFS_WRITEBACK=1): staging absorbs bursts on local
+      # disk but bit us when the copy source contained the staging dir itself
+      # (feedback loop) — default is synchronous upload to garage.
+      local wb=""; [ -n "''${JFS_WRITEBACK:-}" ] && wb="--writeback"
+      ACCESS_KEY="$ACCESS_KEY" SECRET_KEY="$SECRET_KEY" exec juicefs mount $wb "$METAURL" "$mp"
         )
       }
 
