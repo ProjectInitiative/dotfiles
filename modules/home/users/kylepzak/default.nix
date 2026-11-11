@@ -201,11 +201,37 @@ in
       }
 
       juicefs-dev-format() {
-        ( eval "$(juicefs-dev-env)" && exec juicefs format --storage "$STORAGE" --bucket "$BUCKET" --access-key "$ACCESS_KEY" --secret-key "$SECRET_KEY" "$METAURL" "$NAME" )
+        (
+          eval "$(juicefs-dev-env)" || return 1
+          # Mirror bootstrap/base/juicefs-platform/job-format.yaml: RSA pem from
+          # bao (k8s/juicefs-dev/pem, key "cert") + --encrypt-rsa-key, with
+          # JFS_RSA_PASSPHRASE when the pem is passphrase-protected. JuiceFS CE
+          # has no symmetric encryption (the job's --encrypt-key fallback is
+          # dead code), so a missing pem is a hard error, never a silent
+          # unencrypted format.
+          local pemf
+          pemf=$(mktemp "''${XDG_RUNTIME_DIR:-/tmp}/juicefs-dev-pem.XXXXXX")
+          trap 'rm -f "$pemf"' EXIT
+          if ! bao kv get -namespace="''${BAO_NAMESPACE:-production}" -mount=k8s -format=json juicefs-dev/pem | jq -er '(.data.data // .data).cert' > "$pemf"; then
+            echo "juicefs-dev-format: no RSA key in OpenBao (k8s/juicefs-dev/pem, key 'cert') - refusing to format unencrypted." >&2
+            return 1
+          fi
+          [ -n "''${PASSPHRASE:-}" ] && export JFS_RSA_PASSPHRASE="$PASSPHRASE"
+          exec juicefs format --storage "$STORAGE" --bucket "$BUCKET" --access-key "$ACCESS_KEY" --secret-key "$SECRET_KEY" --encrypt-rsa-key "$pemf" "$METAURL" "$NAME"
+        )
       }
 
       juicefs-dev-mount() {
-        ( eval "$(juicefs-dev-env)" && local mp="''${1:-''${JFS_DEV_MOUNTPOINT:-/mnt/juicefs-dev}}" && mkdir -p "$mp" && ACCESS_KEY="$ACCESS_KEY" SECRET_KEY="$SECRET_KEY" exec juicefs mount "$METAURL" "$mp" )
+        (
+          eval "$(juicefs-dev-env)" || return 1
+          # The RSA key lives in the meta engine, but if the pem is
+          # passphrase-protected every client needs JFS_RSA_PASSPHRASE to parse
+          # it (same env the format job sets).
+          [ -n "''${PASSPHRASE:-}" ] && export JFS_RSA_PASSPHRASE="$PASSPHRASE"
+          local mp="''${1:-''${JFS_DEV_MOUNTPOINT:-/mnt/juicefs-dev}}"
+          mkdir -p "$mp"
+          ACCESS_KEY="$ACCESS_KEY" SECRET_KEY="$SECRET_KEY" exec juicefs mount "$METAURL" "$mp"
+        )
       }
 
       juicefs-dev-umount() {
