@@ -111,6 +111,14 @@ in
             # Route only the tailnet domain to Quad100. The search domain
             # preserves single-label lookups such as `s3`.
             ${pkgs.systemd}/bin/resolvectl domain tailscale0 '~${cfg.tailnetDomain}' '${cfg.tailnetDomain}'
+            # tailscaled's resolved integration re-claims tailscale0 as the
+            # node's DEFAULT DNS route on every restart (RouteAll/accept-routes
+            # behavior). With --accept-dns=false Quad100 has no upstreams, so
+            # a default route here SERVFAILs every public lookup and deadlocks
+            # tailscaled's own control-plane connection (observed 2026-11-11
+            # on lightship-atx: 8h of node-wide DNS failure after a reboot).
+            # Always reset it: Quad100 answers only the tailnet domain.
+            ${pkgs.systemd}/bin/resolvectl default-route tailscale0 no
           fi
         }
 
