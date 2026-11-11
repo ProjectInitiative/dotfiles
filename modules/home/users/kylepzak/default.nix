@@ -230,7 +230,7 @@ in
           [ -n "''${PASSPHRASE:-}" ] && export JFS_RSA_PASSPHRASE="$PASSPHRASE"
           local mp="''${1:-''${JFS_DEV_MOUNTPOINT:-/mnt/juicefs-dev}}"
           mkdir -p "$mp"
-          ACCESS_KEY="$ACCESS_KEY" SECRET_KEY="$SECRET_KEY" exec juicefs mount "$METAURL" "$mp"
+          ACCESS_KEY="$ACCESS_KEY" SECRET_KEY="$SECRET_KEY" exec juicefs mount --writeback "$METAURL" "$mp"
         )
       }
 
