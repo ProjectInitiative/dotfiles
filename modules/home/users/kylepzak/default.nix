@@ -186,6 +186,31 @@ in
         echo "Bucket '$bucket_name' created with read-write key '$rw_key_name' and read-only key '$ro_key_name'."
         echo "Credentials have been saved to ''${bucket_name}-rw.key.txt and ''${bucket_name}-ro.key.txt in the current directory."
       }
+
+      # Dev JuiceFS filesystem (separate from the cluster's juicefs-sc).
+      # Credentials live in OpenBao at k8s/dev-juicefs/config (see
+      # homelab docs/dev-juicefs.md); requires an active bao-auth session
+      # (BAO_ADDR/BAO_TOKEN/BAO_NAMESPACE set by the session shell). Helpers
+      # run in a subshell so the pulled creds never leak into the session env.
+      dev-jfs-env() {
+        bao kv get -namespace="''${BAO_NAMESPACE:-production}" -mount=k8s -format=json dev-juicefs/config | jq -r 'to_entries[] | "export \(.key | gsub("-"; "_") | ascii_upcase)=\(.value | @sh)"'
+      }
+
+      dev-jfs-status() {
+        ( eval "$(dev-jfs-env)" && exec juicefs status "$METAURL" )
+      }
+
+      dev-jfs-format() {
+        ( eval "$(dev-jfs-env)" && exec juicefs format --storage "$STORAGE" --bucket "$BUCKET" --access-key "$ACCESS_KEY" --secret-key "$SECRET_KEY" "$METAURL" "$NAME" )
+      }
+
+      dev-jfs-mount() {
+        ( eval "$(dev-jfs-env)" && local mp="''${1:-''${DEV_JFS_MOUNTPOINT:-/mnt/dev-juicefs}}" && mkdir -p "$mp" && ACCESS_KEY="$ACCESS_KEY" SECRET_KEY="$SECRET_KEY" exec juicefs mount "$METAURL" "$mp" )
+      }
+
+      dev-jfs-umount() {
+        juicefs umount "''${1:-''${DEV_JFS_MOUNTPOINT:-/mnt/dev-juicefs}}"
+      }
     '';
 
     home = {
