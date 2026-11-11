@@ -241,6 +241,18 @@ in
       juicefs-dev-umount() {
         juicefs umount "''${1:-''${JFS_DEV_MOUNTPOINT:-/mnt/juicefs-dev}}"
       }
+
+      # Scan + clean leaked objects (safe default; no deletes beyond leaks).
+      juicefs-dev-gc() {
+        ( eval "$(juicefs-dev-env)" && exec juicefs gc "$METAURL" "$@" )
+      }
+
+      # Remove ALL trash immediately (ignores TrashDays retention) and leaked
+      # objects: gc --delete cleans delayed-deleted files/slices. Use after
+      # big deletions to return bucket/pool space (RISK-0044 pressure).
+      juicefs-dev-trash-purge() {
+        ( eval "$(juicefs-dev-env)" && exec juicefs gc --delete "$METAURL" "$@" )
+      }
     '';
 
     home = {
