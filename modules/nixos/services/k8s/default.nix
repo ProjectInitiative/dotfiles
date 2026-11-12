@@ -222,6 +222,20 @@ in
     # the k3s service PATH as well.
     systemd.services.k3s.path = optionals cfg.enableNvidiaContainerRuntime [ pkgs.runc ];
 
+    # Keep dhcpcd away from k8s virtual interfaces. On hosts with both
+    # networking.useDHCP=true and NetworkManager enabled, dhcpcd runs as a
+    # second DHCP client with only the default deny-list (tailscale0/lo/VM
+    # taps), so it "manages" flannel.1/cni0/veth*/... — observed 2026-11-11
+    # on lightship-atx: a tailscaled restart triggered dhcpcd's carrier-lost
+    # handler, which REMOVED flannel.1 mid-flight; flannel's recreate path
+    # then cached an empty external interface and looped "external interface
+    # not found" for 8h (no pod-network routes -> cluster DNS dead for
+    # pods on that node -> argocd-ts and all tailscale proxies down).
+    # Multiple denyinterfaces lines are additive in dhcpcd.
+    networking.dhcpcd.extraConfig = mkIf cfg.enable "
+      denyinterfaces flannel.* cni0 veth* vx-submariner cali* kube-ipvs* dummy* br-*
+    ";
+
     # For tailscale networking, extraFlags resolves --node-ip via
     # `tailscale ip -4` at ExecStart time. A nixos-rebuild switch restarts
     # tailscaled in the same batch as k3s, so a fresh k3s can race the
