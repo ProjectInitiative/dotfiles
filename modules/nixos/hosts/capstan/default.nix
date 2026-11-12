@@ -90,7 +90,11 @@ in
     k8sServerAddr =
       mkOpt types.str ""
         "Address of the server node to connect to (not needed for the first node).";
-    k3sDataDir = mkOpt types.path "/mnt/pool/k3s" "Directory to use for k3s data.";
+    # k3s data-dir: control plane (server/ — etcd WAL + TLS) lives on fast
+    # local ext4 (/var/lib/rancher/k3s on nvme0), NOT the shared bcachefs
+    # pool, so etcd fsync never competes with garage/JuiceFS/containerd IO.
+    # agent/ (92G image cache) stays on the pool via k3sAgentSymlink below.
+    k3sDataDir = mkOpt types.path "/var/lib/rancher/k3s" "Directory to use for k3s data.";
     bondMembers =
       mkOpt (types.listOf types.str) [ ]
         "List of network interfaces to include in the bond";
@@ -259,6 +263,26 @@ in
           endpoint:
             - "http://172.16.1.50:31872"
     '';
+
+    # Node-level resolver with a cluster-zone route: image pulls run on the
+    # host resolver, which otherwise cannot resolve *.svc.cluster.local (only
+    # CoreDNS knows the zone — verified 2026-11-12; :latest + Always pulls
+    # fail on every node without this). resolved keeps the LAN nameservers as
+    # upstreams and routes ONLY the cluster domains at CoreDNS (k3s service IP
+    # is stable cluster-wide). Host resolv.conf becomes the resolved stub;
+    # pod DNS is unaffected (kubelet uses its own clusterDNS config).
+    # NOTE: this replaces the static networking.nameservers resolv.conf — the
+    # same servers move into resolved's upstreams/fallbacks below.
+    services.resolved = mkIf cfg.allFeatures {
+      enable = true;
+      settings.Resolve = {
+        # Route ONLY the cluster domains at CoreDNS (k3s service IP, stable
+        # cluster-wide); everything else goes to the LAN/public upstreams.
+        DNS = [ "10.43.0.10" ];
+        FallbackDNS = [ "172.16.1.1" "1.1.1.1" "9.9.9.9" ];
+        Domains = [ "~svc.cluster.local" "~cluster.local" ];
+      };
+    };
 
     fileSystems."/mnt/local-provisioner" = mkIf cfg.allFeatures {
       device = "/mnt/pool/k8s";
@@ -469,6 +493,10 @@ in
             # TLS configuration
             "--tls-san=172.16.1.50"
 
+            # etcd hygiene on the local nvme home: bound WAL growth
+            "--etcd-arg=--auto-compaction-mode=periodic"
+            "--etcd-arg=--auto-compaction-retention=1h"
+
             # Security
             "--secrets-encryption"
             "--disable=traefik"
@@ -530,6 +558,20 @@ in
     # /mnt/jfs-cache/argo cache; never let two mounts manage the same path.
     systemd.tmpfiles.rules = [ "d /mnt/jfs-cache/argo-data 0755 root root -" ];
 
+    # Keep the 92G agent dir on the shared pool while k3s defaults data-dir to
+    # local ext4. Idempotent: creates the agent symlink only when missing and pool copy
+    # exists (fresh installs adopt the pool). No data movement while k3s runs.
+    system.activationScripts.k3sAgentSymlink = {
+      text = ''
+        set -euo pipefail
+        agent_pool=/mnt/pool/k3s/agent
+        agent_local=/var/lib/rancher/k3s/agent
+        if [ -d ''${agent_pool} ] && [ ! -e ''${agent_local} ]; then
+          ln -s ''${agent_pool} ''${agent_local}
+        fi
+      '';
+    };
+
     # Traditional networking configuration (minimal)
     # Submariner ports (4800/500/4500) and globalnet input rules come from the
     # shared services.k8s module.
@@ -560,7 +602,8 @@ in
       # Clear interfaces (managed by systemd-networkd)
       interfaces = { };
 
-      # Keep DNS configuration
+      # Keep DNS configuration (upstreams now flow through systemd-resolved;
+      # see services.resolved above — kept here for non-allFeatures fallback)
       nameservers = [
         "172.16.1.1"
         "1.1.1.1"

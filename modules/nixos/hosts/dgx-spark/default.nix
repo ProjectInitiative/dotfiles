@@ -270,6 +270,36 @@ in
       ncclRun16g
     ];
 
+    # k3s registry mirror — same as the capstan hosts. Without it containerd
+    # attempts HTTPS against the plaintext registry (TLS handshake timeout,
+    # seen on octant 2026-11-12). Capstans carry this in their host module.
+    environment.etc."rancher/k3s/registries.yaml" = mkIf (cfg.allFeatures && cfg.enableK8s) {
+      text = ''
+        mirrors:
+          "172.16.1.50:31872":
+            endpoint:
+              - "http://172.16.1.50:31872"
+      '';
+    };
+
+    # Node-level resolver with a cluster-zone route: image pulls run on the
+    # host resolver, which otherwise cannot resolve *.svc.cluster.local (only
+    # CoreDNS knows the zone — verified 2026-11-12; :latest + Always pulls
+    # fail on every node without this). resolved keeps the LAN nameservers as
+    # upstreams and routes ONLY the cluster domains at CoreDNS (k3s service IP
+    # is stable cluster-wide). Host resolv.conf becomes the resolved stub;
+    # pod DNS is unaffected (kubelet uses its own clusterDNS config).
+    services.resolved = mkIf (cfg.allFeatures && cfg.enableK8s) {
+      enable = true;
+      settings.Resolve = {
+        # Route ONLY the cluster domains at CoreDNS (k3s service IP, stable
+        # cluster-wide); everything else goes to the LAN/public upstreams.
+        DNS = [ "10.43.0.10" ];
+        FallbackDNS = [ "172.16.1.1" "1.1.1.1" "9.9.9.9" ];
+        Domains = [ "~svc.cluster.local" "~cluster.local" ];
+      };
+    };
+
     # Materialize rather than symlink the inventory: kubelet can bind-mount this
     # exact host file without exposing or depending on a /nix/store path inside
     # the workload container.
