@@ -512,7 +512,20 @@
     flake
     // {
       packages = builtins.mapAttrs (
-        system: pkgs: builtins.removeAttrs pkgs [ "homeConfigurations" ]
+        system: pkgs:
+        builtins.removeAttrs pkgs [ "homeConfigurations" ]
+        // (
+          if system == "x86_64-linux" then
+            {
+              argo-lite-image = import ./containers/argo-lite/image.nix {
+                pkgs = import inputs.nixpkgs { inherit system; };
+                home-manager = inputs.home-manager;
+                authorizedKeys = builtins.readFile inputs.ssh-pub-keys;
+              };
+            }
+          else
+            { }
+        )
       ) flake.packages;
     }
     // {
