@@ -120,14 +120,9 @@ let
         chmod -R u+w "$t" 2>/dev/null || true
       done)
     fi
-    # herdr plugins: the real config's systemd user oneshot has no user
-    # manager to run under in this container, so best-effort install at
-    # boot instead (non-fatal — sshd below runs regardless).
-    if ! ${herdr}/bin/herdr plugin list 2>/dev/null | grep -qE '^(\\s*-\\s+)?mirror(\\s|\\()'; then
-      echo "herdr: installing mirror plugin..."
-      ${pkgs.coreutils}/bin/timeout 90 ${herdr}/bin/herdr plugin install nikok6/herdr-mirror --yes 2>&1 \
-        || echo "herdr: plugin install failed (best-effort, retry next boot)" >&2
-    fi
+    # herdr: no plugin auto-install in the container — the systemd user
+    # oneshot from the real config has no user manager here, and the mirror
+    # plugin isn't needed in this environment (owner decision 2026-11-13).
     mkdir -p /tmp/sshd
     chmod 700 /tmp/sshd
     if [ ! -s /tmp/ssh_host_ed25519_key ]; then

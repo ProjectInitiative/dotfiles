@@ -34,10 +34,7 @@ in
       zsh = enabled;
       herdr = {
         enable = true;
-        plugins."nikok6/herdr-mirror" = {
-          enable = true;
-          repo = "nikok6/herdr-mirror";
-        };
+        plugins = { };  # no plugins in container (mirror plugin not needed here)
       };
       atuin = {
         enable = true;
