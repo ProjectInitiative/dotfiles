@@ -211,5 +211,7 @@ records = true
 autostart = true
 
 [threads]
-# Enable shell thread capture (atuin >= 18.24)
-enable = true
+# Capture AI coding agent sessions as threads (atuin >= 18.24).
+# NOTE: the key is `capture` (per docs.atuin.sh/18.24/ai/threads —
+# `atuin threads enable` sets capture = true); `enable = true` is not read.
+capture = true
