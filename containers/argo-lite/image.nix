@@ -88,8 +88,13 @@ let
 
   entrypoint = pkgs.writeShellScript "argo-lite-entrypoint" ''
     set -u
-    # Seed $HOME from the baked dotfiles — only files that don't exist yet,
-    # so image updates never clobber user modifications on the PVC.
+    # Seed $HOME from the baked dotfiles. Two-tier policy:
+    # 1. GENERATED rc files (.zshenv, .zshrc, .profile) are overwritten on
+    #    every boot — they are image-produced (store paths change with every
+    #    image build) and never user-edited; without this, stale copies
+    #    reference dead store paths and break every login shell.
+    # 2. Everything else copies only if missing, so image updates never
+    #    clobber user modifications on the PVC.
     # Seeding is BEST-EFFORT: a PVC hiccup (odd ownership, dangling symlink,
     # transient mount state) must never block sshd from starting. Any seed
     # failure logs and continues; sshd below runs unconditionally.
@@ -97,15 +102,22 @@ let
       (cd /etc/argo-lite-home && ${pkgs.findutils}/bin/find . -mindepth 1 | while read -r f; do
         rel=''${f#./}
         t="$HOME/$rel"
-        if [ ! -e "$t" ]; then
-          mkdir -p "$(dirname "$t")" 2>/dev/null || { echo "seed: skip $rel (mkdir failed)" >&2; continue; }
-          if ! cp -rL "/etc/argo-lite-home/$rel" "$t" 2>/dev/null; then
-            echo "seed: skip $rel (copy failed)" >&2
-            continue
-          fi
-          chown -R 1000:100 "$t" 2>/dev/null || true
-          chmod -R u+w "$t" 2>/dev/null || true
+        case "$rel" in
+          .zshenv|.zshrc|.zprofile|.profile|.zshrc-keep)
+            overwrite=1
+            ;;
+          *)
+            [ -e "$t" ] && continue
+            overwrite=0
+            ;;
+        esac
+        mkdir -p "$(dirname "$t")" 2>/dev/null || { echo "seed: skip $rel (mkdir failed)" >&2; continue; }
+        if ! cp -rL "/etc/argo-lite-home/$rel" "$t" 2>/dev/null; then
+          echo "seed: skip $rel (copy failed)" >&2
+          continue
         fi
+        chown -R 1000:100 "$t" 2>/dev/null || true
+        chmod -R u+w "$t" 2>/dev/null || true
       done)
     fi
     # herdr plugins: the real config's systemd user oneshot has no user
