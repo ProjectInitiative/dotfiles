@@ -23,6 +23,8 @@ in
         helix = enabled;
         atuin = {
           enable = true;
+          # systemd user services need a user manager — containers have none
+          daemon = mkIf (osConfig != null) true;
           autoLogin = mkIf (osConfig != null) true;
           username = mkIf (osConfig != null) "kylepzak";
           passwordPath = mkIf (osConfig != null) osConfig.sops.secrets.kylepzak_atuin_password.path;

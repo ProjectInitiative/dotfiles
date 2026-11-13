@@ -203,3 +203,9 @@ enter_accept = true
 # This ensures that sync v2 is enabled for new installs only
 # In a later release it will become the default across the board
 records = true
+
+[daemon]
+# Spawn the daemon on first client command if not already running
+# (the systemd user service handles always-on; this covers shells on
+# hosts where the service has not started yet).
+autostart = true

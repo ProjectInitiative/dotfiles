@@ -45,6 +45,16 @@ in
       type = types.str;
       description = "The path to the sops-nix secret containing the Atuin encryption key.";
     };
+
+    daemon = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Run the atuin daemon (background sync + gRPC, atuin >= 18.24) via a
+        systemd user service and set daemon.autostart in the config. Requires
+        a systemd user session — leave off in containers.
+      '';
+    };
   };
 
   config = mkIf cfg.enable {
@@ -85,6 +95,29 @@ in
         # ExecStartPost = "${pkgs.atuin}/bin/atuin sync --force";
         ExecStart = "${loginScript}";
         RemainAfterExit = true;
+      };
+
+      Install = {
+        WantedBy = [ "default.target" ];
+      };
+    };
+
+    # atuin daemon (atuin >= 18.24): long-running background sync + gRPC
+    # server required by `atuin threads import` and friends. Config lives in
+    # homes/dotfiles/atuin/config.toml ([daemon] autostart stanza) — do not
+    # write config.toml here, users/kylepzak owns that path.
+    systemd.user.services.atuin-daemon = mkIf cfg.daemon {
+      Unit = {
+        Description = "Atuin background sync daemon";
+        After = [ "network-online.target" ];
+        Wants = [ "network-online.target" ];
+      };
+
+      Service = {
+        Type = "simple";
+        ExecStart = "${pkgs.atuin}/bin/atuin daemon";
+        Restart = "on-failure";
+        RestartSec = "5s";
       };
 
       Install = {
