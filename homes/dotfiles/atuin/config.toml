@@ -209,3 +209,7 @@ records = true
 # (the systemd user service handles always-on; this covers shells on
 # hosts where the service has not started yet).
 autostart = true
+
+[threads]
+# Enable shell thread capture (atuin >= 18.24)
+enable = true
