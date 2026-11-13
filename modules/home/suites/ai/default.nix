@@ -209,7 +209,24 @@ in
     };
   };
 
-  config = mkIf cfg.enable {
+  # mkMerge split: the MCP config generation must work STANDALONE (without
+  # the full AI suite) so headless contexts (argo-lite container) can give
+  # pi access to the remote MCP servers without installing agents/packages.
+  config = mkMerge [
+    (mkIf cfg.mcp.enable {
+      # Generated configs with MCP servers injected from config.
+      # NOTE: opencode.json is harmless without opencode installed — it's
+      # the same single source of truth for both agents.
+      home.file = {
+        ".config/opencode/opencode.json".source = generatedOpenCodeConfig;
+        # pi-mcp-adapter 6.x reads ~/.pi/agent/mcp-adapter.json.
+        # Keep every Nix-enabled server available through the mcp proxy.
+        ".pi/agent/mcp-adapter.json".source = generatedMcpConfig;
+        # Disable pi-web-access curator (no browser available — SSH/headless terminal)
+        ".pi/web-search.json".text = builtins.toJSON { workflow = "auto-summary"; };
+      };
+    })
+    (mkIf cfg.enable {
 
     home.packages =
       with pkgs;
@@ -462,16 +479,6 @@ in
 
     };
 
-    # Generate configs with MCP servers injected from config
-    home.file = {
-      ".config/opencode/opencode.json".source = generatedOpenCodeConfig;
-      # pi-mcp-adapter 6.x reads ~/.pi/agent/mcp-adapter.json.
-      # Keep every Nix-enabled server available through the mcp proxy.
-      ".pi/agent/mcp-adapter.json".source = generatedMcpConfig;
-      # Disable pi-web-access curator (no browser available — SSH/headless terminal)
-      ".pi/web-search.json".text = builtins.toJSON { workflow = "auto-summary"; };
-    };
-
     # FIFO queue proxy — serializes cheapestinference requests to 1 at a time
     systemd.user.services.fifo-proxy = {
       Unit = {
@@ -492,6 +499,6 @@ in
         WantedBy = [ "default.target" ];
       };
     };
-
-  };
+  })
+  ];
 }

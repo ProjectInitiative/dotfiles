@@ -70,6 +70,12 @@ in
     # Everything not listed above stays at its default (disabled) — the
     # full module tree is imported but only enable-gated pieces activate.
     suites.ai.enable = mkForce false;
+    # MCP config WITHOUT the AI agents: the suite's config generation is
+    # split (mkMerge) so mcp.enable works standalone — gives pi in the
+    # container the remote k8s-cc/k8s-mc/grafana MCP servers (verified:
+    # pod resolves *.taildeab2.ts.net). The rea stdio entry references a
+    # package not installed here; it only fails if invoked.
+    suites.ai.mcp.enable = mkForce true;
     suites.backup.enable = mkForce false;
     suites.messengers.enable = mkForce false;
     suites.digital-creation.enable = mkForce false;
