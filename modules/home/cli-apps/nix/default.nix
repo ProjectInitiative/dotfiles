@@ -38,6 +38,11 @@ let
             arm=1
             shift
             ;;
+          -*)
+            echo "Error: unknown flag $1"
+            echo "Usage: rebuild-host [--target <ip>] [--arm] <hostname> [switch|test|boot]"
+            return 1
+            ;;
           *)
             if [ -z "$hostname" ]; then
               hostname="$1"
@@ -97,6 +102,10 @@ let
             set target $argv[$i]
           case --arm
             set arm 1
+          case '-*'
+            echo "Error: unknown flag $argv[$i]"
+            echo "Usage: rebuild-host [--target <ip>] [--arm] <hostname> [switch|test|boot]"
+            return 1
           case '*'
             if test -z "$hostname"
               set hostname $argv[$i]
