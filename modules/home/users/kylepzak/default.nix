@@ -12,7 +12,8 @@ with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.users.kylepzak;
-  sops = osConfig.sops;
+  # null-guard for standalone-HM (container) contexts
+  sops = if osConfig != null then osConfig.sops else null;
 in
 {
   options.${namespace}.users.kylepzak = with types; {
@@ -268,7 +269,7 @@ in
         # Add the directory creation to ensure it exists
         ".config/sops/age/.keep".text = "";
         # ".config/zellij/zellij".source = "${inputs.self}/homes/dotfiles/zellij/zellij";
-        ".ssh/id_ed25519" = mkIf cfg.includeSSH {
+        ".ssh/id_ed25519" = mkIf (cfg.includeSSH && sops != null) {
           source = config.lib.file.mkOutOfStoreSymlink sops.secrets.kylepzak_ssh_key.path;
         };
         ".config/helix/config.toml".source = "${inputs.self}/homes/dotfiles/helix/config.toml";

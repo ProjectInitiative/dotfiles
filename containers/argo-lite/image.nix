@@ -1,13 +1,38 @@
 {
   pkgs,
   home-manager,
+  herdr,
+  hmModules,
+  namespace,
   authorizedKeys,
 }:
 
 let
+  # Full kylepzak home config, imported through the same module tree the
+  # NixOS hosts use (homeModules = every modules/home/* module, all
+  # enable-gated). The container policy module turns on the headless dev
+  # subset and force-disables GUI/sops/secrets-dependent pieces — see
+  # container-home.nix for the per-item rationale.
   home = home-manager.lib.homeManagerConfiguration {
     inherit pkgs;
-    modules = [ ./home.nix ];
+    extraSpecialArgs = {
+      # Standalone-HM shim: modules that normally run inside a NixOS host
+      # receive osConfig = null (container — secrets/GUI paths must handle
+      # that; the suite code already guards with `mkIf (osConfig != null)`).
+      osConfig = null;
+      format = "docker";
+      namespace = "projectinitiative";
+    };
+    modules =
+      builtins.attrValues hmModules
+      ++ [
+        ./container-home.nix
+        {
+          home.username = "kylepzak";
+          home.homeDirectory = "/home/kylepzak";
+          home.stateVersion = "26.05";
+        }
+      ];
   };
 
   # Generated dotfiles (zshrc, tool configs) from the HM activation —
@@ -32,6 +57,16 @@ let
         chmod 0444 $out/etc/*
   '';
 
+  # Put the CA bundle at the standard system path — sshd does NOT propagate
+  # container Env vars into login sessions, so git/curl inside ssh need the
+  # default OpenSSL trust store to exist.
+  caEtc = pkgs.runCommand "argo-lite-ca-etc" { } ''
+    mkdir -p $out/etc/ssl/certs
+    ln -s ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt $out/etc/ssl/certs/ca-bundle.crt
+    # Debian-openssl default filename some tools probe without env vars
+    ln -s ${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt $out/etc/ssl/certs/ca-certificates.crt
+  '';
+
   sshdConfig = pkgs.writeText "argo-lite-sshd_config" ''
     Port 2222
     AddressFamily any
@@ -45,6 +80,9 @@ let
     AuthorizedKeysFile /etc/ssh/authorized_keys
     UsePAM no
     AllowUsers kylepzak
+    # sshd does not propagate container Env into login sessions; inject
+    # the TLS trust paths explicitly so git/curl work over ssh.
+    SetEnv SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt GIT_SSL_CAINFO=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
     Subsystem sftp ${pkgs.openssh}/libexec/sftp-server
   '';
 
@@ -70,6 +108,14 @@ let
         fi
       done)
     fi
+    # herdr plugins: the real config's systemd user oneshot has no user
+    # manager to run under in this container, so best-effort install at
+    # boot instead (non-fatal — sshd below runs regardless).
+    if ! ${herdr}/bin/herdr plugin list 2>/dev/null | grep -qE '^(\\s*-\\s+)?mirror(\\s|\\()'; then
+      echo "herdr: installing mirror plugin..."
+      ${pkgs.coreutils}/bin/timeout 90 ${herdr}/bin/herdr plugin install nikok6/herdr-mirror --yes 2>&1 \
+        || echo "herdr: plugin install failed (best-effort, retry next boot)" >&2
+    fi
     mkdir -p /tmp/sshd
     chmod 700 /tmp/sshd
     if [ ! -s /tmp/ssh_host_ed25519_key ]; then
@@ -86,10 +132,13 @@ pkgs.dockerTools.buildLayeredImage {
     home.config.home.path
     homeFiles
     pkgs.bashInteractive
+    pkgs.cacert
     pkgs.coreutils
+    caEtc
     etc
     pkgs.openssh
     pkgs.zsh
+    herdr
   ];
 
   fakeRootCommands = ''
@@ -124,9 +173,15 @@ pkgs.dockerTools.buildLayeredImage {
       "USER=kylepzak"
       "LOGNAME=kylepzak"
       "SHELL=${pkgs.zsh}/bin/zsh"
-      "PATH=${home.config.home.path}/bin:${pkgs.openssh}/bin:${pkgs.coreutils}/bin:${pkgs.bashInteractive}/bin:${pkgs.zsh}/bin"
+      "PATH=${home.config.home.path}/bin:${herdr}/bin:${pkgs.openssh}/bin:${pkgs.coreutils}/bin:${pkgs.bashInteractive}/bin:${pkgs.zsh}/bin"
       "EDITOR=hx"
       "VISUAL=hx"
+      # TLS trust: git/curl over https inside the container (github clones,
+      # plugin installs) needs the CA bundle — the image ships no system
+      # certs of its own.
+      "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+      "GIT_SSL_CAINFO=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+      "NIX_SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
     ];
   };
 }

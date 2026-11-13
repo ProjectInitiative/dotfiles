@@ -27,7 +27,9 @@ let
   is-darwin = pkgs.stdenv.isDarwin;
 
   cfg = config.${namespace}.home;
-  username = config.snowfallorg.user.name;
+  # `or` fallback for standalone-HM contexts (containers) where the
+  # snowfallorg option tree doesn't exist.
+  username = config.snowfallorg.user.name or "kylepzak";
 in
 {
   options.${namespace}.home = {
@@ -44,7 +46,9 @@ in
       inherit username;
 
       homeDirectory = cfg.home;
-      stateVersion = osConfig.system.stateVersion;
+      # osConfig is null in non-NixOS contexts (standalone HM, containers);
+      # the container policy module sets stateVersion explicitly.
+      stateVersion = mkIf (osConfig != null) osConfig.system.stateVersion;
     };
   };
 }

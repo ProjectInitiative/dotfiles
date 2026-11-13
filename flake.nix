@@ -520,6 +520,9 @@
               argo-lite-image = import ./containers/argo-lite/image.nix {
                 pkgs = import inputs.nixpkgs { inherit system; };
                 home-manager = inputs.home-manager;
+                herdr = inputs.herdr.packages.${system}.herdr;
+                hmModules = flake.homeModules;
+                namespace = "projectinitiative";
                 authorizedKeys = builtins.readFile inputs.ssh-pub-keys;
               };
             }

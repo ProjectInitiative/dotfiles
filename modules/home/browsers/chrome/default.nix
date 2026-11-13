@@ -11,7 +11,8 @@ with lib;
 with lib.${namespace};
 let
   cfg = config.${namespace}.browsers.chrome;
-  isGraphical = osConfig.${namespace}.isGraphical;
+  # null-guard for standalone-HM (container) contexts
+  isGraphical = if osConfig != null then osConfig.${namespace}.isGraphical else false;
 in
 {
   options.${namespace}.browsers.chrome = with types; {
