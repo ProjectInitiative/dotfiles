@@ -125,7 +125,14 @@ let
     # plugin isn't needed in this environment (owner decision 2026-11-13).
     mkdir -p /tmp/sshd
     chmod 700 /tmp/sshd
-    if [ ! -s /tmp/ssh_host_ed25519_key ]; then
+    # Host key priority: OpenBao-mounted stable key (survives pod restarts,
+    # keeps clients' known_hosts happy) → ephemeral generated key fallback.
+    if [ -s /etc/ssh/host-key/ssh_host_ed25519_key ]; then
+      cp /etc/ssh/host-key/ssh_host_ed25519_key /tmp/ssh_host_ed25519_key
+      chmod 600 /tmp/ssh_host_ed25519_key
+      echo "sshd: using OpenBao-provisioned host key"
+    else
+      echo "sshd: WARNING no mounted host key, generating ephemeral key"
       ${pkgs.openssh}/bin/ssh-keygen -q -t ed25519 -N "" -f /tmp/ssh_host_ed25519_key
     fi
     exec ${pkgs.openssh}/bin/sshd -D -e -f ${sshdConfig}
