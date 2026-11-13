@@ -279,6 +279,13 @@ in
           "172.16.1.50:31872":
             endpoint:
               - "http://172.16.1.50:31872"
+          # Same registry via its ClusterIP: resolution works (node resolver
+          # routes the zone at CoreDNS), but containerd must be told the
+          # endpoint is plaintext or it attempts HTTPS ("server gave HTTP
+          # response to HTTPS client", 2026-11-12).
+          "local-registry.registry.svc.cluster.local:5000":
+            endpoint:
+              - "http://local-registry.registry.svc.cluster.local:5000"
       '';
     };
 
