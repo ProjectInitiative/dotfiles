@@ -14,15 +14,15 @@ let
   # POSIX-compliant shell function for bash and zsh
   rebuildHostFunction = ''
     # Rebuilds a remote NixOS host, piping output to nom.
-    # Usage: rebuild-host [--target <ip>] [--native] <hostname> [switch|test|boot]
-    #   --native  build ON the target host (BUILD_ARM_NATIVE=true + --impure) —
+    # Usage: rebuild-host [--target <ip>] [--arm] <hostname> [switch|test|boot]
+    #   --arm  build ON the target host (BUILD_ARM_NATIVE=true + --impure) —
     #             for aarch64 hosts rebuilt from an aarch64 machine (DGX Spark,
     #             lightships) where the target builds its own closure natively.
     rebuild-host() {
       local target=""
       local hostname=""
       local action="switch"
-      local native=0
+      local arm=0
 
       while [ $# -gt 0 ]; do
         case "$1" in
@@ -34,8 +34,8 @@ let
             target="$2"
             shift 2
             ;;
-          --native)
-            native=1
+          --arm)
+            arm=1
             shift
             ;;
           *)
@@ -51,7 +51,7 @@ let
 
       if [ -z "$hostname" ]; then
         echo "Error: Target hostname is required."
-        echo "Usage: rebuild-host [--target <ip>] [--native] <hostname> [switch|test|boot]"
+        echo "Usage: rebuild-host [--target <ip>] [--arm] <hostname> [switch|test|boot]"
         return 1
       fi
 
@@ -61,7 +61,7 @@ let
 
       local -a extra_flags=()
       local env_prefix=""
-      if [ "$native" -eq 1 ]; then
+      if [ "$arm" -eq 1 ]; then
         env_prefix="BUILD_ARM_NATIVE=true"
         extra_flags=(--impure)
       fi
@@ -75,15 +75,15 @@ let
   # Fish-specific shell function
   rebuildHostFunctionFish = ''
     # Rebuilds a remote NixOS host, piping output to nom.
-    # Usage: rebuild-host [--target <ip>] [--native] <hostname> [switch|test|boot]
-    #   --native  build ON the target host (BUILD_ARM_NATIVE=true + --impure) —
+    # Usage: rebuild-host [--target <ip>] [--arm] <hostname> [switch|test|boot]
+    #   --arm  build ON the target host (BUILD_ARM_NATIVE=true + --impure) —
     #             for aarch64 hosts rebuilt from an aarch64 machine (DGX Spark,
     #             lightships) where the target builds its own closure natively.
     function rebuild-host
       set target ""
       set hostname ""
       set action "switch"
-      set native 0
+      set arm 0
 
       set i 1
       while test $i -le (count $argv)
@@ -95,8 +95,8 @@ let
               return 1
             end
             set target $argv[$i]
-          case --native
-            set native 1
+          case --arm
+            set arm 1
           case '*'
             if test -z "$hostname"
               set hostname $argv[$i]
@@ -109,7 +109,7 @@ let
 
       if test -z "$hostname"
         echo "Error: Target hostname is required."
-        echo "Usage: rebuild-host [--target <ip>] [--native] <hostname> [switch|test|boot]"
+        echo "Usage: rebuild-host [--target <ip>] [--arm] <hostname> [switch|test|boot]"
         return 1
       end
 
@@ -119,7 +119,7 @@ let
 
       set extra_flags
       set env_prefix ""
-      if test "$native" -eq 1
+      if test "$arm" -eq 1
         set env_prefix "BUILD_ARM_NATIVE=true"
         set extra_flags --impure
       end
