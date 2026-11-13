@@ -67,6 +67,19 @@ in
     };
 
     gpuSupport = mkBoolOpt false "Enable GPU support for this node.";
+
+    # Upstream DNS resolvers for k3s CoreDNS. k3s defaults to the NODE's
+    # resolv.conf; with systemd-resolved on the host that is the 127.0.0.53
+    # stub, which is UNREACHABLE from pods (pod loopback != host loopback).
+    # Any CoreDNS replica started after a resolved-enabled rebuild then fails
+    # ALL external resolutions (2026-11-12: argocd-repo-server could not
+    # resolve git.deuxfleurs.fr). Pinning the forwarders here decouples
+    # cluster DNS from the host resolver entirely.
+    coreDnsUpstreams = mkOpt (listOf str) [
+      "172.16.1.1"
+      "1.1.1.1"
+      "9.9.9.9"
+    ] "Nameservers k3s CoreDNS forwards external queries to (pinned; never the host stub).";
     enableNvidiaContainerRuntime = mkBoolOpt false "Enable the NVIDIA containerd runtime for GPU workloads.";
     extraArgs = mkOpt (listOf str) [ ] "Additional arguments to pass to k3s.";
     environmentFile = mkOpt (nullOr path) null "Environment file for k3s service.";
@@ -454,6 +467,14 @@ in
     hardware.nvidia.package = mkIf cfg.gpuSupport config.boot.kernelPackages.nvidiaPackages.stable;
     hardware.nvidia.modesetting.enable = mkIf cfg.gpuSupport true;
 
+    environment.etc."rancher/k3s/resolv-upstreams.conf" = mkIf cfg.enable {
+      # Upstream resolvers for k3s CoreDNS (--resolv-conf). REAL nameservers
+      # only — never the host's resolved stub (127.0.0.53), which pods cannot
+      # reach. See coreDnsUpstreams option.
+      text = concatMapStringsSep "\n" (ns: "nameserver ${ns}") cfg.coreDnsUpstreams + "\n";
+      mode = "0444";
+    };
+
     # nixpkgs services
     services = {
     };
@@ -541,7 +562,10 @@ in
                 else
                   [ ] ++ node-ip ++ node-iface; # Standard networking doesn't need special flags
             in
-            networkFlags ++ gpuFlags ++ cfg.extraArgs;
+            # Pin CoreDNS upstreams: the node resolv.conf may be the resolved
+            # stub (127.0.0.53), which is unreachable from pods. k3s
+            # --resolv-conf feeds CoreDNS's forward config directly.
+            networkFlags ++ gpuFlags ++ [ "--resolv-conf=/etc/rancher/k3s/resolv-upstreams.conf" ] ++ cfg.extraArgs;
         };
       };
 
