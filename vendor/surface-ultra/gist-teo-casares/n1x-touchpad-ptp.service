@@ -1,0 +1,11 @@
+[Unit]
+Description=Rebind Surface Laptop Ultra touchpad as Precision Touchpad (palm rejection)
+After=systemd-udev-trigger.service systemd-modules-load.service
+ConditionPathExists=/sys/bus/hid/drivers/hid-multitouch
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/n1x-touchpad-ptp
+
+[Install]
+WantedBy=multi-user.target

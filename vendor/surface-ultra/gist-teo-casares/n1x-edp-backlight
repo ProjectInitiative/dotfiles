@@ -1,0 +1,167 @@
+#!/usr/bin/python3 -I
+# Internal panel brightness for the Surface Laptop Ultra (NVIDIA N1X, LGD LP150UD1 mini-LED, eDP 1.5).
+#
+# nvidia-modeset registers no backlight device here: RM's GET_BACKLIGHT_BRIGHTNESS fails, so
+# nvRmRegisterBacklight() never calls nvkms_register_backlight(). The panel is in VESA eDP 1.5
+# "panel luminance control" mode (DPCD 0x721 bit7 set), so its brightness is the target luminance
+# in DPCD 0x734-0x736 (millinits, LSB first). Writing that register over the GPU's DP AUX channel
+# (RM control NV0073_CTRL_CMD_DP_AUXCH_CTRL, root only) changes the panel brightness.
+#
+# This daemon creates an LED class device (uleds) "nvidia_0::lcd_backlight", 0..100, and maps
+# each write to a target luminance (perceptual curve, 3..1000 nits). It does not keep the NVIDIA
+# device open between operations, so it never blocks a driver unload.
+import ctypes as C, fcntl, math, os, select, struct, sys, time
+
+LED_NAME = b"nvidia_0::lcd_backlight"
+SYSFS = "/sys/class/leds/" + LED_NAME.decode() + "/brightness"
+STATE = os.path.join(os.environ.get("STATE_DIRECTORY", "/var/lib/n1x-edp-backlight"), "brightness")
+MIN_NITS, MAX_NITS = 3.0, 1000.0    # EDID DisplayID: max suggested SDR luminance 1000 cd/m2
+RECHECK_S = 5.0
+
+def log(*a): print(*a, flush=True)
+
+def IOWR(nr, size): return (3 << 30) | (size << 16) | (ord('F') << 8) | nr
+class OS64(C.Structure):
+    _fields_ = [('hRoot', C.c_uint32), ('hObjectParent', C.c_uint32), ('hObjectNew', C.c_uint32), ('hClass', C.c_uint32),
+                ('pAllocParms', C.c_uint64), ('pRightsRequested', C.c_uint64), ('paramsSize', C.c_uint32),
+                ('flags', C.c_uint32), ('status', C.c_uint32), ('_pad', C.c_uint32)]
+class OS54(C.Structure):
+    _fields_ = [('hClient', C.c_uint32), ('hObject', C.c_uint32), ('cmd', C.c_uint32), ('flags', C.c_uint32),
+                ('params', C.c_uint64), ('paramsSize', C.c_uint32), ('status', C.c_uint32)]
+class OS00(C.Structure):
+    _fields_ = [('hRoot', C.c_uint32), ('hObjectParent', C.c_uint32), ('hObjectOld', C.c_uint32), ('status', C.c_uint32)]
+class A0080(C.Structure):
+    _fields_ = [('deviceId', C.c_uint32), ('hClientShare', C.c_uint32), ('hTargetClient', C.c_uint32), ('hTargetDevice', C.c_uint32),
+                ('flags', C.c_uint32), ('_p', C.c_uint32), ('vaSpaceSize', C.c_uint64), ('vaStartInternal', C.c_uint64),
+                ('vaLimitInternal', C.c_uint64), ('vaMode', C.c_uint32), ('_p2', C.c_uint32)]
+class A2080(C.Structure): _fields_ = [('subDeviceId', C.c_uint32)]
+class IntDisp(C.Structure): _fields_ = [('subDeviceInstance', C.c_uint32), ('internalDisplaysMask', C.c_uint32), ('availableInternalDisplaysMask', C.c_uint32)]
+class Ids(C.Structure): _fields_ = [('gpuIds', C.c_uint32 * 32)]
+class AUX(C.Structure):
+    _fields_ = [('subDeviceInstance', C.c_uint32), ('displayId', C.c_uint32), ('bAddrOnly', C.c_uint8), ('cmd', C.c_uint32),
+                ('addr', C.c_uint32), ('data', C.c_uint8 * 16), ('size', C.c_uint32), ('replyType', C.c_uint32), ('retryTimeMs', C.c_uint32)]
+
+class RmError(Exception): pass
+
+class Rm:
+    """One short-lived RM client: client -> device -> subdevice -> display common."""
+    H_DEV, H_SUB, H_DISP = 0xcaf00001, 0xcaf00002, 0xcaf00003
+    def __enter__(self):
+        self.fd = os.open('/dev/nvidiactl', os.O_RDWR)
+        self.gfd = None
+        try:
+            p = self._alloc(0, 0, 0, 0x41); self.hc = p.hObjectNew
+            ids = Ids(); self._ctrl(self.hc, 0x201, ids)
+            gl = [g for g in ids.gpuIds if g not in (0, 0xffffffff)]
+            if not gl: raise RmError("no GPU attached")
+            arr = (C.c_uint32 * len(gl))(*gl)
+            fcntl.ioctl(self.fd, IOWR(212, C.sizeof(arr)), arr, True)
+            self.gfd = os.open('/dev/nvidia0', os.O_RDWR)
+            reg = C.c_int(self.fd); fcntl.ioctl(self.gfd, IOWR(201, C.sizeof(reg)), reg, True)
+            self._alloc(self.hc, self.hc, self.H_DEV, 0x80, A0080())
+            self._alloc(self.hc, self.H_DEV, self.H_SUB, 0x2080, A2080())
+            self._alloc(self.hc, self.H_DEV, self.H_DISP, 0x73)
+            d = IntDisp(); self._ctrl(self.H_DISP, 0x730116, d)
+            m = d.availableInternalDisplaysMask or d.internalDisplaysMask
+            if not m: raise RmError("no internal display")
+            self.did = m & -m
+        except Exception:
+            self.__exit__(); raise
+        return self
+    def __exit__(self, *a):
+        try:
+            if getattr(self, 'hc', None):
+                fcntl.ioctl(self.fd, IOWR(0x29, C.sizeof(OS00)), OS00(self.hc, self.hc, self.hc, 0), True)
+        except OSError: pass
+        if self.gfd is not None: os.close(self.gfd)
+        os.close(self.fd)
+    def _alloc(self, root, parent, new, cls, params=None):
+        p = OS64(root, parent, new, cls, C.addressof(params) if params else 0, 0, C.sizeof(params) if params else 0, 0, 0)
+        fcntl.ioctl(self.fd, IOWR(0x2B, C.sizeof(OS64)), p, True)
+        if p.status: raise RmError(f"alloc class {cls:#x} status {p.status:#x}")
+        return p
+    def _ctrl(self, obj, cmd, params):
+        p = OS54(self.hc, obj, cmd, 0, C.addressof(params), C.sizeof(params), 0)
+        fcntl.ioctl(self.fd, IOWR(0x2A, C.sizeof(OS54)), p, True)
+        if p.status: raise RmError(f"control {cmd:#x} status {p.status:#x}")
+    def aux_read(self, addr):
+        a = AUX(); a.displayId = self.did; a.cmd = (1 << 3) | 1; a.addr = addr; a.size = 0
+        self._ctrl(self.H_DISP, 0x731341, a)
+        if a.replyType != 0 or a.size != 1: raise RmError(f"aux read {addr:#x} reply {a.replyType}")
+        return a.data[0]
+    def aux_write(self, addr, data):
+        a = AUX(); a.displayId = self.did; a.cmd = (1 << 3) | 0; a.addr = addr; a.size = len(data) - 1
+        for i, b in enumerate(data): a.data[i] = b
+        self._ctrl(self.H_DISP, 0x731341, a)
+        if a.replyType != 0: raise RmError(f"aux write {addr:#x} reply {a.replyType}")
+    def get_millinits(self):
+        return sum(self.aux_read(0x734 + i) << (8 * i) for i in range(3))
+    def set_millinits(self, mn):
+        self.aux_write(0x734, [mn & 0xff, (mn >> 8) & 0xff, (mn >> 16) & 0xff])
+
+def pct_to_millinits(p):
+    p = max(0, min(100, p))
+    return int(1000 * max(MIN_NITS, MAX_NITS * (p / 100.0) ** 2))
+def millinits_to_pct(mn):
+    return max(0, min(100, round(100 * math.sqrt(max(mn / 1000.0, 0) / MAX_NITS))))
+
+def main():
+    # Wait for the NVIDIA driver and a panel in luminance mode; otherwise create nothing.
+    while True:
+        try:
+            with Rm() as rm:
+                mode = rm.aux_read(0x721)
+                cur = rm.get_millinits()
+            if not mode & 0x80:
+                log(f"panel not in luminance-control mode (DPCD 0x721={mode:#x}); not supported, idling")
+                time.sleep(60); continue
+            break
+        except (OSError, RmError) as e:
+            log("waiting for NVIDIA RM / panel:", e); time.sleep(10)
+
+    target = None
+    try:
+        with open(STATE) as f: target = int(f.read().strip())
+    except (OSError, ValueError): pass
+    log(f"panel target luminance {cur/1000:.0f} nits ({millinits_to_pct(cur)}%), saved {target}")
+
+    ufd = os.open("/dev/uleds", os.O_RDWR)
+    os.write(ufd, struct.pack("64si", LED_NAME, 100))
+    for _ in range(50):
+        if os.path.exists(SYSFS): break
+        time.sleep(0.05)
+    if target is None: target = millinits_to_pct(cur)
+    with open(SYSFS, "w") as f: f.write(str(target))   # echoed back via uleds -> applied below
+
+    applied = None
+    poller = select.poll(); poller.register(ufd, select.POLLIN)
+    while True:
+        evs = poller.poll(RECHECK_S * 1000)
+        if evs:
+            val = struct.unpack("i", os.read(ufd, 4))[0]
+            # Coalesce key-repeat bursts: take the latest pending value.
+            while poller.poll(30):
+                val = struct.unpack("i", os.read(ufd, 4))[0]
+            target = max(0, min(100, val))
+        want = pct_to_millinits(target)
+        try:
+            with Rm() as rm:
+                if not evs and applied == want and rm.get_millinits() == want:
+                    continue
+                rm.set_millinits(want)
+            if applied != want:
+                log(f"brightness {target}% -> {want/1000:.0f} nits")
+                try:
+                    with open(STATE + ".tmp", "w") as f: f.write(str(target))
+                    os.replace(STATE + ".tmp", STATE)
+                except OSError as e: log("could not save state:", e)
+            elif not evs:
+                log(f"panel luminance was reset; re-applied {want/1000:.0f} nits")
+            applied = want
+        except (OSError, RmError) as e:
+            # Panel off (DPMS) or driver busy: retry on the next tick.
+            applied = None
+            if evs: log("apply failed:", e)
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: CC0-1.0
+# Simple-IPA tuning for the Surface Laptop Ultra front camera (OmniVision OV02C10).
+%YAML 1.1
+---
+version: 1
+algorithms:
+  # The sensor's black level target (register 0x4003) is 64 at 10 bits, which
+  # matches dark frames. Simple IPA tuning values use libcamera's 16-bit scale,
+  # where 64 << 6 is 4096.
+  - BlackLevel:
+      blackLevel: 4096
+  - Awb:
+  # Not a calibration: a color correction matrix should be measured from a
+  # controlled chart. Until one is, this is a plain saturation boost of 1.6
+  # around Rec. 601 luma (each row sums to 1, so grey stays grey), chosen by
+  # eye by the packager against the uncorrected image, which looks washed out.
+  - Ccm:
+      ccms:
+        - ct: 6500
+          ccm: [ 1.4206, -0.3522, -0.0684,
+                 -0.1794,  1.2478, -0.0684,
+                 -0.1794, -0.3522,  1.5316 ]
+  - Adjust:
+  - Agc:
+...

@@ -1,0 +1,221 @@
+Automatic brightness (and an s2idle-resume fix) for teo-casares' n1x-edp-backlight.
+
+The script itself is not in this repository: it is teo-casares' work, published in
+https://gist.github.com/teo-casares/8b64949638e1952602a7f435bb34d5b8
+(see also https://github.com/omacom/omarchy/discussions/15885). This patch applies to the
+Gist version of 2026-10-28:
+
+  curl -LO https://gist.githubusercontent.com/teo-casares/8b64949638e1952602a7f435bb34d5b8/raw/n1x-edp-backlight
+  patch n1x-edp-backlight < n1x-edp-backlight-auto.patch
+
+Changes:
+- automatic brightness from the ambient light sensor (IIO "als", see ../als): Windows'
+  lux -> nits curve for this machine, a brightness key press is kept as an offset on top
+  of it (saved in $STATE_DIRECTORY/offset), "0" in $STATE_DIRECTORY/auto turns it off
+- re-apply DPCD 0x720/0x721 when the panel loses luminance-control mode (s2idle resume)
+- fade to the target over ~0.3 s instead of one jump when the level is (re)applied at
+  start-up or after the panel was reset (boot, s2idle resume); retry the NVIDIA device
+  every 2 s instead of 10 s at start-up
+
+--- n1x-edp-backlight
++++ n1x-edp-backlight
+@@ -10,11 +10,18 @@
+ # This daemon creates an LED class device (uleds) "nvidia_0::lcd_backlight", 0..100, and maps
+ # each write to a target luminance (perceptual curve, 3..1000 nits). It does not keep the NVIDIA
+ # device open between operations, so it never blocks a driver unload.
+-import ctypes as C, fcntl, math, os, select, struct, sys, time
++#
++# Automatic brightness: while the ambient light sensor (IIO "als", the SCP sensor hub via
++# n1x-spi-hid) is present and $STATE_DIRECTORY/auto is not "0", the target follows Windows'
++# lux -> nits curve. A brightness key press is kept as an offset on top of that curve.
++import ctypes as C, fcntl, glob, math, os, select, struct, sys, time
+ 
+ LED_NAME = b"nvidia_0::lcd_backlight"
+ SYSFS = "/sys/class/leds/" + LED_NAME.decode() + "/brightness"
+-STATE = os.path.join(os.environ.get("STATE_DIRECTORY", "/var/lib/n1x-edp-backlight"), "brightness")
++STATE_DIR = os.environ.get("STATE_DIRECTORY", "/var/lib/n1x-edp-backlight")
++STATE = os.path.join(STATE_DIR, "brightness")
++AUTO = os.path.join(STATE_DIR, "auto")      # "0" turns automatic brightness off
++OFFSET = os.path.join(STATE_DIR, "offset")  # user preference on top of the curve, in %
+ MIN_NITS, MAX_NITS = 3.0, 1000.0    # EDID DisplayID: max suggested SDR luminance 1000 cd/m2
+ RECHECK_S = 5.0
+ 
+@@ -98,6 +105,30 @@
+         return sum(self.aux_read(0x734 + i) << (8 * i) for i in range(3))
+     def set_millinits(self, mn):
+         self.aux_write(0x734, [mn & 0xff, (mn >> 8) & 0xff, (mn >> 16) & 0xff])
++    def ensure_mode(self, ctl, mode):
++        """Put back DPCD 0x720 (display control) / 0x721 (backlight mode) if the panel lost
++        them, e.g. after an s2idle resume; returns True when something was rewritten."""
++        fixed = False
++        if self.aux_read(0x720) != ctl:
++            self.aux_write(0x720, [ctl]); fixed = True
++        if self.aux_read(0x721) != mode:
++            self.aux_write(0x721, [mode]); fixed = True
++        return fixed
++
++FADE_STEPS, FADE_DT = 10, 0.03   # restore after boot/resume over ~0.3 s instead of one jump
++
++def fade(rm, want):
++    """Move the panel from its current luminance to want along the perceptual (%) curve."""
++    try:
++        cur = rm.get_millinits()
++    except (OSError, RmError):
++        cur = want
++    a, b = millinits_to_pct(cur), millinits_to_pct(want)
++    if abs(a - b) > 2:
++        for i in range(1, FADE_STEPS):
++            rm.set_millinits(pct_to_millinits(a + (b - a) * i / FADE_STEPS))
++            time.sleep(FADE_DT)
++    rm.set_millinits(want)
+ 
+ def pct_to_millinits(p):
+     p = max(0, min(100, p))
+@@ -105,25 +136,73 @@
+ def millinits_to_pct(mn):
+     return max(0, min(100, round(100 * math.sqrt(max(mn / 1000.0, 0) / MAX_NITS))))
+ 
++# Windows AdaptiveDisplayBrightness AutobrightnessLuxToNitsCurve for this machine (lux, nits)
++LUX_TO_NITS = [(0, 16), (2, 34), (5, 46), (10, 60), (20, 75), (40, 106), (100, 160), (400, 181),
++               (700, 240), (2000, 408), (3000, 510), (4500, 655), (7000, 850), (15000, 1000)]
++AUTO_TICK_S = 1.0
++AUTO_ALPHA = 0.3        # EWMA weight of a new lux sample
++AUTO_DEADBAND = 3       # % difference before following the light
++AUTO_STEP = 5           # % per tick at most
++
++def lux_to_nits(lux):
++    for (l0, n0), (l1, n1) in zip(LUX_TO_NITS, LUX_TO_NITS[1:]):
++        if lux <= l1:
++            return n0 + (n1 - n0) * max(lux - l0, 0) / (l1 - l0)
++    return LUX_TO_NITS[-1][1]
++
++def find_als():
++    for d in glob.glob("/sys/bus/iio/devices/iio:device*"):
++        try:
++            with open(d + "/name") as f:
++                if f.read().strip() == "als": return d
++        except OSError: pass
++    return None
++
++def read_lux(d):
++    with open(d + "/in_illuminance_raw") as f: raw = float(f.read())
++    with open(d + "/in_illuminance_scale") as f: scale = float(f.read())
++    return raw * scale
++
++def save_int(path, val):
++    try:
++        with open(path + ".tmp", "w") as f: f.write(str(val))
++        os.replace(path + ".tmp", path)
++    except OSError as e: log("could not save state:", e)
++
++def load_int(path, default):
++    try:
++        with open(path) as f: return int(f.read().strip())
++    except (OSError, ValueError): return default
++
++def auto_wanted():
++    try:
++        with open(AUTO) as f: return f.read().strip() != "0"
++    except OSError: return True
++
+ def main():
+     # Wait for the NVIDIA driver and a panel in luminance mode; otherwise create nothing.
+     while True:
+         try:
+             with Rm() as rm:
+-                mode = rm.aux_read(0x721)
++                ctl, mode = rm.aux_read(0x720), rm.aux_read(0x721)
++                if not mode & 0x80:
++                    # Started after a resume that dropped luminance control: try to turn it back on.
++                    rm.aux_write(0x721, [mode | 0x80])
++                    mode = rm.aux_read(0x721)
+                 cur = rm.get_millinits()
+             if not mode & 0x80:
+                 log(f"panel not in luminance-control mode (DPCD 0x721={mode:#x}); not supported, idling")
+                 time.sleep(60); continue
+             break
+         except (OSError, RmError) as e:
+-            log("waiting for NVIDIA RM / panel:", e); time.sleep(10)
++            log("waiting for NVIDIA RM / panel:", e); time.sleep(2)
+ 
+     target = None
+     try:
+         with open(STATE) as f: target = int(f.read().strip())
+     except (OSError, ValueError): pass
+-    log(f"panel target luminance {cur/1000:.0f} nits ({millinits_to_pct(cur)}%), saved {target}")
++    log(f"panel target luminance {cur/1000:.0f} nits ({millinits_to_pct(cur)}%), saved {target}, "
++        f"DPCD 0x720={ctl:#x} 0x721={mode:#x}")
+ 
+     ufd = os.open("/dev/uleds", os.O_RDWR)
+     os.write(ufd, struct.pack("64si", LED_NAME, 100))
+@@ -135,22 +214,61 @@
+ 
+     applied = None
+     poller = select.poll(); poller.register(ufd, select.POLLIN)
++    als, lux, echo, following = None, None, None, False
++    offset = load_int(OFFSET, 0)
+     while True:
+-        evs = poller.poll(RECHECK_S * 1000)
++        auto = auto_wanted() and (als := als if als and os.path.exists(als) else find_als())
++        evs = poller.poll((AUTO_TICK_S if auto else RECHECK_S) * 1000)
++        user = False
+         if evs:
+             val = struct.unpack("i", os.read(ufd, 4))[0]
+             # Coalesce key-repeat bursts: take the latest pending value.
+             while poller.poll(30):
+                 val = struct.unpack("i", os.read(ufd, 4))[0]
+-            target = max(0, min(100, val))
++            val = max(0, min(100, val))
++            if val == echo:
++                echo = None             # our own auto-brightness write coming back
++            else:
++                user, target = True, val
++        if auto:
++            # A read waits for the sensor's next report (up to ~0.75 s): not on a key press.
++            if not user:
++                try:
++                    l = read_lux(als)
++                    lux = l if lux is None else lux + AUTO_ALPHA * (l - lux)
++                except (OSError, ValueError):
++                    als = None
++            if lux is not None:
++                base = millinits_to_pct(1000 * lux_to_nits(lux))
++                if user:
++                    offset = target - base
++                    save_int(OFFSET, offset)
++                    log(f"brightness {target}% at {lux:.0f} lux: offset {offset:+d}%")
++                else:
++                    goal = max(0, min(100, base + offset))
++                    if goal != target and (following or abs(goal - target) >= AUTO_DEADBAND):
++                        target += max(-AUTO_STEP, min(AUTO_STEP, goal - target))
++                        following = target != goal
++                        echo = target
++                        try:
++                            with open(SYSFS, "w") as f: f.write(str(target))
++                        except OSError: echo = None
++                        evs = [True]
+         want = pct_to_millinits(target)
+         try:
+             with Rm() as rm:
++                if rm.ensure_mode(ctl, mode):
++                    log(f"panel backlight mode was reset; restored 0x720={ctl:#x} 0x721={mode:#x}")
++                    applied = None
+                 if not evs and applied == want and rm.get_millinits() == want:
+                     continue
+-                rm.set_millinits(want)
+-            if applied != want:
++                if applied is None:     # first apply after start, or the panel was reset
++                    fade(rm, want)
++                else:
++                    rm.set_millinits(want)
++            if applied != want and (user or not auto):
+                 log(f"brightness {target}% -> {want/1000:.0f} nits")
++            if applied != want:
+                 try:
+                     with open(STATE + ".tmp", "w") as f: f.write(str(target))
+                     os.replace(STATE + ".tmp", STATE)
+@@ -165,4 +283,3 @@
+ 
+ if __name__ == "__main__":
+     sys.exit(main())
+-

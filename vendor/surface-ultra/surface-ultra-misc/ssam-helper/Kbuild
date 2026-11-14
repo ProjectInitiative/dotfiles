@@ -1,0 +1,2 @@
+# SPDX-License-Identifier: GPL-2.0
+obj-m := n1x_ssam_uartclk.o n1x_ssam_clients.o

@@ -1,0 +1,124 @@
+#!/usr/bin/python3 -I
+# Surface Laptop Ultra (MSHW0794, HID 045E:0CC7) keyboard backlight bridge.
+#
+# The keyboard exposes the HID Consumer "Keyboard Backlight Set Level" usage (0x7B):
+#   output report 0xD5 = [0xD5, level]   set level
+#   feature report 0xD6 = [0xD6, level]  current level
+#   feature report 0xD5 = [0xD5, l0..l3] supported levels (0,3,6,12)
+#   input report 0xD5 bit0 (usage 0x515) = backlight key/level-change event
+# The kernel has no generic driver for these usages, so no LED class device appears.
+# This daemon creates one with uleds ("surface::kbd_backlight", brightness 0..N-1
+# indexing the supported levels) and forwards writes to hidraw. It only reads/writes
+# reports on the hidraw node; it never grabs or rebinds the keyboard.
+import array, fcntl, os, select, struct, sys, time
+
+VID, PID = 0x045E, 0x0CC7
+LED_NAME = b"surface::kbd_backlight"
+DEFAULT_LEVELS = [0, 3, 6, 12]
+
+def IOC(d, t, nr, size): return (d << 30) | (size << 16) | (ord(t) << 8) | nr
+def HIDIOCGFEATURE(n): return IOC(3, 'H', 0x07, n)
+
+def log(*a): print(*a, flush=True)
+
+def find_hidraw():
+    for name in sorted(os.listdir("/sys/class/hidraw")):
+        try:
+            with open(f"/sys/class/hidraw/{name}/device/uevent") as f:
+                ue = f.read()
+        except OSError:
+            continue
+        for line in ue.splitlines():
+            if line.startswith("HID_ID="):
+                bus, v, p = line[7:].split(":")
+                if int(v, 16) == VID and int(p, 16) == PID:
+                    return "/dev/" + name
+    return None
+
+def get_feature(fd, rid, n):
+    buf = array.array('B', [rid] + [0] * (n - 1))
+    fcntl.ioctl(fd, HIDIOCGFEATURE(n), buf, True)
+    return buf.tolist()
+
+def main():
+    dev = None
+    for _ in range(60):
+        dev = find_hidraw()
+        if dev: break
+        time.sleep(1)
+    if not dev:
+        log("keyboard hidraw node not found"); return 1
+    hfd = os.open(dev, os.O_RDWR | os.O_NONBLOCK)
+    try:
+        levels = get_feature(hfd, 0xD5, 5)[1:]
+        if levels != sorted(levels) or levels[0] != 0: raise ValueError(levels)
+    except Exception as e:
+        log("could not read supported levels, using default:", e); levels = DEFAULT_LEVELS
+    def hw_get():
+        return get_feature(hfd, 0xD6, 2)[1]
+    def hw_set(level):
+        os.write(hfd, bytes([0xD5, level]))
+    def to_index(level):
+        return min(range(len(levels)), key=lambda i: abs(levels[i] - level))
+    log(f"hidraw {dev}, levels {levels}, current {hw_get()}")
+
+    ufd = os.open("/dev/uleds", os.O_RDWR)
+    os.write(ufd, struct.pack("64si", LED_NAME, len(levels) - 1))
+    sysfs = "/sys/class/leds/" + LED_NAME.decode() + "/brightness"
+    for _ in range(50):
+        if os.path.exists(sysfs): break
+        time.sleep(0.05)
+
+    def sync_sysfs(idx):
+        # Reflect a firmware-side change in sysfs; uleds echoes it back to us, and
+        # setting the same level again is a no-op for the keyboard.
+        global_state["echo"] = idx
+        with open(sysfs, "w") as f: f.write(str(idx))
+
+    global_state = {"echo": None, "last_write": 0.0}
+    sync_sysfs(to_index(hw_get()))
+
+    poller = select.poll()
+    poller.register(ufd, select.POLLIN)
+    poller.register(hfd, select.POLLIN)
+    shown = to_index(hw_get())
+    while True:
+        evs = poller.poll(10000)
+        if not evs:
+            # The physical backlight key is handled inside the keyboard firmware and sends
+            # no report, so resync sysfs with the hardware level every 10 s (one feature GET).
+            try:
+                idx = to_index(hw_get())
+                with open(sysfs) as f: shown = int(f.read())
+                if idx != shown:
+                    log(f"level changed on the keyboard to {levels[idx]}"); sync_sysfs(idx)
+            except OSError as e:
+                log("resync failed:", e)
+        for fd, ev in evs:
+            if ev & (select.POLLERR | select.POLLHUP | select.POLLNVAL):
+                log("device went away; exiting for restart"); return 2
+            if fd == ufd:
+                idx = struct.unpack("i", os.read(ufd, 4))[0]
+                idx = max(0, min(idx, len(levels) - 1))
+                if global_state["echo"] == idx:
+                    global_state["echo"] = None
+                    if levels[idx] == hw_get():
+                        continue
+                hw_set(levels[idx]); global_state["last_write"] = time.monotonic()
+                log(f"set level {levels[idx]} (index {idx})")
+            else:
+                try:
+                    rep = os.read(hfd, 64)
+                except BlockingIOError:
+                    continue
+                if not rep or rep[0] != 0xD5:
+                    continue
+                if time.monotonic() - global_state["last_write"] < 0.5:
+                    continue  # our own change being reported back
+                time.sleep(0.15)
+                cur = hw_get()
+                log(f"keyboard backlight event {rep.hex()}, level now {cur}")
+                sync_sysfs(to_index(cur))
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,72 @@
+--- a/drivers/platform/surface/aggregator/core.c
++++ b/drivers/platform/surface/aggregator/core.c
+@@ -304,6 +304,21 @@
+ 
+ /* -- Serial device setup. -------------------------------------------------- */
+ 
++static bool ssam_uart_clk_is_doubled(struct acpi_resource_uart_serialbus *uart)
++{
++	struct acpi_device *adev;
++	acpi_handle handle;
++
++	if (!uart->resource_source.string_length || !uart->resource_source.string_ptr)
++		return false;
++
++	if (ACPI_FAILURE(acpi_get_handle(NULL, uart->resource_source.string_ptr, &handle)))
++		return false;
++
++	adev = acpi_fetch_acpi_dev(handle);
++	return adev && acpi_dev_hid_match(adev, "NVDA0240");
++}
++
+ static acpi_status ssam_serdev_setup_via_acpi_crs(struct acpi_resource *rsc,
+ 						  void *ctx)
+ {
+@@ -316,7 +331,19 @@
+ 		return AE_OK;
+ 
+ 	/* Set up serdev device. */
+-	serdev_device_set_baudrate(serdev, uart->default_baud_rate);
++	if (ssam_uart_clk_is_doubled(uart)) {
++		/*
++		 * NVIDIA N1X/GB10 (NVDA0240, 8250_mtk): the UART input clock is
++		 * 52 MHz, but 8250_mtk has no clock on ACPI and assumes 26 MHz.
++		 * Request half the rate so the programmed divisor (13 clk/bit)
++		 * yields the real ACPI-specified rate on the wire.
++		 */
++		dev_info(&serdev->dev, "N1X UART clock quirk: requesting %u baud for %u on the wire\n",
++			 uart->default_baud_rate / 2, uart->default_baud_rate);
++		serdev_device_set_baudrate(serdev, uart->default_baud_rate / 2);
++	} else {
++		serdev_device_set_baudrate(serdev, uart->default_baud_rate);
++	}
+ 
+ 	/* serdev currently only supports RTSCTS flow control. */
+ 	if (uart->flow_control & (~((u8)ACPI_UART_FLOW_CONTROL_HW))) {
+--- a/drivers/platform/surface/surface_aggregator_registry.c
++++ b/drivers/platform/surface/surface_aggregator_registry.c
+@@ -302,6 +302,14 @@
+ 	NULL,
+ };
+ 
++/* Devices for Surface Laptop Ultra (NVIDIA N1X, ACPI). Battery + AC only for now. */
++static const struct software_node *ssam_node_group_slu[] = {
++	&ssam_node_root,
++	&ssam_node_bat_ac,
++	&ssam_node_bat_main,
++	NULL,
++};
++
+ /* Devices for Surface Laptop Studio 1. */
+ static const struct software_node *ssam_node_group_sls1[] = {
+ 	&ssam_node_root,
+@@ -502,6 +510,9 @@
+ 	/* Surface Laptop Studio 2 */
+ 	{ "MSHW0360", (unsigned long)ssam_node_group_sls2 },
+ 
++	/* Surface Laptop Ultra (NVIDIA N1X) */
++	{ "MSHW0733", (unsigned long)ssam_node_group_slu },
++
+ 	{ },
+ };
+ MODULE_DEVICE_TABLE(acpi, ssam_platform_hub_acpi_match);

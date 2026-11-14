@@ -1,0 +1,3 @@
+# The Surface Laptop Ultra keyboard LED sits behind slow HID-over-I2C writes, and the
+# kbd-capslock trigger delays Caps Lock itself. Leave the LED unlinked from the key state.
+ACTION=="add", SUBSYSTEM=="leds", KERNEL=="input*::capslock", ATTRS{name}=="MSHW0794:00 045E:0CC7 Keyboard", ATTR{trigger}="none"

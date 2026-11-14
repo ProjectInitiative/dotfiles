@@ -1,0 +1,268 @@
+--- a/kernel-open/nvidia/nv.c	2026-10-18 11:24:46.204243343 -0400
++++ b/kernel-open/nvidia/nv.c	2026-10-18 12:43:49.367990628 -0400
+@@ -3975,20 +3975,54 @@
+         }
+         else
+         {
+-            pages = kvmalloc_array(page_count, sizeof(struct page *), NV_GFP_KERNEL);
+-            if (pages == NULL)
++            //
++            // vmap() needs every page to have a struct page. The N1x firmware
++            // carveout has none unless n1x_carveout_memmap gave it a memmap,
++            // and allocations can mix it with RAM, so check every page and
++            // map such allocations by pfn instead.
++            //
++            unsigned long *pfns;
++            NvBool carveout = NV_FALSE;
++
++            pfns = kvmalloc_array(page_count, sizeof(unsigned long), NV_GFP_KERNEL);
++            if (pfns == NULL)
+             {
+                 nv_printf(NV_DBG_ERRORS,
+-                          "NVRM: failed to allocate vmap() page descriptor table!\n");
++                          "NVRM: failed to allocate vmap() pfn table!\n");
+                 return NULL;
+             }
+ 
+             for (j = 0; j < page_count; j++)
+-                pages[j] = NV_GET_PAGE_STRUCT(at->page_table[pageIndex+j].phys_addr);
++            {
++                pfns[j] = at->page_table[pageIndex+j].phys_addr >> PAGE_SHIFT;
++                if (!pfn_valid(pfns[j]))
++                    carveout = NV_TRUE;
++            }
+ 
+-            virt_addr = nv_vm_map_pages(pages, page_count,
+-                at->cache_type == NV_MEMORY_CACHED, at->flags.unencrypted);
+-            kvfree(pages);
++            if (carveout)
++            {
++                virt_addr = nv_vm_map_carveout(pfns, page_count,
++                                               at->flags.unencrypted);
++                kvfree(pfns);
++            }
++            else
++            {
++                kvfree(pfns);
++                pages = kvmalloc_array(page_count, sizeof(struct page *), NV_GFP_KERNEL);
++                if (pages == NULL)
++                {
++                    nv_printf(NV_DBG_ERRORS,
++                              "NVRM: failed to allocate vmap() page descriptor table!\n");
++                    return NULL;
++                }
++
++                for (j = 0; j < page_count; j++)
++                    pages[j] = NV_GET_PAGE_STRUCT(at->page_table[pageIndex+j].phys_addr);
++
++                virt_addr = nv_vm_map_pages(pages, page_count,
++                    at->cache_type == NV_MEMORY_CACHED, at->flags.unencrypted);
++                kvfree(pages);
++            }
+         }
+ 
+         if (virt_addr == 0)
+--- a/kernel-open/nvidia/nv-vm.c	2026-10-18 11:24:46.208243371 -0400
++++ b/kernel-open/nvidia/nv-vm.c	2026-10-18 12:37:12.488178645 -0400
+@@ -25,6 +25,7 @@
+ #include "nv.h"
+ #include "nv-linux.h"
+ #include "nv-reg.h"
++#include "nv-carveout-map.h"
+ 
+ extern NvU32 NVreg_EnableSystemMemoryPools;
+ 
+@@ -1203,10 +1204,8 @@
+     nv_free_system_pages(at);
+ }
+ 
+-static NvUPtr nv_vmap(struct page **pages, NvU32 page_count,
+-                      NvBool cached, NvBool unencrypted)
++static pgprot_t nv_vmap_prot(NvBool cached, NvBool unencrypted)
+ {
+-    void *ptr;
+     pgprot_t prot = PAGE_KERNEL;
+ #if defined(NVCPU_X86_64)
+     if (unencrypted)
+@@ -1229,12 +1228,54 @@
+         prot = cached ? PAGE_KERNEL : NV_PGPROT_UNCACHED(PAGE_KERNEL);
+     }
+ #endif
+-    ptr = vmap(pages, page_count, VM_MAP, prot);
++    return prot;
++}
++
++static NvUPtr nv_vmap(struct page **pages, NvU32 page_count,
++                      NvBool cached, NvBool unencrypted)
++{
++    void *ptr;
++
++    ptr = vmap(pages, page_count, VM_MAP, nv_vmap_prot(cached, unencrypted));
+     NV_MEMDBG_ADD(ptr, page_count * PAGE_SIZE);
+ 
+     return (NvUPtr)ptr;
+ }
+ 
++//
++// Map physical pages vmap() can't take: a firmware carveout left out of the
++// kernel's memory map (N1x display memory on the Surface Laptop Ultra). See
++// nv-carveout-map.h. Mapped Normal-NC, as the firmware's IORT RMR gives the
++// GPU, whatever the allocation's cache type.
++//
++NvUPtr nv_vm_map_carveout(
++    unsigned long *pfns,
++    NvU32 count,
++    NvBool unencrypted
++)
++{
++    void *ptr;
++
++    if (!NV_MAY_SLEEP())
++    {
++        nv_printf(NV_DBG_ERRORS,
++                  "NVRM: %s: can't map %d pfns, invalid context!\n",
++                  __FUNCTION__, count);
++        os_dbg_breakpoint();
++        return 0;
++    }
++
++    ptr = nv_carveout_vmap(pfns, count, nv_vmap_prot(NV_FALSE, unencrypted));
++    NV_MEMDBG_ADD(ptr, count * PAGE_SIZE);
++
++    return (NvUPtr)ptr;
++}
++
++NvBool nv_vm_pfn_is_carveout(unsigned long pfn)
++{
++    return nv_carveout_pfn(pfn);
++}
++
+ NvU64 nv_get_reclaimable_memory_usage(void)
+ {
+     int node_id;
+--- a/kernel-open/nvidia/nv-mmap.c	2026-10-18 11:25:14.134429817 -0400
++++ b/kernel-open/nvidia/nv-mmap.c	2026-10-18 12:37:32.189806993 -0400
+@@ -461,7 +461,8 @@
+ #if defined(NV_VGPU_KVM_BUILD)
+             at->flags.guest ||
+ #endif
+-            at->flags.carveout || at->import_sgt)
++            at->flags.carveout || at->import_sgt ||
++            nv_vm_pfn_is_carveout(at->page_table[j].phys_addr >> PAGE_SHIFT))
+         {
+             ret = nv_remap_page_range(vma, start, at->page_table[j].phys_addr,
+                                       PAGE_SIZE, vma->vm_page_prot);
+--- a/kernel-open/common/inc/nv-proto.h	2026-10-18 11:24:46.210243385 -0400
++++ b/kernel-open/common/inc/nv-proto.h	2026-10-18 12:37:12.488508332 -0400
+@@ -48,6 +48,8 @@
+ void        nv_revoke_gpu_mappings_locked(nv_state_t *);
+ 
+ NvUPtr      nv_vm_map_pages             (struct page **, NvU32, NvBool, NvBool);
++NvUPtr      nv_vm_map_carveout          (unsigned long *, NvU32, NvBool);
++NvBool      nv_vm_pfn_is_carveout       (unsigned long);
+ void        nv_vm_unmap_pages           (NvUPtr, NvU32);
+ NvU64       nv_get_reclaimable_memory_usage(void);
+ 
+--- /dev/null	2026-10-18 12:29:30.664323288 -0400
++++ b/kernel-open/common/inc/nv-carveout-map.h	2026-10-18 12:43:49.367758915 -0400
+@@ -0,0 +1,100 @@
++/*
++ * Kernel mappings of firmware carveout memory (NVIDIA N1x, Surface Laptop
++ * Ultra). The firmware leaves the GPU's display carveout out of the EFI memory
++ * map, so most of it has no struct page; the 48 MiB below 0x200000000 shares a
++ * memmap section with RAM and has reserved struct pages. vmap() rejects the
++ * former, so such allocations are mapped here instead.
++ *
++ * Plain kernel types only: also built into the n1x_pfn_probe test module.
++ */
++#ifndef __NV_CARVEOUT_MAP_H__
++#define __NV_CARVEOUT_MAP_H__
++
++#include <linux/mm.h>
++#include <linux/io.h>
++#include <linux/ioport.h>
++#include <linux/vmalloc.h>
++#include <linux/printk.h>
++#include <linux/memremap.h>
++
++/*
++ * A carveout page, to be mapped to user space by pfn (remap_pfn_range) rather
++ * than vm_insert_page(): no struct page; a ZONE_DEVICE one (the memmap that
++ * n1x_carveout_memmap gives the carveout); or a reserved one outside System
++ * RAM. Reserved RAM (the zero page, kernel image) is not one; page_is_ram()
++ * only runs for reserved pages.
++ */
++static inline bool nv_carveout_pfn(unsigned long pfn)
++{
++    struct page *page;
++
++    if (!pfn_valid(pfn))
++        return true;
++    page = pfn_to_page(pfn);
++    return is_zone_device_page(page) ||
++           (PageReserved(page) && !page_is_ram(pfn));
++}
++
++/*
++ * Kernel-map count pages, at least one without a struct page (the carveout
++ * when n1x_carveout_memmap is not loaded), with prot. Returns NULL, after
++ * logging the page list, when no mapping fits; free with vunmap(). With the
++ * memmap module loaded every page has a struct page and plain vmap() is used.
++ */
++static inline void *nv_carveout_vmap(unsigned long *pfns, unsigned int count,
++                                     pgprot_t prot)
++{
++    static atomic_t reports = ATOMIC_INIT(0);
++    unsigned int i, valid = 0, ram = 0;
++    bool contig = true;
++    const char *how = "none";
++    void *ptr = NULL;
++
++    for (i = 0; i < count; i++)
++    {
++        if (pfn_valid(pfns[i]))
++        {
++            valid++;
++            if (page_is_ram(pfns[i]))
++                ram++;
++        }
++        if (i > 0 && pfns[i] != pfns[i - 1] + 1)
++            contig = false;
++    }
++
++    if (valid == 0)
++    {
++        /* vmap_pfn() takes only pages without a struct page. */
++        ptr = vmap_pfn(pfns, count, prot);
++        how = "vmap_pfn";
++    }
++    else if (contig && ram == 0)
++    {
++        /* One physical range outside the linear map. */
++        ptr = (void __force *)__ioremap_prot(PFN_PHYS(pfns[0]),
++                                             (size_t)count << PAGE_SHIFT, prot);
++        how = "ioremap";
++    }
++
++    if (ptr == NULL || atomic_inc_return(&reports) <= 8)
++    {
++        pr_info("NVRM: carveout map %u pages %#llx..%#llx (valid %u, ram %u, %s) via %s: %s\n",
++                count, (unsigned long long)PFN_PHYS(pfns[0]),
++                (unsigned long long)PFN_PHYS(pfns[count - 1]), valid, ram,
++                contig ? "contiguous" : "scattered", how, ptr ? "ok" : "FAILED");
++    }
++    if (ptr == NULL)
++    {
++        for (i = 0; i < count && i < 16; i++)
++        {
++            pr_info("NVRM:   page %u: %#llx valid %d reserved %d ram %d\n", i,
++                    (unsigned long long)PFN_PHYS(pfns[i]), pfn_valid(pfns[i]),
++                    pfn_valid(pfns[i]) && PageReserved(pfn_to_page(pfns[i])),
++                    pfn_valid(pfns[i]) && page_is_ram(pfns[i]));
++        }
++    }
++
++    return ptr;
++}
++
++#endif /* __NV_CARVEOUT_MAP_H__ */

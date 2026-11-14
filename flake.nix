@@ -388,6 +388,11 @@
             watchman-mdf = {
               system = "aarch64-linux";
             };
+            # Microsoft Surface Laptop Ultra (NVIDIA RTX Spark N1X, aarch64).
+            # Heavy patch/module stack via modules/nixos/hardware/surface-laptop-ultra.
+            surface-ultra = {
+              system = "aarch64-linux";
+            };
           };
           modules =
             let

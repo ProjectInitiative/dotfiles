@@ -1,0 +1,244 @@
+#!/usr/bin/python3
+"""n1x-thermald: skin-temperature / SoC-power controller for the Surface Laptop Ultra (N1X).
+
+Windows keeps the skin (SAM sensor VTS1) at 45 C by lowering the SoC's sustained power
+limit (PL1: 55 W on AC, 42.5 W on battery). Linux has no PL1 knob here, so this daemon
+holds the averaged SoC power (ACPI \\_TZ.PSOC, which reports mW, not a temperature) under
+a budget by moving every CPU's scaling_max_freq, and lowers the budget when the skin gets
+warm. The numbers come from the Windows thermal policy (see README.md, "thermal").
+
+  n1x-thermald              run (root; systemd service)
+  n1x-thermald --dry-run    compute and print decisions every cycle, write nothing (any user)
+  n1x-thermald --selftest   check that scaling_max_freq really slows a CPU (root)
+
+System python3 and the standard library only: it runs as root at boot, where uv is not
+available.
+"""
+import glob
+import json
+import os
+import signal
+import subprocess
+import sys
+import time
+
+PERIOD = 2.0                    # s
+P_BUDGET_AC = 55.0              # W, Windows "recommended" PL1 on AC
+P_BUDGET_DC = 42.5              # W, on battery
+P_MIN = 10.0                    # W, lowest budget the skin loop may ask for
+SKIN = dict(iid=9, target=45.0, kp=3.0, ki=0.03)        # VTS1, Windows SKIN_TARGET_REC
+SECONDARY = dict(iid=12, target=51.0, kp=3.0, ki=0.03)  # VTS5, Windows secondary PID target
+BATT_IID = 5                    # RTS5
+SEC_HOT, SEC_CRIT = 55.5, 57.0  # Windows SAFE_SKIN_HOT / CRT
+BATT_HOT, BATT_CRIT = 62.0, 64.0
+CAP_FLOOR = 0.40                # lowest normal cap (fraction of max frequency)
+CAP_STEP = 0.05
+STEP_DOWN_HOLD = 8.0            # s between steps: PSOC is a ~28 s average, so wait for it
+STEP_UP_HOLD = 8.0
+OVER_MARGIN = 1.0               # W above budget before stepping down
+UNDER_MARGIN = 3.0              # W below budget before stepping up
+STATUS = "/run/n1x-thermald/status.json"
+
+
+def read(path):
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except OSError:
+        return None
+
+
+def write(path, val):
+    with open(path, "w") as f:
+        f.write(str(val))
+
+
+def acpi_zone(name):
+    for z in glob.glob("/sys/class/thermal/thermal_zone*"):
+        if read(f"{z}/device/path") == f"\\_TZ_.{name}":
+            return z
+    return None
+
+
+def hwmon(name):
+    for h in glob.glob("/sys/class/hwmon/hwmon*"):
+        if read(f"{h}/name") == name:
+            return h
+    return None
+
+
+class Sensors:
+    def __init__(self):
+        self.tsoc = acpi_zone("TSOC")
+        self.psoc = acpi_zone("PSOC")
+        self.thermal = None
+        self.next_scan = 0.0
+
+    def rescan(self):
+        # surface_temp may load after us; look again every 30 s while it is missing
+        if self.thermal is None and time.monotonic() >= self.next_scan:
+            self.thermal = hwmon("surface_thermal")
+            self.next_scan = time.monotonic() + 30
+
+    def tj(self):
+        v = read(f"{self.tsoc}/temp") if self.tsoc else None
+        return int(v) / 1000 if v else None
+
+    def soc_power(self):
+        # Linux converts the raw dK reading with (raw - 2732) * 100; PSOC's raw value is mW
+        v = read(f"{self.psoc}/temp") if self.psoc else None
+        return (int(v) / 100 + 2732) / 1000 if v else None
+
+    def sam(self, iid):
+        v = read(f"{self.thermal}/temp{iid}_input") if self.thermal else None
+        if v is None:
+            return None
+        t = int(v) / 1000
+        return t if -20 < t < 150 else None
+
+
+def on_ac():
+    for p in glob.glob("/sys/class/power_supply/*"):
+        if read(f"{p}/type") == "Mains":
+            return read(f"{p}/online") == "1"
+    return True
+
+
+class Cpus:
+    """The cap is a fraction of each policy's own maximum (the clusters differ)."""
+
+    def __init__(self):
+        self.policies = {p: (int(read(f"{p}/cpuinfo_min_freq")), int(read(f"{p}/cpuinfo_max_freq")))
+                         for p in sorted(glob.glob("/sys/devices/system/cpu/cpufreq/policy*"))}
+        self.applied = None
+
+    def describe(self):
+        maxes = sorted({hi for _, hi in self.policies.values()})
+        return f"{len(self.policies)} CPUs, max {'/'.join(str(m // 1000) for m in maxes)} MHz"
+
+    def set_cap(self, frac):
+        if frac == self.applied:
+            return
+        for p, (lo, hi) in self.policies.items():
+            try:
+                write(f"{p}/scaling_max_freq", max(lo, int(hi * frac)))
+            except OSError as e:
+                print(f"cannot set {p}: {e}", flush=True)
+        self.applied = frac
+
+    def restore(self):
+        self.applied = None
+        self.set_cap(1.0)
+
+
+class Pi:
+    """Budget reduction from one skin sensor: kp * error + integral, never negative."""
+
+    def __init__(self, target, kp, ki, span):
+        self.target, self.kp, self.ki, self.span = target, kp, ki, span
+        self.integral = 0.0
+
+    def cut(self, temp, dt):
+        if temp is None:
+            return 0.0
+        err = temp - self.target
+        self.integral = min(max(self.integral + self.ki * err * dt, 0.0), self.span)
+        return max(self.kp * err, 0.0) + self.integral
+
+
+def main():
+    dry = "--dry-run" in sys.argv
+    sensors, cpus = Sensors(), Cpus()
+    if sensors.psoc is None:
+        sys.exit("ACPI \\_TZ.PSOC not found")
+    span = P_BUDGET_AC - P_MIN
+    skin = Pi(SKIN["target"], SKIN["kp"], SKIN["ki"], span)
+    sec = Pi(SECONDARY["target"], SECONDARY["kp"], SECONDARY["ki"], span)
+    cap, last_step, hot = 1.0, 0.0, False
+
+    def stop(*_):
+        if not dry:
+            cpus.restore()
+        print("stopped, CPU limits restored", flush=True)
+        sys.exit(0)
+
+    signal.signal(signal.SIGTERM, stop)
+    signal.signal(signal.SIGINT, stop)
+    if not dry:
+        os.makedirs(os.path.dirname(STATUS), exist_ok=True)
+        cpus.restore()
+    print(f"n1x-thermald: {cpus.describe()}, "
+          f"PSOC {sensors.psoc}, TSOC {sensors.tsoc}{' (dry run)' if dry else ''}", flush=True)
+
+    prev = time.monotonic()
+    while True:
+        now = time.monotonic()
+        dt, prev = now - prev, now
+        sensors.rescan()
+        ac = on_ac()
+        power, tj = sensors.soc_power(), sensors.tj()
+        t_skin, t_sec, t_batt = sensors.sam(SKIN["iid"]), sensors.sam(SECONDARY["iid"]), sensors.sam(BATT_IID)
+
+        base = P_BUDGET_AC if ac else P_BUDGET_DC
+        budget = max(P_MIN, base - max(skin.cut(t_skin, dt), sec.cut(t_sec, dt)))
+        reason = ""
+
+        if (t_sec or 0) >= SEC_CRIT or (t_batt or 0) >= BATT_CRIT:
+            print(f"CRITICAL: secondary skin {t_sec} C, battery {t_batt} C: powering off", flush=True)
+            if not dry:
+                subprocess.run(["systemctl", "poweroff"])
+        was_hot = hot
+        hot = (t_sec or 0) >= SEC_HOT or (t_batt or 0) >= BATT_HOT or \
+            (was_hot and ((t_sec or 0) >= SEC_HOT - 1.5 or (t_batt or 0) >= BATT_HOT - 2))
+        if hot:
+            cap, reason = 0.0, "HOT"
+        elif was_hot:
+            cap, last_step, reason = CAP_FLOOR, now, "hot over"
+        elif power is not None:
+            over = power - budget
+            if over > OVER_MARGIN and cap > CAP_FLOOR and now - last_step >= STEP_DOWN_HOLD:
+                cap, last_step, reason = max(CAP_FLOOR, cap - CAP_STEP), now, "down"
+            elif over < -UNDER_MARGIN and cap < 1.0 and now - last_step >= STEP_UP_HOLD:
+                cap, last_step, reason = min(1.0, cap + CAP_STEP), now, "up"
+
+        line = (f"{'AC' if ac else 'DC'} soc {power:5.1f} W / budget {budget:4.1f} W | "
+                f"skin {t_skin} sec {t_sec} batt {t_batt} tj {tj} | cap {cap:.2f} {reason}")
+        if dry or reason:
+            print(line, flush=True)
+        if not dry:
+            cpus.set_cap(cap)
+            try:
+                with open(STATUS + ".tmp", "w") as f:
+                    json.dump(dict(ac=ac, soc_w=power, budget_w=budget, skin=t_skin, secondary=t_sec,
+                                   battery=t_batt, tj=tj, cap=round(cap, 2)), f)
+                os.replace(STATUS + ".tmp", STATUS)
+            except OSError:
+                pass
+        time.sleep(PERIOD)
+
+
+def selftest():
+    """Busy-loop speed on CPU 0 at 100 % and 50 % scaling_max_freq."""
+    cpus = Cpus()
+    os.sched_setaffinity(0, {0})
+
+    def speed():
+        n, end = 0, time.monotonic() + 2
+        while time.monotonic() < end:
+            n += 1
+        return n / 2
+
+    try:
+        cpus.set_cap(1.0)
+        a = speed()
+        cpus.set_cap(0.5)
+        time.sleep(0.2)
+        b = speed()
+    finally:
+        cpus.restore()
+    print(f"loop rate at 100 %: {a:,.0f}/s, at 50 %: {b:,.0f}/s, ratio {b / a:.2f} "
+          f"({'OK, the cap works' if b / a < 0.7 else 'the cap has NO effect'})")
+
+
+if __name__ == "__main__":
+    selftest() if "--selftest" in sys.argv else main()

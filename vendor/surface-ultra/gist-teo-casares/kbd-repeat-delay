@@ -1,0 +1,12 @@
+#!/usr/bin/python3 -I
+# [key-repeat] Set kernel soft-autorepeat delay (used by the Linux VT/TTY) on an evdev node.
+# Usage: kbd-repeat-delay /dev/input/eventN [delay_ms]   (period is kept as-is)
+import fcntl, struct, sys
+EVIOCGREP, EVIOCSREP = 0x80084503, 0x40084503
+dev = sys.argv[1]; delay = int(sys.argv[2]) if len(sys.argv) > 2 else 500
+with open(dev, 'rb') as f:
+    b = bytearray(8); fcntl.ioctl(f, EVIOCGREP, b)
+    old_delay, period = struct.unpack('II', b)
+    fcntl.ioctl(f, EVIOCSREP, struct.pack('II', delay, period))
+    b = bytearray(8); fcntl.ioctl(f, EVIOCGREP, b)
+    print(f"{dev}: delay {old_delay} -> {struct.unpack('II', b)[0]} ms, period {period} ms")
