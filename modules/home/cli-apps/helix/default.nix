@@ -31,8 +31,30 @@ in
 
       sessionVariables = {
         EDITOR = "hx";
+        VISUAL = "hx";
       };
 
+    };
+
+    # home.sessionVariables is guarded by __HM_SESS_VARS_SOURCED (one-shot per
+    # session). When the systemd user manager was started from a login shell,
+    # it inherits EDITOR=nano (NixOS set-environment via /etc/zshenv) *plus*
+    # the guard already set — so every terminal spawned from the session skips
+    # the hx export and sops/git/etc open nano. Re-export unconditionally in
+    # interactive shell init so the user-level choice always wins.
+    programs.zsh.initContent = mkIf config.programs.zsh.enable ''
+      export EDITOR="hx" VISUAL="hx"
+    '';
+
+    programs.bash.initExtra = mkIf config.programs.bash.enable ''
+      export EDITOR="hx" VISUAL="hx"
+    '';
+
+    # GUI-launched apps and user services read environment.d; keeps new
+    # services consistent with the interactive shells.
+    systemd.user.sessionVariables = {
+      EDITOR = "hx";
+      VISUAL = "hx";
     };
   };
 }
