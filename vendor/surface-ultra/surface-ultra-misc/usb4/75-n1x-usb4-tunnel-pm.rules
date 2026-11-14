@@ -1,4 +1,0 @@
-# Surface Laptop Ultra (N1X): keep the USB4 tunnel root ports (NVIDIA 10de:22cf) out of
-# runtime suspend. While they are suspended, devices behind a USB4/Thunderbolt dock are not
-# enumerated. Approach from teo-casares (omacom/omarchy discussion #15885).
-ACTION=="add|bind", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{device}=="0x22cf", ATTR{power/control}="on"

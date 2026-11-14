@@ -1,4 +1,0 @@
-# [key-repeat] Surface Laptop Ultra built-in keyboard (MSHW0794 045E:0CC7 on i2c-3): its key-release
-# reports arrive 20-145 ms late (I2C read stall), so the kernel 250 ms soft-autorepeat (used by the
-# TTY console) fires on normal keystrokes. Raise the kernel repeat delay to 500 ms for this device.
-ACTION=="add", SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_KEYBOARD}=="1", ATTRS{name}=="MSHW0794:00 045E:0CC7 Keyboard", RUN+="/usr/local/bin/kbd-repeat-delay $devnode 500"

@@ -1,9 +1,0 @@
-#!/bin/sh
-# [audio] wait for the MT8901 card, then one soft SoundWire link-0 reset so the
-# codecs (rt721 jack) re-run attach-time init after early PCM probing.
-for i in $(seq 1 60); do grep -q mt8901 /proc/asound/cards && break; sleep 1; done
-grep -q mt8901 /proc/asound/cards || exit 0
-sleep 3
-K=/sys/kernel/debug/NVDA9100:00/bus_reset
-[ -w "$K" ] && echo 0 > "$K"
-exit 0

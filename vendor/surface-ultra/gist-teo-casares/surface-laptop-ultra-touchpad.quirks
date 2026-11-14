@@ -1,9 +1,0 @@
-# Surface Laptop Ultra (N1X) ELAN touchpad: advertises pressure 0-2048 but real
-# touches report ~20-40, so libinput's pressure threshold (~204) rejects every touch.
-# Ignore the pressure axes and fall back to plain contact detection.
-[Surface Laptop Ultra Touchpad]
-MatchUdevType=touchpad
-MatchBus=i2c
-MatchVendor=0x04F3
-MatchProduct=0x3358
-AttrEventCode=-ABS_MT_PRESSURE;-ABS_PRESSURE;

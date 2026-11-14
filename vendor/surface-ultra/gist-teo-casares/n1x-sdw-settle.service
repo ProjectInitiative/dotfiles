@@ -1,9 +1,0 @@
-[Unit]
-Description=Settle MT8901 SoundWire link after audio card probe (Surface Laptop Ultra)
-After=systemd-modules-load.service sys-kernel-debug.mount
-ConditionPathExists=/sys/bus/acpi/devices/NVDA9100:00
-[Service]
-Type=oneshot
-ExecStart=/usr/local/sbin/n1x-sdw-settle
-[Install]
-WantedBy=multi-user.target

@@ -1,4 +1,0 @@
-# Upstream rt721-sdca from Linux v7.4-rc1, built for 7.3 kernels.
-ccflags-y := -I$(src)
-snd-soc-rt721-sdca-y := rt721-sdca.o rt721-sdca-sdw.o
-obj-m := snd-soc-rt721-sdca.o

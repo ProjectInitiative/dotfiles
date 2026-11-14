@@ -1,2 +1,0 @@
-obj-m := surface_ccu_boot.o surface_ultra_cam.o
-surface_ultra_cam-y := sucam_main.o sucam_hw.o sucam_vd55g1.o sucam_mc.o
