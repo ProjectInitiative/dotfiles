@@ -761,14 +761,24 @@ in
   #   };
   # };
 
+  # Both depend on the bcachefs pool. Requires= alone is not enough: if the
+  # pool mount fails once at boot (rockpi HAT flake, drives slow to appear),
+  # the start job is aborted and NEVER retried — that silently killed
+  # prometheus for 7h on 2026-11-14 while every Grafana alert turned into a
+  # DatasourceError storm. Restart=on-failure makes them self-heal once the
+  # pool eventually comes up.
   systemd.services.prometheus = {
     after = [ "storage-mount.service" ];
     requires = [ "storage-mount.service" ];
+    serviceConfig.Restart = lib.mkForce "on-failure";
+    serviceConfig.RestartSec = "30s";
   };
 
   systemd.services.loki = {
     after = [ "storage-mount.service" ];
     requires = [ "storage-mount.service" ];
+    serviceConfig.Restart = lib.mkForce "on-failure";
+    serviceConfig.RestartSec = "30s";
   };
 
   # # Define the filesystem on the RAID array to be mounted.

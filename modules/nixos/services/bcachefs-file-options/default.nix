@@ -79,7 +79,15 @@ in
         jobName: jobCfg:
         nameValuePair "bcachefs-file-options-${jobName}" {
           description = "Apply bcachefs options to ${jobCfg.path}";
-          after = [ "local-fs.target" ];
+          # The target path lives on a bcachefs pool that may mount late in
+          # boot (storage-mount.service runs after rockpi-quad.service on
+          # dinghy). Without ordering, the timer can fire pre-mount and the
+          # set-file-option fails with ENOENT. wants+after (not requires) so
+          # hosts without a storage-mount.service (capstan mounts its pool
+          # another way) are unaffected — After= on a nonexistent unit is a
+          # no-op.
+          after = [ "local-fs.target" "storage-mount.service" ];
+          wants = [ "storage-mount.service" ];
 
           path = [ pkgs.bcachefs-tools ];
 
