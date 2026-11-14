@@ -21,6 +21,10 @@ in
     home = {
       packages = with pkgs; [
         helix
+        # Wayland clipboard bridge — pi (and other TUI apps) shell out to
+        # wl-copy/wl-paste for clipboard access; terminal highlight-copy works
+        # without it, but in-process copies need the helper.
+        wl-clipboard
         # language servers
         lsp-ai
         nil
