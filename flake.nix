@@ -356,18 +356,10 @@
             "aarch64-linux"
           ];
           hosts = {
+            # New astrolabe: DGX Spark worker (aarch64), reusing the name and
+            # .54 management IP of the retired x86 Strix Halo astrolabe.
             astrolabe = {
-              system = "x86_64-linux";
-              specialArgs = {
-                # ✅ CORRECT: 'config' is safely contained inside the upstream import
-                upstream = import inputs.upstream {
-                  system = "x86_64-linux";
-                  config = {
-                    allowUnfree = true;
-                    allowBroken = true;
-                  };
-                };
-              };
+              system = "aarch64-linux";
             };
             wharfmaster = {
               system = "aarch64-linux";
@@ -387,6 +379,9 @@
             chronometer = {
               system = "aarch64-linux";
             };
+            # chronometer/sextant/octant/astrolabe form the DGX Spark cluster
+            # (see systems/aarch64-linux/*/default.nix and
+            # modules/nixos/hosts/dgx-spark/).
             watchman-idf = {
               system = "aarch64-linux";
             };
