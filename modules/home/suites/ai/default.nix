@@ -276,7 +276,7 @@ in
             api = "openai-completions";
           };
           providers.ai = {
-            baseUrl = "http://ai.taildeab2.ts.net/v1";
+            baseUrl = "https://ai.taildeab2.ts.net/v1";
             api = "openai-completions";
             # Virtual key from sops (litellm_virtual_key). Resolved at request
             # time via "!command" — never in the nix store. Empty string until
@@ -401,7 +401,7 @@ in
             api = "openai-completions";
           };
           providers.ai = {
-            baseUrl = "http://ai.taildeab2.ts.net/v1";
+            baseUrl = "https://ai.taildeab2.ts.net/v1";
             api = "openai-completions";
             # Same sops-backed virtual key as pi (see pi block above).
             apiKey = "!cat /run/secrets/litellm_virtual_key 2>/dev/null";
