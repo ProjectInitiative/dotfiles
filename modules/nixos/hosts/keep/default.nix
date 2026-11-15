@@ -283,21 +283,13 @@ in
         X11Forwarding = false;
         PermitTunnel = false;
         LogLevel = "VERBOSE";
-        KexAlgorithms = [
-          "curve25519-sha256"
-          "curve25519-sha256@libssh.org"
-          "diffie-hellman-group16-sha512"
-          "diffie-hellman-group18-sha512"
-        ];
-        Ciphers = [
-          "chacha20-poly1305@openssh.com"
-          "aes256-gcm@openssh.com"
-          "aes128-gcm@openssh.com"
-        ];
-        Macs = [
-          "hmac-sha2-256-etm@openssh.com"
-          "hmac-sha2-512-etm@openssh.com"
-        ];
+        # No KexAlgorithms/Ciphers/Macs pins: modern OpenSSH upstream defaults
+        # are PQ-first (mlkem768x25519-sha256) and already exclude the weak
+        # legacy algorithms (CBC, SHA1 MACs, DH-group1) that pinned lists used
+        # to guard against. Hand-pinned lists silently go stale as upstream
+        # upgrades — that is exactly how keep missed the PQ KEX transition and
+        # logged "not using a post-quantum key exchange" warnings. Revisit only
+        # if OpenSSH ever ships a weak default.
       };
     };
 
