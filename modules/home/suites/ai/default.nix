@@ -197,11 +197,18 @@ in
           };
           # REA: Reverse Engineer Anything — stdio MCP server from the
           # nix-packaged rea-agents; spawns lazily on first tool call.
+          # The Android (jadx) provider needs REA's pinned jadx-headless-mcp
+          # JAR (REA never downloads it) plus a full JDK with jdk.compiler
+          # (REA compiles a source bridge against the JAR at admission).
           rea = {
             enable = true;
             type = "stdio";
             command = lib.getExe pkgs.${namespace}.rea-agents;
             args = [ "mcp" ];
+            env = {
+              REA_JADX_MCP_JAR = "${pkgs.${namespace}.jadx-headless-mcp}/share/java/jadx-headless-mcp-0.7.1-all.jar";
+              JAVA_HOME = "${pkgs.jdk}";
+            };
           };
         };
         description = "MCP server configurations. Each attr name is the MCP server identifier.";

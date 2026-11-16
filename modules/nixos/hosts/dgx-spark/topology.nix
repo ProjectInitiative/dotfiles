@@ -1,6 +1,7 @@
 { lib }:
 let
   controlAddresses = {
+    astrolabe = "172.16.4.54";
     chronometer = "172.16.4.55";
     sextant = "172.16.4.56";
     octant = "172.16.4.57";
@@ -9,19 +10,90 @@ let
   # The switchless fabric is declared once. Each link has exactly two endpoints;
   # linksFor derives reciprocal peer identity, addresses, and MACs so those
   # values cannot drift between host configurations.
+  #
+  # 4-node ring (astrolabe → octant → chronometer → sextant → astrolabe).
+  # Each chassis QSFP connector (P0/P1) exposes TWO 100G rails on separate
+  # PCIe paths: P0 = enp1s0f0np0 + enP2p1s0f0np0 (the "f0" pair),
+  # P1 = enp1s0f1np1 + enP2p1s0f1np1 (the "f1" pair). One physical cable
+  # therefore appears as two link entries (-0 = card1 rail, -1 = card2 rail).
+  # Ring: each node's P0 goes to the next node's P1; the -0 rail lives in
+  # 172.16.5–.11, the -1 rail in .6–.12.
   links = [
+    # astrolabe P0 → octant P1
+    {
+      id = "astrolabe-octant-0";
+      endpoints = {
+        astrolabe = {
+          name = "enp1s0f0np0";
+          mac = "30:c5:99:40:35:06";
+          address = "172.16.5.54/24";
+        };
+        octant = {
+          name = "enp1s0f1np1";
+          mac = "30:c5:99:be:70:fe";
+          address = "172.16.5.57/24";
+        };
+      };
+    }
+    {
+      id = "astrolabe-octant-1";
+      endpoints = {
+        astrolabe = {
+          name = "enP2p1s0f0np0";
+          mac = "30:c5:99:40:35:0a";
+          address = "172.16.6.54/24";
+        };
+        octant = {
+          name = "enP2p1s0f1np1";
+          mac = "30:c5:99:be:71:02";
+          address = "172.16.6.57/24";
+        };
+      };
+    }
+    # octant P0 → chronometer P1
+    {
+      id = "octant-chronometer-0";
+      endpoints = {
+        octant = {
+          name = "enp1s0f0np0";
+          mac = "30:c5:99:be:70:fd";
+          address = "172.16.7.57/24";
+        };
+        chronometer = {
+          name = "enp1s0f1np1";
+          mac = "30:c5:99:40:fb:cf";
+          address = "172.16.7.55/24";
+        };
+      };
+    }
+    {
+      id = "octant-chronometer-1";
+      endpoints = {
+        octant = {
+          name = "enP2p1s0f0np0";
+          mac = "30:c5:99:be:71:01";
+          address = "172.16.8.57/24";
+        };
+        chronometer = {
+          name = "enP2p1s0f1np1";
+          mac = "30:c5:99:40:fb:d3";
+          address = "172.16.8.55/24";
+        };
+      };
+    }
+    # chronometer P0 → sextant P1
     {
       id = "chronometer-sextant-0";
       endpoints = {
         chronometer = {
-          name = "enp1s0f1np1";
-          mac = "30:c5:99:40:fb:cf";
-          address = "172.16.5.55/24";
+          name = "enp1s0f0np0";
+          mac = "30:c5:99:40:fb:ce";
+          address = "172.16.9.55/24";
         };
         sextant = {
           name = "enp1s0f1np1";
           mac = "30:c5:99:40:c4:2f";
-          address = "172.16.5.56/24";
+          address = "172.16.9.56/24";
         };
       };
     }
@@ -29,74 +101,45 @@ let
       id = "chronometer-sextant-1";
       endpoints = {
         chronometer = {
-          name = "enP2p1s0f1np1";
-          mac = "30:c5:99:40:fb:d3";
-          address = "172.16.6.55/24";
+          name = "enP2p1s0f0np0";
+          mac = "30:c5:99:40:fb:d2";
+          address = "172.16.10.55/24";
         };
         sextant = {
           name = "enP2p1s0f1np1";
           mac = "30:c5:99:40:c4:33";
-          address = "172.16.6.56/24";
+          address = "172.16.10.56/24";
         };
       };
     }
+    # sextant P0 → astrolabe P1 (ring wrap)
     {
-      id = "chronometer-octant-0";
-      endpoints = {
-        chronometer = {
-          name = "enp1s0f0np0";
-          mac = "30:c5:99:40:fb:ce";
-          address = "172.16.7.55/24";
-        };
-        octant = {
-          name = "enp1s0f1np1";
-          mac = "30:c5:99:be:70:fe";
-          address = "172.16.7.57/24";
-        };
-      };
-    }
-    {
-      id = "chronometer-octant-1";
-      endpoints = {
-        chronometer = {
-          name = "enP2p1s0f0np0";
-          mac = "30:c5:99:40:fb:d2";
-          address = "172.16.8.55/24";
-        };
-        octant = {
-          name = "enP2p1s0f1np1";
-          mac = "30:c5:99:be:71:02";
-          address = "172.16.8.57/24";
-        };
-      };
-    }
-    {
-      id = "sextant-octant-0";
+      id = "sextant-astrolabe-0";
       endpoints = {
         sextant = {
           name = "enp1s0f0np0";
           mac = "30:c5:99:40:c4:2e";
-          address = "172.16.9.56/24";
+          address = "172.16.11.56/24";
         };
-        octant = {
-          name = "enp1s0f0np0";
-          mac = "30:c5:99:be:70:fd";
-          address = "172.16.9.57/24";
+        astrolabe = {
+          name = "enp1s0f1np1";
+          mac = "30:c5:99:40:35:07";
+          address = "172.16.11.54/24";
         };
       };
     }
     {
-      id = "sextant-octant-1";
+      id = "sextant-astrolabe-1";
       endpoints = {
         sextant = {
           name = "enP2p1s0f0np0";
           mac = "30:c5:99:40:c4:32";
-          address = "172.16.10.56/24";
+          address = "172.16.12.56/24";
         };
-        octant = {
-          name = "enP2p1s0f0np0";
-          mac = "30:c5:99:be:71:01";
-          address = "172.16.10.57/24";
+        astrolabe = {
+          name = "enP2p1s0f1np1";
+          mac = "30:c5:99:40:35:0b";
+          address = "172.16.12.54/24";
         };
       };
     }

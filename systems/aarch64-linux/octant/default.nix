@@ -32,12 +32,12 @@ in
     vlanId = 10;
     # Standard management NIC (enP7s7 / enP7p1s0), not ConnectX-7.
     interfaceMac = "30:c5:99:be:70:fc";
-    # Octant physical port f1 connects to Chronometer physical port f0;
-    # Octant physical port f0 connects to Sextant physical port f0.
+    # Octant physical port f1 connects to Astrolabe physical port f0;
+    # Octant physical port f0 connects to Chronometer physical port f1.
     rdmaLinks = rdmaTopology.linksFor config.networking.hostName;
     rdmaPeerManagementIps = [
+      "172.16.1.54" # Astrolabe
       "172.16.1.55" # Chronometer
-      "172.16.1.56" # Sextant
     ];
     rdmaPeerControlIps = rdmaTopology.peerControlAddressesFor config.networking.hostName;
     k8sServerAddr = "https://172.16.1.50:6443";

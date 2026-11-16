@@ -18,17 +18,9 @@ in
   # Reuses the old x86 Strix Halo astrolabe's name and .54 management IP.
   # Configuration mirrors chronometer/sextant/octant.
   #
-  # TODO: pin interfaceMac to the new host's standard NIC once hardware
-  # arrives (the ConnectX-7 ports are reserved for the RDMA interconnect,
-  # not k3s). The mgmnt link rename is skipped until this is set — the
-  # machine boots with stock interface names and DHCP until then.
-  #
-  # TODO: RDMA — chronometer/sextant/octant form a full switchless mesh and
-  # both QSFP ports per node are already cabled. Cabling a 4th node requires
-  # either re-plumbing the mesh or an RDMA switch; leave rdmaLinks empty and
-  # extend modules/nixos/hosts/dgx-spark/topology.nix once the fabric is
-  # decided. rdmaPeerManagementIps below keeps the node registered with the
-  # existing mesh peers for ARP/inventory.
+  # RDMA: 4-node switchless ring (astrolabe → octant → chronometer →
+  # sextant → astrolabe) declared once in
+  # modules/nixos/hosts/dgx-spark/topology.nix.
   ${namespace}.hosts.dgx-spark = {
     enable = true;
     # Management on 172.16.1.0/24 and the Kubernetes node/data path on VLAN 10
@@ -41,12 +33,10 @@ in
     vlanIpAddress = "172.16.4.54/24";
     vlanId = 10;
     # Standard management NIC (enP7s7 / enP7p1s0), not ConnectX-7.
-    interfaceMac = "";
-    # No RDMA links yet — see TODO above.
-    rdmaLinks = [ ];
+    interfaceMac = "30:c5:99:40:35:05";
+    rdmaLinks = rdmaTopology.linksFor config.networking.hostName;
     rdmaPeerManagementIps = [
       "172.16.1.55" # Chronometer
-      "172.16.1.56" # Sextant
       "172.16.1.57" # Octant
     ];
     rdmaPeerControlIps = [ ];

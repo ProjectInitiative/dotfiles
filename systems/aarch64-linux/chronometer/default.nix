@@ -33,13 +33,13 @@ in
     # Standard management NIC (enP7s7 / enP7p1s0), not ConnectX-7.
     # fbcd
     interfaceMac = "30:c5:99:40:fb:cd";
-    # Each physical QSFP port exposes two 100G logical paths. Physical port
-    # f1 remains the direct Chronometer–Sextant link; physical port f0 goes
-    # to Octant's physical port f1.
+    # Each physical QSFP port exposes two 100G logical paths. Ring topology:
+    # physical port f1 goes to Octant's physical port f0; physical port f0
+    # goes to Sextant's physical port f1.
     rdmaLinks = rdmaTopology.linksFor config.networking.hostName;
     rdmaPeerManagementIps = [
+      "172.16.1.54" # Astrolabe
       "172.16.1.56" # Sextant
-      "172.16.1.57" # Octant
     ];
     rdmaPeerControlIps = rdmaTopology.peerControlAddressesFor config.networking.hostName;
     k8sServerAddr = "https://172.16.1.50:6443";
