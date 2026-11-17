@@ -18,6 +18,20 @@ let
       lib.optional (cfg.rdmaPeerManagementIp != "") cfg.rdmaPeerManagementIp;
   peerControlIps = lib.unique (peerManagementIps ++ cfg.rdmaPeerControlIps);
 
+  addressWithoutPrefix = address: builtins.head (lib.splitString "/" address);
+
+  # Cross-fabric transit: a forwarded RoCE packet enters on one fabric
+  # interface and leaves on another (ring neighbour relay). Accept all ordered
+  # fabric interface pairs in the FORWARD chain — k3s/flannel installs its own
+  # FORWARD policy, so these must be explicit.
+  fabricTransitPairs = lib.concatMap (
+    l1:
+    builtins.map (l2: {
+      inName = l1.name;
+      outName = l2.name;
+    }) (builtins.filter (l2: l2.name != l1.name) cfg.rdmaLinks)
+  ) cfg.rdmaLinks;
+
   # Build natively on the Spark itself (or on ARM infra) by setting
   # BUILD_ARM_NATIVE=true. Default: cross-compile the NVIDIA kernel on x86_64
   # (see ./cross-kernel.nix) so the infra can pre-build before hardware arrives.
@@ -111,6 +125,12 @@ in
             linkId = mkOption {
               type = types.str;
               description = "Stable cluster-wide identifier shared by both ends of this direct link";
+            };
+            farRoutes = mkOption {
+              type = types.listOf types.str;
+              default = [ ];
+              description =
+                "Fabric subnets reachable only via this link's peer; installed as routed RoCE static routes (ring relay)";
             };
           };
         }
@@ -426,6 +446,12 @@ in
             iptables -w -C nixos-fw -s ${peerIp} -j nixos-fw-accept 2>/dev/null || \
               iptables -w -I nixos-fw 1 -s ${peerIp} -j nixos-fw-accept
           '') peerControlIps
+          # Routed RoCE transit between fabric interfaces (ring relay).
+          + optionalString (cfg.rdmaLinks != [ ]) "\n"
+          + lib.concatMapStringsSep "\n" (pair: ''
+            iptables -w -C FORWARD -i ${pair.inName} -o ${pair.outName} -j ACCEPT 2>/dev/null || \
+              iptables -w -I FORWARD 1 -i ${pair.inName} -o ${pair.outName} -j ACCEPT
+          '') fabricTransitPairs
           + optionalString (cfg.k8sHostNetworkServiceTCPPorts != [ ]) "\n"
           + lib.concatMapStringsSep "\n" (
             sourceCidr:
@@ -446,6 +472,14 @@ in
               ip saddr ${sourceCidr} tcp dport ${toString port} accept comment "DGX Spark Kubernetes host-network service"
             '') cfg.k8sHostNetworkServiceTCPPorts
           ) cfg.k8sHostNetworkServiceSourceCidrs
+        );
+        # Routed RoCE transit between fabric interfaces (ring relay) —
+        # nftables path. The iptables path adds the same rules via
+        # extraCommands above.
+        extraForwardRules = mkIf (config.networking.nftables.enable && cfg.rdmaLinks != [ ]) (
+          lib.concatMapStringsSep "\n" (pair: ''
+            iifname "${pair.inName}" oifname "${pair.outName}" accept comment "DGX Spark RoCE transit"
+          '') fabricTransitPairs
         );
       };
       # DHCP/static addressing is managed explicitly by systemd.network below.
@@ -553,6 +587,17 @@ in
               RequiredForOnline = "no";
             };
             address = [ link.address ];
+            # Routed RoCE for non-adjacent pairs: reach the peer's other-cable
+            # subnets through this peer (RoCE v2 is routable; transit rides
+            # this single rail). Needs net.ipv4.ip_forward (already set by
+            # k3s) and the FORWARD accepts below.
+            routes = builtins.map (subnet: {
+              routeConfig = {
+                Destination = subnet;
+                Gateway = link.peerAddress;
+                PreferredSource = addressWithoutPrefix link.address;
+              };
+            }) (link.farRoutes or [ ]);
             # RoCE exhausts its retry budget too quickly to rely on cold ARP
             # resolution. A static neighbor makes the path immediately usable.
             neighbors = [

@@ -147,6 +147,14 @@ let
 
   addressWithoutPrefix = address: builtins.head (lib.splitString "/" address);
 
+  # The /24 carrying `address`, as a route destination (e.g. 172.16.7.0/24).
+  subnetPrefix =
+    address:
+    let
+      parts = lib.splitString "." (addressWithoutPrefix address);
+    in
+    lib.concatStringsSep "." (lib.take 3 parts) + ".0/24";
+
   linksFor =
     nodeName:
     lib.concatMap (
@@ -174,6 +182,21 @@ let
             peerAddress = addressWithoutPrefix peer.address;
             peerControlAddress = controlAddresses.${peerNode};
             peerMac = peer.mac;
+            # Subnets reachable only THROUGH this peer (its other cable).
+            # RoCE v2 is UDP-encapsulated and routable: with these static
+            # routes + kernel forwarding, ANY node pair can serve a TP2 rank
+            # pair without direct rails (routed hop, ~half the striped
+            # bandwidth). See keel OQ-0055.
+            farRoutes = lib.unique (
+              builtins.map (l: subnetPrefix l.endpoints.${peerNode}.address) (
+                builtins.filter (
+                  l:
+                  l.id != link.id
+                  && builtins.hasAttr peerNode l.endpoints
+                  && !builtins.hasAttr nodeName l.endpoints
+                ) links
+              )
+            );
           }
         ]
     ) links;
