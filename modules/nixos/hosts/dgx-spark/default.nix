@@ -402,6 +402,10 @@ in
             "--node-label=gpu-vendor=nvidia"
             "--node-label=gpu=dgx-spark"
             "--node-label=tier=compute"
+            # Dedicated-GPU quarantine: every serving lane tolerates this, and
+            # Conductor placement ignores it (cordon is the quarantine
+            # mechanism). Declared here so all four Sparks carry it from Git.
+            "--node-taint=dgx-spark-dedicated=true:NoSchedule"
           ]
           ++ optionals (cfg.rdmaLinks != [ ]) [
             # Stable workload-facing fabric contract. The physical interface,
