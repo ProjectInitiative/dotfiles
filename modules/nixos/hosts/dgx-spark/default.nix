@@ -11,6 +11,7 @@ with lib.${namespace};
 let
   cfg = config.${namespace}.hosts.dgx-spark;
   sops = config.sops;
+  rdmaTopology = import ./topology.nix { inherit lib; };
   peerManagementIps =
     if cfg.rdmaPeerManagementIps != [ ] then
       cfg.rdmaPeerManagementIps
@@ -408,6 +409,9 @@ in
             # select the capability rather than a hostname or ConnectX port.
             "--node-label=fabric.homelab.io/rdma=roce-v2"
             "--node-label=fabric.homelab.io/topology=direct-ring"
+            # Ring walking order (Conductor uses this for adjacent-pair
+            # placement): node[i].P0 cables to node[i+1].P1, last wraps.
+            "--node-label=fabric.homelab.io/ring-position=${rdmaTopology.ringPositionFor config.networking.hostName}"
           ];
         };
       };
@@ -592,11 +596,9 @@ in
             # this single rail). Needs net.ipv4.ip_forward (already set by
             # k3s) and the FORWARD accepts below.
             routes = builtins.map (subnet: {
-              routeConfig = {
-                Destination = subnet;
-                Gateway = link.peerAddress;
-                PreferredSource = addressWithoutPrefix link.address;
-              };
+              Destination = subnet;
+              Gateway = link.peerAddress;
+              PreferredSource = addressWithoutPrefix link.address;
             }) (link.farRoutes or [ ]);
             # RoCE exhausts its retry budget too quickly to rely on cold ARP
             # resolution. A static neighbor makes the path immediately usable.

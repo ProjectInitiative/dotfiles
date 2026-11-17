@@ -201,6 +201,22 @@ let
         ]
     ) links;
 
+  # Ring walking order: node[i]'s physical port P0 cables to node[i+1]'s P1,
+  # and the last node's P0 wraps to node[0]'s P1. Matches the links list.
+  ringOrder = [
+    "astrolabe"
+    "octant"
+    "chronometer"
+    "sextant"
+  ];
+
+  ringPositionFor =
+    nodeName:
+    if builtins.elem nodeName ringOrder then
+      toString (lib.lists.findFirstIndex (n: n == nodeName) (-1) ringOrder)
+    else
+      throw "node ${nodeName} is not in the DGX Spark ring order";
+
   peerControlAddressesFor =
     nodeName: lib.unique (builtins.map (link: link.peerControlAddress) (linksFor nodeName));
 in
@@ -213,5 +229,6 @@ assert lib.assertMsg (
     links
     linksFor
     peerControlAddressesFor
+    ringPositionFor
     ;
 }
