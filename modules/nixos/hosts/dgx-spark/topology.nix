@@ -203,11 +203,23 @@ let
 
   # Ring walking order: node[i]'s physical port P0 cables to node[i+1]'s P1,
   # and the last node's P0 wraps to node[0]'s P1. Matches the links list.
+  #
+  # This is also the PHYSICAL stack order (verified against the live cabling
+  # 2026-11-17: all 8 rails ping green across the four edges, both
+  # directions, with static-ARP MAC pinning — a rail only answers if the
+  # physical cable connects the two ports owning its IPs/MACs). The
+  # fabric.homelab.io/ring-position=<index> k3s labels (declared in the
+  # dgx-spark module) let Conductor pick ring-adjacent pairs for TP2 lanes
+  # (OQ-0055); labels were bootstrapped by hand on 2026-11-17 for the nodes
+  # provisioned before the label commit and are re-asserted from here on any
+  # rebuild. If a label ever disagrees with the cabling, the lane's fabric
+  # preflight fails loudly ("expected two rails to peer, found 0") — fix the
+  # label or the cable, never both blindly.
   ringOrder = [
-    "astrolabe"
-    "octant"
-    "chronometer"
-    "sextant"
+    "astrolabe" # stack position 1 (top)
+    "octant" # stack position 2
+    "chronometer" # stack position 3
+    "sextant" # stack position 4 (bottom)
   ];
 
   ringPositionFor =
