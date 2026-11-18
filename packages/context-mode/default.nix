@@ -1,15 +1,15 @@
-# context-mode — MCP server + agent adapters (omp/pi/claude/codex/…).
+# context-mode — MCP server + agent adapters (pi/omp/claude/codex/…).
 #
-# Installed from the npm tarball (upstream ships prebuilt artifacts; their
-# build is just tsc + rolldown bundling). Self-contained for our use paths:
-# the omp adapter and server bundle import only node builtins + relative
-# paths, and the SQLite engine lazy-selects bun:sqlite / node:sqlite
-# (>=22.5) — better-sqlite3 (native addon) is only a last-resort fallback
-# we never hit. Zero node_modules needed at runtime → no buildNpmPackage.
+# Installed from the npm tarball (upstream ships prebuilt bundles; their
+# build is bundling + zero runtime deps). 2.x layout: pi extension at
+# pi/index.js (omp/index.js re-exports it with the omp agent id), MCP
+# server at server.mjs — both import only node builtins and use
+# node:sqlite (needs node >=24, system ships 26). Zero node_modules →
+# no buildNpmPackage.
 #
-# Wiring (see modules/home/cli-apps/omp): the omp adapter symlink loads via
-# realpath so its relative imports stay inside this store path; the MCP
-# server runs under nixpkgs bun.
+# Wiring (see modules/home/suites/ai): the pi extension source symlink
+# loads via realpath so its relative imports stay inside this store path;
+# the MCP server runs under nixpkgs node.
 {
   lib,
   stdenvNoCC,
@@ -17,11 +17,11 @@
 }:
 stdenvNoCC.mkDerivation {
   pname = "context-mode";
-  version = "1.0.169";
+  version = "2.2.1";
 
   src = fetchurl {
-    url = "https://registry.npmjs.org/context-mode/-/context-mode-1.0.169.tgz";
-    hash = "sha256-CcQeTPd7IVZsdrjqL9vX89gjBV/uLwLCFm/Vu1ddryw=";
+    url = "https://registry.npmjs.org/context-mode/-/context-mode-2.2.1.tgz";
+    hash = "sha256-LoIwmnZFupDyv6R+l4XkwK5g/kfuKhydG/bm9dmGtI4=";
   };
 
   # npm tarballs unpack with a package/ root
