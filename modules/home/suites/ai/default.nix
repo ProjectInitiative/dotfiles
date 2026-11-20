@@ -286,10 +286,6 @@ in
           # remote-providers extension. A single stub model avoids pi registering
           # an empty stub that would conflict with dynamic discovery.
           models = {
-            providers.lemonade = {
-              baseUrl = "http://100.81.89.107:13305/v1";
-              api = "openai-completions";
-            };
             providers.ai = {
               baseUrl = "https://ai.taildeab2.ts.net/v1";
               api = "openai-completions";
@@ -411,10 +407,6 @@ in
           # Same providers as pi's models.json — GLM reasoning overrides ported
           # verbatim to YAML. Verify with `omp models ai`.
           models = {
-            providers.lemonade = {
-              baseUrl = "http://100.81.89.107:13305/v1";
-              api = "openai-completions";
-            };
             providers.ai = {
               baseUrl = "https://ai.taildeab2.ts.net/v1";
               api = "openai-completions";
