@@ -47,6 +47,9 @@ INDEX=$((OUTLET - 1))
 # ---- state ----------------------------------------------------------------
 
 # GET /restapi/relay/outlets/<index>/state/ -> "true"/"false"
+# 403 "Security lockout in place" = DLI brute-force lockout of our IP
+# (triggered by the bearer-token debug 401s). Wait it out; do not retry
+# aggressively or the window extends.
 dli_state() {
     state=$($CURL $CURL_OPTS "${AUTH[@]}" -H 'Accept: application/json' \
         "$DLI_HOST/restapi/relay/outlets/$INDEX/state/" 2>/dev/null) || return 1
@@ -59,13 +62,19 @@ rest_set() {
     # rest_set <rest-index> <true|false>
     $CURL $CURL_OPTS "${AUTH[@]}" -X PUT -H 'X-CSRF: x' -H 'Accept: application/json' \
         --data "value=$2" \
-        "$DLI_HOST/restapi/relay/outlets/$1/state/"
+        "$DLI_HOST/restapi/relay/outlets/$1/state/" || {
+        echo "dli-outlet: control failed (HTTP error; if 403 'Security lockout', wait for the unit's lockout window to expire)" >&2
+        exit 3
+    }
 }
 
 rest_cycle() {
     # rest_cycle <rest-index>
     $CURL $CURL_OPTS "${AUTH[@]}" -X POST -H 'X-CSRF: x' -H 'Accept: application/json' \
-        "$DLI_HOST/restapi/relay/outlets/$1/cycle/"
+        "$DLI_HOST/restapi/relay/outlets/$1/cycle/" || {
+        echo "dli-outlet: cycle failed (HTTP error; if 403 'Security lockout', wait for the unit's lockout window to expire)" >&2
+        exit 3
+    }
 }
 
 case "$ACTION" in
