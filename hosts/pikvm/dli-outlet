@@ -25,8 +25,12 @@ if [ -z "${DLI_PASS:-}" ]; then
     echo "dli-outlet: DLI_PASS is not set" >&2
     exit 2
 fi
+# All requests use digest auth: this unit has plaintext (Basic) logins
+# explicitly disabled — basic-auth requests are silently denied with a 200
+# redirect page, which makes failures look like successes (DLI log:
+# "login denied ... (plaintext): explicit plaintext login denied").
 CURL="/usr/bin/curl"
-CURL_OPTS="-m 8 -sf"
+CURL_OPTS="-m 8 -sf --digest"
 
 OUTLET="$1"
 ACTION="$2"
