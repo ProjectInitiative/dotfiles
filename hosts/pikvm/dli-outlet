@@ -4,39 +4,41 @@
 #
 # Usage: dli-outlet <outlet-number> <on|off|cycle|state>
 #
-# Auth: DLI client ACCESS TOKEN (bearer) — NOT a user password. The token
-# is registered on the unit with scopes granting ONLY outlets 5-8
-# (get/modify/invoke), so the PiKVM holds neither the admin password nor
-# broad access. Registration is a one-time admin step (see README).
+# Auth: the non-admin `pikvm` user over HTTP DIGEST. Requirements on the
+# unit (all configured 2026-11-23):
+#   - Setup > Users: `pikvm` granted outlets 5-8
+#   - Setup > External APIs: "Allow REST-style API" +
+#     "Allow REST-style API for non-admin users" enabled
+# NOTE: DLI client access tokens (bearer) are NOT supported by the EPCR6
+# (wired-only firmware routes bearer/Basic/client auth through the user
+# login path and fails with "no such user"); see README for the full saga.
+# Digest everywhere: the unit denies plaintext logins by default.
 #
-# Control + state use the REST API exclusively. This unit's "Power
-# Controller" firmware does NOT implement the legacy outlet?N= interface
-# (requests silently no-op with a redirect page), and REST-over-HTTP for
-# *user* auth is admin-only — but bearer-token clients bypass that gate.
-# REST indexes are ZERO-BASED (docs: "the outlet index is zero-based"),
-# so index = outlet - 1; the DLI UI and our cmd lists are 1-based.
-# Getting indexing wrong silently controls the adjacent outlet.
+# Control + state use the REST API exclusively — the legacy outlet?N=
+# interface does not exist on the "Power Controller" firmware (requests
+# silently no-op with a redirect page). REST indexes are ZERO-BASED
+# (docs: "the outlet index is zero-based"), so index = outlet - 1; the
+# DLI UI and our cmd lists are 1-based. Wrong indexing silently controls
+# the adjacent outlet.
 #
 # Cycle uses the unit's native POST /cycle/ endpoint (its own timed
 # cycle), not an off/sleep/on emulation.
-#
-# Digest auth everywhere: plaintext (Basic) logins are explicitly denied
-# by the unit (DLI log: "login denied ... (plaintext)").
 
 set -eu
 
 DLI_HOST="${DLI_HOST:-http://172.16.1.4}"
-DLI_CLIENT="${DLI_CLIENT:-pikvm}"
-DLI_TOKEN="${DLI_TOKEN:-}"
-if [ -z "$DLI_TOKEN" ]; then
-    echo "dli-outlet: DLI_TOKEN is not set" >&2
+DLI_USER="${DLI_USER:-pikvm}"
+# Password from the environment only (DLI_PASS). The kvmd service gets it
+# via a root-owned systemd EnvironmentFile — never inline it here; this
+# script is committed to a public repo.
+if [ -z "${DLI_PASS:-}" ]; then
+    echo "dli-outlet: DLI_PASS is not set" >&2
     exit 2
 fi
 
-# All requests use digest + bearer header.
 CURL="/usr/bin/curl"
 CURL_OPTS="-m 8 -sf --digest"
-AUTH="Authorization: Bearer $DLI_CLIENT.$DLI_TOKEN"
+AUTH=(-u "$DLI_USER:$DLI_PASS")
 
 OUTLET="$1"
 ACTION="$2"
@@ -44,10 +46,10 @@ INDEX=$((OUTLET - 1))
 
 # ---- state ----------------------------------------------------------------
 
-# GET /restapi/relay/outlets/<index>;/state/ -> "true"/"false"
+# GET /restapi/relay/outlets/<index>/state/ -> "true"/"false"
 dli_state() {
-    state=$($CURL $CURL_OPTS -H "$AUTH" -H 'Accept: application/json' \
-        "$DLI_HOST/restapi/relay/outlets/$INDEX;/state/" 2>/dev/null) || return 1
+    state=$($CURL $CURL_OPTS "${AUTH[@]}" -H 'Accept: application/json' \
+        "$DLI_HOST/restapi/relay/outlets/$INDEX/state/" 2>/dev/null) || return 1
     [ "$state" = "true" ]
 }
 
@@ -55,15 +57,15 @@ dli_state() {
 
 rest_set() {
     # rest_set <rest-index> <true|false>
-    $CURL $CURL_OPTS -H "$AUTH" -X PUT -H 'X-CSRF: x' -H 'Accept: application/json' \
+    $CURL $CURL_OPTS "${AUTH[@]}" -X PUT -H 'X-CSRF: x' -H 'Accept: application/json' \
         --data "value=$2" \
-        "$DLI_HOST/restapi/relay/outlets/$1;/state/"
+        "$DLI_HOST/restapi/relay/outlets/$1/state/"
 }
 
 rest_cycle() {
     # rest_cycle <rest-index>
-    $CURL $CURL_OPTS -H "$AUTH" -X POST -H 'X-CSRF: x' -H 'Accept: application/json' \
-        "$DLI_HOST/restapi/relay/outlets/$1;/cycle/"
+    $CURL $CURL_OPTS "${AUTH[@]}" -X POST -H 'X-CSRF: x' -H 'Accept: application/json' \
+        "$DLI_HOST/restapi/relay/outlets/$1/cycle/"
 }
 
 case "$ACTION" in
