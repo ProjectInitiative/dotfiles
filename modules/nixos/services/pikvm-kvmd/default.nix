@@ -8,19 +8,28 @@
 #
 # What it provisions:
 #   - /etc/kvmd/bin/dli-outlet: control script for the EPCR6 (REST API:
-#     PUT state for on/off, POST cycle, GET state for LEDs). Auth is a
-#     scoped DLI client access token (bearer) — outlets 5-8 only — injected
+#     PUT state for on/off, POST cycle, GET state for LEDs). Auth is the
+#     non-admin `pikvm` user over HTTP DIGEST — the password is injected
 #     into the kvmd service environment from a sops secret
-#     (dli_epcr6_token) via an EnvironmentFile. No admin password on the
-#     node, ever.
+#     (dli_epcr6_password) via an EnvironmentFile. Never in the repo.
 #   - /etc/kvmd/override.yaml rendered from hosts/pikvm/override.yaml.device
 #     + hosts/pikvm/epcr6-gpio.yaml semantics (BliSwitch channels + EPCR6
 #     cmd/cmdret pseudo-drivers for Astrolabe/Chronometer/Sextant/Octant).
+#   - 99-bliswitch-v2.rules: CH340 USB-serial symlink /dev/bliswitch that
+#     the BliSwitch v2 driver (xh_hk4401, protocol 1) points at.
+# NOTE: DLI client bearer tokens are unsupported on the EPCR6 (see
+# hosts/pikvm/README.md auth saga) — do not reintroduce DLI_TOKEN here.
 #
 # CAUTION: kvmd's `cmd` drivers run as the kvmd user on the PiKVM itself and
 # hard-cut power to the DGX Spark nodes (no ATX on those). Off/Cycle buttons
 # are confirmation-gated in the UI. Verified DLI outlet map:
 # DLI 8=astrolabe, 6=chronometer, 7=sextant, 5=octant.
+#
+# HARDWARE NOTE: the node is a PiKVM **v3 HAT on RPi4** (kvmd-platform-v3-hdmi-rpi4
+# on PiKVM OS). A NixOS conversion needs: kvmd packaged (nixpkgs issue
+# #428203 open; community modules hatch01/nixos-pikvm, Gigahawk/nixos-kvmd —
+# neither proven on v3-hdmi hardware, WebRTC/janus known broken there),
+# nixos-hardware rpi4/CM4 profile, and this module for the GPIO/DLI layer.
 {
   config,
   lib,
@@ -51,24 +60,30 @@ in
       description = "Base URL of the Digital Loggers EPCR6";
     };
 
-    dliClient = mkOption {
+    dliUser = mkOption {
       type = types.str;
       default = "pikvm";
-      description = "DLI client access-token name (bearer auth)";
+      description = "EPCR6 username (non-admin, digest; needs outlet grant + non-admin REST enabled on the unit)";
     };
 
-    dliTokenFile = mkOption {
+    dliPasswordFile = mkOption {
       type = types.str;
-      default = "/run/secrets/dli_epcr6_token";
-      description = "Path to file containing the DLI client access token";
+      default = "/run/secrets/dli_epcr6_password";
+      description = "Path to file containing the EPCR6 password";
     };
   };
 
   config = mkIf cfg.enable {
-    # sops secret dli_epcr6_token must contain a single systemd
-    # EnvironmentFile line: DLI_TOKEN=<token> (same pattern as
+    # sops secret dli_epcr6_password must contain a single systemd
+    # EnvironmentFile line: DLI_PASS=<password> (same pattern as
     # mcp_grafana_sa_token in modules/common/encrypted/default.nix).
-    sops.secrets.dli_epcr6_token = { };
+    sops.secrets.dli_epcr6_password = { };
+
+    # BliSwitch v2: QinHeng CH340 USB-serial adapter -> stable /dev/bliswitch
+    # symlink (matches the device's /etc/udev/rules.d/99-bliswitch-v2.rules).
+    services.udev.extraRules = ''
+      SUBSYSTEM=="tty", ENV{ID_VENDOR_ID}=="1a86", ENV{ID_MODEL_ID}=="7523", ENV{ID_MODEL}=="USB2.0-Ser_", ENV{ID_REVISION}=="0254", SYMLINK+="bliswitch"
+    '';
 
     environment.etc = {
       "kvmd/override.yaml".source = overrideYaml;
@@ -85,11 +100,11 @@ in
     systemd.services.kvmd = {
       environment = {
         DLI_HOST = cfg.dliHost;
-        DLI_CLIENT = cfg.dliClient;
+        DLI_USER = cfg.dliUser;
       };
       serviceConfig = {
-        # File content: DLI_TOKEN=<token> (sops secret, root-only).
-        EnvironmentFile = cfg.dliTokenFile;
+        # File content: DLI_PASS=<password> (sops secret, root-only).
+        EnvironmentFile = cfg.dliPasswordFile;
       };
     };
 
