@@ -5,10 +5,13 @@
 # power on / power off / cycle buttons + status LEDs to the GPIO menu via
 # kvmd's `cmd` / `cmdret` pseudo-drivers.
 #
-# OUTLET MAP — UNVERIFIED GUESS: EPCR6 outlets 3-6 are assumed to feed the
-# DGX nodes, aligned with the BliSwitch channel order (Astrolabe=3,
-# Chronometer=4, Sextant=5, Octant=6). VERIFY against the physical plug
-# layout before first use; a wrong mapping just powers the wrong outlet.
+# OUTLET MAP — VERIFIED by Kyle 2026-11-23: EPCR6 outlets feed the DGX
+# nodes as follows (note: DLI outlet numbering ≠ BliSwitch channel
+# numbering):
+#   astrolabe=8, chronometer=6, sextant=7, octant=5
+# (BliSwitch channels remain: astrolabe=3, chronometer=4, sextant=5,
+# octant=6 in 0-based config pins — astrolabe=GPIO4 etc. in 1-based UI
+# labeling.) Outlets 1-4 are unassigned/capstan-adjacent.
 #
 # Mechanism:
 #   - Each action is a one-shot cmd driver (pulse button, `switch: false`);
@@ -27,52 +30,52 @@ kvmd:
         drivers:
             dli_astrolabe_state:
                 type: cmdret
-                cmd: [/etc/kvmd/bin/dli-outlet, "3", "state"]
+                cmd: [/etc/kvmd/bin/dli-outlet, "8", "state"]
             dli_astrolabe_on:
                 type: cmd
-                cmd: [/etc/kvmd/bin/dli-outlet, "3", "on"]
+                cmd: [/etc/kvmd/bin/dli-outlet, "8", "on"]
             dli_astrolabe_off:
                 type: cmd
-                cmd: [/etc/kvmd/bin/dli-outlet, "3", "off"]
+                cmd: [/etc/kvmd/bin/dli-outlet, "8", "off"]
             dli_astrolabe_cycle:
                 type: cmd
-                cmd: [/etc/kvmd/bin/dli-outlet, "3", "cycle"]
+                cmd: [/etc/kvmd/bin/dli-outlet, "8", "cycle"]
             dli_chronometer_state:
                 type: cmdret
-                cmd: [/etc/kvmd/bin/dli-outlet, "4", "state"]
+                cmd: [/etc/kvmd/bin/dli-outlet, "6", "state"]
             dli_chronometer_on:
                 type: cmd
-                cmd: [/etc/kvmd/bin/dli-outlet, "4", "on"]
+                cmd: [/etc/kvmd/bin/dli-outlet, "6", "on"]
             dli_chronometer_off:
                 type: cmd
-                cmd: [/etc/kvmd/bin/dli-outlet, "4", "off"]
+                cmd: [/etc/kvmd/bin/dli-outlet, "6", "off"]
             dli_chronometer_cycle:
                 type: cmd
-                cmd: [/etc/kvmd/bin/dli-outlet, "4", "cycle"]
+                cmd: [/etc/kvmd/bin/dli-outlet, "6", "cycle"]
             dli_sextant_state:
                 type: cmdret
-                cmd: [/etc/kvmd/bin/dli-outlet, "5", "state"]
+                cmd: [/etc/kvmd/bin/dli-outlet, "7", "state"]
             dli_sextant_on:
                 type: cmd
-                cmd: [/etc/kvmd/bin/dli-outlet, "5", "on"]
+                cmd: [/etc/kvmd/bin/dli-outlet, "7", "on"]
             dli_sextant_off:
                 type: cmd
-                cmd: [/etc/kvmd/bin/dli-outlet, "5", "off"]
+                cmd: [/etc/kvmd/bin/dli-outlet, "7", "off"]
             dli_sextant_cycle:
                 type: cmd
-                cmd: [/etc/kvmd/bin/dli-outlet, "5", "cycle"]
+                cmd: [/etc/kvmd/bin/dli-outlet, "7", "cycle"]
             dli_octant_state:
                 type: cmdret
-                cmd: [/etc/kvmd/bin/dli-outlet, "6", "state"]
+                cmd: [/etc/kvmd/bin/dli-outlet, "5", "state"]
             dli_octant_on:
                 type: cmd
-                cmd: [/etc/kvmd/bin/dli-outlet, "6", "on"]
+                cmd: [/etc/kvmd/bin/dli-outlet, "5", "on"]
             dli_octant_off:
                 type: cmd
-                cmd: [/etc/kvmd/bin/dli-outlet, "6", "off"]
+                cmd: [/etc/kvmd/bin/dli-outlet, "5", "off"]
             dli_octant_cycle:
                 type: cmd
-                cmd: [/etc/kvmd/bin/dli-outlet, "6", "cycle"]
+                cmd: [/etc/kvmd/bin/dli-outlet, "5", "cycle"]
         scheme:
             dli_astrolabe_led:
                 driver: dli_astrolabe_state

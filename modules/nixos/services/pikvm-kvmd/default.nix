@@ -18,7 +18,8 @@
 #
 # CAUTION: kvmd's `cmd` drivers run as the kvmd user on the PiKVM itself and
 # hard-cut power to the DGX Spark nodes (no ATX on those). Off/Cycle buttons
-# are confirmation-gated in the UI.
+# are confirmation-gated in the UI. Verified DLI outlet map:
+# DLI 8=astrolabe, 6=chronometer, 7=sextant, 5=octant.
 {
   config,
   lib,
@@ -93,7 +94,7 @@ in
 
     warnings = [
       "pikvm-kvmd: hard power control for the DGX Spark nodes — Off/Cycle cut power with no graceful shutdown path"
-      "pikvm-kvmd: EPCR6 outlet map (3=Astrolabe 4=Chronometer 5=Sextant 6=Octant) is an unverified guess"
+      "pikvm-kvmd: EPCR6 outlet map — DLI 8=astrolabe 6=chronometer 7=sextant 5=octant (verified 2026-11-23); hard power cuts, no graceful path"
     ];
   };
 }

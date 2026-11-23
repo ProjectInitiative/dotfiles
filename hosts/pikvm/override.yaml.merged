@@ -1,7 +1,8 @@
-# PiKVM /etc/kvmd/override.yaml — merged copy from dotfiles hosts/pikvm/.
+# PiKVM /etc/kvmd/override.yaml - merged copy from dotfiles hosts/pikvm/.
 # Base: BliSwitch v2 8-port GPIO (xh_hk4401, /dev/bliswitch).
 # Add-on: Digital Loggers EPCR6 power control for the DGX Spark nodes via
-# cmd/cmdret pseudo-drivers + /etc/kvmd/bin/dli-outlet. See
+# cmd/cmdret pseudo-drivers + /etc/kvmd/bin/dli-outlet. Verified outlet map:
+# DLI 8=astrolabe, 6=chronometer, 7=sextant, 5=octant. See
 # dotfiles hosts/pikvm/README.md before editing on-device.
 kvmd:
   gpio:
@@ -14,97 +15,97 @@ kvmd:
         type: cmdret
         cmd:
         - /etc/kvmd/bin/dli-outlet
-        - '3'
+        - '8'
         - state
       dli_astrolabe_on:
         type: cmd
         cmd:
         - /etc/kvmd/bin/dli-outlet
-        - '3'
+        - '8'
         - 'on'
       dli_astrolabe_off:
         type: cmd
         cmd:
         - /etc/kvmd/bin/dli-outlet
-        - '3'
+        - '8'
         - 'off'
       dli_astrolabe_cycle:
         type: cmd
         cmd:
         - /etc/kvmd/bin/dli-outlet
-        - '3'
+        - '8'
         - cycle
       dli_chronometer_state:
         type: cmdret
         cmd:
         - /etc/kvmd/bin/dli-outlet
-        - '4'
+        - '6'
         - state
       dli_chronometer_on:
         type: cmd
         cmd:
         - /etc/kvmd/bin/dli-outlet
-        - '4'
+        - '6'
         - 'on'
       dli_chronometer_off:
         type: cmd
         cmd:
         - /etc/kvmd/bin/dli-outlet
-        - '4'
+        - '6'
         - 'off'
       dli_chronometer_cycle:
         type: cmd
         cmd:
         - /etc/kvmd/bin/dli-outlet
-        - '4'
+        - '6'
         - cycle
       dli_sextant_state:
         type: cmdret
         cmd:
         - /etc/kvmd/bin/dli-outlet
-        - '5'
+        - '7'
         - state
       dli_sextant_on:
         type: cmd
         cmd:
         - /etc/kvmd/bin/dli-outlet
-        - '5'
+        - '7'
         - 'on'
       dli_sextant_off:
         type: cmd
         cmd:
         - /etc/kvmd/bin/dli-outlet
-        - '5'
+        - '7'
         - 'off'
       dli_sextant_cycle:
         type: cmd
         cmd:
         - /etc/kvmd/bin/dli-outlet
-        - '5'
+        - '7'
         - cycle
       dli_octant_state:
         type: cmdret
         cmd:
         - /etc/kvmd/bin/dli-outlet
-        - '6'
+        - '5'
         - state
       dli_octant_on:
         type: cmd
         cmd:
         - /etc/kvmd/bin/dli-outlet
-        - '6'
+        - '5'
         - 'on'
       dli_octant_off:
         type: cmd
         cmd:
         - /etc/kvmd/bin/dli-outlet
-        - '6'
+        - '5'
         - 'off'
       dli_octant_cycle:
         type: cmd
         cmd:
         - /etc/kvmd/bin/dli-outlet
-        - '6'
+        - '5'
         - cycle
     scheme:
       ch0_led:

@@ -36,11 +36,17 @@ see `modules/nixos/services/pikvm-kvmd/` for the future-conversion module).
   "Allow legacy plaintext login methods" (control) and "Allow REST-style
   API" (state).
 
-## Outlet map — UNVERIFIED
+## Outlet map — VERIFIED 2026-11-23
 
-`3=Astrolabe 4=Chronometer 5=Sextant 6=Octant` was assumed from BliSwitch
-channel alignment, not verified against the physical plugs. Verify before
-trusting an Off/Cycle press. Outlets 1-2 (Capstan1/2) and 7-8 are unassigned.
+Verified by Kyle against the physical plugs. Note the DLI outlet numbering
+differs from the BliSwitch channel numbering:
+
+- DLI outlet 8 = Astrolabe (BliSwitch ch3 / "GPIO4")
+- DLI outlet 6 = Chronometer (BliSwitch ch4 / "GPIO5")
+- DLI outlet 7 = Sextant (BliSwitch ch5 / "GPIO6")
+- DLI outlet 5 = Octant (BliSwitch ch6 / "GPIO7")
+
+Outlets 1-4 are unassigned.
 
 ## Regenerating `override.yaml.merged`
 
