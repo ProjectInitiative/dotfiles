@@ -7,11 +7,12 @@
 # config is already codified — enable it and kvmd gets the same GPIO view.
 #
 # What it provisions:
-#   - /etc/kvmd/bin/dli-outlet: control script for the EPCR6
-#     (legacy outlet?N=ON|OFF|CCL for control, REST-then-/status-bitmap for
-#     state). The password is injected into the kvmd service environment
-#     from a sops secret (dli_epcr6_password) via an EnvironmentFile —
-#     never stored in the script or repo.
+#   - /etc/kvmd/bin/dli-outlet: control script for the EPCR6 (REST API:
+#     PUT state for on/off, POST cycle, GET state for LEDs). Auth is a
+#     scoped DLI client access token (bearer) — outlets 5-8 only — injected
+#     into the kvmd service environment from a sops secret
+#     (dli_epcr6_token) via an EnvironmentFile. No admin password on the
+#     node, ever.
 #   - /etc/kvmd/override.yaml rendered from hosts/pikvm/override.yaml.device
 #     + hosts/pikvm/epcr6-gpio.yaml semantics (BliSwitch channels + EPCR6
 #     cmd/cmdret pseudo-drivers for Astrolabe/Chronometer/Sextant/Octant).
@@ -50,24 +51,24 @@ in
       description = "Base URL of the Digital Loggers EPCR6";
     };
 
-    dliUser = mkOption {
+    dliClient = mkOption {
       type = types.str;
       default = "pikvm";
-      description = "EPCR6 username (non-admin; needs outlet grant in Setup > Users)";
+      description = "DLI client access-token name (bearer auth)";
     };
 
-    dliPasswordFile = mkOption {
+    dliTokenFile = mkOption {
       type = types.str;
-      default = "/run/secrets/dli_epcr6_password";
-      description = "Path to file containing the EPCR6 password";
+      default = "/run/secrets/dli_epcr6_token";
+      description = "Path to file containing the DLI client access token";
     };
   };
 
   config = mkIf cfg.enable {
-    # sops secret dli_epcr6_password must contain a single systemd
-    # EnvironmentFile line: DLI_PASS=<password> (same pattern as
+    # sops secret dli_epcr6_token must contain a single systemd
+    # EnvironmentFile line: DLI_TOKEN=<token> (same pattern as
     # mcp_grafana_sa_token in modules/common/encrypted/default.nix).
-    sops.secrets.dli_epcr6_password = { };
+    sops.secrets.dli_epcr6_token = { };
 
     environment.etc = {
       "kvmd/override.yaml".source = overrideYaml;
@@ -84,11 +85,11 @@ in
     systemd.services.kvmd = {
       environment = {
         DLI_HOST = cfg.dliHost;
-        DLI_USER = cfg.dliUser;
+        DLI_CLIENT = cfg.dliClient;
       };
       serviceConfig = {
-        # File content: DLI_PASS=<password> (sops secret, root-only).
-        EnvironmentFile = cfg.dliPasswordFile;
+        # File content: DLI_TOKEN=<token> (sops secret, root-only).
+        EnvironmentFile = cfg.dliTokenFile;
       };
     };
 

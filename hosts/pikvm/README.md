@@ -20,11 +20,14 @@ see `modules/nixos/services/pikvm-kvmd/` for the future-conversion module).
 
 ## EPCR6 account reality (as of 2026-11-23)
 
-- Account used: `pikvm` (non-admin). Password is **not stored in this repo**
-  — `dli-outlet` reads `DLI_PASS` from the environment; on-device it is
-  provided to the kvmd service via `/etc/kvmd/dli-epcr6.env` (root:kvmd 0600,
-  `DLI_PASS=...`), and at NixOS-conversion time via sops
-  (`dli_epcr6_password`, wired in the NixOS module).
+- Account used: a **DLI client access token** (`pikvm` client, bearer auth)
+  — NOT a user password. The token is scoped to outlets 5-8 only
+  (get/modify/invoke), so outlets 1-4 (network gear) are unreachable with
+  it, and the admin password never lives on the PiKVM. Token lives in
+  `/etc/kvmd/dli-epcr6.env` (`DLI_CLIENT=pikvm`, `DLI_TOKEN=...`,
+  root:kvmd 0600). At NixOS-conversion time the token moves to sops
+  (`dli_epcr6_token`, wired in the NixOS module). Token registration is a
+  one-time admin step (see "Token registration").
 - Non-admin accounts **can toggle outlets** via legacy HTTP but **cannot read
   state**: `/restapi/...` → 403 "requires administrative rights", legacy
   `/status` bitmap comes back empty (no outlet visibility granted).
