@@ -1,0 +1,164 @@
+# ============================================================================
+# Digital Loggers EPCR6 (http://172.16.1.4) — remote power for the 4 DGX
+# Spark nodes (Astrolabe, Chronometer, Sextant, Octant). These nodes have no
+# ATX controls, so PiKVM's built-in ATX page can't manage them; this adds
+# power on / power off / cycle buttons + status LEDs to the GPIO menu via
+# kvmd's `cmd` / `cmdret` pseudo-drivers.
+#
+# OUTLET MAP — UNVERIFIED GUESS: EPCR6 outlets 3-6 are assumed to feed the
+# DGX nodes, aligned with the BliSwitch channel order (Astrolabe=3,
+# Chronometer=4, Sextant=5, Octant=6). VERIFY against the physical plug
+# layout before first use; a wrong mapping just powers the wrong outlet.
+#
+# Mechanism:
+#   - Each action is a one-shot cmd driver (pulse button, `switch: false`);
+#     pin numbers are ignored by cmd/cmdret, the driver name is the key.
+#   - Off and Cycle require confirmation in the UI (hard power cut risk).
+#   - The state LED uses cmdret: exit 0 = ON. The `pikvm` user on the EPCR6
+#     is non-admin, so /restapi/... returns 403; the helper falls back to
+#     the legacy /status bitmap. If LEDs stay off while outlets are on,
+#     grant the pikvm user outlet visibility in EPCR6 Setup > Users.
+#   - Helper script + credentials: see hosts/pikvm/dli-outlet (deployed to
+#     /etc/kvmd/bin/dli-outlet, root:kvmd 0750).
+# ============================================================================
+
+kvmd:
+    gpio:
+        drivers:
+            dli_astrolabe_state:
+                type: cmdret
+                cmd: [/etc/kvmd/bin/dli-outlet, "3", "state"]
+            dli_astrolabe_on:
+                type: cmd
+                cmd: [/etc/kvmd/bin/dli-outlet, "3", "on"]
+            dli_astrolabe_off:
+                type: cmd
+                cmd: [/etc/kvmd/bin/dli-outlet, "3", "off"]
+            dli_astrolabe_cycle:
+                type: cmd
+                cmd: [/etc/kvmd/bin/dli-outlet, "3", "cycle"]
+            dli_chronometer_state:
+                type: cmdret
+                cmd: [/etc/kvmd/bin/dli-outlet, "4", "state"]
+            dli_chronometer_on:
+                type: cmd
+                cmd: [/etc/kvmd/bin/dli-outlet, "4", "on"]
+            dli_chronometer_off:
+                type: cmd
+                cmd: [/etc/kvmd/bin/dli-outlet, "4", "off"]
+            dli_chronometer_cycle:
+                type: cmd
+                cmd: [/etc/kvmd/bin/dli-outlet, "4", "cycle"]
+            dli_sextant_state:
+                type: cmdret
+                cmd: [/etc/kvmd/bin/dli-outlet, "5", "state"]
+            dli_sextant_on:
+                type: cmd
+                cmd: [/etc/kvmd/bin/dli-outlet, "5", "on"]
+            dli_sextant_off:
+                type: cmd
+                cmd: [/etc/kvmd/bin/dli-outlet, "5", "off"]
+            dli_sextant_cycle:
+                type: cmd
+                cmd: [/etc/kvmd/bin/dli-outlet, "5", "cycle"]
+            dli_octant_state:
+                type: cmdret
+                cmd: [/etc/kvmd/bin/dli-outlet, "6", "state"]
+            dli_octant_on:
+                type: cmd
+                cmd: [/etc/kvmd/bin/dli-outlet, "6", "on"]
+            dli_octant_off:
+                type: cmd
+                cmd: [/etc/kvmd/bin/dli-outlet, "6", "off"]
+            dli_octant_cycle:
+                type: cmd
+                cmd: [/etc/kvmd/bin/dli-outlet, "6", "cycle"]
+        scheme:
+            dli_astrolabe_led:
+                driver: dli_astrolabe_state
+                pin: 0
+                mode: input
+                debounce: 1.0
+            dli_astrolabe_on_btn:
+                driver: dli_astrolabe_on
+                pin: 0
+                mode: output
+                switch: false
+            dli_astrolabe_off_btn:
+                driver: dli_astrolabe_off
+                pin: 0
+                mode: output
+                switch: false
+            dli_astrolabe_cycle_btn:
+                driver: dli_astrolabe_cycle
+                pin: 0
+                mode: output
+                switch: false
+            dli_chronometer_led:
+                driver: dli_chronometer_state
+                pin: 0
+                mode: input
+                debounce: 1.0
+            dli_chronometer_on_btn:
+                driver: dli_chronometer_on
+                pin: 0
+                mode: output
+                switch: false
+            dli_chronometer_off_btn:
+                driver: dli_chronometer_off
+                pin: 0
+                mode: output
+                switch: false
+            dli_chronometer_cycle_btn:
+                driver: dli_chronometer_cycle
+                pin: 0
+                mode: output
+                switch: false
+            dli_sextant_led:
+                driver: dli_sextant_state
+                pin: 0
+                mode: input
+                debounce: 1.0
+            dli_sextant_on_btn:
+                driver: dli_sextant_on
+                pin: 0
+                mode: output
+                switch: false
+            dli_sextant_off_btn:
+                driver: dli_sextant_off
+                pin: 0
+                mode: output
+                switch: false
+            dli_sextant_cycle_btn:
+                driver: dli_sextant_cycle
+                pin: 0
+                mode: output
+                switch: false
+            dli_octant_led:
+                driver: dli_octant_state
+                pin: 0
+                mode: input
+                debounce: 1.0
+            dli_octant_on_btn:
+                driver: dli_octant_on
+                pin: 0
+                mode: output
+                switch: false
+            dli_octant_off_btn:
+                driver: dli_octant_off
+                pin: 0
+                mode: output
+                switch: false
+            dli_octant_cycle_btn:
+                driver: dli_octant_cycle
+                pin: 0
+                mode: output
+                switch: false
+        view:
+            table:
+                - []
+                - ["#EPCR6 Power"]
+                - ["#Astrolabe:", dli_astrolabe_led, "dli_astrolabe_on_btn|On", "dli_astrolabe_off_btn|confirm|Off", "dli_astrolabe_cycle_btn|confirm|Cycle"]
+                - ["#Chronometer:", dli_chronometer_led, "dli_chronometer_on_btn|On", "dli_chronometer_off_btn|confirm|Off", "dli_chronometer_cycle_btn|confirm|Cycle"]
+                - ["#Sextant:", dli_sextant_led, "dli_sextant_on_btn|On", "dli_sextant_off_btn|confirm|Off", "dli_sextant_cycle_btn|confirm|Cycle"]
+                - ["#Octant:", dli_octant_led, "dli_octant_on_btn|On", "dli_octant_off_btn|confirm|Off", "dli_octant_cycle_btn|confirm|Cycle"]

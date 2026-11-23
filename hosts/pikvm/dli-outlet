@@ -1,0 +1,79 @@
+#!/bin/sh
+# dli-outlet — control a Digital Loggers EPCR6 outlet for kvmd's cmd/cmdret
+# GPIO pseudo-drivers on PiKVM.
+#
+# Usage: dli-outlet <outlet-number> <on|off|cycle|state>
+#
+# Control uses the legacy HTTP interface (outlet?N=ON|OFF|CCL), which works
+# for non-admin users granted the outlet. State uses the REST API first
+# (admin only) and falls back to the legacy /status bitmap (works for any
+# user with visibility on that outlet). Exit 0 = outlet is ON / command
+# accepted; exit 1 = off / failure.
+#
+# DLI units: the non-admin account must be granted the outlets in
+# Setup > Users, and "Allow legacy plaintext login methods" + "Allow
+# REST-style API" should be enabled under External APIs.
+
+set -eu
+
+DLI_HOST="${DLI_HOST:-http://172.16.1.4}"
+DLI_USER="${DLI_USER:-pikvm}"
+# Password comes from the environment only (DLI_PASS). The kvmd service
+# gets it via a root-owned systemd EnvironmentFile — never inline it here;
+# this script is committed to a public repo.
+if [ -z "${DLI_PASS:-}" ]; then
+    echo "dli-outlet: DLI_PASS is not set" >&2
+    exit 2
+fi
+CURL="/usr/bin/curl"
+CURL_OPTS="-m 8 -sf"
+
+OUTLET="$1"
+ACTION="$2"
+
+# ---- state ----------------------------------------------------------------
+
+# REST: /restapi/relay/outlets/N;/state/ -> "true"/"false" (admin only).
+# Legacy: /status HTML embeds a hex outlet bitmap, one char per nibble,
+# e.g. 0x2E1 -> outlets 1,6,10 on (bit N-1 of the number).
+dli_state() {
+    rest=$($CURL $CURL_OPTS --digest -u "$DLI_USER:$DLI_PASS" \
+        -H 'Accept: application/json' \
+        "$DLI_HOST/restapi/relay/outlets/$OUTLET;/state/" 2>/dev/null) && {
+        [ "$rest" = "true" ]
+        return
+    }
+
+    bitmap=$($CURL $CURL_OPTS -u "$DLI_USER:$DLI_PASS" "$DLI_HOST/status" 2>/dev/null \
+        | grep -io 'state[^<]*0[xX][0-9a-fA-F]*' \
+        | grep -io '0[xX][0-9a-fA-F]*' \
+        | head -n 1) || true
+    [ -n "$bitmap" ] || return 1
+
+    bits=$(printf '%d' "$bitmap") || return 1
+    mask=$((1 << (OUTLET - 1)))
+    [ $((bits & mask)) -ne 0 ]
+}
+
+# ---- actions --------------------------------------------------------------
+
+case "$ACTION" in
+on)
+    $CURL $CURL_OPTS -u "$DLI_USER:$DLI_PASS" "$DLI_HOST/outlet?$OUTLET=ON" >/dev/null
+    ;;
+off)
+    $CURL $CURL_OPTS -u "$DLI_USER:$DLI_PASS" "$DLI_HOST/outlet?$OUTLET=OFF" >/dev/null
+    ;;
+cycle)
+    # CCL = clean cycle: the unit drops power then restores it on its own
+    # schedule. Verified against the unit; do not "simplify" to OFF+ON.
+    $CURL $CURL_OPTS -u "$DLI_USER:$DLI_PASS" "$DLI_HOST/outlet?$OUTLET=CCL" >/dev/null
+    ;;
+state)
+    dli_state
+    ;;
+*)
+    echo "usage: dli-outlet <outlet-number> <on|off|cycle|state>" >&2
+    exit 2
+    ;;
+esac

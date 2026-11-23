@@ -1,0 +1,97 @@
+# BliSwitch v2 (8-port) GPIO configuration for PiKVM / Raspberry Pi platforms.
+# Merge the contents under the existing top-level `kvmd:` key in
+# /etc/kvmd/override.yaml. Do NOT create a second `kvmd:` key if one exists.
+#
+# Vendor guide currently specifies protocol: 1 for BliSwitch v2.
+# The installer creates a stable /dev/bliswitch udev symlink.
+
+kvmd:
+    gpio:
+        drivers:
+            hk:
+                type: xh_hk4401
+                protocol: 1
+                device: /dev/bliswitch
+        scheme:
+            ch0_led:
+                driver: hk
+                pin: 0
+                mode: input
+            ch1_led:
+                driver: hk
+                pin: 1
+                mode: input
+            ch2_led:
+                driver: hk
+                pin: 2
+                mode: input
+            ch3_led:
+                driver: hk
+                pin: 3
+                mode: input
+            ch4_led:
+                driver: hk
+                pin: 4
+                mode: input
+            ch5_led:
+                driver: hk
+                pin: 5
+                mode: input
+            ch6_led:
+                driver: hk
+                pin: 6
+                mode: input
+            ch7_led:
+                driver: hk
+                pin: 7
+                mode: input
+            ch0_button:
+                driver: hk
+                pin: 0
+                mode: output
+                switch: false
+            ch1_button:
+                driver: hk
+                pin: 1
+                mode: output
+                switch: false
+            ch2_button:
+                driver: hk
+                pin: 2
+                mode: output
+                switch: false
+            ch3_button:
+                driver: hk
+                pin: 3
+                mode: output
+                switch: false
+            ch4_button:
+                driver: hk
+                pin: 4
+                mode: output
+                switch: false
+            ch5_button:
+                driver: hk
+                pin: 5
+                mode: output
+                switch: false
+            ch6_button:
+                driver: hk
+                pin: 6
+                mode: output
+                switch: false
+            ch7_button:
+                driver: hk
+                pin: 7
+                mode: output
+                switch: false
+        view:
+            table:
+                - ["#Capstan1", ch0_led, ch0_button]
+                - ["#Capstan2", ch1_led, ch1_button]
+                - ["#Capstan3", ch2_led, ch2_button]
+                - ["#Astrolabe", ch3_led, ch3_button]
+                - ["#Chronometer", ch4_led, ch4_button]
+                - ["#Sextant", ch5_led, ch5_button]
+                - ["#Octant", ch6_led, ch6_button]
+                - ["#INPUT 8", ch7_led, ch7_button]
