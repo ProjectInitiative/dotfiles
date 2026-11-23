@@ -17,6 +17,12 @@
 #     cmd/cmdret pseudo-drivers for Astrolabe/Chronometer/Sextant/Octant).
 #   - 99-bliswitch-v2.rules: CH340 USB-serial symlink /dev/bliswitch that
 #     the BliSwitch v2 driver (xh_hk4401, protocol 1) points at.
+#   - **kvmd source patch**: upstream xh_hk4401 is 4-channel only; BliSwitch
+#     v2 needs 8. On PiKVM OS this is applied post-install by
+#     hosts/pikvm/patch-xh_hk4401-8port.py against the installed driver
+#     (WIPED BY EVERY kvmd PACMAN UPDATE — see hosts/pikvm/DRIVER-PATCH.md).
+#     On NixOS, apply it via overrideAttrs postPatch against the packaged
+#     kvmd instead — see the kvmdPatcher option below.
 # NOTE: DLI client bearer tokens are unsupported on the EPCR6 (see
 # hosts/pikvm/README.md auth saga) — do not reintroduce DLI_TOKEN here.
 #
@@ -49,6 +55,9 @@ let
   # pieces in hosts/pikvm/, regenerate override.yaml.merged and diff
   # against the device.
   overrideYaml = ../../../hosts/pikvm/override.yaml.merged;
+
+  # The 8-port patcher script (idempotent, refuses unexpected driver code).
+  bliswitchPatcher = ../../../hosts/pikvm/patch-xh_hk4401-8port.py;
 in
 {
   options.${namespace}.services.pikvm-kvmd = {
@@ -70,6 +79,21 @@ in
       type = types.str;
       default = "/run/secrets/dli_epcr6_password";
       description = "Path to file containing the EPCR6 password";
+    };
+
+    kvmdPackage = mkOption {
+      type = types.package;
+      description = ''
+        The kvmd package to patch for 8-port BliSwitch v2 support. Required
+        (not optional) because upstream xh_hk4401 is 4-channel only. Example:
+          kvmdPackage = pkgs.kvmd.overrideAttrs (old: {
+            postPatch = builtins.readFile ./patch-kvmd-8port.sh;
+          });
+        where patch-kvmd-8port.sh runs
+        ${"patch-xh_hk4401-8port.py"} against the packaged driver
+        (path depends on the package's build layout; verify the driver
+        location inside the drv first). See hosts/pikvm/DRIVER-PATCH.md.
+      '';
     };
   };
 
@@ -95,6 +119,15 @@ in
       };
     };
 
+    # Assert the kvmd package carries the 8-port BliSwitch patch. The check
+    # greps for the patched validator (max=7); fails the build if missing.
+    system.checks.text = let pkg = cfg.kvmdPackage; in ''
+      # kvmd 8-port bliswitch patch assertion
+      grep -r "max=7" ${pkg}/lib/python*/site-packages/kvmd/plugins/ugpio/xh_hk4401.py >/dev/null || {
+        echo "kvmd package is NOT patched for 8-port BliSwitch v2"; exit 1;
+      }
+    '';
+
     # kvmd's cmd drivers spawn dli-outlet as child processes of the kvmd
     # service, so they inherit this environment.
     systemd.services.kvmd = {
@@ -111,6 +144,7 @@ in
     warnings = [
       "pikvm-kvmd: hard power control for the DGX Spark nodes — Off/Cycle cut power with no graceful shutdown path"
       "pikvm-kvmd: EPCR6 outlet map — DLI 8=astrolabe 6=chronometer 7=sextant 5=octant (verified 2026-11-23); hard power cuts, no graceful path"
+      "pikvm-kvmd: kvmdPackage MUST carry the 8-port xh_hk4401 patch (see kvmdPackage option + hosts/pikvm/DRIVER-PATCH.md) — a stock kvmd build silently breaks BliSwitch channels 5-8"
     ];
   };
 }
