@@ -29,6 +29,15 @@ in
   # system.etc.overlay.enable = true;
   # services.userborn.enable = true;
   #
+
+  # Cap local builds so the laptop stays usable during big compiles
+  # (3 derivations × 4 cores = 12 of 16 logical cores, ~75%). Applies
+  # daemon-wide, so builds also stay capped when the launching client
+  # capped when the launching client dies (nix-daemon keeps orphans).
+  nix.settings = {
+    max-jobs = 3;
+    cores = 4;
+  };
   boot.initrd.systemd.enable = true;
   boot.initrd.systemd.fido2.enable = true;
 

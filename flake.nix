@@ -20,7 +20,10 @@
     # storytold ArtCraft suite (15 apps) + solidcraft — pinned-source builds
     # with the dbus.lib + desktop-integration fixes. Consumed via
     # inputs.artcraft.packages.${system}.<name>; see systems/.../thinkpad.
+    # Local clone (build-software/custom-nix/artcraft-nix) so we control the
+    # lockfile updates; switch back to github when the upstream rev catches up.
     artcraft.url = "github:ProjectInitiative/artcraft-nix";
+    # artcraft.url = "path:/home/kylepzak/development/build-software/custom-nix/artcraft-nix";
 
     # omp (Oh My Pi) coding agent — parallel trial with pi (keel OQ-0040).
     # NOT following our nixpkgs: omp builds with bun2nix against its own pin.
