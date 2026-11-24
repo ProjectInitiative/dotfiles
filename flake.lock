@@ -70,11 +70,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1795492985,
-        "narHash": "sha256-bwv7sgZ0K13MEBo/VDVVWfMAugk1Xhm5SnMJgCdS/3Q=",
+        "lastModified": 1795534105,
+        "narHash": "sha256-Mowhlpx/Y/ZUTkWkyUOmMaeYndNv5XplytDc5jFeI1w=",
         "owner": "ProjectInitiative",
         "repo": "artcraft-nix",
-        "rev": "0253a47b5aedbeebc484c3e29e20d3fd6878b1d0",
+        "rev": "b19988362d10fd92ce848caac39dbda8099f1a6d",
         "type": "github"
       },
       "original": {

@@ -1,4 +1,4 @@
 { channels, inputs, ... }:
 final: prev: {
-  herdr = inputs.herdr.packages.${final.system}.herdr;
+  herdr = inputs.herdr.packages.${final.stdenv.hostPlatform.system}.herdr;
 }

@@ -247,7 +247,11 @@ in
         # cannot run on NixOS (foreign interpreter); this build patches the
         # interpreter + RPATH (packages/hypa). Must be on PATH so the
         # extension's bare-`hypa` resolution and rewritten bash commands work.
-        ++ (optional cfg.agent.pi-coding.enable pkgs.${namespace}.hypa)
+        # x86_64-only for now (upstream arm64 tarball exists but is unpackaged);
+        # `? hypa` guards aarch64 hosts like dcc-ex where the attr is absent.
+        ++ (optionals (cfg.agent.pi-coding.enable && pkgs.${namespace} ? hypa) [
+          pkgs.${namespace}.hypa
+        ])
         ++ (optional cfg.mcp.enable pkgs.${namespace}.mcp-proxy-runner)
         ++ (optional cfg.mcp.enable pkgs.${namespace}.rea-agents)
         ++ (optional cfg.mcp.enable githubMcpWrapper)
