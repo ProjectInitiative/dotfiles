@@ -339,11 +339,11 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1795623373,
-        "narHash": "sha256-gazjcuaVh0H/dmK5yuZRSmuEz3BXESCNz8fa7tGFD60=",
+        "lastModified": 1795629741,
+        "narHash": "sha256-QaHuBEVNda6kp4UP0fJMV5XbYmry0WapeKN7QGSMu1E=",
         "owner": "projectinitiative",
         "repo": "dcc-ex",
-        "rev": "0267bffb703101f7da6a379763e71e34442b21a9",
+        "rev": "b8b43117d10432ef150be2ef6427ef6c959bd15b",
         "type": "github"
       },
       "original": {
