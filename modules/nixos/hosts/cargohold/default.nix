@@ -389,6 +389,12 @@ in
         # services.samba = { enable = true; /* ... */ };
       };
 
+      # Open the WireGuard UDP port (services.tailscale.port, default 41641)
+      # so tailnet peers can form direct connections to this host instead of
+      # falling back to DERP relay. The shared tailscale module defaults this
+      # to false; cargohold opts in.
+      services.tailscale.openFirewall = true;
+
       # Enable the sync-host service for automated backup tasks
       services.sync-host = {
         enable = true;

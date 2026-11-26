@@ -62,6 +62,11 @@ in
       # Enable the official tailscale daemon and autoconnect service
       enable = true;
 
+      # Keep the WireGuard UDP port closed by default — the host decides.
+      # Hosts that need direct (non-DERP) peer connections should override
+      # with services.tailscale.openFirewall = true; in their host config.
+      openFirewall = mkDefault false;
+
       # Only set authKeyFile when we actually have a key; otherwise tailscaled
       # runs without autoconnect and the admin can `tailscale up` interactively.
       authKeyFile = mkIf (tailscale_key != null) tailscale_key;
