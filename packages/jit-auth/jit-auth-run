@@ -142,29 +142,66 @@ trap 'cleanup; exit 143' TERM
 msg "🔐 Unlocking Bitwarden..."
 # Reuse a valid unlocked session from the parent env if present; never pass
 # BW_SESSION down into the auth shell (unset before exec).
+# Hollow-cache guard: data.json can exist WITHOUT vault payload (email empty,
+# ciphers null — e.g. a login raced/failed partway, server blip, or CLI
+# version churn). `bw unlock` against such a shell fails with "You are not
+# logged in" forever this boot. Detect it (no accessToken / no ciphers key in
+# data.json) and fall back to the full-login path.
+bw_cache_is_hollow() {
+  [ -f "$BITWARDENCLI_APPDATA_DIR/data.json" ] || return 1
+  python3 - "$BITWARDENCLI_APPDATA_DIR/data.json" <<'PYEOF' 2>/dev/null || return 1
+import json, sys
+d = json.load(open(sys.argv[1]))
+acct = d.get("global_account_accounts", {})
+if not acct:
+    sys.exit(1)  # no account shell at all -> treat as missing cache
+uid = next(iter(acct))
+if not d.get(uid + "_token_accessToken") and not d.get(uid + "_ciphers_ciphers"):
+    sys.exit(1)  # account shell with no vault payload -> hollow
+sys.exit(0)
+PYEOF
+}
+bw_cache_is_hollow || { rm -f "$BITWARDENCLI_APPDATA_DIR/data.json"; }
 BW_SESSION=""
 if [ ! -f "$BITWARDENCLI_APPDATA_DIR/data.json" ]; then
-  # First session since boot: the shared tmpfs cache is empty, so `bw unlock`
-  # would have nothing to decrypt. Do the full login once — server auth with
-  # 2FA as configured — which downloads data.json into the RAM cache and
-  # yields a session key directly (--raw). Every later session this boot
-  # takes the plain-unlock path below.
+  # First session since boot (or hollow cache just cleared): the shared tmpfs
+  # cache is empty, so `bw unlock` would have nothing to decrypt. Do the full
+  # login once — server auth with 2FA as configured — which downloads
+  # data.json into the RAM cache and yields a session key directly (--raw).
+  # Every later session this boot takes the plain-unlock path below.
   msg "📥 No vault cache yet — full login (2FA may prompt)..."
   BW_SESSION="$(bw login --raw)" || { unset BW_SESSION; fail "bw login failed"; }
+  # Post-login sanity: the login must have actually populated the vault.
+  if ! bw_cache_is_hollow; then
+    msg "⚠️  login produced an empty vault cache — forcing sync..."
+    bw sync --session "$BW_SESSION" >/dev/null 2>&1 || true
+    bw_cache_is_hollow && { unset BW_SESSION; fail "vault cache still empty after login+sync (check bw login / server status)"; }
+  fi
 elif [ -n "${BW_SESSION:-}" ] && bw status --session "$BW_SESSION" 2>/dev/null | grep -q '"status" *: *1'; then
   : # parent already had an unlocked vault session; reuse it
 else
-  BW_SESSION="$(bw unlock --raw)" || { unset BW_SESSION; fail "failed to unlock Bitwarden"; }
+  BW_SESSION="$(bw unlock --raw)" || {
+    unset BW_SESSION
+    # unlock failed but cache looked healthy -> stale/locked cache; last
+    # resort is a full re-login rather than a dead end.
+    msg "⚠️  unlock failed — falling back to full login (2FA may prompt)..."
+    rm -f "$BITWARDENCLI_APPDATA_DIR/data.json"
+    BW_SESSION="$(bw login --raw)" || fail "bw login failed"
+  }
 fi
 [ -n "$BW_SESSION" ] || { unset BW_SESSION; fail "failed to unlock Bitwarden"; }
 
 # Vault freshness is once per boot by design: the shared tmpfs cache is
 # downloaded by the first session's `bw login`, and later sessions reuse it
-# as-is. Set JIT_AUTH_SYNC=1 to force a re-sync for this session (costs
-# ~3-5s: one extra Node startup + network + full vault rewrite); secrets
-# changed elsewhere mid-boot are not visible until then.
+# as-is. Force a re-sync for this session via JIT_AUTH_SYNC=1 (the `auth`
+# composer maps its --sync flag to this), or JIT_AUTH_FORCE_LOGIN=1 to skip
+# the warm-cache path entirely. Costs ~3-5s: one extra Node startup + network
+# + full vault rewrite; secrets changed elsewhere mid-boot are not visible
+# until then.
 if [ "${JIT_AUTH_SYNC:-0}" = "1" ]; then
+  msg "🔄 Syncing Bitwarden vault..."
   bw sync --session "$BW_SESSION" >/dev/null 2>&1 || { unset BW_SESSION; fail "Bitwarden sync failed"; }
+  bw_cache_is_hollow && { unset BW_SESSION; fail "vault cache empty after sync (sync did not populate the vault)"; }
 fi
 
 # Single extraction point: adjust here if a secret lives in a custom field.

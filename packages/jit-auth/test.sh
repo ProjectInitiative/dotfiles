@@ -22,9 +22,11 @@ fail_test() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 mkdir -p "$work/fakebin"
 cat > "$work/fakebin/bw" <<EOF
 #!/usr/bin/env bash
+export BITWARDENCLI_APPDATA_DIR="\${BITWARDENCLI_APPDATA_DIR:-$work/bwdata}"
+mkdir -p "\$BITWARDENCLI_APPDATA_DIR"
 case "\$1" in
   status) echo '{"status": "unauthenticated"}' ;;
-  login)  echo "fake-session-token" ;;
+  login)  echo "fake-session-token"; printf '{"global_account_accounts":{"u1":{"email":"x@y"}},"user_u1_ciphers_ciphers":{"c1":{"name":"n"}},"user_u1_token_accessToken":"t"}' > "\$BITWARDENCLI_APPDATA_DIR/data.json" ;;
   unlock) echo "fake-session-token" ;;
   sync)   exit 0 ;;
   get)
@@ -120,7 +122,7 @@ true
 EOF
 chmod +x "$work/session.sh"
 
-export PATH="$work/fakebin:$JIT_BIN:$PATH"
+export PATH="$work/fakebin:$JIT_BIN/bin:$PATH"
 export JIT_SESSION_NAME=k8s
 export JIT_SECRETS="k8s:fake-k8s-item bao:fake-bao-item"
 export JIT_WRAPPERS="kubectl:$work/realbin/kubectl kubectx:$work/realbin/kubectx kubens:$work/realbin/kubens k9s:$work/realbin/k9s bao:$work/realbin/bao"
@@ -128,7 +130,9 @@ export JIT_BINDINGS="kubectl:KUBECONFIG=k8s kubectx:KUBECONFIG=k8s kubens:KUBECO
 export JIT_REQUIRED_ENV="BAO_ADDR"
 export BAO_ADDR="https://bao.internal:8200"
 export BAO_TEST_ENV_OUT="$work/bao-env.txt"
-export JIT_BROKER="$JIT_BIN/jit-auth-broker"
+export BITWARDENCLI_APPDATA_DIR="$work/bwdata"
+mkdir -p "$BITWARDENCLI_APPDATA_DIR"
+export JIT_BROKER="$JIT_BIN/bin/jit-auth-broker"
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp}"
 
 # Baselines: other interactive auth sessions may legitimately be running;
@@ -138,6 +142,35 @@ before="$(ls -d "$XDG_RUNTIME_DIR"/jit-auth-k8s-* 2>/dev/null | wc -l || true)"
 before_brokers="$(pgrep -f "jit-auth-broker serve --socket $XDG_RUNTIME_DIR/jit-auth-k8s-" | wc -l || true)"
 before_brokers=$(echo "$before_brokers" | head -1)
 out="$(SHELL="$work/session.sh" jit-auth-run 2>&1)" || fail_test "jit-auth-run exited nonzero: $out"
+
+# fetch accounting: the FIRST session must fetch each slot's item exactly once
+# (later test sessions — hollow-cache recovery, sync — legitimately fetch again)
+fetches_first="$(wc -l < "$work/fetch.log" || true)"
+[ "$fetches_first" -eq 2 ] || fail_test "configs fetched $fetches_first times, expected 2 (one per slot)"
+[ "$(sort -u "$work/fetch.log" | wc -l)" -eq 2 ] || fail_test "same item fetched more than once"
+pass "each slot's item fetched exactly once per session (combo: 2 items, 1 unlock)"
+
+# 0. hollow-cache guard: an empty data.json must be re-logged-in, not unlock-failed
+rm -rf "$BITWARDENCLI_APPDATA_DIR"; mkdir -p "$BITWARDENCLI_APPDATA_DIR"
+echo '{"global_account_accounts":{"u1":{"email":""}}}' > "$BITWARDENCLI_APPDATA_DIR/data.json"
+out_hollow="$(SHELL="$work/session.sh" jit-auth-run 2>&1)" || fail_test "hollow-cache recovery failed: $out_hollow"
+echo "$out_hollow" | grep -q "full login" || fail_test "hollow cache did not trigger login fallback"
+[ "$(grep -c 'fake-k8s-item' "$work/fetch.log")" -ge 1 ] || fail_test "hollow-cache session fetched nothing"
+pass "hollow cache (no vault payload) detected and recovered via full login"
+
+# 0b. --sync flag maps to a sync call
+rm -f "$work/sync.log"
+printf "true\n" > "$work/true-session.sh"; chmod +x "$work/true-session.sh"
+sed -i "s|sync)   exit 0 ;;|sync)   echo synced >> $work/sync.log ;;|" "$work/fakebin/bw"
+# functional: jit-auth-run with JIT_AUTH_SYNC=1 (what --sync maps to)
+out_sync="$(PATH="$work/fakebin:$JIT_BIN/bin:$PATH" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" BITWARDENCLI_APPDATA_DIR="$BITWARDENCLI_APPDATA_DIR" JIT_SESSION_NAME=k8s JIT_SECRETS="k8s:fake-k8s-item bao:fake-bao-item" JIT_WRAPPERS="kubectl:$work/realbin/kubectl" JIT_BINDINGS="kubectl:KUBECONFIG=k8s" JIT_REQUIRED_ENV="" JIT_AUTH_SYNC=1 SHELL="$work/true-session.sh" "$JIT_BIN/bin/jit-auth-run" 2>&1)" || fail_test "JIT_AUTH_SYNC=1 run failed: $out_sync"
+[ -s "$work/sync.log" ] || fail_test "JIT_AUTH_SYNC=1 did not trigger bw sync"
+# flag mapping: the built auth script must map --sync to JIT_AUTH_SYNC=1
+grep -q 'JIT_AUTH_SYNC=1' "$JIT_BIN/bin/auth" || fail_test "auth script does not map --sync to JIT_AUTH_SYNC"
+# and accepts --sync without unknown-app error (uses the real composed session)
+out_flag="$(PATH="$work/fakebin:$JIT_BIN/bin:$PATH" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" BITWARDENCLI_APPDATA_DIR="$BITWARDENCLI_APPDATA_DIR" SHELL="$work/session.sh" "$JIT_BIN/bin/auth" --sync bao 2>&1)" || true
+echo "$out_flag" | grep -q "unknown jit-auth app" && fail_test "--sync consumed as app name"
+pass "JIT_AUTH_SYNC=1 triggers bw sync; auth --sync maps the flag"
 
 # 1. wrapper ran and served content (both slots)
 echo "$out" | grep -q "ran:get" || fail_test "wrapped tools did not run"
@@ -159,10 +192,6 @@ pass "kubectl, kubectx, kubens, k9s, bao all resolve through session wrappers"
 echo "$out" | grep -q MUTATION_NOT_SHARED && fail_test "mutation not shared"
 pass "plain/bash/sh children and concurrent invocations work"
 
-fetches="$(wc -l < "$work/fetch.log" || true)"
-[ "$fetches" -eq 2 ] || fail_test "configs fetched $fetches times, expected 2 (one per slot)"
-[ "$(sort -u "$work/fetch.log" | wc -l)" -eq 2 ] || fail_test "same item fetched more than once"
-pass "each slot's item fetched exactly once per session (combo: 2 items, 1 unlock)"
 
 # 5. environment hygiene
 grep -q "BW_SESSION_LEAK" "$work/child-env.txt" && fail_test "BW_SESSION leaked"
@@ -214,7 +243,7 @@ true
 EOF
 chmod +x "$work/session-combo.sh"
 fetches_before="$(wc -l < "$work/fetch.log")"
-out2="$(PATH="$work/fakebin:$JIT_BIN:$PATH" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" SHELL="$work/session-combo.sh" "$JIT_BIN/auth" bao k8s 2>&1)" || fail_test "auth bao k8s failed: $out2"
+out2="$(PATH="$work/fakebin:$JIT_BIN/bin:$PATH" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" SHELL="$work/session-combo.sh" "$JIT_BIN/bin/auth" bao k8s 2>&1)" || fail_test "auth bao k8s failed: $out2"
 echo "$out2" | grep -q KUBECTL_NOT_WRAPPED && fail_test "auth combo: kubectl not wrapped: $out2"
 echo "$out2" | grep -q BAO_NOT_WRAPPED && fail_test "auth combo: bao not wrapped: $out2"
 echo "$out2" | grep -q BAO_VERSION_FAILED && fail_test "auth combo: real bao failed through wrapper"
@@ -230,7 +259,7 @@ fi
 pass "combo session cleanup: dirs gone, token never in a named file"
 
 # 9. unknown app rejected with a helpful list
-out_bogus="$($JIT_BIN/auth bogus-not-an-app 2>&1 || true)"
+out_bogus="$($JIT_BIN/bin/auth bogus-not-an-app 2>&1 || true)"
 if echo "$out_bogus" | grep -q "unknown jit-auth app" && echo "$out_bogus" | grep -q "bao"; then
   pass "auth rejects unknown apps (with available-app list)"
 else
@@ -244,7 +273,7 @@ case "$kp" in *jit-auth-k8s*) ;; *) echo "KUBECTL_NOT_WRAPPED:$kp" ;; esac
 true
 EOF
 chmod +x "$work/session-single.sh"
-out3="$(PATH="$work/fakebin:$JIT_BIN:$PATH" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" SHELL="$work/session-single.sh" "$JIT_BIN/k8s-auth" 2>&1)" || fail_test "k8s-auth alias failed: $out3"
+out3="$(PATH="$work/fakebin:$JIT_BIN/bin:$PATH" XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" SHELL="$work/session-single.sh" "$JIT_BIN/bin/k8s-auth" 2>&1)" || fail_test "k8s-auth alias failed: $out3"
 echo "$out3" | grep -q KUBECTL_NOT_WRAPPED && fail_test "k8s-auth alias: kubectl not wrapped: $out3"
 pass "single-app alias k8s-auth works (kubectl wrapped, real binary)"
 

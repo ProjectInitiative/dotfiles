@@ -4,6 +4,9 @@
 #   auth <app> [<app> ...]     combine any registered apps into ONE session:
 #                              single bw unlock, one fetch per item, ALL
 #                              wrapper sets on PATH; exit destroys all of it.
+#   auth --sync <app> [...]    force a vault sync before fetching (adds
+#                              ~3-5s; use when secrets changed elsewhere
+#                              mid-boot)
 #   <app>-auth                 single-app shortcut (execs `auth <app>`).
 #
 # Apps are registered by build-time fragment files in auth-fragments/<app>.sh
@@ -33,6 +36,19 @@ usage() {
 }
 
 [ "$#" -ge 1 ] || usage
+
+# --sync flag: force a vault sync before fetching. Position-independent.
+FORCE_SYNC=0
+ARGS=()
+for arg in "$@"; do
+  case "$arg" in
+    --sync) FORCE_SYNC=1 ;;
+    -h|--help) usage ;;
+    *) ARGS+=("$arg") ;;
+  esac
+done
+[ "${#ARGS[@]}" -ge 1 ] || usage
+[ "$FORCE_SYNC" = 0 ] || export JIT_AUTH_SYNC=1
 
 declare -A SEEN_APP SEEN_SLOT SEEN_CMD
 APPS=()
@@ -72,7 +88,7 @@ jit_auth_register() {
   return 0
 }
 
-for app in "$@"; do
+for app in "${ARGS[@]}"; do
   frag="$FRAG_DIR/$app.sh"
   [ -f "$frag" ] || {
     echo "error: unknown jit-auth app '$app'" >&2
